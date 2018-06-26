@@ -70,6 +70,16 @@ class LessonTypeItem(QTableWidgetItem):
             self.setToolTip("Практика")
 
 
+month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
+
+
+class MonthTableItem(QTableWidgetItem):
+    def __init__(self, month: int):
+        super().__init__()
+        self.setTextAlignment(Qt.AlignCenter)
+        self.setText(month_names[month])
+
+
 class PercentItem(QTableWidgetItem):
     def __init__(self, value=0):
         super().__init__()

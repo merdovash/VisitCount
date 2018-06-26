@@ -34,4 +34,4 @@ class QMyComboBox(QComboBox):
             if self.items[key]["id"] == ID:
                 super().setCurrentText(key)
                 return
-        raise Exception("no such id in list " + str(ID) + " " + str(self.items))
+        print("no "+ID+" ID")

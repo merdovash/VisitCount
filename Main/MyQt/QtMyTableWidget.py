@@ -1,11 +1,10 @@
 import datetime
+from PyQt5 import QtGui
 
 from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtWidgets import QHeaderView, QTableWidget, QWidget, QHBoxLayout, QTableWidgetItem, QLayout, QVBoxLayout
 
-from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, PercentItem
-
-month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
+from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, PercentItem, MonthTableItem
 
 
 class VisitTable(QWidget):
@@ -17,22 +16,22 @@ class VisitTable(QWidget):
         self.visit_table.horizontalHeader().setVisible(False)
         self.visit_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.visit_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        scroll_bar = self.visit_table.verticalScrollBar()
+        self.scroll_bar = self.visit_table.verticalScrollBar()
 
         self.percent_table = QTableWidget()
         self.percent_table.setFixedWidth(60)
-        self.percent_table.setVerticalScrollBar(scroll_bar)
+        self.percent_table.setVerticalScrollBar(self.scroll_bar)
         self.percent_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.percent_table.verticalHeader().setVisible(False)
         self.percent_table.horizontalHeader().setVisible(False)
         self.percent_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
         self.home_work_table = QTableWidget()
-        self.home_work_table.setVerticalScrollBar(scroll_bar)
+        self.home_work_table.setVerticalScrollBar(self.scroll_bar)
         self.home_work_table.setMaximumWidth(400)
         self.percent_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
-        self.l.addWidget(scroll_bar)
+        self.l.addWidget(self.scroll_bar)
         self.l.addWidget(self.visit_table)
         self.l.addWidget(self.percent_table)
         self.l.addWidget(self.home_work_table)
@@ -43,6 +42,19 @@ class VisitTable(QWidget):
         parent.addLayout(self.l)
 
         self.lessons = None
+        self._init = True
+
+    def resizeEvent(self, a0: QtGui.QResizeEvent):
+        print("resized") # TODO: resize
+        # if self._init:
+        #     try:
+        #         self.l.removeWidget(self.scroll_bar)
+        #         self.scroll_bar = self.visit_table.verticalScrollBar()
+        #         self.percent_table.setVerticalScrollBar(self.scroll_bar)
+        #         self.home_work_table.setVerticalScrollBar(self.scroll_bar)
+        #         self.l.insertWidget(0, self.scroll_bar)
+        #     except Exception as e:
+        #         print(e)
 
     def rowCount(self):
         return self.visit_table.rowCount()
@@ -70,9 +82,8 @@ class VisitTable(QWidget):
         # months = get_months(lessons)
         for i in range(len(lessons)):
             dt = datetime.datetime.strptime(lessons[i]["date"], "%d-%m-%Y %I:%M%p")
-            month_item = QTableWidgetItem(month_names[dt.month])
-            month_item.setTextAlignment(Qt.AlignCenter)
-            self.visit_table.setItem(0, i, month_item)
+
+            self.visit_table.setItem(0, i, MonthTableItem(dt.month))
             self.visit_table.setItem(1, i, QTableWidgetItem(str(dt.day)))
             self.visit_table.setItem(2, i, LessonTypeItem(lessons[i]["type"]))
             self.visit_table.setColumnWidth(i, 20)
@@ -135,7 +146,7 @@ class VisitTable(QWidget):
                     item = VisitItem(VisitItem.Status.NoInfo)
                 self.visit_table.setItem(current_row, j, item)
             except Exception as e:
-                print(e)
+                print("ERROR: add student -> fill row: ", e)
 
         self.percent_table.setItem(current_row,
                                    0,
@@ -147,21 +158,12 @@ class VisitTable(QWidget):
     def recalculate_percents(self, student_index=None):
         def get_percent(v_row: int) -> str:
             visit, total = 0, 0
-            for l in range(self.visit_table.colorCount()):
-                if self.visit_table.item(v_row, l) is not None:
-                    # try:
-                    #     visit_status = self.visit_table.item(v_row, l).status
-                    #     if visit_status != VisitItem.Status.NoInfo:
-                    #         total += 1
-                    #         if visit_status == VisitItem.Status.Visited:
-                    #             visit += 1
-                    # except Exception as e:
-                    #     print(e)
-                    try:
-                        total += self.visit_table.item(v_row, l).visit_data[VisitItem.Data.Completed]
-                        visit += self.visit_table.item(v_row, l).visit_data[VisitItem.Data.Visited]
-                    except Exception as e:
-                        print(e)
+            for col_index in range(self.visit_table.columnCount()):
+                if self.visit_table.item(v_row, col_index) is not None:
+                    item = self.visit_table.item(v_row, col_index)
+                    if type(item) is VisitItem:
+                        total += item.visit_data[VisitItem.Data.Completed]
+                        visit += item.visit_data[VisitItem.Data.Visited]
             if total != 0:
                 r = round(100 * visit / total)
             else:
@@ -170,20 +172,24 @@ class VisitTable(QWidget):
 
         if student_index is None:
             for i in range(len(self.students)):
-                try:
+                item = self.percent_table.item(3 + i, 0)
+                if type(item) is PercentItem:
                     self.percent_table.item(3 + i, 0).setValue(get_percent(3 + i))
-                except Exception as e:
-                    print(e)
             self.percent_table.dataChanged(self.percent_table.model().index(3, 0),
                                            self.percent_table.model().index(3 + len(self.students), 0))
         else:
-            try:
-                self.percent_table.item(3 + student_index, 0).setValue(get_percent(3 + student_index))
-            except Exception as e:
-                print(e)
-            self.percent_table.dataChanged(self.percent_table.model().index(3 + student_index, 0),
-                                           self.percent_table.model().index(3 + student_index, 0))
+            item = self.percent_table.item(3 + student_index, 0)
+            if type(item) is PercentItem:
+                item.setValue(get_percent(3 + student_index))
+                self.percent_table.dataChanged(self.percent_table.model().index(3 + student_index, 0),
+                                               self.percent_table.model().index(3 + student_index, 0))
+            else:
+                print("ERROR: trying to recalculate percents on a " + student_index + " row")
 
     def columnForEach(self, col_index, func: callable):
         for i in range(self.visit_table.rowCount()):
             func(self.visit_table.item(i, col_index))
+
+    def rowForEach(self, row_index, func: callable):
+        for i in range(self.visit_table.colorCount()):
+            func(self.visit_table.item(row_index, i))

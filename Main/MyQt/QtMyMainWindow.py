@@ -1,3 +1,5 @@
+from PyQt5 import QtGui
+
 from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtGui import QFont, QBrush, QColor
 from PyQt5.QtWidgets import QWidget, QTableWidget, QListWidget, QLayout, QBoxLayout, QVBoxLayout, QHBoxLayout, \
@@ -28,7 +30,7 @@ def getLessonIndex(lessons: list, ID: int):
             return i
 
 
-def closest_lesson(lessons:list):
+def closest_lesson(lessons: list):
     closest = min(
         lessons,
         key=lambda x: abs(datetime.datetime.now() - datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p")))
@@ -47,7 +49,7 @@ class QMyMainWindow(QWidget):
             self.setup_geometry()
 
             self.setup_data()
-        except Exception  as e:
+        except Exception as e:
             print(e)
 
     def setup_geometry(self):
@@ -122,20 +124,20 @@ class QMyMainWindow(QWidget):
 
         self.setLayout(self.layout)
 
+    def resizeEvent(self, a0: QtGui.QResizeEvent):
+        self.table.resizeEvent(a0)
+
     def setup_data(self):
         disciplines = self.db.get_disciplines(professor_id=self.professor_id)
         self.discipline_selector.addItems(disciplines)
 
         try:
             closest = closest_lesson(self.table.lessons)
-        except Exception as e:
-            print(e)
 
-        print(closest)
-        try:
             self.discipline_selector.setCurrentId(closest["discipline_id"])
             self.group_selector.setCurrentId(closest["group_id"])
             self.lesson_selector.setCurrentId(closest["id"])
+
         except Exception as e:
             print(e)
 
@@ -167,7 +169,8 @@ class QMyMainWindow(QWidget):
         self.lesson_selector.clear()
         self.lesson_selector.addItems(lessons)
         self.lesson_selector.currentTextChanged.connect(self.lesson_changed)
-        print("closest",closest_lesson(lessons))
+        closest = closest_lesson(lessons)
+        print("closest", closest, closest in self.lesson_selector.get_data())
         self.lesson_selector.setCurrentId(closest_lesson(lessons)["id"])
         pass
         self.fill_table()
@@ -175,20 +178,19 @@ class QMyMainWindow(QWidget):
 
     def lesson_changed(self):
         current_col = getLessonIndex(self.table.lessons, self.lesson_selector.currentId())
-        try:
+        if self.last_lesson is not None:
             self.table.columnForEach(
                 self.last_lesson,
                 lambda x: x.current_lesson(False) if type(x) is VisitItem else 0)
-            self.table.columnForEach(
-                current_col,
-                lambda x: x.current_lesson(True) if type(x) is VisitItem else 0)
-        except Exception as e:
-            print(e)
+
+        self.table.columnForEach(
+            current_col,
+            lambda x: x.current_lesson(True) if type(x) is VisitItem else 0)
+
         self.last_lesson = current_col
-        self.table.visit_table.scrollTo(self.table.visit_table.model().index(0,self.last_lesson))
+        self.table.visit_table.scrollTo(self.table.visit_table.model().index(1, self.last_lesson))
 
     def fill_table(self):
-        print("hello3")
         students = self.db.get_students(
             group_id=self.group_selector.currentId())
         students.sort(key=lambda x: x["last_name"])
@@ -214,7 +216,7 @@ class QMyMainWindow(QWidget):
         self.discipline_selector.setEnabled(False)
         try:
             if self.last_lesson is None:
-                self.last_lessons=self.table.lessons.index(closest_lesson(self.lesson_selector.get_data()))
+                self.last_lessons = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data()))
 
             self.start_button.disconnect()
             self.start_button.setText("Завершить занятие")
@@ -226,7 +228,7 @@ class QMyMainWindow(QWidget):
             self.info_label.setText("Учет начался. Приложите карту студента к считывателю.")
             self.program.serial.method = self.new_visit
         except Exception as e:
-            print(e)
+            print("start_lesson", e)
 
     def new_visit(self, ID):
         student = self.db.get_students(card_id=ID)[0]
@@ -236,12 +238,16 @@ class QMyMainWindow(QWidget):
 
             item = self.table.visit_table.item(student_table_row, lesson_table_col)
             if type(item) is VisitItem:
-                item.set_visit_status(VisitItem.Status.Visited)
-
-            # self.db.add_visit(student["id"], self.last_lesson)
-            self.info_label.setText(
-                "Студент " + student["last_name"] + " " + student["first_name"] + " посетил занятие")
-
+                if item.status == VisitItem.Status.Visited:
+                    self.info_label.setText(
+                        "Студент " + student["last_name"] + " " + student["first_name"] + " уже отмечен")
+                else:
+                    item.set_visit_status(VisitItem.Status.Visited)
+                    # self.db.add_visit(student["id"], self.last_lesson)
+                    self.info_label.setText(
+                        "Студент " + student["last_name"] + " " + student["first_name"] + " посетил занятие")
+            else:
+                print("ERROR: new_visit->update table item ({},{}) is not {}".format(student_table_row, lesson_table_col, type(VisitItem)))
             self.table.recalculate_percents(self.table.students.index(student))
             self.table.visit_table.dataChanged(
                 self.table.visit_table.model().index(student_table_row, lesson_table_col),
