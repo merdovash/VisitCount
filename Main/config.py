@@ -17,3 +17,5 @@ rooms = "rooms"
 main_button_css = "background-color: #ff8000; color: #ffffff; font-weight: bold;"
 
 sql_banned_symbols = ["\'", ";", "\""]
+
+server = "http://bisitor.itut.ru"

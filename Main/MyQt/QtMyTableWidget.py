@@ -45,7 +45,9 @@ class VisitTable(QWidget):
         self._init = True
 
     def resizeEvent(self, a0: QtGui.QResizeEvent):
-        print("resized") # TODO: resize
+        super().resizeEvent(a0)
+        print("resized")
+        # TODO: resize
         # if self._init:
         #     try:
         #         self.l.removeWidget(self.scroll_bar)
@@ -78,7 +80,19 @@ class VisitTable(QWidget):
     def set_horizontal_header(self, lessons: list):
         self.lessons = lessons
         self.visit_table.setColumnCount(len(lessons))
+
         self.visit_table.setRowCount(3)
+        item1 = QTableWidgetItem()
+        item1.setText("Месяц")
+        self.visit_table.setVerticalHeaderItem(0, item1)
+        item2 = QTableWidgetItem()
+        item2.setText("День")
+        self.visit_table.setVerticalHeaderItem(1, item2)
+        item3 = QTableWidgetItem()
+        item3.setText("Тип занятия")
+        self.visit_table.setVerticalHeaderItem(2, item3)
+
+
         # months = get_months(lessons)
         for i in range(len(lessons)):
             dt = datetime.datetime.strptime(lessons[i]["date"], "%d-%m-%Y %I:%M%p")
@@ -107,31 +121,19 @@ class VisitTable(QWidget):
         self.visit_table.insertRow(current_row)
         self.percent_table.insertRow(current_row)
 
-        try:
-            if self.visit_table.verticalHeader() is None:
-                self.visit_table.setVerticalHeader(QHeaderView(Qt.Vertical))
-                item1 = QTableWidgetItem()
-                item1.setText("Месяц")
-                self.visit_table.setVerticalHeaderItem(0, item1)
-                item2 = QTableWidgetItem()
-                item2.setText("День")
-                self.visit_table.setVerticalHeaderItem(1, item2)
-                item3 = QTableWidgetItem()
-                item3.setText("Тип занятия")
-                self.visit_table.setVerticalHeaderItem(2, item3)
-            item = QTableWidgetItem()
-            item.setText(student["last_name"]
-                         + ' '
-                         + student['first_name'][0]
-                         + '. '
-                         + student["middle_name"][0]
-                         + '. ')
-            self.visit_table.setVerticalHeaderItem(current_row, item)
-        except Exception as e:
-            print(e)
+        # set row header
+        item = QTableWidgetItem()
+        item.setText(student["last_name"]
+                     + ' '
+                     + student['first_name'][0]
+                     + '. '
+                     + student["middle_name"][0]
+                     + '. ')
+        self.visit_table.setVerticalHeaderItem(current_row, item)
 
         completed_lessons = list(filter(lambda x: x["completed"] == 1, self.lessons))
 
+        # fill row and find percents
         visit_count = 0
         visitations_id = [i["lesson_id"] for i in visitations]
         for j in range(len(self.lessons)):

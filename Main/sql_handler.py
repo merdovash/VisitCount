@@ -90,11 +90,17 @@ class DataBaseWorker:
             return False
         return True
 
-    def loads(self, table, data):
+    def loads(self, table, data, marker=None):
         if config.db == "sqlite":
+            if marker is not None:
+                marker["table"] = table
+                marker["total"] = len(data)
+            else:
+                marker = {}
             res = ""
-            for line in data:
-                res += str(self.load(table, line))
+            for i in range(len(data)):
+                marker["inserted"] = i
+                res += str(self.load(table, data[i]))
 
         elif config.db == "mysql":
             req = "INSERT IGNORE INTO {0}({1}) VALUES {2}"
@@ -103,7 +109,7 @@ class DataBaseWorker:
                 table,
                 ', '.join(keys),
                 ', '.join(
-                    ['(' + ', '.join([line[key] for key in keys]) + ')' for line in data])  #TODO: to foramt function
+                    ['(' + ', '.join([line[key] for key in keys]) + ')' for line in data])  # TODO: to foramt function
             ]
 
             res = self.sql_request(req, *tuple(params))
@@ -116,7 +122,7 @@ class DataBaseWorker:
 
             def to_format(value, key):
                 if types[key] == "INTEGER":
-                    return value
+                    return str(value)
                 else:
                     return "'" + value + "'"
 
@@ -150,17 +156,30 @@ class DataBaseWorker:
                          login,
                          password, account_type, user_id)
 
-    def auth(self, login=None, password=None, uid=None, card_id=None):
+    class AuthStatus(int):
+        Success = 1
+        Fail = 0
+        NoData = 2
+
+    def auth(self, login=None, password=None, uid=None, card_id=None) -> (AuthStatus, int):
         # TODO: auth
         print(card_id)
         if card_id is not None:
             print(password)
-            res = self.sql_request("SELECT * FROM {0} WHERE card_id={1} AND password={2}",
+            res = self.sql_request("Select * from {} WHERE card_id={}",
                                    config.auth,
-                                   card_id,
-                                   password)
-            print(res)
-            return [{"user_id": i[3]} for i in res]
+                                   card_id)
+            if len(res) == 0:
+                return DataBaseWorker.AuthStatus.NoData, None
+            else:
+                res = self.sql_request("SELECT id FROM {0} WHERE card_id={1} AND password={2}",
+                                       config.auth,
+                                       card_id,
+                                       password)
+                if len(res) == 0:
+                    return DataBaseWorker.AuthStatus.Fail, None
+                else:
+                    return DataBaseWorker.AuthStatus.Success, res[0][0]
         else:
             return "neeet"
 
@@ -684,7 +703,7 @@ class DataBaseWorker:
         if not ignore_banned_symbols:
             arg = valid(*args)
         else:
-            arg=args
+            arg = args
         try:
             sql = message.format(*arg)
             Logger.write(sql)
