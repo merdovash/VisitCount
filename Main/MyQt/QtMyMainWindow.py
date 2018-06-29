@@ -1,14 +1,16 @@
-from PyQt5 import QtGui
-
-from PyQt5.QtCore import Qt, QModelIndex
-from PyQt5.QtGui import QFont, QBrush, QColor
-from PyQt5.QtWidgets import QWidget, QTableWidget, QListWidget, QLayout, QBoxLayout, QVBoxLayout, QHBoxLayout, \
-    QComboBox, QLabel, QHeaderView, QTableWidgetItem, QPushButton, QMessageBox, QDialog, QStyle
-
-from Main import sql_handler, config
-from Main.MyQt.QtMyComboBox import QMyComboBox
 import datetime
 
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QTableWidget, QVBoxLayout, QHBoxLayout, \
+    QLabel, QPushButton
+
+from Main import config
+from Main.DataBase import sql_handler
+from Main.DataBase.SendNew import send
+from Main.MyQt.QtMyComboBox import QMyComboBox
+from Main.MyQt.QtMyStatusBar import QStatusMessage
 from Main.MyQt.QtMyTableWidget import VisitTable
 from Main.MyQt.QtMyWidgetItem import VisitItem
 
@@ -42,7 +44,7 @@ class QMyMainWindow(QWidget):
         super().__init__()
         self.program = program
 
-        self.db = sql_handler.DataBaseWorker()
+        self.db = sql_handler.DataBaseWorker.get()
         self.professor_id = professor_id
         try:
             self.setup_select_lesson()
@@ -56,7 +58,7 @@ class QMyMainWindow(QWidget):
         self.showMaximized()
 
     def setup_select_lesson(self):
-        self.layout = QVBoxLayout()
+        self.l = QVBoxLayout()
 
         # INFO BLOCK
         self.info_layout = QHBoxLayout()
@@ -67,15 +69,12 @@ class QMyMainWindow(QWidget):
         )
         self.professor_label.setFont(QFont("", 20))
 
-        self.info_label = QLabel("-")
-        self.info_label.setToolTip("Текущий статус программы")
-        self.info_label.setAlignment(Qt.AlignRight)
-        self.info_label.setFont(QFont("", 16))
+        self.info_label = QStatusMessage.get()
 
         self.info_layout.addWidget(self.professor_label)
         self.info_layout.addWidget(self.info_label)
 
-        self.layout.addLayout(self.info_layout)
+        self.l.addLayout(self.info_layout)
 
         # SELECTOR BLOCK
         self.selector_layout = QHBoxLayout()
@@ -107,7 +106,7 @@ class QMyMainWindow(QWidget):
         self.selector_layout.addWidget(lesson_label)
         self.selector_layout.addWidget(self.lesson_selector)
 
-        self.layout.addLayout(self.selector_layout)
+        self.l.addLayout(self.selector_layout)
 
         # start button
         self.start_button = QPushButton()
@@ -118,21 +117,27 @@ class QMyMainWindow(QWidget):
         self.selector_layout.addWidget(self.start_button)
 
         # DATA BLOCK
-        self.table = VisitTable(self.layout)
+        self.table = VisitTable(self.l)
 
-        # self.layout.addWidget(self.table)
+        # self.l.addWidget(self.table)
 
-        self.setLayout(self.layout)
+        self.setLayout(self.l)
 
     def resizeEvent(self, a0: QtGui.QResizeEvent):
         self.table.resizeEvent(a0)
 
     def setup_data(self):
-        disciplines = self.db.get_disciplines(professor_id=self.professor_id)
-        self.discipline_selector.addItems(disciplines)
+        # disciplines = self.db.get_disciplines(professor_id=self.professor_id)
+        # self.discipline_selector.addItems(disciplines)
 
         try:
-            closest = closest_lesson(self.table.lessons)
+            lessons = self.db.get_lessons(professor_id=self.professor_id)
+            closest = closest_lesson(lessons)
+
+            disciplines = self.db.get_disciplines(professor_id=self.professor_id)
+            self.discipline_selector.disconnect()
+            self.discipline_selector.addItems(disciplines)
+            self.discipline_selector.currentIndexChanged.connect(self.discipline_changed)
 
             self.discipline_selector.setCurrentId(closest["discipline_id"])
             self.group_selector.setCurrentId(closest["group_id"])
@@ -142,6 +147,10 @@ class QMyMainWindow(QWidget):
             print(e)
 
     def discipline_changed(self):
+        """
+        update groups ComboBox
+        :return: None
+        """
         disc = self.discipline_selector.currentId()
         groups = self.db.get_groups(professor_id=self.professor_id, discipline_id=disc)
         self.group_selector.disconnect()
@@ -214,6 +223,9 @@ class QMyMainWindow(QWidget):
         self.lesson_selector.setEnabled(False)
         self.group_selector.setEnabled(False)
         self.discipline_selector.setEnabled(False)
+
+        self.db.start_lesson(lesson_id=self.lesson_selector.currentId())
+
         try:
             if self.last_lesson is None:
                 self.last_lessons = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data()))
@@ -231,34 +243,45 @@ class QMyMainWindow(QWidget):
             print("start_lesson", e)
 
     def new_visit(self, ID):
-        student = self.db.get_students(card_id=ID)[0]
-        if ID in [i["card_id"] for i in self.table.students]:
-            student_table_row = 3 + self.table.students.index(student)
-            lesson_table_col = self.last_lesson
-
-            item = self.table.visit_table.item(student_table_row, lesson_table_col)
-            if type(item) is VisitItem:
-                if item.status == VisitItem.Status.Visited:
-                    self.info_label.setText(
-                        "Студент " + student["last_name"] + " " + student["first_name"] + " уже отмечен")
-                else:
-                    item.set_visit_status(VisitItem.Status.Visited)
-                    # self.db.add_visit(student["id"], self.last_lesson)
-                    self.info_label.setText(
-                        "Студент " + student["last_name"] + " " + student["first_name"] + " посетил занятие")
-            else:
-                print("ERROR: new_visit->update table item ({},{}) is not {}".format(student_table_row, lesson_table_col, type(VisitItem)))
-            self.table.recalculate_percents(self.table.students.index(student))
-            self.table.visit_table.dataChanged(
-                self.table.visit_table.model().index(student_table_row, lesson_table_col),
-                self.table.visit_table.model().index(student_table_row, lesson_table_col))
+        students = self.db.get_students(card_id=ID, group_id=self.group_selector.currentId())
+        if len(students) == 0:
+            self.info_label.setText("Студента нет в списках.")
         else:
-            self.info_label.setText(
-                "Студент не из группы "
-                + self.db.get_groups(group_id=self.group_selector.currentId())[0]["name"]
-            )
+            student = students[0]
+            if ID in [i["card_id"] for i in self.table.students]:
+                r = self.db.add_visit(student_id=student["id"], lesson_id=self.lesson_selector.currentId())
+                print(r)
+
+                student_table_row = 3 + self.table.students.index(student)
+                lesson_table_col = self.last_lesson
+
+                item = self.table.visit_table.item(student_table_row, lesson_table_col)
+                if type(item) is VisitItem:
+                    if item.status == VisitItem.Status.Visited:
+                        self.info_label.setText(
+                            "Студент " + student["last_name"] + " " + student["first_name"] + " уже отмечен")
+                    else:
+                        item.set_visit_status(VisitItem.Status.Visited)
+                        # self.db.add_visit(student["id"], self.last_lesson)
+                        self.info_label.setText(
+                            "Студент " + student["last_name"] + " " + student["first_name"] + " посетил занятие")
+                else:
+                    print("ERROR: new_visit->update table item ({},{}) is not {}".format(student_table_row,
+                                                                                         lesson_table_col,
+                                                                                         type(VisitItem)))
+                self.table.recalculate_percents(self.table.students.index(student))
+                self.table.visit_table.dataChanged(
+                    self.table.visit_table.model().index(student_table_row, lesson_table_col),
+                    self.table.visit_table.model().index(student_table_row, lesson_table_col))
+            else:
+                self.info_label.setText(
+                    "Студент не из группы "
+                    + self.db.get_groups(group_id=self.group_selector.currentId())[0]["name"]
+                )
 
     def end_lesson(self):
+        send(self.db, self.professor_id)
+
         self.program.serial.method = lambda x: 0
 
         self.lesson_selector.setEnabled(True)

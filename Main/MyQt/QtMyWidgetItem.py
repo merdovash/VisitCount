@@ -1,6 +1,12 @@
+import PyQt5
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidgetItem, QMenu
+
+from Main.MyQt.QtMyStatusBar import QStatusMessage
+from Main.SerialsReader import getReader
+from Main.DataBase.sql_handler import DataBaseWorker
 
 
 class MyTableItem(QTableWidgetItem):
@@ -89,3 +95,40 @@ class PercentItem(QTableWidgetItem):
 
     def setValue(self, value):
         self.setText(self.mask.format(value))
+
+
+class StudentHeaderItem(QTableWidgetItem):
+    def __init__(self, student:dict, *__args):
+        super().__init__(*__args)
+        self.setText("{} {}. {}.".format(
+                student["last_name"],
+                student['first_name'][0],
+                student["middle_name"][0]
+            ))
+        self.student = student
+
+    def show_context_menu(self, pos):
+        menu = QMenu()
+        print(pos)
+        menu.move(pos)
+        menu.addAction("Зарегистрировать карту", self.register)
+        menu.addAction("Показать номер карты", lambda: QStatusMessage.get().setText(self.student["card_id"]))
+        menu.exec_()
+
+    def register(self):
+        self.r = getReader()
+        self.r.method = self.reader_handler
+
+    def reader_handler(self, card_id):
+        if self.student["card_id"] is not None:
+            QStatusMessage.get().setText("Студенту {} {} перезаписали номер карты".format(
+                self.student["last_name"],
+                self.student["first_name"]))
+        else:
+            QStatusMessage.get().setText("Студенту {} {} записали номер карты".format(
+                self.student["last_name"],
+                self.student["first_name"]))
+        db = DataBaseWorker.get()
+        db.add_card_id_to(card_id=card_id, student_id=self.student["id"])
+        self.r.method = lambda x: 0
+        self.card_id = card_id

@@ -1,10 +1,8 @@
-from PyQt5 import QtGui
-
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QWidget
 
+from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyLoginInput import QLoginInput
 from Main.MyQt.QtMyMainWindow import QMyMainWindow
-from Main.sql_handler import DataBaseWorker
 
 
 class QAuthButton(QPushButton):

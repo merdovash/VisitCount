@@ -37,42 +37,26 @@ def setParam(request: str, params: list, param, string: str, size: int):
 
 class DataBaseWorker:
     """
-    class
+    SINGLETON
     """
+    inst = None
+
+    @staticmethod
+    def get():
+        if DataBaseWorker.inst is None:
+            DataBaseWorker.inst = DataBaseWorker()
+        return DataBaseWorker.inst
 
     def __init__(self, app=None):
+        if DataBaseWorker.inst is not None:
+            raise Exception("too much instances")
         self.app = app
         self.init_connection()
+        self.created = None
+        self.connection = None
 
     def init_connection(self):
-        try:
-            if config.db == "sqlite":
-                import sqlite3
-                self.connection = sqlite3.connect(config.database_path)
-                self.cursor = self.connection.cursor()
-            elif config.db == "oracle":
-                import cx_Oracle
-                self.connection = cx_Oracle.Connection(config.connection)
-                self.cursor = self.connection.cursor()
-            elif config.db == "mysql":
-
-                self.connection = MySQLdb.connect(host=config.db_host,
-                                                  user=config.db_user,
-                                                  passwd=config.db_password,
-                                                  db=config.db_name,
-                                                  use_unicode=True,
-                                                  charset='utf8')
-                try:
-                    if self.cursor:
-                        pass
-                except AttributeError:
-                    self.cursor = self.connection.cursor()
-
-        except IOError:
-
-            # если база данных не найдена - завершаем приложение
-            print("no db found")
-            exit()
+        pass
 
     def is_login_exist(self, login_name):
         """
@@ -92,15 +76,27 @@ class DataBaseWorker:
 
     def loads(self, table, data, marker=None):
         if config.db == "sqlite":
-            if marker is not None:
-                marker["table"] = table
-                marker["total"] = len(data)
-            else:
-                marker = {}
-            res = ""
-            for i in range(len(data)):
-                marker["inserted"] = i
-                res += str(self.load(table, data[i]))
+            types = {i[1]: i[2] for i in self.sql_request("PRAGMA table_info({0});", table)}
+
+            def to_format(value, key):
+                if types[key] == "INTEGER" or types[key] == "INT":
+                    return str(value)
+                else:
+                    return "'" + str(value) + "'"
+
+            req = "INSERT OR IGNORE INTO {0}({1}) VALUES {2}"
+            keys = data[0].keys()
+            params = [
+                table,
+                ', '.join(keys),
+                ', '.join(
+                    ['(' + ', '.join([to_format(line[key], key) for key in keys]) + ')' for line in data])
+            ]
+            params[2] = params[2].replace("\r", "").replace("\n", "")
+
+            print(*tuple(params))
+
+            res = self.sql_request(req, *tuple(params), ignore_banned_symbols=True)
 
         elif config.db == "mysql":
             req = "INSERT IGNORE INTO {0}({1}) VALUES {2}"
@@ -124,7 +120,7 @@ class DataBaseWorker:
                 if types[key] == "INTEGER":
                     return str(value)
                 else:
-                    return "'" + value + "'"
+                    return "'" + str(value) + "'"
 
         elif config.db == "mysql":
             req = "INSERT IGNORE INTO {0}({1}) VALUES {2}"
@@ -172,7 +168,7 @@ class DataBaseWorker:
             if len(res) == 0:
                 return DataBaseWorker.AuthStatus.NoData, None
             else:
-                res = self.sql_request("SELECT id FROM {0} WHERE card_id={1} AND password={2}",
+                res = self.sql_request("SELECT user_id FROM {0} WHERE card_id={1} AND password={2}",
                                        config.auth,
                                        card_id,
                                        password)
@@ -371,7 +367,7 @@ class DataBaseWorker:
         :return: list of lessons
         """
         request = "SELECT DISTINCT {0}.id, {0}.date, {0}.room_id, {0}.group_id, {0}.discipline_id, {0}.professor_id," \
-                  " {0}.complete, {0}.type FROM {0} "
+                  " {0}.completed, {0}.type FROM {0} "
         params = [config.lessons]
         if student_id is not None:
             request += "JOIN {1} ON {0}.group_id={1}.group_id "
@@ -400,7 +396,7 @@ class DataBaseWorker:
         return r
 
     def get_visitations(self, group_id=None, professor_id=None, discipline_id=None, student_list=None,
-                        student_id=None) -> list:
+                        student_id=None, synch=None) -> list:
         """
 
         :param student_id: you can select visitations by student
@@ -426,6 +422,7 @@ class DataBaseWorker:
                                    2)
         request, params = setParam(request, params, discipline_id, "{1}.discipline_id={" + str(len(params)) + "} ",
                                    2)
+        request, params = setParam(request, params, synch, "{0}.synch={" + str(len(params)) + "} ", 2)
 
         return [{
             "student_id": str(res[0]),
@@ -671,24 +668,40 @@ class DataBaseWorker:
         return r
 
     def complete_lesson(self, lesson_id: int):
-        r = self.sql_request("UPDATE {0} SET complete=1 WHERE id={1}",
+        r = self.sql_request("UPDATE {0} SET completed=1 WHERE id={1}",
                              config.lessons,
                              lesson_id)
         print(r)
         return r
 
-    def connect(self):
-        if self.connection:
-            try:
-                self.connection.close()
-                self.connection = MySQLdb.connect(host=config.db_host,
-                                                  user=config.db_user,
-                                                  passwd=config.db_password,
-                                                  db=config.db_name,
-                                                  use_unicode=True,
-                                                  charset='utf8')
-            except sqlite3.ProgrammingError:
-                self.connection = sqlite3.connect(config.database_path)
+    def connect2(self) -> sqlite3.Connection or MySQLdb.Connection:
+        try:
+            if config.db == "sqlite":
+                connection = sqlite3.connect(config.database_path)
+
+                if self.created is None or not self.created:
+                    from Main.DataBase.Creator import create
+                    create(connection.cursor())
+                    self.created = True
+
+            elif config.db == "oracle":
+                import cx_Oracle
+                connection = cx_Oracle.Connection(config.connection)
+
+            elif config.db == "mysql":
+                connection = MySQLdb.connect(host=config.db_host,
+                                             user=config.db_user,
+                                             passwd=config.db_password,
+                                             db=config.db_name,
+                                             use_unicode=True,
+                                             charset='utf8')
+
+        except IOError:
+            # если база данных не найдена - завершаем приложение
+            print("no db found")
+            exit()
+
+        return connection
 
     def sql_request(self, msg, *args, ignore_banned_symbols=False) -> list:
         """
@@ -699,28 +712,32 @@ class DataBaseWorker:
         :return: Возвращает результат SQL запроса
         :rtype: list
         """
+
+        conn = self.connect2()
+        cursor = conn.cursor()
+
         message = msg.replace('\t', '').replace("  ", " ")
-        if not ignore_banned_symbols:
-            arg = valid(*args)
-        else:
-            arg = args
+
+        arg = args if ignore_banned_symbols else valid(*args)
+
         try:
             sql = message.format(*arg)
             Logger.write(sql)
             try:
-                cursor = self.connection.cursor()
                 cursor.execute(sql)
-            except (AttributeError, MySQLdb.OperationalError, sqlite3.ProgrammingError):
-                self.connect()
-                cursor = self.connection.cursor()
-                cursor.execute(sql)
-            self.connection.commit()
-        except (IndexError, sqlite3.OperationalError, Exception) as e:
-            Logger.write("index out of range {0} in {1}".format(arg, message))
-            print(e)
-            return []
+            # except (AttributeError, MySQLdb.OperationalError, sqlite3.ProgrammingError):
+            #     cursor = self.connection.cursor()
+            #     cursor.execute(sql)
+            except sqlite3.OperationalError as e:
+                Logger.write("index out of range {0} in {1}".format(arg, message))
+                print("SQL INSERT ERROR: ->", sql, e)
+                return []
+            conn.commit()
 
-        temp = cursor.fetchall()
+            temp = cursor.fetchall()
+        except IndexError as e:
+            print("SQL FORMAT ERROR: ->", e)
+
         return temp
 
     def get_table2(self, owner, student_id=None, professor_id=None, group_id=None, discipline_id=None):
@@ -757,6 +774,34 @@ class DataBaseWorker:
             for v in visit:
                 data[v[1]][v[0]] = True
         return data
+
+    def get_auth(self, professor_id) -> list:
+        req = "SELECT card_id, password FROM {0} WHERE user_id={1}"
+        params = [config.auth, professor_id]
+
+        res = self.sql_request(req, *tuple(params))
+
+        return [{
+            "card_id": i[0],
+            "password": i[1]
+        } for i in res]
+
+    def start_lesson(self, lesson_id=None):
+        req = "UPDATE {} SET completed=1 WHERE id={}"
+        params = [config.lessons, lesson_id]
+
+        res = self.sql_request(req, *tuple(params))
+
+        return res
+
+    def add_card_id_to(self, card_id: int, student_id=None):
+        req = "UPDATE {} SET card_id={} WHERE id={}"
+        params = [config.students,
+                  card_id,
+                  student_id]
+
+        res = self.sql_request(req, *tuple(params))
+        return res
 
 
 def and_or_where(params, size):

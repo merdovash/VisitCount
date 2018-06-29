@@ -1,10 +1,10 @@
 import datetime
-from PyQt5 import QtGui
 
-from PyQt5.QtCore import Qt, QModelIndex
-from PyQt5.QtWidgets import QHeaderView, QTableWidget, QWidget, QHBoxLayout, QTableWidgetItem, QLayout, QVBoxLayout
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QResizeEvent
+from PyQt5.QtWidgets import QTableWidget, QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout
 
-from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, PercentItem, MonthTableItem
+from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, PercentItem, MonthTableItem, StudentHeaderItem
 
 
 class VisitTable(QWidget):
@@ -16,6 +16,10 @@ class VisitTable(QWidget):
         self.visit_table.horizontalHeader().setVisible(False)
         self.visit_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.visit_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.visit_table.verticalHeader().sectionClicked.connect(self.vertical_header_click)
+        headers = self.visit_table.verticalHeader()
+        headers.setContextMenuPolicy(Qt.CustomContextMenu)
+        headers.customContextMenuRequested.connect(self.vertical_header_click)
         self.scroll_bar = self.visit_table.verticalScrollBar()
 
         self.percent_table = QTableWidget()
@@ -44,7 +48,18 @@ class VisitTable(QWidget):
         self.lessons = None
         self._init = True
 
-    def resizeEvent(self, a0: QtGui.QResizeEvent):
+    def vertical_header_click(self, event:QPoint):
+        print("he")
+        index = self.visit_table.indexAt(event)
+        row = index.row()
+        item = self.visit_table.verticalHeaderItem(row)
+        if type(item) == StudentHeaderItem:
+            real_pos = event.__pos__()+self.visit_table.pos()
+            item.show_context_menu(real_pos)
+        else:
+            print("hello2")
+
+    def resizeEvent(self, a0: QResizeEvent):
         super().resizeEvent(a0)
         print("resized")
         # TODO: resize
@@ -92,7 +107,6 @@ class VisitTable(QWidget):
         item3.setText("Тип занятия")
         self.visit_table.setVerticalHeaderItem(2, item3)
 
-
         # months = get_months(lessons)
         for i in range(len(lessons)):
             dt = datetime.datetime.strptime(lessons[i]["date"], "%d-%m-%Y %I:%M%p")
@@ -122,28 +136,22 @@ class VisitTable(QWidget):
         self.percent_table.insertRow(current_row)
 
         # set row header
-        item = QTableWidgetItem()
-        item.setText(student["last_name"]
-                     + ' '
-                     + student['first_name'][0]
-                     + '. '
-                     + student["middle_name"][0]
-                     + '. ')
+        item = StudentHeaderItem(student)
         self.visit_table.setVerticalHeaderItem(current_row, item)
 
         completed_lessons = list(filter(lambda x: x["completed"] == 1, self.lessons))
-
+        print(completed_lessons)
         # fill row and find percents
         visit_count = 0
         visitations_id = [i["lesson_id"] for i in visitations]
         for j in range(len(self.lessons)):
             try:
                 if self.lessons[j] in completed_lessons:
-                    if completed_lessons[j]["id"] in visitations_id:
+                    if self.lessons[j]["id"] in visitations_id:
                         item = VisitItem(VisitItem.Status.Visited)
                     else:
                         item = VisitItem(VisitItem.Status.NotVisited)
-                    visit_count += 1 if completed_lessons[j]["id"] in visitations_id else 0
+                    visit_count += 1 if self.lessons[j]["id"] in visitations_id else 0
                 else:
                     item = VisitItem(VisitItem.Status.NoInfo)
                 self.visit_table.setItem(current_row, j, item)

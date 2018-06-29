@@ -1,23 +1,28 @@
+import os
 import sys
-from PyQt5 import QtCore
 
+import PyQt5
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import pyqtSlot, Qt
-from qtpy import QtGui
-
-from Main import SerialsReader, sql_handler, config
-
 from PyQt5.QtWidgets import *
 
-from Main.Load import FirstLoad
+from Main import SerialsReader, config
+from Main.DataBase import sql_handler
+from Main.DataBase.Load import FirstLoad
+from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyDownloadingWidget import QLoadingWidget
 from Main.MyQt.QtMyLoginInput import QLoginInput
 from Main.MyQt.QtMyMainWindow import QMyMainWindow
-from Main.sql_handler import DataBaseWorker
+
+pyqt = os.path.dirname(PyQt5.__file__)
+QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
+
+print(os.path.dirname(__file__))
 
 
 class MyProgram:
     def __init__(self):
-        self.serial = SerialsReader.SerialThread(None)
+        self.serial = SerialsReader.getReader()
 
         self.window = QMyAuthWidget(self)
 
@@ -35,7 +40,7 @@ class QMyAuthWidget(QWidget):
 
         self.window = window
 
-        self.db = sql_handler.DataBaseWorker()
+        self.db = sql_handler.DataBaseWorker.get()
 
         self.setup_geometry()
         self.setupUI()
@@ -65,11 +70,14 @@ class QMyAuthWidget(QWidget):
         self.auth_btn.clicked.connect(self.auth)
 
         # add to layouts
-        self.l.addWidget(header)
+        self.l.addWidget(header, Qt.AlignCenter)
         self.l.addLayout(form_layout)
         form_layout.addRow(QLabel("Введите Логин"), self.login_input)
         form_layout.addRow(QLabel("Введите Пароль"), self.password_input)
-        self.l.addWidget(self.auth_btn)
+        self.l.addWidget(self.auth_btn, 2, Qt.AlignBottom)
+
+        self.loading_info = QLabel()
+        self.l.addWidget(self.loading_info, 4, Qt.AlignBottom)
 
         self.setLayout(self.l)
 
@@ -84,11 +92,10 @@ class QMyAuthWidget(QWidget):
             if len(prof) == 0:
                 self.login_input.setText(prof_card_id)
             else:
-                name = prof['last_name'] + ' ' + prof['first_name'] + ' ' + prof['middle_name']
+                name = prof[0]['last_name'] + ' ' + prof[0]['first_name'] + ' ' + prof[0]['middle_name']
                 self.login_input.set_image_text(prof_card_id, name)
 
         self.window.serial.method = imaged_value
-        self.window.serial.start()
 
     @pyqtSlot()
     def auth(self):
@@ -99,16 +106,12 @@ class QMyAuthWidget(QWidget):
             except Exception as e:
                 print(e)
         elif status == DataBaseWorker.AuthStatus.NoData:
-            self.status = QLoadingWidget()
-            self.l.addWidget(self.status)
-
             try:
                 FirstLoad(
                     card_id=self.login_input.text(),
                     password=self.password_input.text(),
                     db=self.db,
-                    data_totals=lambda x: self.status.setTotals(x),
-                    data_placer=lambda x: self.status.setMarker(x),
+                    parent=self,
                     on_finish=self.auth).run()
             except Exception as e:
                 print("ERROR FirstLoad->", e)

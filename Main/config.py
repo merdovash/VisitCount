@@ -4,7 +4,7 @@ if db == "sqlite":
     database_path = "local_db.db"
 
 visitation = "visitations"
-auth = "auth"
+auth = "auth5"
 password = "123457"
 students = "students"
 professors = "professors"
