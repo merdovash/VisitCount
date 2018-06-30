@@ -113,7 +113,7 @@ class QMyMainWindow(QWidget):
         # DATA BLOCK
         self.table = VisitTable(self.l)
 
-        # self.l.addWidget(self.table)
+        # self.inner_layout.addWidget(self.table)
 
         self.setLayout(self.l)
 
@@ -219,7 +219,7 @@ class QMyMainWindow(QWidget):
                 professor_id=WorkingData.instance().professor["id"],
                 discipline_id=self.discipline_selector.currentId()))
 
-        self.table.fill_vertical_percent()
+        self.table.fill_percents_byStudent()
 
         return
 

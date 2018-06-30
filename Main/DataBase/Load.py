@@ -87,7 +87,7 @@ class FirstLoad:
                     print("запрос неудачный. код ошибки: ", r.status_code)
                     if type(self.parent.loading_info) == QLabel:
                         self.parent.loading_info.setText("Запрос неудачный. "+str(r.status_code)+" "+str(r.reason))
-                        # self.parent.l.removeWidget(self.parent.loading_info)
+                        # self.parent.inner_layout.removeWidget(self.parent.loading_info)
             except requests.exceptions.ConnectionError as e:
                 print("No internet connection to Server")
         Thread(target=a).start()

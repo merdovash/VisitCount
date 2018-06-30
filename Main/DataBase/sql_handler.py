@@ -315,6 +315,8 @@ class DataBaseWorker:
                      card_id=None) -> list:
         """
 
+        :param discipline_id: you can select students by discipline_id
+        :param card_id: you can select students by card_id
         :param student_id: you can select students by id
         :param group_id: you can select students by group
         :param student_list: you can select students by list if id
@@ -399,6 +401,7 @@ class DataBaseWorker:
                         student_id=None, synch=None) -> list:
         """
 
+        :param synch: you can select visitations by synch status
         :param student_id: you can select visitations by student
         :param group_id: you can select visitations by group
         :param professor_id: you can select visitations by professor

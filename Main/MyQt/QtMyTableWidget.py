@@ -1,85 +1,46 @@
 import datetime
 
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import QTableWidget, QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QAbstractItemView
 
-from Main.DataBase.sql_handler import DataBaseWorker
+from Main.MyQt.QtMyHomeworkSection import HomeworkSection
+from Main.MyQt.QtMyPercentSection import PercentSection
 from Main.MyQt.QtMyStatusBar import QStatusMessage
+from Main.MyQt.QtMyVisitSection import VisitSection
 from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, MonthTableItem, \
     StudentHeaderItem, \
-    MyTableItem, PercentItem, PercentHeaderItem
+    PercentItem, PercentHeaderItem
 
 
 class VisitTable(QWidget):
     def __init__(self, parent: QVBoxLayout):
         super().__init__()
-        self.l = QHBoxLayout()
-        self.l.setSpacing(0)
-        self.visit_table = QTableWidget()
-        self.visit_table.horizontalHeader().setVisible(False)
-        self.visit_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.visit_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.visit_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.inner_layout = QHBoxLayout()
+        self.inner_layout.setSpacing(0)
+        # init sections
+        self.visit_table = VisitSection()
+        self.percent_table = PercentSection()
+        self.home_work_table = HomeworkSection()
 
-        # set context menu on table
-        self.visit_table.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.visit_table.customContextMenuRequested.connect(self.table_right_click)
-
-        # set context menu on vertical header
-        # self.visit_table.verticalHeader().customContextMenuRequested.connect(self.vertical_header_click)
-        headers = self.visit_table.verticalHeader()
-        headers.setContextMenuPolicy(Qt.CustomContextMenu)
-        headers.customContextMenuRequested.connect(self.vertical_header_click)
+        # share scroll bar between sections
         self.scroll_bar = self.visit_table.verticalScrollBar()
-
-        self.percent_table = QTableWidget()
-        self.percent_table.setFixedWidth(60)
         self.percent_table.setVerticalScrollBar(self.scroll_bar)
-        self.percent_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.percent_table.verticalHeader().setVisible(False)
-        self.percent_table.horizontalHeader().setVisible(False)
-        self.percent_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.percent_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-
-        self.home_work_table = QTableWidget()
         self.home_work_table.setVerticalScrollBar(self.scroll_bar)
-        self.home_work_table.setMaximumWidth(400)
-        self.home_work_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.home_work_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
-        self.l.addWidget(self.scroll_bar)
-        self.l.addWidget(self.visit_table)
-        self.l.addWidget(self.percent_table)
-        self.l.addWidget(self.home_work_table)
+        # add widgets to layout
+        self.inner_layout.addWidget(self.scroll_bar)
+        self.inner_layout.addWidget(self.visit_table)
+        self.inner_layout.addWidget(self.percent_table)
+        self.inner_layout.addWidget(self.home_work_table)
 
         self.students = []
         self.lessons = []
 
-        parent.addLayout(self.l)
+        parent.addLayout(self.inner_layout)
 
         self.lessons = None
         self._init = True
-
-        self.vertical_percents = None
-
-    def vertical_header_click(self, event: QPoint):
-        print("Event on header")
-        index = self.visit_table.indexAt(event)
-        row = index.row()
-        item = self.visit_table.verticalHeaderItem(row)
-        if type(item) == StudentHeaderItem or type(item) == PercentHeaderItem:
-            real_pos = event.__pos__() + self.visit_table.pos()
-            item.show_context_menu(real_pos)
-
-    def table_right_click(self, event: QPoint):
-        index = self.visit_table.indexAt(event)
-        row, col = index.row(), index.column()
-        print(row, col)
-        item = self.visit_table.item(row, col)
-        if type(item) == VisitItem:
-            real_pos = event.__pos__() + self.visit_table.pos()
-            item.show_context_menu(real_pos)
 
     def resizeEvent(self, a0: QResizeEvent):
         super().resizeEvent(a0)
@@ -87,11 +48,11 @@ class VisitTable(QWidget):
         # TODO: resize
         # if self._init:
         #     try:
-        #         self.l.removeWidget(self.scroll_bar)
+        #         self.inner_layout.removeWidget(self.scroll_bar)
         #         self.scroll_bar = self.visit_table.verticalScrollBar()
         #         self.percent_table.setVerticalScrollBar(self.scroll_bar)
         #         self.home_work_table.setVerticalScrollBar(self.scroll_bar)
-        #         self.l.insertWidget(0, self.scroll_bar)
+        #         self.inner_layout.insertWidget(0, self.scroll_bar)
         #     except Exception as e:
         #         print(e)
 
@@ -169,7 +130,6 @@ class VisitTable(QWidget):
         visitations_id = [i["lesson_id"] for i in visitations]
         for j in range(len(self.lessons)):
             try:
-                item = None
                 if self.lessons[j] in completed_lessons:
                     if self.lessons[j]["id"] in visitations_id:
                         item = VisitItem(VisitItem.Status.Visited)
@@ -193,7 +153,7 @@ class VisitTable(QWidget):
         self.visit_table.resizeRowsToContents()
         self.percent_table.resizeRowsToContents()
 
-    def fill_vertical_percent(self):
+    def fill_percents_byStudent(self):
         current_row = self.rowCount()
         self.insertRow(current_row)
 
