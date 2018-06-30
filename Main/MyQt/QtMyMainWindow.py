@@ -9,21 +9,15 @@ from PyQt5.QtWidgets import QWidget, QTableWidget, QVBoxLayout, QHBoxLayout, \
 from Main import config
 from Main.DataBase import sql_handler
 from Main.DataBase.SendNew import send
+from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyComboBox import QMyComboBox
 from Main.MyQt.QtMyStatusBar import QStatusMessage
 from Main.MyQt.QtMyTableWidget import VisitTable
 from Main.MyQt.QtMyWidgetItem import VisitItem
+from Main.SerialsReader import RFIDReader, nothing
+from Main.Types import WorkingData
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
-
-
-def color_col(col: int, last_col: int, table: QTableWidget):
-    for i in range(3, table.rowCount()):
-        try:
-            table.item(i, col).current_lesson(True)
-            table.item(i, last_col).current_lesson(False)
-        except Exception as e:
-            print(e)
 
 
 def getLessonIndex(lessons: list, ID: int):
@@ -44,8 +38,8 @@ class QMyMainWindow(QWidget):
         super().__init__()
         self.program = program
 
-        self.db = sql_handler.DataBaseWorker.get()
-        self.professor_id = professor_id
+        self.db = sql_handler.DataBaseWorker.instance()
+        WorkingData.instance().professor = DataBaseWorker.instance().get_professors(professor_id=professor_id)[0]
         try:
             self.setup_select_lesson()
             self.setup_geometry()
@@ -63,13 +57,13 @@ class QMyMainWindow(QWidget):
         # INFO BLOCK
         self.info_layout = QHBoxLayout()
 
-        professor = self.db.get_professors(professor_id=self.professor_id)[0]
+        professor = WorkingData.instance().professor
         self.professor_label = QLabel(
             professor["last_name"] + " " + professor["first_name"] + " " + professor["middle_name"]
         )
         self.professor_label.setFont(QFont("", 20))
 
-        self.info_label = QStatusMessage.get()
+        self.info_label = QStatusMessage.instance()
 
         self.info_layout.addWidget(self.professor_label)
         self.info_layout.addWidget(self.info_label)
@@ -127,14 +121,11 @@ class QMyMainWindow(QWidget):
         self.table.resizeEvent(a0)
 
     def setup_data(self):
-        # disciplines = self.db.get_disciplines(professor_id=self.professor_id)
-        # self.discipline_selector.addItems(disciplines)
-
         try:
-            lessons = self.db.get_lessons(professor_id=self.professor_id)
+            lessons = self.db.get_lessons(professor_id=WorkingData.instance().professor["id"])
             closest = closest_lesson(lessons)
 
-            disciplines = self.db.get_disciplines(professor_id=self.professor_id)
+            disciplines = self.db.get_disciplines(professor_id=WorkingData.instance().professor["id"])
             self.discipline_selector.disconnect()
             self.discipline_selector.addItems(disciplines)
             self.discipline_selector.currentIndexChanged.connect(self.discipline_changed)
@@ -152,22 +143,26 @@ class QMyMainWindow(QWidget):
         :return: None
         """
         disc = self.discipline_selector.currentId()
-        groups = self.db.get_groups(professor_id=self.professor_id, discipline_id=disc)
+        groups = self.db.get_groups(professor_id=WorkingData.instance().professor["id"], discipline_id=disc)
         self.group_selector.disconnect()
         self.group_selector.clear()
         self.group_selector.currentIndexChanged.connect(self.group_changed)
         self.group_selector.addItems(groups)
+
+        WorkingData.instance().discipline = DataBaseWorker.instance().get_disciplines(discipline_id=disc)[0]
 
     def group_changed(self):
         self.table.clear()
         self.last_lesson = None
         group = self.group_selector.currentId()
 
+        WorkingData.instance().group = DataBaseWorker.instance().get_groups(group_id=group)[0]
+
         if group is None:
             return
 
         lessons = self.db.get_lessons(
-            professor_id=self.professor_id,
+            professor_id=WorkingData.instance().professor["id"],
             group_id=group,
             discipline_id=self.discipline_selector.currentId())
         lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p"))
@@ -185,19 +180,25 @@ class QMyMainWindow(QWidget):
         self.fill_table()
         self.lesson_changed()
 
+        RFIDReader.instance().method = nothing
+        QStatusMessage.instance().setText("Выбрана группа {}".format(self.group_selector.currentText()))
+
     def lesson_changed(self):
         current_col = getLessonIndex(self.table.lessons, self.lesson_selector.currentId())
         if self.last_lesson is not None:
-            self.table.columnForEach(
+            self.table.ForEachRow(
                 self.last_lesson,
                 lambda x: x.current_lesson(False) if type(x) is VisitItem else 0)
 
-        self.table.columnForEach(
+        self.table.ForEachRow(
             current_col,
             lambda x: x.current_lesson(True) if type(x) is VisitItem else 0)
 
         self.last_lesson = current_col
         self.table.visit_table.scrollTo(self.table.visit_table.model().index(1, self.last_lesson))
+
+        WorkingData.instance().lesson = DataBaseWorker.instance().get_lessons(
+            lesson_id=self.lesson_selector.currentId())[0]
 
     def fill_table(self):
         students = self.db.get_students(
@@ -205,7 +206,7 @@ class QMyMainWindow(QWidget):
         students.sort(key=lambda x: x["last_name"])
 
         lessons = self.db.get_lessons(
-            professor_id=self.professor_id,
+            professor_id=WorkingData.instance().professor["id"],
             group_id=self.group_selector.currentId(),
             discipline_id=self.discipline_selector.currentId())
         lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p"))
@@ -215,11 +216,15 @@ class QMyMainWindow(QWidget):
         for st in students:
             self.table.add_student(st, self.db.get_visitations(
                 student_id=st["id"],
-                professor_id=self.professor_id,
+                professor_id=WorkingData.instance().professor["id"],
                 discipline_id=self.discipline_selector.currentId()))
+
+        self.table.fill_vertical_percent()
+
         return
 
     def start_lesson(self):
+        WorkingData.instance().marking_visits = True
         self.lesson_selector.setEnabled(False)
         self.group_selector.setEnabled(False)
         self.discipline_selector.setEnabled(False)
@@ -234,64 +239,53 @@ class QMyMainWindow(QWidget):
             self.start_button.setText("Завершить занятие")
             self.start_button.clicked.connect(self.end_lesson)
             for i in range(3, self.table.rowCount()):
-                if self.table.visit_table.item(i, self.last_lesson).status == VisitItem.Status.NoInfo:
-                    self.table.visit_table.item(i, self.last_lesson).set_visit_status(VisitItem.Status.NotVisited)
+                item = self.table.visit_table.item(i, self.last_lesson)
+                if type(item) == VisitItem:
+                    if item.status == VisitItem.Status.NoInfo:
+                        item.set_visit_status(VisitItem.Status.NotVisited)
 
             self.info_label.setText("Учет начался. Приложите карту студента к считывателю.")
-            self.program.serial.method = self.new_visit
+            RFIDReader.instance().method = self.new_visit
         except Exception as e:
             print("start_lesson", e)
 
     def new_visit(self, ID):
-        students = self.db.get_students(card_id=ID, group_id=self.group_selector.currentId())
-        if len(students) == 0:
-            self.info_label.setText("Студента нет в списках.")
-        else:
-            student = students[0]
-            if ID in [i["card_id"] for i in self.table.students]:
-                r = self.db.add_visit(student_id=student["id"], lesson_id=self.lesson_selector.currentId())
-                print(r)
-
-                student_table_row = 3 + self.table.students.index(student)
-                lesson_table_col = self.last_lesson
-
-                item = self.table.visit_table.item(student_table_row, lesson_table_col)
-                if type(item) is VisitItem:
-                    if item.status == VisitItem.Status.Visited:
-                        self.info_label.setText(
-                            "Студент " + student["last_name"] + " " + student["first_name"] + " уже отмечен")
-                    else:
-                        item.set_visit_status(VisitItem.Status.Visited)
-                        # self.db.add_visit(student["id"], self.last_lesson)
-                        self.info_label.setText(
-                            "Студент " + student["last_name"] + " " + student["first_name"] + " посетил занятие")
-                else:
-                    print("ERROR: new_visit->update table item ({},{}) is not {}".format(student_table_row,
-                                                                                         lesson_table_col,
-                                                                                         type(VisitItem)))
-                self.table.recalculate_percents(self.table.students.index(student))
-                self.table.visit_table.dataChanged(
-                    self.table.visit_table.model().index(student_table_row, lesson_table_col),
-                    self.table.visit_table.model().index(student_table_row, lesson_table_col))
+        try:
+            students = self.db.get_students(card_id=ID, group_id=self.group_selector.currentId())
+            if len(students) == 0:
+                self.info_label.setText("Студента нет в списках.")
             else:
-                self.info_label.setText(
-                    "Студент не из группы "
-                    + self.db.get_groups(group_id=self.group_selector.currentId())[0]["name"]
-                )
+                lesson_id = self.lesson_selector.currentId()
+                student = students[0]
+                if ID in [i["card_id"] for i in self.table.students]:
+                    r = self.db.add_visit(student_id=student["id"], lesson_id=lesson_id)
+                    print(r)
+
+                    self.table.new_visit(student["id"], lesson_id)
+                else:
+                    self.info_label.setText(
+                        "Студент не из группы "
+                        + self.db.get_groups(group_id=self.group_selector.currentId())[0]["name"]
+                    )
+        except Exception as e:
+            print(e)
 
     def end_lesson(self):
-        send(self.db, self.professor_id)
+        WorkingData.instance().marking_visits = False
+        try:
+            send(self.db, WorkingData.instance().professor["id"])
 
-        self.program.serial.method = lambda x: 0
+            RFIDReader.instance().method = nothing
 
-        self.lesson_selector.setEnabled(True)
-        self.group_selector.setEnabled(True)
-        self.discipline_selector.setEnabled(True)
+            self.lesson_selector.setEnabled(True)
+            self.group_selector.setEnabled(True)
+            self.discipline_selector.setEnabled(True)
 
-        self.start_button.disconnect()
-        self.start_button.setText("Начать занятие")
-        self.start_button.clicked.connect(self.start_lesson)
-        r = self.db.complete_lesson(self.last_lesson)
-        self.table.recalculate_percents()
-        self.info_label.setText("Учет посещений завершен.")
-        print(r)
+            self.start_button.disconnect()
+            self.start_button.setText("Начать занятие")
+            self.start_button.clicked.connect(self.start_lesson)
+            r = self.db.complete_lesson(self.last_lesson)
+            self.info_label.setText("Учет посещений завершен.")
+            print(r)
+        except Exception as e:
+            print(e)

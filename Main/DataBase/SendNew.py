@@ -38,20 +38,20 @@ def send(db: DataBaseWorker, professor_id: int):
                     if res["status"] == "OK":
                         print("synch success")
                         finish_synch(db, visitations)
-                        QStatusMessage.get().setText("Сервер записал изменения")
+                        QStatusMessage.instance().setText("Сервер записал изменения")
                     elif res["status"] == "ERROR":
                         print(res["message"])
-                        QStatusMessage.get().setText("Сервер не записал изменения. Код ошибки: {}".format(
+                        QStatusMessage.instance().setText("Сервер не записал изменения. Код ошибки: {}".format(
                             res["message"])
                         )
                     else:
                         print("something wrong")
-                        QStatusMessage.get().setText("Сервер не записал изменения с неизвестной ошибкой")
+                        QStatusMessage.instance().setText("Сервер не записал изменения с неизвестной ошибкой")
                 else:
                     print("request type", res["status"])
             else:
                 print("response type", r.text)
-                QStatusMessage.get().setText("Ответ сервера неверный")
+                QStatusMessage.instance().setText("Ответ сервера неверный")
         except requests.exceptions.ConnectionError as e:
             print("No internet connection to server")
 

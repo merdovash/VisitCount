@@ -13,6 +13,7 @@ from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyDownloadingWidget import QLoadingWidget
 from Main.MyQt.QtMyLoginInput import QLoginInput
 from Main.MyQt.QtMyMainWindow import QMyMainWindow
+from Main.SerialsReader import RFIDReader
 
 pyqt = os.path.dirname(PyQt5.__file__)
 QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
@@ -22,8 +23,6 @@ print(os.path.dirname(__file__))
 
 class MyProgram:
     def __init__(self):
-        self.serial = SerialsReader.getReader()
-
         self.window = QMyAuthWidget(self)
 
         self.window.show()
@@ -40,7 +39,7 @@ class QMyAuthWidget(QWidget):
 
         self.window = window
 
-        self.db = sql_handler.DataBaseWorker.get()
+        self.db = sql_handler.DataBaseWorker.instance()
 
         self.setup_geometry()
         self.setupUI()
@@ -95,7 +94,7 @@ class QMyAuthWidget(QWidget):
                 name = prof[0]['last_name'] + ' ' + prof[0]['first_name'] + ' ' + prof[0]['middle_name']
                 self.login_input.set_image_text(prof_card_id, name)
 
-        self.window.serial.method = imaged_value
+        RFIDReader.instance().method = imaged_value
 
     @pyqtSlot()
     def auth(self):
@@ -107,12 +106,10 @@ class QMyAuthWidget(QWidget):
                 print(e)
         elif status == DataBaseWorker.AuthStatus.NoData:
             try:
-                FirstLoad(
-                    card_id=self.login_input.text(),
-                    password=self.password_input.text(),
-                    db=self.db,
-                    parent=self,
-                    on_finish=self.auth).run()
+                FirstLoad(card_id=self.login_input.text(),
+                          password=self.password_input.text(),
+                          parent=self,
+                          on_finish=self.auth).run()
             except Exception as e:
                 print("ERROR FirstLoad->", e)
         elif status == DataBaseWorker.AuthStatus.Fail:

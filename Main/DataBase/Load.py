@@ -76,7 +76,7 @@ class FirstLoad:
                                           config.lessons,
                                           config.visitation,
                                           config.auth]:
-                                DataBaseWorker.get().loads(table, data[table], self.marker)
+                                DataBaseWorker.instance().loads(table, data[table], self.marker)
 
                             self.parent.l.removeWidget(self.parent.loading_info)
 
@@ -96,7 +96,7 @@ class FirstLoad:
 
 class SendNewVisitation:
     def __init__(self):
-        self.db = DataBaseWorker.get()
+        self.db = DataBaseWorker.instance()
 
     def run(self):
         self.db.get_visitations(synch=0)

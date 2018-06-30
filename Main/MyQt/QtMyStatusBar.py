@@ -12,7 +12,7 @@ class QStatusMessage(QLabel):
     inst = None
 
     @staticmethod
-    def get():
+    def instance():
         if QStatusMessage.inst is None:
             QStatusMessage.inst = QStatusMessage()
         return QStatusMessage.inst

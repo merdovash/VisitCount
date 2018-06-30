@@ -25,3 +25,20 @@ def Status(res) -> int:
         return Response.JSON
     except json.decoder.JSONDecodeError:
         return Response.ERROR
+
+
+class WorkingData:
+    inst = None
+
+    @staticmethod
+    def instance():
+        if WorkingData.inst is None:
+            WorkingData.inst = WorkingData()
+        return WorkingData.inst
+
+    def __init__(self):
+        self.professor = None
+        self.group = None
+        self.discipline = None
+        self.lesson = None
+        self.marking_visits = False

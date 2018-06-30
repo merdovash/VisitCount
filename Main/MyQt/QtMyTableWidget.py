@@ -2,9 +2,13 @@ import datetime
 
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QTableWidget, QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout
+from PyQt5.QtWidgets import QTableWidget, QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QAbstractItemView
 
-from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, PercentItem, MonthTableItem, StudentHeaderItem
+from Main.DataBase.sql_handler import DataBaseWorker
+from Main.MyQt.QtMyStatusBar import QStatusMessage
+from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, MonthTableItem, \
+    StudentHeaderItem, \
+    MyTableItem, PercentItem, PercentHeaderItem
 
 
 class VisitTable(QWidget):
@@ -16,7 +20,14 @@ class VisitTable(QWidget):
         self.visit_table.horizontalHeader().setVisible(False)
         self.visit_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.visit_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.visit_table.verticalHeader().sectionClicked.connect(self.vertical_header_click)
+        self.visit_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        # set context menu on table
+        self.visit_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.visit_table.customContextMenuRequested.connect(self.table_right_click)
+
+        # set context menu on vertical header
+        # self.visit_table.verticalHeader().customContextMenuRequested.connect(self.vertical_header_click)
         headers = self.visit_table.verticalHeader()
         headers.setContextMenuPolicy(Qt.CustomContextMenu)
         headers.customContextMenuRequested.connect(self.vertical_header_click)
@@ -29,11 +40,13 @@ class VisitTable(QWidget):
         self.percent_table.verticalHeader().setVisible(False)
         self.percent_table.horizontalHeader().setVisible(False)
         self.percent_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.percent_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.home_work_table = QTableWidget()
         self.home_work_table.setVerticalScrollBar(self.scroll_bar)
         self.home_work_table.setMaximumWidth(400)
-        self.percent_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.home_work_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.home_work_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
         self.l.addWidget(self.scroll_bar)
         self.l.addWidget(self.visit_table)
@@ -48,16 +61,25 @@ class VisitTable(QWidget):
         self.lessons = None
         self._init = True
 
-    def vertical_header_click(self, event:QPoint):
-        print("he")
+        self.vertical_percents = None
+
+    def vertical_header_click(self, event: QPoint):
+        print("Event on header")
         index = self.visit_table.indexAt(event)
         row = index.row()
         item = self.visit_table.verticalHeaderItem(row)
-        if type(item) == StudentHeaderItem:
-            real_pos = event.__pos__()+self.visit_table.pos()
+        if type(item) == StudentHeaderItem or type(item) == PercentHeaderItem:
+            real_pos = event.__pos__() + self.visit_table.pos()
             item.show_context_menu(real_pos)
-        else:
-            print("hello2")
+
+    def table_right_click(self, event: QPoint):
+        index = self.visit_table.indexAt(event)
+        row, col = index.row(), index.column()
+        print(row, col)
+        item = self.visit_table.item(row, col)
+        if type(item) == VisitItem:
+            real_pos = event.__pos__() + self.visit_table.pos()
+            item.show_context_menu(real_pos)
 
     def resizeEvent(self, a0: QResizeEvent):
         super().resizeEvent(a0)
@@ -75,6 +97,9 @@ class VisitTable(QWidget):
 
     def rowCount(self):
         return self.visit_table.rowCount()
+
+    def columnCount(self):
+        return self.visit_table.columnCount()
 
     def clear(self):
         self.visit_table.clear()
@@ -126,80 +151,108 @@ class VisitTable(QWidget):
 
         self.percent_table.setColumnCount(1)
         self.percent_table.setRowCount(3)
-        self.percent_table.setItem(0, 0, QTableWidgetItem("Итого"))
+        self.percent_table.setItem(0, 0, PercentHeaderItem([], PercentItem.Orientation.ByStudents))
         self.percent_table.setSpan(0, 0, 3, 1)
 
     def add_student(self, student: dict, visitations: list):
         self.students.append(student)
-        current_row = self.visit_table.rowCount()
-        self.visit_table.insertRow(current_row)
-        self.percent_table.insertRow(current_row)
+        row = self.visit_table.rowCount()
+        self.insertRow(row)
 
         # set row header
-        item = StudentHeaderItem(student)
-        self.visit_table.setVerticalHeaderItem(current_row, item)
+        header_item = StudentHeaderItem(student)
+        self.visit_table.setVerticalHeaderItem(row, header_item)
 
         completed_lessons = list(filter(lambda x: x["completed"] == 1, self.lessons))
         print(completed_lessons)
         # fill row and find percents
-        visit_count = 0
         visitations_id = [i["lesson_id"] for i in visitations]
         for j in range(len(self.lessons)):
             try:
+                item = None
                 if self.lessons[j] in completed_lessons:
                     if self.lessons[j]["id"] in visitations_id:
                         item = VisitItem(VisitItem.Status.Visited)
                     else:
                         item = VisitItem(VisitItem.Status.NotVisited)
-                    visit_count += 1 if self.lessons[j]["id"] in visitations_id else 0
                 else:
                     item = VisitItem(VisitItem.Status.NoInfo)
-                self.visit_table.setItem(current_row, j, item)
+                item.student = student
+                item.lesson = self.lessons[j]
+                self.visit_table.setItem(row, j, item)
             except Exception as e:
                 print("ERROR: add student -> fill row: ", e)
 
-        self.percent_table.setItem(current_row,
-                                   0,
-                                   PercentItem(str(round(100 * visit_count / len(completed_lessons)))))
+        percent_item = PercentItem([self.visit_table.item(row, col) for col in range(self.columnCount())],
+                                   PercentItem.Orientation.ByStudents)
+        self.percent_table.setItem(row, 0, percent_item)
+
+        header = self.percent_table.item(0, 0)
+        header.percents.append(percent_item)
 
         self.visit_table.resizeRowsToContents()
         self.percent_table.resizeRowsToContents()
 
-    def recalculate_percents(self, student_index=None):
-        def get_percent(v_row: int) -> str:
-            visit, total = 0, 0
-            for col_index in range(self.visit_table.columnCount()):
-                if self.visit_table.item(v_row, col_index) is not None:
-                    item = self.visit_table.item(v_row, col_index)
-                    if type(item) is VisitItem:
-                        total += item.visit_data[VisitItem.Data.Completed]
-                        visit += item.visit_data[VisitItem.Data.Visited]
-            if total != 0:
-                r = round(100 * visit / total)
-            else:
-                r = 0
-            return r
+    def fill_vertical_percent(self):
+        current_row = self.rowCount()
+        self.insertRow(current_row)
 
-        if student_index is None:
-            for i in range(len(self.students)):
-                item = self.percent_table.item(3 + i, 0)
-                if type(item) is PercentItem:
-                    self.percent_table.item(3 + i, 0).setValue(get_percent(3 + i))
-            self.percent_table.dataChanged(self.percent_table.model().index(3, 0),
-                                           self.percent_table.model().index(3 + len(self.students), 0))
+        vertical_percents = []
+
+        for col in range(self.visit_table.columnCount()):
+            item = PercentItem(
+                [self.visit_table.item(row, col) for row in range(self.rowCount())],
+                PercentItem.Orientation.ByLessons)
+            self.visit_table.setItem(current_row, col, item)
+            vertical_percents.append(item)
+
+        self.visit_table.setVerticalHeaderItem(current_row, PercentHeaderItem(vertical_percents))
+
+    def insertRow(self, index: int):
+        print(self.visit_table.rowCount(), index)
+        self.visit_table.insertRow(index)
+        self.percent_table.insertRow(index)
+        # self.home_work_table.insertRow(index)
+
+    def removeRow(self, index: int):
+        self.visit_table.removeRow(index)
+        self.percent_table.removeRow(index)
+        # self.home_work_table.removeRow(index)
+
+    def row(self, student_id: int) -> int:
+        for row in range(self.rowCount()):
+            item = self.visit_table.verticalHeaderItem(row)
+            if type(item) == StudentHeaderItem:
+                if item.student["id"] == student_id:
+                    return row
+        return -1
+
+    def col(self, lesson_id) -> int:
+        for col in range(self.columnCount()):
+            if self.lessons[col]["id"] == lesson_id:
+                return col
+        return -1
+
+    def new_visit(self, student_id, lesson_id):
+        col = self.col(lesson_id)
+        row = self.row(student_id)
+
+        item = self.visit_table.item(row, col)
+        if item.status == VisitItem.Status.Visited:
+            QStatusMessage.instance().setText("Студент уже в отмечен")
         else:
-            item = self.percent_table.item(3 + student_index, 0)
-            if type(item) is PercentItem:
-                item.setValue(get_percent(3 + student_index))
-                self.percent_table.dataChanged(self.percent_table.model().index(3 + student_index, 0),
-                                               self.percent_table.model().index(3 + student_index, 0))
-            else:
-                print("ERROR: trying to recalculate percents on a " + student_index + " row")
+            student = self.visit_table.verticalHeaderItem(row).student
+            QStatusMessage.instance().setText(
+                "Студент {} {} отмечен".format(student["last_name"], student["first_name"]))
+            item.set_visit_status(VisitItem.Status.Visited)
 
-    def columnForEach(self, col_index, func: callable):
+            self.percent_table.item(row, 0).refresh()
+            self.visit_table.item(self.rowCount() - 1, col).refresh()
+
+    def ForEachRow(self, col_index, func):
         for i in range(self.visit_table.rowCount()):
             func(self.visit_table.item(i, col_index))
 
-    def rowForEach(self, row_index, func: callable):
+    def ForEachColumn(self, row_index, func):
         for i in range(self.visit_table.colorCount()):
             func(self.visit_table.item(row_index, i))

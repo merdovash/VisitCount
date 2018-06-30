@@ -42,7 +42,7 @@ class DataBaseWorker:
     inst = None
 
     @staticmethod
-    def get():
+    def instance():
         if DataBaseWorker.inst is None:
             DataBaseWorker.inst = DataBaseWorker()
         return DataBaseWorker.inst
