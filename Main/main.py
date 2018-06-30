@@ -6,11 +6,10 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import *
 
-from Main import SerialsReader, config
+from Main import config
 from Main.DataBase import sql_handler
 from Main.DataBase.Load import FirstLoad
 from Main.DataBase.sql_handler import DataBaseWorker
-from Main.MyQt.QtMyDownloadingWidget import QLoadingWidget
 from Main.MyQt.QtMyLoginInput import QLoginInput
 from Main.MyQt.QtMyMainWindow import QMyMainWindow
 from Main.SerialsReader import RFIDReader
@@ -47,7 +46,7 @@ class QMyAuthWidget(QWidget):
         pass
 
     def setupUI(self):
-        self.l = QVBoxLayout()
+        self.inner_layout = QVBoxLayout()
 
         # login input field
         self.login_input = QLoginInput()
@@ -69,16 +68,16 @@ class QMyAuthWidget(QWidget):
         self.auth_btn.clicked.connect(self.auth)
 
         # add to layouts
-        self.l.addWidget(header, Qt.AlignCenter)
-        self.l.addLayout(form_layout)
+        self.inner_layout.addWidget(header, Qt.AlignCenter)
+        self.inner_layout.addLayout(form_layout)
         form_layout.addRow(QLabel("Введите Логин"), self.login_input)
         form_layout.addRow(QLabel("Введите Пароль"), self.password_input)
-        self.l.addWidget(self.auth_btn, 2, Qt.AlignBottom)
+        self.inner_layout.addWidget(self.auth_btn, 2, Qt.AlignBottom)
 
         self.loading_info = QLabel()
-        self.l.addWidget(self.loading_info, 4, Qt.AlignBottom)
+        self.inner_layout.addWidget(self.loading_info, 4, Qt.AlignBottom)
 
-        self.setLayout(self.l)
+        self.setLayout(self.inner_layout)
 
     def setup_geometry(self):
         self.resize(350, 200)

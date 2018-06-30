@@ -64,7 +64,7 @@ class FirstLoad:
                         if res["status"] == "OK":
                             # create and add Widget to display loading progress
                             self.parent.loading_info = QLoadingWidget()
-                            self.parent.l.addWidget(self.parent.loading_info)
+                            self.parent.inner_layout.addWidget(self.parent.loading_info)
 
                             # handle data
                             data = res["data"]
@@ -78,7 +78,7 @@ class FirstLoad:
                                           config.auth]:
                                 DataBaseWorker.instance().loads(table, data[table], self.marker)
 
-                            self.parent.l.removeWidget(self.parent.loading_info)
+                            self.parent.inner_layout.removeWidget(self.parent.loading_info)
 
                             self.finish()
                     else:

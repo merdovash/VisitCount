@@ -8,7 +8,7 @@ class QLoadingWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.l = QFormLayout()
+        self.inner_layout = QFormLayout()
         self.tables = [config.students,
                        config.groups,
                        config.students_groups,
@@ -21,9 +21,9 @@ class QLoadingWidget(QWidget):
         self.labels = [[QLabel(i), QProgressBar()] for i in self.tables]
 
         for i in self.labels:
-            self.l.addRow(i[0], i[1])
+            self.inner_layout.addRow(i[0], i[1])
 
-        self.setLayout(self.l)
+        self.setLayout(self.inner_layout)
         self.current_table = None
 
     def update(self, l):
