@@ -49,6 +49,7 @@ class BisitorRequest:
 
 
 class Statistic:
+    # TODO loading from server
     loaded = {}
 
     @staticmethod

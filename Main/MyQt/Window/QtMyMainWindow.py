@@ -39,16 +39,26 @@ def closest_lesson(lessons: list):
 
 
 class MainWindow(QMainWindow):
+    _inst = None
+
+    @staticmethod
+    def instance(window=None) -> 'MainWindow':
+        print(window)
+        if window is not None:
+            MainWindow._inst = window
+        return MainWindow._inst
+
     def __init__(self, professor_id, program):
         super().__init__()
-
         self.setCentralWidget(MainWindowWidget(professor_id, program))
 
         self.setup_menu()
 
-        self.dialog=None
+        self.dialog = None
 
         self.showMaximized()
+
+        MainWindow.instance(self)
 
     def setup_menu(self):
         bar = self.menuBar()
@@ -63,14 +73,14 @@ class MainWindow(QMainWindow):
 
         analysis = bar.addMenu("Анализ")
         analysis_weeks = QAction("По неделям", self)
-        analysis_weeks.triggered.connect(show(WeekChart,self))
+        analysis_weeks.triggered.connect(show(WeekChart, self))
         analysis.addAction(analysis_weeks)
 
         analysis_week_days = QAction("По дням недели", self)
-        analysis_week_days.triggered.connect(show(WeekDayChart,self))
+        analysis_week_days.triggered.connect(show(WeekDayChart, self))
         analysis.addAction(analysis_week_days)
 
-    def setDialog(self, dialog:QAnalysisDialog):
+    def setDialog(self, dialog: QAnalysisDialog):
         self.dialog = dialog
         self.dialog.show()
 
@@ -89,7 +99,7 @@ class MainWindowWidget(QWidget):
 
             self.setup_data()
 
-            self.dialog=None
+            self.dialog = None
         except Exception as e:
             print(e)
 
@@ -168,7 +178,6 @@ class MainWindowWidget(QWidget):
         super().resizeEvent(a0)
         self.table.resizeEvent(a0)
 
-
     def setup_data(self):
         try:
             lessons = self.db.get_lessons(professor_id=WorkingData.instance().professor["id"])
@@ -199,6 +208,17 @@ class MainWindowWidget(QWidget):
         self.group_selector.addItems(groups)
 
         WorkingData.instance().discipline = DataBaseWorker.instance().get_disciplines(discipline_id=disc)[0]
+
+    def refresh_table(self):
+        lessons = self.db.get_lessons(
+            professor_id=WorkingData.instance().professor["id"],
+            group_id=WorkingData.instance().group["id"],
+            discipline_id=WorkingData.instance().discipline["id"])
+        lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p"))
+
+        self.table.set_horizontal_header(lessons)
+
+        self.fill_table()
 
     def group_changed(self):
         self.table.clear()

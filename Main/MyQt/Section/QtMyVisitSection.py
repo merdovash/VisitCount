@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView
 
-from Main.MyQt.QtMyWidgetItem import StudentHeaderItem, PercentHeaderItem, VisitItem
+from Main.MyQt.QtMyWidgetItem import StudentHeaderItem, PercentHeaderItem, VisitItem, LessonDateItem
 
 
 class VisitSection(QTableWidget):
@@ -36,4 +36,7 @@ class VisitSection(QTableWidget):
         item = self.item(row, col)
         if type(item) == VisitItem:
             real_pos = event.__pos__() + self.pos()
+            item.show_context_menu(real_pos)
+        if type(item) == LessonDateItem:
+            real_pos = event.__pos__() +self.pos()
             item.show_context_menu(real_pos)

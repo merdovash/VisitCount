@@ -1,9 +1,14 @@
+import traceback
+from datetime import datetime
+
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor, QFont
-from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget
+from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget, QCalendarWidget, QDialog
 
 from Main.DataBase.sql_handler import DataBaseWorker
+from Main.MyQt.QtMyCalendar import LessonDateChanger
 from Main.MyQt.QtMyStatusBar import QStatusMessage
+from Main.MyQt.Time import from_time_to_index
 from Main.SerialsReader import RFIDReader, nothing
 from Main.Types import WorkingData
 
@@ -43,9 +48,9 @@ class VisitItem(MyTableItem, AbstractContextItem):
         NotVisited = QColor("#ffffff")
         NoInfo = QColor("#ffffff")
 
-    def __init__(self, table,  status: Status= Status.NoInfo, student: dict = None, lesson: dict = None):
+    def __init__(self, table, status: Status = Status.NoInfo, student: dict = None, lesson: dict = None):
         super().__init__()
-        self.table : QTableWidget = table
+        self.table: QTableWidget = table
         self.setTextAlignment(Qt.AlignCenter)
         self.status = status
         self.visit_data = [0, 0]
@@ -84,14 +89,14 @@ class VisitItem(MyTableItem, AbstractContextItem):
         plus.setY(25)
 
         menu = QMenu()
-        menu.move(pos+plus)
+        menu.move(pos + plus)
 
         menu.addAction("Информация", self._show_info)
         if not WorkingData.instance().marking_visits:
             if self.status == VisitItem.Status.NotVisited:
                 menu.addAction("Отметить посещение", self._set_visited_by_professor)
-            # if self.student == VisitItem.Status.Visited:
-            #     menu.addAction("Отменить запись", self._del_visit_by_professor)
+                # if self.student == VisitItem.Status.Visited:
+                #     menu.addAction("Отменить запись", self._del_visit_by_professor)
         menu.exec_()
 
     def _show_info(self):
@@ -114,7 +119,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
             self.set_visit_status(VisitItem.Status.Visited)
         else:
             QStatusMessage.instance().setText("Ошибка")
-        # RFIDReader.instance().method = nothing
+            # RFIDReader.instance().method = nothing
 
 
 class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
@@ -140,6 +145,37 @@ class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
             menu.move(pos)
             menu.addAction("Начать учет")
             menu.exec_()
+
+
+class LessonNumberItem(QTableWidgetItem):
+    def __init__(self, date: datetime):
+        super().__init__()
+        self.setTextAlignment(Qt.AlignCenter)
+        self.setText(str(from_time_to_index(date)))
+
+
+class LessonDateItem(QTableWidgetItem, AbstractContextItem):
+    def __init__(self, date: datetime, lesson_id: int, parent: 'MainWindow' = None):
+        super().__init__()
+        self._parent = parent
+        self.date = date
+        self.lesson_id = lesson_id
+        self.setTextAlignment(Qt.AlignCenter)
+        self.setText(str(date.day))
+
+    def show_context_menu(self, pos):
+        if not WorkingData.instance().marking_visits:
+            menu = QMenu()
+            menu.move(pos)
+            menu.addAction("Перенести занятие", self.move_lesson)
+            menu.exec_()
+
+    def move_lesson(self):
+        try:
+            self.calendar = LessonDateChanger(self.date, self.lesson_id, self._parent)
+            self.calendar.show()
+        except Exception:
+            traceback.print_exc()
 
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -243,7 +279,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         menu = QMenu()
         print(pos)
         menu.move(pos)
-        #if not WorkingData.instance().marking_visits:
+        # if not WorkingData.instance().marking_visits:
         if not self.register_process:
             menu.addAction("Зарегистрировать карту", self._register_student_card)
         else:

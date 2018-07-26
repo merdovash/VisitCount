@@ -1,14 +1,13 @@
 import datetime
 import traceback
-from PyQt5 import Qt
 
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QMainWindow, QScrollBar
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QMainWindow
 
 from Main.MyQt.QtMyStatusBar import QStatusMessage
 from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, MonthTableItem, \
     StudentHeaderItem, \
-    PercentItem, PercentHeaderItem
+    PercentItem, PercentHeaderItem, LessonDateItem, LessonNumberItem
 from Main.MyQt.Section.QtMyHomeworkSection import HomeworkSection
 from Main.MyQt.Section.QtMyPercentSection import PercentSection
 from Main.MyQt.Section.QtMyVisitSection import VisitSection
@@ -17,8 +16,10 @@ from Main.MyQt.Section.QtMyVisitSection import VisitSection
 class VisitTable(QWidget):
     def __init__(self, parent: QVBoxLayout, MainWindow: QMainWindow):
         super().__init__(MainWindow)
+        self._parent = MainWindow
         self.inner_layout = QHBoxLayout()
         self.inner_layout.setSpacing(0)
+
         # init sections
         self.visit_table = VisitSection()
         self.percent_table = PercentSection()
@@ -51,7 +52,7 @@ class VisitTable(QWidget):
         try:
             print(self.visit_table.verticalScrollBar())
             self.scroll_bar = self.visit_table.verticalScrollBar()
-        #    # share scroll bar between sections
+        # # share scroll bar between sections
         #    scroll_bar = self.visit_table.verticalScrollBar()
         #    self.percent_table.setVerticalScrollBar(scroll_bar)
         #    self.home_work_table.setVerticalScrollBar(scroll_bar)
@@ -88,7 +89,7 @@ class VisitTable(QWidget):
         self.lessons = lessons
         self.visit_table.setColumnCount(len(lessons))
 
-        self.visit_table.setRowCount(3)
+        self.visit_table.setRowCount(4)
         item1 = QTableWidgetItem()
         item1.setText("Месяц")
         self.visit_table.setVerticalHeaderItem(0, item1)
@@ -96,17 +97,24 @@ class VisitTable(QWidget):
         item2.setText("День")
         self.visit_table.setVerticalHeaderItem(1, item2)
         item3 = QTableWidgetItem()
-        item3.setText("Тип занятия")
+        item3.setText("Номер пары")
         self.visit_table.setVerticalHeaderItem(2, item3)
+        item4 = QTableWidgetItem()
+        item4.setText("Тип занятия")
+        self.visit_table.setVerticalHeaderItem(3, item4)
 
         # months = get_months(lessons)
-        for i in range(len(lessons)):
-            dt = datetime.datetime.strptime(lessons[i]["date"], "%d-%m-%Y %I:%M%p")
+        try:
+            for i in range(len(lessons)):
+                dt = datetime.datetime.strptime(lessons[i]["date"], "%d-%m-%Y %I:%M%p")
 
-            # self.visit_table.setColumnWidth(i, 20)
-            self.visit_table.setItem(0, i, MonthTableItem(dt.month))
-            self.visit_table.setItem(1, i, QTableWidgetItem(str(dt.day)))
-            self.visit_table.setItem(2, i, LessonTypeItem(lessons[i]["type"]))
+                # self.visit_table.setColumnWidth(i, 20)
+                self.visit_table.setItem(0, i, MonthTableItem(dt.month))
+                self.visit_table.setItem(1, i, LessonDateItem(dt, lessons[i]["id"], self._parent))
+                self.visit_table.setItem(2, i, LessonNumberItem(dt))
+                self.visit_table.setItem(3, i, LessonTypeItem(lessons[i]["type"]))
+        except Exception:
+            traceback.print_exc()
 
         start = 0
         for i in range(len(lessons)):
@@ -118,7 +126,7 @@ class VisitTable(QWidget):
 
         self.percent_table.setColumnCount(1)
         # self.percent_table.resizeColumnsToContents()
-        self.percent_table.setRowCount(3)
+        self.percent_table.setRowCount(4)
         self.percent_table.setItem(0, 0, PercentHeaderItem([], PercentItem.Orientation.ByStudents))
         self.percent_table.setSpan(0, 0, 3, 1)
 

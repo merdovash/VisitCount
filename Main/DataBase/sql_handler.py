@@ -479,6 +479,15 @@ class DataBaseWorker:
         print(r)
         return r
 
+    def update_lesson_date(self, lesson_id: int, new_date: datetime):
+        # TODO send update on server
+        r = self.sql_request("UPDATE {0} SET date='{1}' WHERE id={2}",
+                             config.lessons,
+                             new_date.strftime("%d-%m-%Y %I:%M%p"),
+                             lesson_id)
+
+        print("on lesson date update", r)
+
     def connect2(self) -> sqlite3.Connection or MySQLdb.Connection:
         try:
             if config.db == "sqlite":

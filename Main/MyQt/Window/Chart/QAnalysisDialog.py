@@ -90,6 +90,9 @@ class LessonAccumulator:
             print(x, self.all[x])
         return [np.array(self.all[x]) for x in self.all]
 
+    def is_ready(self):
+        return False
+
 
 class QAnalysisDialog(QDialog):
     class DataType(int):
@@ -100,31 +103,85 @@ class QAnalysisDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        # load data
         self.acc = LessonAccumulator(lessons=self.get_lessons())
-        # self.global_acc = Statistic(self.data_type)
+
+        # load global statistic data
+        # TODO make real global statistic load
+        self.global_acc = LessonAccumulator()
+
+        # initialise plots variables
         self._ax = None
+        self._gp = None
+
+        # parameters
+        self.count = None
+
         try:
             self.figure = plt.figure()
-
             self.canvas = FigureCanvas(self.figure)
 
-            # self.toolbar = NavigationToolbar(self.canvas, self)
-
+            # init plot type selector
             self.combo_box = QComboBox()
             self.combo_box.addItems("Ломаная,Гистограма,Диаграма размаха".split(','))
             self.combo_box.currentIndexChanged.connect(self.draw)
+
             layout = QVBoxLayout()
-            # layout.addWidget(self.toolbar)
             layout.addWidget(self.canvas)
             layout.addWidget(self.combo_box)
             self.setLayout(layout)
         except Exception as e:
             print(e)
 
+    def draw(self):
+        # remove old and setup new
+        self.ax().clear()
+        self.format_ax()
+
+        # depend on selected type
+        if self.combo_box.currentIndex() == 0:
+            self._plot()
+        elif self.combo_box.currentIndex() == 1:
+            self._hist()
+        elif self.combo_box.currentIndex() == 2:
+            self._boxplot()
+
+        # refresh canvas
+        self.canvas.draw()
+
     def ax(self):
         if self._ax is None:
             self._ax = self.figure.add_subplot(111)
         return self._ax
+
+    def _plot(self):
+        if self.global_acc.is_ready():
+            self.ax().plot(self.acc.get_data(), label="Процент посещений ваших занятий")
+            self.ax().plot(self.global_acc.get_data(), label="Процент посещений по университету")
+
+            self.ax().legend()
+        else:
+            self.ax().plot(self.acc.get_data())
+
+    def _hist(self):
+        if self.global_acc.is_ready():
+            self.ax().hist([self.acc.get_hist_data(), self.global_acc.get_hist_data()],
+                           bins=range(0, self.count), align='right', rwidth=0.7, histtype='bar',
+                           label=["Процент посещений ваших занятий",
+                                  "Процент посещений по университету"])
+
+            self.ax().legend()
+        else:
+            N, bins, patches = self.ax().hist(self.acc.get_hist_data(),
+                                              bins=range(0, self.count), align='right', rwidth=0.7)
+            for i in range(len(patches)):
+                if i % 2 == 0:
+                    patches[i].set_facecolor(color="#ff8000")
+                else:
+                    patches[i].set_facecolor(color="#ff7010")
+
+    def _boxplot(self):
+        self.ax().boxplot(self.acc.get_box_data(), '*-', sym="")
 
     @abstractmethod
     def get_lessons(self):

@@ -1,4 +1,5 @@
 import datetime
+import traceback
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,12 +14,15 @@ class WeekDayChart(QAnalysisDialog):
     def __init__(self, parent=None):
         try:
             self.data_type = QAnalysisDialog.DataType.WEEK_DAY
-
             super().__init__(parent)
+
+            self.global_acc.data = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
+            self.count = 7
 
             self.draw()
         except Exception as e:
             print(e)
+            traceback.print_exc()
 
     def format_ax(self):
         self.ax().set_ylim(0, 100)
@@ -35,28 +39,6 @@ class WeekDayChart(QAnalysisDialog):
 
         self.ax().set_xlabel("Дни недели")
         self.ax().set_ylabel("Процент посещений")
-
-    def draw(self):
-        self.ax().clear()
-        self.format_ax()
-
-        if self.combo_box.currentIndex() == 0:
-            data = self.acc.get_data()
-            self.ax().plot(data)
-        elif self.combo_box.currentIndex() == 1:
-            data = self.acc.get_hist_data()
-
-            N, bins, patches = self.ax().hist(data, bins=range(0, len(data)), align='right', rwidth=0.7)
-            for i in range(len(patches)):
-                if i % 2 == 0:
-                    patches[i].set_facecolor(color="#ff8000")
-                else:
-                    patches[i].set_facecolor(color="#ff7010")
-        elif self.combo_box.currentIndex() == 2:
-            data = self.acc.get_box_data()
-            self.ax().boxplot(data, '*-', sym="")
-
-        self.canvas.draw()
 
     def get_lessons(self):
         return [
