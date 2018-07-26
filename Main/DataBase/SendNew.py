@@ -11,10 +11,10 @@ from Main.Types import Status, Response
 
 def finish_synch(db: DataBaseWorker, visitations: list):
     for i in visitations:
-        db.sql_request("UPDATE {} SET synch=1 WHERE student_id={} AND lesson_id={}",
+        db.sql_request("UPDATE {} SET synch=1 WHERE student_id={} AND id={}",
                        config.visitation,
                        i["student_id"],
-                       i["lesson_id"])
+                       i["id"])
 
 
 def send(db: DataBaseWorker, professor_id: int):

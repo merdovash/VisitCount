@@ -1,6 +1,3 @@
-import typing
-
-import PyQt5
 from PyQt5.QtWidgets import QComboBox
 
 

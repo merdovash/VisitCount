@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QPushButton, QLineEdit, QWidget
 
 from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyLoginInput import QLoginInput
-from Main.MyQt.QtMyMainWindow import QMyMainWindow
+from Main.MyQt.Window.QtMyMainWindow import MainWindowWidget
 
 
 class QAuthButton(QPushButton):
@@ -16,4 +16,4 @@ class QAuthButton(QPushButton):
     def click(self):
         print(self.login_input.text(), self.password.text())
         if self.db.auth(card_id=self.login_input.text(), password=self.password.text()):
-            self.parent = QMyMainWindow()
+            self.parent = MainWindowWidget()

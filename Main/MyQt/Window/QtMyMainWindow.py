@@ -1,10 +1,12 @@
 import datetime
+import os
+import sys
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QTableWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
+    QLabel, QPushButton, QApplication, QMenuBar, QAction, QMainWindow
 
 from Main import config
 from Main.DataBase import sql_handler
@@ -14,6 +16,9 @@ from Main.MyQt.QtMyComboBox import QMyComboBox
 from Main.MyQt.QtMyStatusBar import QStatusMessage
 from Main.MyQt.QtMyTableWidget import VisitTable
 from Main.MyQt.QtMyWidgetItem import VisitItem
+from Main.MyQt.Window.Chart.QAnalysisDialog import show, QAnalysisDialog
+from Main.MyQt.Window.Chart.WeekAnalysis import WeekChart
+from Main.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
 from Main.SerialsReader import RFIDReader, nothing
 from Main.Types import WorkingData
 
@@ -33,23 +38,63 @@ def closest_lesson(lessons: list):
     return closest
 
 
-class QMyMainWindow(QWidget):
+class MainWindow(QMainWindow):
+    def __init__(self, professor_id, program):
+        super().__init__()
+
+        self.setCentralWidget(MainWindowWidget(professor_id, program))
+
+        self.setup_menu()
+
+        self.dialog=None
+
+        self.showMaximized()
+
+    def setup_menu(self):
+        bar = self.menuBar()
+
+        self.bar = bar
+
+        file = bar.addMenu("Файл")
+        file_exit = QAction("Выход", self)
+        file_exit.triggered.connect(self.close)
+
+        file.addAction(file_exit)
+
+        analysis = bar.addMenu("Анализ")
+        analysis_weeks = QAction("По неделям", self)
+        analysis_weeks.triggered.connect(show(WeekChart,self))
+        analysis.addAction(analysis_weeks)
+
+        analysis_week_days = QAction("По дням недели", self)
+        analysis_week_days.triggered.connect(show(WeekDayChart,self))
+        analysis.addAction(analysis_week_days)
+
+    def setDialog(self, dialog:QAnalysisDialog):
+        self.dialog = dialog
+        self.dialog.show()
+
+
+class MainWindowWidget(QWidget):
     def __init__(self, professor_id, program):
         super().__init__()
         self.program = program
 
         self.db = sql_handler.DataBaseWorker.instance()
+        print(DataBaseWorker.instance().get_professors())
         WorkingData.instance().professor = DataBaseWorker.instance().get_professors(professor_id=professor_id)[0]
         try:
             self.setup_select_lesson()
             self.setup_geometry()
 
             self.setup_data()
+
+            self.dialog=None
         except Exception as e:
             print(e)
 
     def setup_geometry(self):
-        self.showMaximized()
+        pass
 
     def setup_select_lesson(self):
         self.l = QVBoxLayout()
@@ -111,14 +156,18 @@ class QMyMainWindow(QWidget):
         self.selector_layout.addWidget(self.start_button)
 
         # DATA BLOCK
-        self.table = VisitTable(self.l)
+
+        self.table = VisitTable(self.l, self)
+        # self.setCentralWidget(self.table)
 
         # self.inner_layout.addWidget(self.table)
 
         self.setLayout(self.l)
 
     def resizeEvent(self, a0: QtGui.QResizeEvent):
+        super().resizeEvent(a0)
         self.table.resizeEvent(a0)
+
 
     def setup_data(self):
         try:
@@ -244,8 +293,8 @@ class QMyMainWindow(QWidget):
                     if item.status == VisitItem.Status.NoInfo:
                         item.set_visit_status(VisitItem.Status.NotVisited)
 
-            self.info_label.setText("Учет начался. Приложите карту студента к считывателю.")
-            RFIDReader.instance().method = self.new_visit
+            QStatusMessage.instance().setText("Учет начался. Приложите карту студента к считывателю.")
+            RFIDReader.instance().onRead = self.new_visit
         except Exception as e:
             print("start_lesson", e)
 
@@ -289,3 +338,16 @@ class QMyMainWindow(QWidget):
             print(r)
         except Exception as e:
             print(e)
+
+
+if __name__ == "__main__":
+    from Main.main import MyProgram
+
+    app = QApplication(sys.argv)
+    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Material"
+    app.setApplicationName("СПбГУТ - Учет посещений")
+
+    program = MyProgram()
+    program.set_new_window(MainWindow("2", app))
+
+    sys.exit(app.exec_())

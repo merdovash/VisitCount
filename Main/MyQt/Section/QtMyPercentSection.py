@@ -6,7 +6,7 @@ class PercentSection(QTableWidget):
     def __init__(self, *__args):
         super().__init__(*__args)
 
-        self.setFixedWidth(60)
+        self.setFixedWidth(40)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.verticalHeader().setVisible(False)
         self.horizontalHeader().setVisible(False)

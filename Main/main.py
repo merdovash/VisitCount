@@ -11,7 +11,7 @@ from Main.DataBase import sql_handler
 from Main.DataBase.Load import FirstLoad
 from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyLoginInput import QLoginInput
-from Main.MyQt.QtMyMainWindow import QMyMainWindow
+from Main.MyQt.Window.QtMyMainWindow import MainWindowWidget, MainWindow
 from Main.SerialsReader import RFIDReader
 
 pyqt = os.path.dirname(PyQt5.__file__)
@@ -93,14 +93,14 @@ class QMyAuthWidget(QWidget):
                 name = prof[0]['last_name'] + ' ' + prof[0]['first_name'] + ' ' + prof[0]['middle_name']
                 self.login_input.set_image_text(prof_card_id, name)
 
-        RFIDReader.instance().method = imaged_value
+        RFIDReader.instance().onRead = imaged_value
 
     @pyqtSlot()
     def auth(self):
         status, professor_id = self.db.auth(card_id=self.login_input.text(), password=self.password_input.text())
         if status == DataBaseWorker.AuthStatus.Success:
             try:
-                self.window.set_new_window(QMyMainWindow(professor_id, self.window))
+                self.window.set_new_window(MainWindow(professor_id, self.window))
             except Exception as e:
                 print(e)
         elif status == DataBaseWorker.AuthStatus.NoData:
@@ -124,6 +124,7 @@ class QMyAuthWidget(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Material"
     app.setApplicationName("СПбГУТ - Учет посещений")
 
     program = MyProgram()

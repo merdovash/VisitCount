@@ -79,7 +79,7 @@ def create(cursor):
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS {} (
-            `lesson_id`	INTEGER,
+            `id`	INTEGER,
             `student_id`	INTEGER,
             `synch`	INTEGER
         );

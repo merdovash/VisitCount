@@ -1,5 +1,4 @@
-import PyQt5
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QHBoxLayout, QFormLayout
+from PyQt5.QtWidgets import QWidget, QLabel, QProgressBar, QFormLayout
 
 from Main import config
 

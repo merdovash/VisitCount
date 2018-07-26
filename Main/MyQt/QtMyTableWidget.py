@@ -1,21 +1,22 @@
 import datetime
+import traceback
+from PyQt5 import Qt
 
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QTableWidget, QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QAbstractItemView
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QMainWindow, QScrollBar
 
-from Main.MyQt.QtMyHomeworkSection import HomeworkSection
-from Main.MyQt.QtMyPercentSection import PercentSection
 from Main.MyQt.QtMyStatusBar import QStatusMessage
-from Main.MyQt.QtMyVisitSection import VisitSection
 from Main.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, MonthTableItem, \
     StudentHeaderItem, \
     PercentItem, PercentHeaderItem
+from Main.MyQt.Section.QtMyHomeworkSection import HomeworkSection
+from Main.MyQt.Section.QtMyPercentSection import PercentSection
+from Main.MyQt.Section.QtMyVisitSection import VisitSection
 
 
 class VisitTable(QWidget):
-    def __init__(self, parent: QVBoxLayout):
-        super().__init__()
+    def __init__(self, parent: QVBoxLayout, MainWindow: QMainWindow):
+        super().__init__(MainWindow)
         self.inner_layout = QHBoxLayout()
         self.inner_layout.setSpacing(0)
         # init sections
@@ -46,15 +47,20 @@ class VisitTable(QWidget):
         super().resizeEvent(a0)
         print("resized")
         # TODO: resize
-        # if self._init:
-        #     try:
-        #         self.inner_layout.removeWidget(self.scroll_bar)
-        #         self.scroll_bar = self.visit_table.verticalScrollBar()
-        #         self.percent_table.setVerticalScrollBar(self.scroll_bar)
-        #         self.home_work_table.setVerticalScrollBar(self.scroll_bar)
-        #         self.inner_layout.insertWidget(0, self.scroll_bar)
-        #     except Exception as e:
-        #         print(e)
+
+        try:
+            print(self.visit_table.verticalScrollBar())
+            self.scroll_bar = self.visit_table.verticalScrollBar()
+        #    # share scroll bar between sections
+        #    scroll_bar = self.visit_table.verticalScrollBar()
+        #    self.percent_table.setVerticalScrollBar(scroll_bar)
+        #    self.home_work_table.setVerticalScrollBar(scroll_bar)
+
+        #    # self.inner_layout.removeWidget(self.scroll_bar)
+        #    self.inner_layout.insertWidget(0, scroll_bar)
+        #    self.scroll_bar = scroll_bar
+        except Exception as e:
+            traceback.print_exc()
 
     def rowCount(self):
         return self.visit_table.rowCount()
@@ -97,20 +103,21 @@ class VisitTable(QWidget):
         for i in range(len(lessons)):
             dt = datetime.datetime.strptime(lessons[i]["date"], "%d-%m-%Y %I:%M%p")
 
+            # self.visit_table.setColumnWidth(i, 20)
             self.visit_table.setItem(0, i, MonthTableItem(dt.month))
             self.visit_table.setItem(1, i, QTableWidgetItem(str(dt.day)))
             self.visit_table.setItem(2, i, LessonTypeItem(lessons[i]["type"]))
-            self.visit_table.setColumnWidth(i, 20)
 
         start = 0
         for i in range(len(lessons)):
-            self.visit_table.setColumnWidth(i, 20)
             if self.visit_table.item(0, i).text() != self.visit_table.item(0, start).text():
                 self.visit_table.setSpan(0, start, 1, i - start)
                 start = i
                 self.visit_table.setSpan(0, start, 1, len(lessons) - start)
+            self.visit_table.setColumnWidth(i, 20)
 
         self.percent_table.setColumnCount(1)
+        # self.percent_table.resizeColumnsToContents()
         self.percent_table.setRowCount(3)
         self.percent_table.setItem(0, 0, PercentHeaderItem([], PercentItem.Orientation.ByStudents))
         self.percent_table.setSpan(0, 0, 3, 1)
@@ -127,16 +134,16 @@ class VisitTable(QWidget):
         completed_lessons = list(filter(lambda x: x["completed"] == 1, self.lessons))
         print(completed_lessons)
         # fill row and find percents
-        visitations_id = [i["lesson_id"] for i in visitations]
+        visitations_id = [i["id"] for i in visitations]
         for j in range(len(self.lessons)):
             try:
                 if self.lessons[j] in completed_lessons:
                     if self.lessons[j]["id"] in visitations_id:
-                        item = VisitItem(VisitItem.Status.Visited)
+                        item = VisitItem(self.visit_table, VisitItem.Status.Visited)
                     else:
-                        item = VisitItem(VisitItem.Status.NotVisited)
+                        item = VisitItem(self.visit_table, VisitItem.Status.NotVisited)
                 else:
-                    item = VisitItem(VisitItem.Status.NoInfo)
+                    item = VisitItem(self.visit_table, VisitItem.Status.NoInfo)
                 item.student = student
                 item.lesson = self.lessons[j]
                 self.visit_table.setItem(row, j, item)

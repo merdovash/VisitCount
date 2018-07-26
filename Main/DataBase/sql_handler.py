@@ -183,7 +183,7 @@ class DataBaseWorker:
         """
 
         :param professor_id: ID of professor
-        :return: list of table students_groups
+        :return: data of table students_groups
         """
         request = "SELECT DISTINCT {0}.student_id, {0}.group_id FROM {0} "
         params = [config.students_groups]
@@ -226,6 +226,8 @@ class DataBaseWorker:
         request, params = setParam(request, params, professor_id, "{0}.id={" + str(len(params)) + "} ", 1)
         request, params = setParam(request, params, card_id, "{0}.card_id={" + str(len(params)) + "} ", 1)
 
+        print(request.format(*tuple(params)))
+
         return [
             {
                 "first_name": res[1],
@@ -253,7 +255,7 @@ class DataBaseWorker:
         :param student_id: you can select groups by student
         :param professor_id: you can select groups by professor
         :param discipline_id: you can select groups by discipline
-        :return: list of {"name": res[i][name], "id": res[i][id]}
+        :return: data of {"name": res[i][name], "id": res[i][id]}
         """
         request = "SELECT DISTINCT {0}.id, {0}.name FROM {0} "
         params = [config.groups]
@@ -288,7 +290,7 @@ class DataBaseWorker:
         :param discipline_id: you can select disciplines by id
         :param professor_id: you can select disciplines by professor
         :param student_id: you can select disciplines by student
-        :return: list of disciplines
+        :return: data of disciplines
         """
 
         request = "SELECT DISTINCT {0}.id, {0}.name FROM {0} " \
@@ -319,9 +321,9 @@ class DataBaseWorker:
         :param card_id: you can select students by card_id
         :param student_id: you can select students by id
         :param group_id: you can select students by group
-        :param student_list: you can select students by list if id
+        :param student_list: you can select students by data if id
         :param professor_id: you can select students by professor
-        :return: list of students  keys=(id, last_name, first_name, middle_name, card_id)
+        :return: data of students  keys=(id, last_name, first_name, middle_name, card_id)
         """
         request = "SELECT DISTINCT {0}.id, {0}.first_name, {0}.last_name, {0}.middle_name, {0}.card_id " \
                   "FROM {0} "
@@ -366,7 +368,7 @@ class DataBaseWorker:
         :param group_id: you can select lessons by group
         :param professor_id: you can select lessons by professor
         :param discipline_id: you can select lessons by discipline
-        :return: list of lessons
+        :return: data of lessons
         """
         request = "SELECT DISTINCT {0}.id, {0}.date, {0}.room_id, {0}.group_id, {0}.discipline_id, {0}.professor_id," \
                   " {0}.completed, {0}.type FROM {0} "
@@ -385,6 +387,8 @@ class DataBaseWorker:
         request, params = setParam(request, params, lesson_id, "{0}.id={" + str(len(params)) + "} ", 1)
 
         request += "ORDER BY {0}.date "
+
+        print(request.format(*tuple(params)))
 
         r = [{'id': str(res[0]),
               'date': str(res[1]),
@@ -406,7 +410,7 @@ class DataBaseWorker:
         :param group_id: you can select visitations by group
         :param professor_id: you can select visitations by professor
         :param discipline_id: you can select visitations by discipline
-        :param student_list: you can select visitations by student list
+        :param student_list: you can select visitations by student data
         :return:
         """
         request = "SELECT DISTINCT {0}.student_id, {0}.lesson_id FROM {0} "
@@ -429,211 +433,9 @@ class DataBaseWorker:
 
         return [{
             "student_id": str(res[0]),
-            "lesson_id": str(res[1])
+            "id": str(res[1])
         }
             for res in self.sql_request(request, *tuple(params))]
-
-    def get_table(self, student_id=None, professor_id=None, discipline_id=None, group_id=None, user_type=None):
-        if user_type is None:
-            request = """
-            SELECT
-                {0}.date,
-                CASE lessons.complete
-                    WHEN 1 THEN {2}.student_id
-                    WHEN 0 THEN -1
-                END
-            FROM {0}
-            JOIN {1} ON {1}.group_id={0}.group_id
-            LEFT JOIN {2} ON {2}.student_id={1}.student_id AND {0}.id={2}.lesson_id
-            """
-            params = [config.lessons, config.students_groups, config.visitation]
-            if student_id is not None:
-                request += and_or_where(params, 3) + "{1}.student_id={" + str(len(params)) + "} "
-                params.append(student_id)
-            if professor_id is not None:
-                request += and_or_where(params, 3) + "{0}.professor_id={" + str(len(params)) + "} "
-                params.append(professor_id)
-            if group_id is not None:
-                request += and_or_where(params, 3) + "{0}.group_id={" + str(len(params)) + "} "
-                params.append(group_id)
-            if discipline_id is not None:
-                request += and_or_where(params, 3) + "{0}.discipline_id={" + str(len(params)) + "} "
-                params.append(discipline_id)
-            request += "ORDER BY {0}.date; "
-            print(self.sql_request(request, *tuple(params)))
-            return [
-                {
-                    "student_id": "-1" if str(i[1]) == "-1" else ("1" if str(i[1]) == str(student_id) else "0")
-                } for i in self.sql_request(request, *tuple(params))
-            ]
-        elif str(user_type) == "1":
-            return {
-                "lessons": [[lesson["date"], lesson["type"]] for lesson in
-                            self.get_lessons(professor_id=professor_id, group_id=group_id,
-                                             discipline_id=discipline_id)],
-                "students": [{
-                    "first_name": student["first_name"],
-                    "last_name": student["last_name"],
-                    "middle_name": student["middle_name"],
-                    "visitations": [c["student_id"] for c in
-                                    self.get_table(student_id=student["id"], discipline_id=discipline_id,
-                                                   professor_id=professor_id, group_id=group_id)]
-                } for student in self.get_students(group_id=group_id)
-                ]
-            }
-        elif str(user_type) == "0":
-            return {
-                "lessons": [[lesson["date"], lesson["type"]] for lesson in self.get_lessons(student_id=student_id,
-                                                                                            discipline_id=discipline_id,
-                                                                                            group_id=(self.get_groups(
-                                                                                                student_id=student_id)[
-                                                                                                          0]["id"])
-                                                                                            )],
-                "students": [{
-                    "first_name": student["first_name"],
-                    "last_name": student["last_name"],
-                    "middle_name": student["middle_name"],
-                    "visitations": [c["student_id"] for c in
-                                    self.get_table(student_id=student_id, discipline_id=discipline_id,
-                                                   group_id=self.get_groups(student_id=student_id)[0]["id"])]
-                } for student in self.get_students(student_id=student_id)
-                ]
-            }
-        else:
-            return False
-
-    def get_total(self, admin_id=None, user_type=None):
-        if str(user_type) == "2":
-            request = """
-                SELECT
-                    {2}.id,
-                    count(distinct {4}.lesson_id, {4}.student_id)/(count({3}.id))*100 AS 'ctn',
-                    {2}.name
-                FROM {0}
-                JOIN {1} ON {0}.id={1}.student_id
-                JOIN {2} ON {1}.group_id={2}.id
-                JOIN {3} ON {2}.id={3}.group_id
-                LEFT JOIN {4} ON {3}.id={4}.lesson_id AND {0}.id={4}.student_id
-                GROUP BY {2}.id
-            """
-            params = [
-                config.students,
-                config.students_groups,
-                config.groups,
-                config.lessons,
-                config.visitation]
-            return [{
-                "id": i[0],
-                "%": float(i[1]),
-                "name": str(i[2])
-            } for i in self.sql_request(request, *tuple(params))]
-        else:
-            return []
-
-    def get_groups_of_total(self, group_id: int, admin_id=None, user_type=None):
-        """
-        return total visitation of student of selected group
-        :param group_id: ID of group
-        :param admin_id: ID of user
-        :param user_type: type of user
-        """
-        if str(user_type) == "2":
-            request = """
-            SELECT
-                {0}.id,
-                {0}.last_name,
-                {0}.first_name,
-                {0}.middle_name,
-                COUNT(distinct {3}.lesson_id, {3}.student_id)/(count(distinct {2}.id))*100 as '%'
-            FROM {0}
-            JOIN {1} on {0}.id={1}.student_id
-            JOIN {2} on {1}.group_id={2}.group_id
-            LEFT JOIN {3} on {2}.id={3}.lesson_id and {0}.id={3}.student_id
-            WHERE {1}.group_id={4}
-            GROUP BY {0}.id
-            ORDER BY '%'
-            """
-            params = [
-                config.students,
-                config.students_groups,
-                config.lessons,
-                config.visitation,
-                group_id]
-
-            return [{
-                "id": i[0],
-                "last_name": i[1],
-                "first_name": i[2],
-                "middle_name": i[3],
-                "%": float(i[4])
-            } for i in self.sql_request(request, *tuple(params))]
-        return []
-
-    def get_the_lessons_count(self, student_id: int or str, discipline_id: int or str) -> int:
-        """
-
-        :param student_id: ID of student
-        :param discipline_id: ID of discipline
-        :return: number of completed lessons
-        """
-        return self.sql_request("SELECT COUNT(DISTINCT id) FROM {0} "
-                                "JOIN {1} ON {1}.group_id={0}.group_id "
-                                "WHERE {1}.student_id={2} AND {0}.discipline_id={3}",
-                                config.lessons,
-                                config.students_groups,
-                                student_id,
-                                discipline_id)[0][0]
-
-    def get_visited_lessons_count(self, student_id: int or str, discipline_id: int or str) -> int:
-        """
-
-        :param student_id: ID of student
-        :param discipline_id: ID of discipline
-        :return: number of visited lessons
-        """
-        return self.sql_request("SELECT COUNT(DISTINCT {0}.lesson_id) FROM {0} "
-                                "JOIN {1} ON {1}.id={0}.lesson_id "
-                                "JOIN {2} ON {1}.group_id={2}.group_id "
-                                "WHERE {2}.student_id={3} AND {1}.discipline_id={4}",
-                                config.visitation,
-                                config.lessons,
-                                config.students_groups,
-                                student_id,
-                                discipline_id)[0][0]
-
-    def get_data_for_student_table(self, student_id: int or str, group_id: int or str, discipline_id) -> dict:
-        """
-
-        :param student_id: student ID
-        :param group_id: group ID
-        :param discipline_id: list if disciplines
-        :return: data dict
-        """
-        visitation = self.sql_request("SELECT DISTINCT {0}.lesson_id, {1}.discipline_id, {1}.date FROM {0} "
-                                      "JOIN {1} ON {1}.id={0}.lesson_id "
-                                      "WHERE {0}.student_id={2} AND {1}.group_id={3} AND {1}.discipline_id in ({4})",
-                                      config.visitation,
-                                      config.lessons,
-                                      student_id,
-                                      group_id,
-                                      discipline_id
-                                      )
-        try:
-            data = {
-                "data": [{"col_id": visitation[i][0], "row_id": visitation[i][1]} for i in range(len(visitation))],
-                "cols_head": {lesson["id"]: lesson["date"] for lesson in self.get_lessons(student_id=student_id)},
-                "rows_head": self.get_disciplines(discipline_id=discipline_id)[0]["name"],
-                "head":
-                    {
-                        "Группа": self.get_groups(group_id=group_id),
-                        "Студент": self.get_student_name(student_id=student_id),
-                        "Дисциплина": self.get_disciplines(discipline_id=discipline_id),
-                        "Преподаватель": self.get_professors(group_id=group_id, discipline_id=discipline_id)[0]
-                    }
-            }
-            return data
-        except Exception as e:
-            raise e
 
     def get_data_for_professor(self, discipline_id: int or str, group_id: int or str, professor_id: int or str,
                                student_list):
@@ -662,7 +464,7 @@ class DataBaseWorker:
         return data
 
     def add_visit(self, student_id: int, lesson_id: int):
-        r = self.sql_request("INSERT INTO {0}(student_id, lesson_id, synch) VALUES ({1}, {2}, {3})",
+        r = self.sql_request("INSERT INTO {0}(student_id, id, synch) VALUES ({1}, {2}, {3})",
                              config.visitation,
                              student_id,
                              lesson_id,
@@ -746,7 +548,7 @@ class DataBaseWorker:
     def get_table2(self, owner, student_id=None, professor_id=None, group_id=None, discipline_id=None):
         if owner == "student":
             request = "SELECT DISTINCT {0}.date, {2}.name FROM {0} " \
-                      "JOIN {1} ON {1}.lesson_id={0}.id " \
+                      "JOIN {1} ON {1}.id={0}.id " \
                       "JOIN {2} ON {0}.discipline_id={2}.id " \
                       "JOIN {3} ON {3}.group_id={0}.group_id " \
                       "WHERE {0}.discipline_id IN {4} AND {3}.student_id={5} " \
@@ -764,7 +566,7 @@ class DataBaseWorker:
                     data[v[1]] = {}
                 data[v[1]][v[0]] = False
             request = "SELECT DISTINCT {0}.date, {2}.name FROM {0} " \
-                      "JOIN {1} ON {1}.lesson_id={0}.id " \
+                      "JOIN {1} ON {1}.id={0}.id " \
                       "JOIN {2} ON {0}.discipline_id={2}.id " \
                       "WHERE {0}.discipline_id IN {3} AND {1}.student_id={4} "
             params = [config.lessons,
@@ -810,8 +612,8 @@ class DataBaseWorker:
 def and_or_where(params, size):
     """
 
-    :param params: list of params
-    :param size: standard list size
+    :param params: data of params
+    :param size: standard data size
     :return: "AND " or "WHERE "
     """
     if len(params) > size:
