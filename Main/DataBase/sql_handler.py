@@ -226,8 +226,6 @@ class DataBaseWorker:
         request, params = setParam(request, params, professor_id, "{0}.id={" + str(len(params)) + "} ", 1)
         request, params = setParam(request, params, card_id, "{0}.card_id={" + str(len(params)) + "} ", 1)
 
-        print(request.format(*tuple(params)))
-
         return [
             {
                 "first_name": res[1],
@@ -388,8 +386,6 @@ class DataBaseWorker:
 
         request += "ORDER BY {0}.date "
 
-        print(request.format(*tuple(params)))
-
         r = [{'id': str(res[0]),
               'date': str(res[1]),
               'room': str(res[2]),
@@ -476,7 +472,6 @@ class DataBaseWorker:
         r = self.sql_request("UPDATE {0} SET completed=1 WHERE id={1}",
                              config.lessons,
                              lesson_id)
-        print(r)
         return r
 
     def update_lesson_date(self, lesson_id: int, new_date: datetime):
@@ -486,7 +481,6 @@ class DataBaseWorker:
                              new_date.strftime("%d-%m-%Y %I:%M%p"),
                              lesson_id)
 
-        print("on lesson date update", r)
 
     def connect2(self) -> sqlite3.Connection or MySQLdb.Connection:
         try:

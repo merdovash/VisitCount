@@ -1,17 +1,20 @@
 import datetime
 import os
 import sys
+import traceback
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QPushButton, QApplication, QMenuBar, QAction, QMainWindow
+    QLabel, QPushButton, QApplication, QAction, QMainWindow
 
 from Main import config
+import Main.Configuartion.WindowConfig as WindowConfig
 from Main.DataBase import sql_handler
 from Main.DataBase.SendNew import send
 from Main.DataBase.sql_handler import DataBaseWorker
+from Main.MyQt.QAction.DataAction import DataAction
 from Main.MyQt.QtMyComboBox import QMyComboBox
 from Main.MyQt.QtMyStatusBar import QStatusMessage
 from Main.MyQt.QtMyTableWidget import VisitTable
@@ -39,26 +42,24 @@ def closest_lesson(lessons: list):
 
 
 class MainWindow(QMainWindow):
-    _inst = None
-
-    @staticmethod
-    def instance(window=None) -> 'MainWindow':
-        print(window)
-        if window is not None:
-            MainWindow._inst = window
-        return MainWindow._inst
-
-    def __init__(self, professor_id, program):
+    def __init__(self, professor_id: int or str, program: 'MyProgram', window_config: WindowConfig.Config):
         super().__init__()
-        self.setCentralWidget(MainWindowWidget(professor_id, program))
+        self.config = self.__setup_setting__(window_config, professor_id)
 
+        self.setCentralWidget(MainWindowWidget(professor_id, program, self.config))
+        print(self.centralWidget())
         self.setup_menu()
-
         self.dialog = None
 
         self.showMaximized()
 
-        MainWindow.instance(self)
+    def __setup_setting__(self, window_config: WindowConfig.Config, professor_id: int) -> WindowConfig.Config:
+        c = window_config
+        if str(professor_id) not in window_config:
+            c.new_user(professor_id)
+        c.set_professor(professor_id)
+
+        return c
 
     def setup_menu(self):
         bar = self.menuBar()
@@ -80,17 +81,38 @@ class MainWindow(QMainWindow):
         analysis_week_days.triggered.connect(show(WeekDayChart, self))
         analysis.addAction(analysis_week_days)
 
+        self._init_menu_data()
+
+    def _init_menu_data(self):
+        data = self.bar.addMenu("Данные")
+
+        d1 = DataAction(["Отображать день", "Не отображать день"], VisitTable.Header.DAY, self)
+        data.addAction(d1)
+
+        data.addAction(
+            DataAction(["Отображать день недели", "Не отображать день недели"], VisitTable.Header.WEEKDAY, self))
+        data.addAction(
+            DataAction(["Отображать месяц", "Не отображать месяц"], VisitTable.Header.MONTH, self))
+        data.addAction(
+            DataAction(["Отображать номер занятия", "Не отображать номер занятия"], VisitTable.Header.LESSON, self))
+        data.addAction(
+            DataAction(["Отображать тип занятия", "Не отображать тип занятия"], VisitTable.Header.LESSONTYPE, self))
+
     def setDialog(self, dialog: QAnalysisDialog):
         self.dialog = dialog
         self.dialog.show()
 
 
 class MainWindowWidget(QWidget):
-    def __init__(self, professor_id, program):
+    def __init__(self, professor_id, program: 'MyProgram', window_config: WindowConfig.Config):
         super().__init__()
+        self.table = None
+
+        self.window_config = window_config
         self.program = program
 
         self.db = sql_handler.DataBaseWorker.instance()
+
         print(DataBaseWorker.instance().get_professors())
         WorkingData.instance().professor = DataBaseWorker.instance().get_professors(professor_id=professor_id)[0]
         try:
@@ -101,7 +123,10 @@ class MainWindowWidget(QWidget):
 
             self.dialog = None
         except Exception as e:
-            print(e)
+            traceback.print_exc()
+
+    def show_header(self, i):
+        self.table.visit_table.setRowHidden(i, True)
 
     def setup_geometry(self):
         pass
@@ -167,7 +192,7 @@ class MainWindowWidget(QWidget):
 
         # DATA BLOCK
 
-        self.table = VisitTable(self.l, self)
+        self.table = VisitTable(self.l, self, self.window_config)
         # self.setCentralWidget(self.table)
 
         # self.inner_layout.addWidget(self.table)
@@ -210,7 +235,8 @@ class MainWindowWidget(QWidget):
         WorkingData.instance().discipline = DataBaseWorker.instance().get_disciplines(discipline_id=disc)[0]
 
     def refresh_table(self):
-        lessons = self.db.get_lessons(
+        self.table.clear()
+        lessons = DataBaseWorker.instance().get_lessons(
             professor_id=WorkingData.instance().professor["id"],
             group_id=WorkingData.instance().group["id"],
             discipline_id=WorkingData.instance().discipline["id"])
@@ -219,6 +245,16 @@ class MainWindowWidget(QWidget):
         self.table.set_horizontal_header(lessons)
 
         self.fill_table()
+
+        self.lesson_selector.disconnect()
+        self.lesson_selector.clear()
+        self.lesson_selector.addItems(lessons)
+        self.lesson_selector.currentTextChanged.connect(self.lesson_changed)
+        closest = closest_lesson(lessons)
+        print("closest", closest, closest in self.lesson_selector.get_data())
+        self.lesson_selector.setCurrentId(closest_lesson(lessons)["id"])
+
+        self.lesson_changed()
 
     def group_changed(self):
         self.table.clear()
@@ -364,10 +400,12 @@ if __name__ == "__main__":
     from Main.main import MyProgram
 
     app = QApplication(sys.argv)
-    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Material"
+    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Flat Style"
     app.setApplicationName("СПбГУТ - Учет посещений")
 
+    window_config = WindowConfig.load()
+
     program = MyProgram()
-    program.set_new_window(MainWindow("2", app))
+    program.set_new_window(MainWindow("2", app, window_config))
 
     sys.exit(app.exec_())

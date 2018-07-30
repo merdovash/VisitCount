@@ -154,6 +154,15 @@ class LessonNumberItem(QTableWidgetItem):
         self.setText(str(from_time_to_index(date)))
 
 
+class WeekDayItem(QTableWidgetItem):
+    rule = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
+
+    def __init__(self, date:datetime):
+        super().__init__()
+        self.setTextAlignment(Qt.AlignCenter)
+        self.setText(str(WeekDayItem.rule[date.weekday()]))
+
+
 class LessonDateItem(QTableWidgetItem, AbstractContextItem):
     def __init__(self, date: datetime, lesson_id: int, parent: 'MainWindow' = None):
         super().__init__()
