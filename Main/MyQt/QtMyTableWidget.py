@@ -1,8 +1,8 @@
 import datetime
 import traceback
 
-from PyQt5.QtGui import QResizeEvent
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QMainWindow
+from PyQt5.QtGui import QResizeEvent, QWheelEvent
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QMainWindow, QScrollArea
 
 from Main.Configuartion.Configurable import Configurable
 from Main.Configuartion.WindowConfig import Config
@@ -52,12 +52,11 @@ class VisitTable(QWidget, Configurable):
         self.home_work_table = HomeworkSection()
 
         # share scroll bar between sections
-        self.scroll_bar = self.visit_table.verticalScrollBar()
-        self.percent_table.setVerticalScrollBar(self.scroll_bar)
-        self.home_work_table.setVerticalScrollBar(self.scroll_bar)
+        scroll_bar = self.visit_table.verticalScrollBar()
+        scroll_bar.valueChanged.connect(self.percent_table.verticalScrollBar().setValue)
+        scroll_bar.valueChanged.connect(self.home_work_table.verticalScrollBar().setValue)
 
-        # add widgets to layout
-        self.inner_layout.addWidget(self.scroll_bar)
+        #self.scroll_area.setWidget(self.visit_table)
         self.inner_layout.addWidget(self.visit_table)
         self.inner_layout.addWidget(self.percent_table)
         self.inner_layout.addWidget(self.home_work_table)
@@ -72,25 +71,6 @@ class VisitTable(QWidget, Configurable):
     def _setup_config(self, window_config: Config):
         self.window_config = window_config
         self.window_config.check(self)
-
-    def resizeEvent(self, a0: QResizeEvent):
-        super().resizeEvent(a0)
-        print("resized")
-        # TODO: resize
-
-        try:
-            print(self.visit_table.verticalScrollBar())
-            self.scroll_bar = self.visit_table.verticalScrollBar()
-        # # share scroll bar between sections
-        #    scroll_bar = self.visit_table.verticalScrollBar()
-        #    self.percent_table.setVerticalScrollBar(scroll_bar)
-        #    self.home_work_table.setVerticalScrollBar(scroll_bar)
-
-        #    # self.inner_layout.removeWidget(self.scroll_bar)
-        #    self.inner_layout.insertWidget(0, scroll_bar)
-        #    self.scroll_bar = scroll_bar
-        except Exception as e:
-            traceback.print_exc()
 
     def rowCount(self):
         return self.visit_table.rowCount()

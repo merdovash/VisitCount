@@ -38,5 +38,5 @@ class VisitSection(QTableWidget):
             real_pos = event.__pos__() + self.pos()
             item.show_context_menu(real_pos)
         if type(item) == LessonDateItem:
-            real_pos = event.__pos__() +self.pos()
+            real_pos = event.__pos__() + self.pos()
             item.show_context_menu(real_pos)

@@ -9,3 +9,4 @@ class HomeworkSection(QTableWidget):
         self.setMaximumWidth(400)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)

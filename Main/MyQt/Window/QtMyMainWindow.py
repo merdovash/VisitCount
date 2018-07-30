@@ -199,10 +199,6 @@ class MainWindowWidget(QWidget):
 
         self.setLayout(self.l)
 
-    def resizeEvent(self, a0: QtGui.QResizeEvent):
-        super().resizeEvent(a0)
-        self.table.resizeEvent(a0)
-
     def setup_data(self):
         try:
             lessons = self.db.get_lessons(professor_id=WorkingData.instance().professor["id"])
