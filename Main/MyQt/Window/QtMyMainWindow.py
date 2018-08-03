@@ -22,7 +22,7 @@ from Main.MyQt.QtMyWidgetItem import VisitItem
 from Main.MyQt.Window.Chart.QAnalysisDialog import show, QAnalysisDialog
 from Main.MyQt.Window.Chart.WeekAnalysis import WeekChart
 from Main.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
-from Main.SerialsReader import RFIDReader, nothing
+from Main.SerialsReader import RFIDReader, nothing, RFIDReaderNotFoundException
 from Main.Types import WorkingData
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -44,16 +44,20 @@ def closest_lesson(lessons: list):
 class MainWindow(QMainWindow):
     def __init__(self, professor_id: int or str, program: 'MyProgram', window_config: WindowConfig.Config):
         super().__init__()
-        self.config = self.__setup_setting__(window_config, professor_id)
+        self.config = self.__init_setting__(window_config, professor_id)
 
-        self.setCentralWidget(MainWindowWidget(professor_id, program, self.config))
+        self.program = program
+
+        self.c_w = MainWindowWidget(professor_id, program, self.config)
+        self.setCentralWidget(self.c_w)
+
         print(self.centralWidget())
-        self.setup_menu()
+        self.__init_menu__()
         self.dialog = None
 
         self.showMaximized()
 
-    def __setup_setting__(self, window_config: WindowConfig.Config, professor_id: int) -> WindowConfig.Config:
+    def __init_setting__(self, window_config: WindowConfig.Config, professor_id: int) -> WindowConfig.Config:
         c = window_config
         if str(professor_id) not in window_config:
             c.new_user(professor_id)
@@ -61,16 +65,12 @@ class MainWindow(QMainWindow):
 
         return c
 
-    def setup_menu(self):
+    def __init_menu__(self):
         bar = self.menuBar()
 
         self.bar = bar
 
-        file = bar.addMenu("Файл")
-        file_exit = QAction("Выход", self)
-        file_exit.triggered.connect(self.close)
-
-        file.addAction(file_exit)
+        self._init_menu_file()
 
         analysis = bar.addMenu("Анализ")
         analysis_weeks = QAction("По неделям", self)
@@ -82,6 +82,19 @@ class MainWindow(QMainWindow):
         analysis.addAction(analysis_week_days)
 
         self._init_menu_data()
+
+    def _init_menu_file(self):
+        file = self.bar.addMenu("Файл")
+
+        file_change_user = QAction("Сменить пользоватлея", self)
+        file_change_user.triggered.connect(self.program.change_user)
+
+        file.addAction(file_change_user)
+
+        file_exit = QAction("Выход", self)
+        file_exit.triggered.connect(self.close)
+
+        file.addAction(file_exit)
 
     def _init_menu_data(self):
         data = self.bar.addMenu("Данные")
@@ -109,7 +122,7 @@ class MainWindowWidget(QWidget):
         self.table = None
 
         self.window_config = window_config
-        self.program = program
+        # self.program = program
 
         self.db = sql_handler.DataBaseWorker.instance()
 
@@ -159,8 +172,8 @@ class MainWindowWidget(QWidget):
         disc_label = QLabel("Дисциплина")
         disc_label.setAlignment(Qt.AlignRight)
 
-        self.selector_layout.addWidget(disc_label)
-        self.selector_layout.addWidget(self.discipline_selector)
+        self.selector_layout.addWidget(disc_label, alignment=Qt.AlignCenter)
+        self.selector_layout.addWidget(self.discipline_selector, alignment=Qt.AlignCenter)
 
         # group
         self.group_selector = QMyComboBox()
@@ -281,7 +294,10 @@ class MainWindowWidget(QWidget):
         self.fill_table()
         self.lesson_changed()
 
-        RFIDReader.instance().method = nothing
+        try:
+            RFIDReader.instance().method = nothing
+        except RFIDReaderNotFoundException:
+            pass
         QStatusMessage.instance().setText("Выбрана группа {}".format(self.group_selector.currentText()))
 
     def lesson_changed(self):
@@ -402,6 +418,6 @@ if __name__ == "__main__":
     window_config = WindowConfig.load()
 
     program = MyProgram()
-    program.set_new_window(MainWindow("2", app, window_config))
+    program.auth_success(2)
 
     sys.exit(app.exec_())

@@ -3,10 +3,11 @@ import time
 from threading import Thread
 
 import requests
-from PyQt5.QtWidgets import QWidget, QLabel
+from PyQt5.QtWidgets import QWidget, QLabel, QDialog
 
 from Main import config
 from Main.DataBase.sql_handler import DataBaseWorker
+from Main.MyQt.Dialogs.ServerNotResponse import Server504
 from Main.MyQt.QtMyDownloadingWidget import QLoadingWidget
 from Main.Types import LoadingInfo, Status, Response
 
@@ -84,6 +85,8 @@ class FirstLoad:
                     else:
                         return False
                 elif res_status == Response.ERROR:
+                    if int(r.status_code) in [504]:
+                        self.parent.showDialog(Server504(self.parent))
                     print("запрос неудачный. код ошибки: ", r.status_code)
                     if type(self.parent.loading_info) == QLabel:
                         self.parent.loading_info.setText("Запрос неудачный. "+str(r.status_code)+" "+str(r.reason))

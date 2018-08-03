@@ -2,6 +2,7 @@
     sql_handler.py
 """
 import sqlite3
+import traceback
 from datetime import datetime
 
 from Main import config
@@ -177,7 +178,14 @@ class DataBaseWorker:
                 else:
                     return DataBaseWorker.AuthStatus.Success, res[0][0]
         else:
-            return "neeet"
+            res = self.sql_request("SELECT user_id FROM {0} WHERE login='{1}' AND password='{2}' AND user_type=1",
+                                   config.auth,
+                                   login,
+                                   password)
+            if len(res) == 0:
+                return DataBaseWorker.AuthStatus.NoData, None
+            else:
+                return DataBaseWorker.AuthStatus.Success, res[0][0]
 
     def get_students_groups(self, professor_id=None) -> object:
         """
@@ -481,7 +489,6 @@ class DataBaseWorker:
                              new_date.strftime("%d-%m-%Y %I:%M%p"),
                              lesson_id)
 
-
     def connect2(self) -> sqlite3.Connection or MySQLdb.Connection:
         try:
             if config.db == "sqlite":
@@ -539,12 +546,14 @@ class DataBaseWorker:
             except sqlite3.OperationalError as e:
                 Logger.write("index out of range {0} in {1}".format(arg, message))
                 print("SQL INSERT ERROR: ->", sql, e)
+                traceback.print_stack()
                 return []
             conn.commit()
 
             temp = cursor.fetchall()
         except IndexError as e:
             print("SQL FORMAT ERROR: ->", e)
+            traceback.print_exc()
 
         return temp
 

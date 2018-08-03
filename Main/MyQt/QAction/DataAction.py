@@ -6,12 +6,14 @@ from PyQt5.QtWidgets import QAction
 class DataAction(QAction):
     def __init__(self, name: list, row: int, window: "MainWindow"):
         """
-
+        :type name: list[str]
+        :type row: int
         :type window: MainWindow
         """
         self.name = name
-        self.table = window.centralWidget().table
+        self.table = window.c_w.table
         self.window = window
+        print(window.c_w)
         super().__init__(name[0] if self.table.visit_table.isRowHidden(row) else name[1], window)
         self.row = row
         self.triggered.connect(self.action)

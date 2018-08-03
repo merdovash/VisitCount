@@ -1,0 +1,101 @@
+<!-- Разметка окна входа -->
+<div class="fullscreen">
+	<div class="login-menu">
+		<h2 class="login-title">ЛИЧНЫЙ КАБИНЕТ</h2>
+		<form class="pure-form">
+			<fieldset class="pure-group">
+				<input id = "log" type="text" class="pure-input login-input" placeholder="Логин">
+				<input id = "pass" type="password" class="pure-input login-input" placeholder="Пароль">
+			</fieldset>
+			<a class="pure-button login-button" onclick="submitLogin();">Войти</a>
+		</form>
+	</div>
+</div>
+
+<!-- Логика входа в личный кабинет -->
+<script type="text/javascript">
+
+	host = "";
+	uid = null;
+
+	function register(log, pass) {
+		var xhr = new XMLHttpRequest();
+		var formData = new FormData();
+		formData.append("login", log);
+		formData.append("password",pass);
+		xhr.open("POST",host+"/login", true);
+		xhr.onreadystatechange = function() {
+			if (this.readyState != 4) return;
+			if (this.status != 200) {
+				alert(this.status + ': ' + this.statusText);
+			} else {
+			    console.log(this.responseText)
+				var res = JSON.parse(this.responseText);
+				if (res.type == "login") {
+					if (res.status == "OK") {
+						var data = res["data"];
+						uid = data.uid;
+						user_type = data.user_type;
+						user = data.user;
+						setCookie("uid", uid);
+						setCookie("user_type", user_type);
+						setCookie("user", JSON.stringify(data.user));
+						window.app("user", "news");
+					}
+					else {
+						alert(res.message);
+					}
+				}
+				else
+				{
+				    alert("wrong response");
+				}
+			}
+		}
+		xhr.send(formData);
+	}
+
+		function setCookie(name, value, options) {
+		  options = options || {};
+
+		  var expires = options.expires;
+
+		  if (typeof expires == "number" && expires) {
+		    var d = new Date();
+		    d.setTime(d.getTime() + expires * 1000);
+		    expires = options.expires = d;
+		  }
+		  if (expires && expires.toUTCString) {
+		    options.expires = expires.toUTCString();
+		  }
+
+		  value = encodeURIComponent(value);
+
+		  var updatedCookie = name + "=" + value;
+
+		  for (var propName in options) {
+		    updatedCookie += "; " + propName;
+		    var propValue = options[propName];
+		    if (propValue !== true) {
+		        updatedCookie += "=" + propValue;
+		    }
+		  }
+
+		  document.cookie = updatedCookie;
+		}
+
+	function submitLogin() {
+		var log = document.getElementById("log").value;
+		var pass = document.getElementById("pass").value;
+		register(log, pass);
+
+	}
+
+	app.page("login", function() {
+		// возвращает обработчик, срабатывающий при кажом открытии секции
+		return function(params) {
+			parent.location.hash = "login";
+		}
+	});
+
+</script>

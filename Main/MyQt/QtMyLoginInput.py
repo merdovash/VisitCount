@@ -7,6 +7,9 @@ class QLoginInput(QtWidgets.QLineEdit):
         super().__init__()
         self.innerText = ""
 
+    def real_text(self):
+        return super().text()
+
     def setText(self, a0: str):
         super().setText(a0)
         self.innerText = a0

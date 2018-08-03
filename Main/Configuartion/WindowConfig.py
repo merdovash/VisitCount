@@ -17,7 +17,7 @@ class Config:
             self.obj = {}
 
     def set_professor(self, professor_id):
-        self.professor_id = professor_id
+        self.professor_id = str(professor_id)
 
     def check(self, a: Configurable):
         if self.professor_id is not None:

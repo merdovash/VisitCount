@@ -1,5 +1,6 @@
 import serial
 import threading
+import traceback
 
 
 def nothing(card_id):
@@ -27,7 +28,9 @@ class RFIDReader(threading.Thread):
                 RFIDReader.inst.start()
             else:
                 RFIDReader.inst = None
+                # traceback.print_stack()
                 raise RFIDReaderNotFoundException()
+
         return RFIDReader.inst
 
     def __init__(self, method=nothing):
