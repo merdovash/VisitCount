@@ -28,9 +28,9 @@ from Main.Types import WorkingData
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
 
 
-def getLessonIndex(lessons: list, ID: int):
+def getLessonIndex(lessons: list, lesson_id: int)->int:
     for i in range(len(lessons)):
-        if lessons[i]["id"] == ID:
+        if lessons[i]["id"] == lesson_id:
             return i
 
 
@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
         c = window_config
         if str(professor_id) not in window_config:
             c.new_user(professor_id)
-        c.set_professor(professor_id)
+        c.set_professor_id(professor_id)
 
         return c
 

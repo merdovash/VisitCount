@@ -215,10 +215,10 @@ class DataBaseWorker:
         :param group_id: you can select professors by  group
         :param card_id: you can select professor by card id
         :param professor_id: you can select professor by id
-        :return: Last Name, First Name, Middle Name as Dictionary
+        :return:  List of as Dictionary (keys = last_name, first_name, middle_name, id, card_id)
         """
 
-        request = "SELECT {0}.first_name, {0}.last_name, {0}.middle_name, {0}.id, {0}.card_id FROM {0} "
+        request = "SELECT DISTINCT {0}.first_name, {0}.last_name, {0}.middle_name, {0}.id, {0}.card_id FROM {0} "
         params = [config.professors]
         if group_id is not None or discipline_id is not None or student_id is not None:
             request += "JOIN {1} ON {0}.id={1}.professor_id "

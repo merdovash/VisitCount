@@ -1,0 +1,189 @@
+html, body { height: 100%; margin: 0; }
+
+.login-menu {
+	text-align: center;
+	width: 300px; 
+	border-radius: 4px;
+	padding: 30px;
+	background: #fff;
+	margin: 150px auto 0 auto; 
+}
+
+.fullscreen {
+	position: fixed;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	overflow: auto;
+	background: #FF7043;
+/*	background-image: url('anime_girl.jpg');
+	background-size: 100%;
+    background-repeat: no-repeat;*/
+}
+
+.login-input { width: 100%; }
+.login-button { width: 100%; background: #FF5722;  border-radius: 4px;}
+.login-title { color: #424242; }
+
+#sidebar {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    width: 180px;
+    background-color: #EEEEEE;
+}
+
+.logo {	
+	color: #FFFFFF;
+/*	text-align: center;*/
+	font-weight: bold;
+	font-size: 20px;
+	background-color: #FF7043;
+	padding-left: 25px;
+	height: 64px;
+	display: flex;
+    align-items: center;
+}
+
+.option {	
+	color: #424242;
+	background-color: #EEEEEE;
+	padding-left: 25px;
+	padding-top: 16px;
+	padding-bottom: 16px;
+}
+
+.option-sel {	
+	color: #424242;
+	background-color: #E0E0E0;
+	padding-left: 25px;
+	padding-top: 16px;
+	padding-bottom: 16px;
+}
+
+.option:hover {
+	background-color: #E0E0E0;
+}
+
+#header {
+	text-align: right;
+	color: #424242;
+	margin-left: 180px;
+/*	font-weight: bold;*/
+	font-size: 20px;
+	background-color: #EEEEEE;
+	padding-right: 25px;
+	padding-left: 25px;
+	height: 64px;
+
+	display: flex;
+	align-items: center; 
+    justify-content: space-between; 
+}
+
+#rank_name {
+	color: #626262;
+	font-size: 16px;
+}
+
+#week_pl {
+	color: #626262;
+	font-size: 16px;
+}
+
+#content {
+/*	text-align: center;*/
+	color: #424242;
+	font-size: 13pt;
+	padding-top: 20px;
+	padding-bottom: 80px;
+	padding-left: 80px;
+	padding-right: 80px;
+    margin-left: 180px;
+}
+
+a {	text-decoration: none; }
+p {	text-align: justify; }
+
+/* TABLE STYLES*/
+
+.tables{
+	max-width: "100%";
+	border-style: solid;
+	border-width: 0px;
+	border-color: gray;
+	border-spacing: 0;
+}
+
+.plate {
+	overflow: scroll;
+	overflow-y: hidden;
+}
+
+td {
+    border: 1px gray solid;
+    padding: 8px;
+}
+
+.visited {
+	background: #88EE88;
+	color: #212121;
+	text-align: center;
+	line-height: 20px;
+	height: 20px;
+	font-size: 16px;
+}
+
+.not_visited {
+	background: #EE8888;
+	color: #212121;
+	text-align: center;
+	line-height: 20px;
+	height: 20px;
+	font-size: 16px;
+}
+
+.not_info {
+	background: #E0E0E0;
+	color: #212121;
+	text-align: center;
+	line-height: 20px;
+	height: 20px;
+	font-size: 16px;
+}
+
+.rotate {
+	background: #FFFFFF;
+}
+.rotated-text {
+    display: inline-block;
+    overflow: hidden;
+    text-align: center;
+    width: 20px;
+}
+.rotated-text__inner {
+    display: inline-block;
+    white-space: nowrap;
+    /* this is for shity "non IE" browsers
+       that dosn't support writing-mode */
+    -webkit-transform: rotate(-90deg);
+       -moz-transform: rotate(-90deg);
+         -o-transform: rotate(-90deg);
+            transform: rotate(-90deg);
+}
+.rotated-text__inner:before {
+    content: "";
+    float: left;
+    margin-top: 100%;
+}
+
+/* visibility rules */
+
+/* all sections are off by default */
+body > section { display:none; }
+
+body.about	> section#about,
+body.user	> section#user,
+body.login  > section#login { display:block; }

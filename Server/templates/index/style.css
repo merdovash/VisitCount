@@ -1,0 +1,21 @@
+body {
+    background:
+      -webkit-linear-gradient(315deg, hsla(36.23, 100%, 50%, 1) 0%, hsla(36.23, 100%, 50%, 0) 70%),
+      -webkit-linear-gradient(65deg, hsla(43.02, 90.72%, 55.39%, 1) 10%, hsla(43.02, 90.72%, 55.39%, 0) 80%),
+      -webkit-linear-gradient(135deg, hsla(33.96, 100%, 50.45%, 1) 15%, hsla(33.96, 100%, 50.45%, 0) 80%),
+      -webkit-linear-gradient(205deg, hsla(60.25, 97.12%, 49.74%, 1) 100%, hsla(60.25, 97.12%, 49.74%, 0) 70%);
+    background:
+      linear-gradient(135deg, hsla(36.23, 100%, 50%, 1) 0%, hsla(36.23, 100%, 50%, 0) 70%),
+      linear-gradient(25deg, hsla(43.02, 90.72%, 55.39%, 1) 10%, hsla(43.02, 90.72%, 55.39%, 0) 80%),
+      linear-gradient(315deg, hsla(33.96, 100%, 50.45%, 1) 15%, hsla(33.96, 100%, 50.45%, 0) 80%),
+      linear-gradient(245deg, hsla(60.25, 97.12%, 49.74%, 1) 100%, hsla(60.25, 97.12%, 49.74%, 0) 70%);
+    }
+
+.colorful {
+    background:
+        -webkit-linear-gradient(0deg, hsla(30.12, 100%, 50%, 1) 0%, hsla(30.12, 100%, 50%, 0) 20%),
+        -webkit-linear-gradient(180deg, hsla(30.12, 100%, 50%, 1) 0%, hsla(30.12, 100%, 50%, 0) 20%);
+    background:
+        linear-gradient(90deg, hsla(30.12, 100%, 50%, 1) 0%, hsla(30.12, 100%, 50%, 0) 20%),
+        linear-gradient(270deg, hsla(30.12, 100%, 50%, 1) 0%, hsla(30.12, 100%, 50%, 0) 20%);
+    }

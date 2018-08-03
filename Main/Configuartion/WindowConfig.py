@@ -16,7 +16,7 @@ class Config:
         except FileNotFoundError as e:
             self.obj = {}
 
-    def set_professor(self, professor_id):
+    def set_professor_id(self, professor_id):
         self.professor_id = str(professor_id)
 
     def check(self, a: Configurable):
@@ -56,6 +56,9 @@ class Config:
             return self.obj.__repr__()
         else:
             return self.obj[self.professor_id].__repr__()
+
+    def __len__(self):
+        return len(self.obj)
 
 
 def load(path: str = None) -> Config:

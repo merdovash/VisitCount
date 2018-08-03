@@ -1,0 +1,72 @@
+<html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="file/surface_styles.css" / rel="stylesheet">
+</head>
+
+<body>
+
+    <header class="container--end bg--blood-orange no-margin-vertical">
+        <h1 class="m--1 g--6" id="head">Проекты студентов СПбГУТ</h1>
+        <nav class="g--3 nav--horizontal">
+            <ul>
+                <li><a href="#top">Home</a></li>
+                <li><a href="#projects">Проекты</a></li>
+                <li><a href="#contacts">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="tile m--2 g--9 no-pad">
+        <a name="top"></a>
+        <h2 class="m--1 g--6">
+            Добро пожаловать
+        </h2>
+
+        <p class="m--1 g--8">
+            На данном сайте представлены проектные работы, разрабатываемые студентами университета. Здесь вы сможете узнать краткую информацию о каждом из проектов, а так же перейти на их веб-сайты.
+        </p>
+    </div>
+
+
+    <h2 class="m--2 g--9 no-margin-vertical">
+        <a name="projects"></a>
+        Список проектов
+    </h2>
+
+    <div id="desc"></div>
+    <div id=""></div>
+    <ul id="projects">
+        <li v-for="(item, index) in items">
+            <div class="collapsible-wrap card no-pad m--2 g--9 no-margin-vertical">
+                <input type="checkbox" :id="'collapsible-'+(index+1)">
+                <label :for="'collapsible-'+(index+1)">{{item.title}}</label>
+                <div :class="'collapsible-'+(index+1)+'-area'">
+                    <p>{{item.desc}}</p>
+                    <p v-if="Array.isArray(item.author)" class="text-right">{{"Авторы: "+ item.author.join(", ")}}</p>
+                    <p v-else class="text-right">Автор: {{item.author}}</p>
+                    <p class="text-left">Научный руководитель: {{item.professor}}</p>
+                    <button class="btn--primary" v-on:click="goto(item.url)">{{item.btnName}}</button>
+                </div>
+            </div>
+        </li>
+    </ul>
+
+    <div class="card m--2 g--9">
+        <a name="contacts"></a>
+        <h2>Контакты</h2>
+        <p>По всем вопросам обращайтесь по e-mail: vladschekochikhin@gmial.com</p>
+    </div>
+
+    <footer class="no-margin-vertical bg--blood-orange">
+        <div>
+            <p class="text-center color--white">СПбГУТ, 2018</p>
+        </div>
+    </footer>
+
+    <script src="file/app.js"></script>
+</body>
+
+</html>

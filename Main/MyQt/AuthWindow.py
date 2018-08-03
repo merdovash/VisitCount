@@ -87,15 +87,18 @@ class QMyAuthWidget(QWidget):
 
     @pyqtSlot()
     def auth(self):
-        if self.login_input.innerText is None or self.login_input.innerText == "":
+        status = DataBaseWorker.AuthStatus.Fail
+        if self.login_input.image:
             try:
                 status, professor_id = self.db.auth(
-                    login=self.login_input.real_text(),
+                    login=self.login_input.text(),
                     password=self.password_input.text())
             except Exception:
                 traceback.print_exc()
         else:
-            status, professor_id = self.db.auth(card_id=self.login_input.text(), password=self.password_input.text())
+            status, professor_id = self.db.auth(
+                card_id=self.login_input.text(),
+                password=self.password_input.text())
 
         if status == DataBaseWorker.AuthStatus.Success:
             try:
