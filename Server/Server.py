@@ -14,9 +14,9 @@ from sql_handler import DataBaseWorker
 import config
 
 path, file = os.path.split(os.path.abspath(__file__))
-templates_path = path+"/templates/"
+templates_path = path + "/templates/"
 
-app = Flask(__name__, static_folder=path+"/static")
+app = Flask(__name__, static_folder=path + "/static")
 db_worker = DataBaseWorker(app)
 
 print(path)
@@ -24,15 +24,15 @@ print(path)
 
 class Response:
     def __init__(self, type):
-        self.type=type
+        self.type = type
 
     def set_data(self, data):
-        self.status="OK"
-        self.data=data
+        self.status = "OK"
+        self.data = data
         return self
 
     def set_error(self, msg):
-        self.status="ERROR"
+        self.status = "ERROR"
         self.message = msg
         return self
 
@@ -134,9 +134,9 @@ def get_resource(p):  # pragma: no cover
     filename, file_extension = os.path.splitext(p)
     mimetype = mimetypes.get(file_extension)
     if mimetype[1]:
-        content = open(path+ "/static" + "/" + p).read()
+        content = open(path + "/static" + "/" + p).read()
     else:
-        content = open(templates_path+p).read()
+        content = open(templates_path + p).read()
     response = make_response(content)
     response.headers['Content-Type'] = mimetype[0]
 
@@ -154,11 +154,29 @@ def index():
     if request.method == "POST":
         data = json_read(request.data.decode('utf8').replace("'", '"'))
         res = Response(data["type"])
-        print("from client",data)
-        if db_worker.auth(card_id=data["card_id"], password=data["password"]):
+        print("from client", data)
+
+        # auth procedure
+        if "card_id" in data.keys():
+            auth_status = db_worker.auth(card_id=data["card_id"], password=data["password"])
+            card_id = data["card_id"]
+            by_card = True
+        elif "login" in data.keys():
+            auth_status = db_worker.auth(login=data["login"], password=data["password"])
+            login = data["login"]
+            by_card=False
+        else:
+            return res.set_error("auth fail 2")()
+
+        # main body
+        if auth_status:
             if data["type"] == "first":
                 # send data for client database
-                status, r = db_worker.get_data_for_client(data["card_id"])
+                if by_card:
+                    status, r = db_worker.get_data_for_client(professor_card_id=card_id)
+                else:
+                    status, r = db_worker.get_data_for_client(login=login)
+
                 if status:
                     return res.set_data(r)()
                 else:
@@ -225,7 +243,7 @@ def new_uid():
 
 def generate_code():
     value = random.randrange(10000, 100001, 1)
-    while len(db_worker.get_telegram_temp(code=value))!=0:
+    while len(db_worker.get_telegram_temp(code=value)) != 0:
         value = random.randrange(10000, 100001, 1)
     return value
 
@@ -236,10 +254,10 @@ def autorizeTelegram():
     user_data = db_worker.auth(uid=request.args["uid"])
     if user_data:
         code = generate_code()
-        if user_data["telegram"]=="" or user_data["telegram"] == "None":
-            response.set_data({"code":code, "connected":False})
+        if user_data["telegram"] == "" or user_data["telegram"] == "None":
+            response.set_data({"code": code, "connected": False})
         else:
-            response.set_data({"code":code, "connected":True})
+            response.set_data({"code": code, "connected": True})
         db_worker.set_telegram_temp(user_data["id"], code)
     else:
         response.set_error("auth failed")
@@ -266,8 +284,8 @@ def log_in():
                     "uid": uid,
                     "user_type": user_data["user_type"],
                     "user": db_worker.get_students(student_id=user_data["id"]) \
-                    if str(user_data["user_type"])=="0" \
-                    else db_worker.get_professors(professor_id=user_data["user_id"])
+                        if str(user_data["user_type"]) == "0" \
+                        else db_worker.get_professors(professor_id=user_data["user_id"])
                 }
             )()
         else:
@@ -404,7 +422,7 @@ def get_field():
 
 @app.route("/table")
 def get_table2():
-    res=Response("table")
+    res = Response("table")
     owner = request.args["owner"]
     student_id = request.args["student_id"]
     discipline_id = request.args["discipline_id"]

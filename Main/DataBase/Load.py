@@ -13,19 +13,36 @@ from Main.Types import LoadingInfo, Status, Response
 
 
 class FirstLoad:
-    def __init__(self,
-                 password,
-                 card_id,
-                 parent: QWidget,
-                 on_finish: callable = None):
+    class AuthType(int):
+        ByLogin = 0
+        ByCard = 1
+
+    def __init__(self, login=None, card_id=None, password=None, parent: QWidget = None, on_finish: callable = None):
         self.address = config.server
         self.password = password
-        self.card_id = card_id
+        if card_id is not None:
+            self.auth_type = FirstLoad.AuthType.ByCard
+            self.card_id = card_id
+        elif login is not None:
+            self.auth_type = FirstLoad.AuthType.ByLogin
+            self.login = login
+        else:
+            raise Exception("expected card_id or login parameter")
 
         self.parent = parent
         self.finish = on_finish
 
         self.marker = LoadingInfo()
+
+    def get_request_body(self):
+        if self.auth_type == FirstLoad.AuthType.ByLogin:
+            return {'type': 'first',
+                    'login': self.login,
+                    'password': self.password}
+        elif self.auth_type == FirstLoad.AuthType.ByCard:
+            return {'type': 'first',
+                    'card_id': self.card_id,
+                    'password': self.password}
 
     def run(self):
 
@@ -53,10 +70,7 @@ class FirstLoad:
                 r = requests.post(
                     url=self.address,
                     headers={"Content-Type": "application/json"},
-                    data=json.dumps({'type': 'first',
-                                     'card_id': self.card_id,
-                                     'password': self.password}
-                                    ))
+                    data=json.dumps(self.get_request_body()))
                 print(r.text)
                 res_status = Status(r.text)
                 if res_status == Response.JSON:
@@ -89,10 +103,12 @@ class FirstLoad:
                         self.parent.showDialog(Server504(self.parent))
                     print("запрос неудачный. код ошибки: ", r.status_code)
                     if type(self.parent.loading_info) == QLabel:
-                        self.parent.loading_info.setText("Запрос неудачный. "+str(r.status_code)+" "+str(r.reason))
+                        self.parent.loading_info.setText(
+                            "Запрос неудачный. " + str(r.status_code) + " " + str(r.reason))
                         # self.parent.inner_layout.removeWidget(self.parent.loading_info)
             except requests.exceptions.ConnectionError as e:
                 print("No internet connection to Server")
+
         Thread(target=a).start()
         Thread(target=b).start()
 

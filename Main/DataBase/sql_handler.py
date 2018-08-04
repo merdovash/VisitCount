@@ -76,41 +76,49 @@ class DataBaseWorker:
         return True
 
     def loads(self, table, data, marker=None):
-        if config.db == "sqlite":
-            types = {i[1]: i[2] for i in self.sql_request("PRAGMA table_info({0});", table)}
+        if len(data) != 0:
+            if config.db == "sqlite":
+                types = {i[1]: i[2] for i in self.sql_request("PRAGMA table_info({0});", table)}
 
-            def to_format(value, key):
-                if types[key] == "INTEGER" or types[key] == "INT":
-                    return str(value)
-                else:
-                    return "'" + str(value) + "'"
+                def to_format(value, key):
+                    if key == "card_id" and (value is None or value == "None"):
+                        return "''"
+                    elif key == "completed" and value is None:
+                        return "0"
+                    elif types[key] == "INTEGER" or types[key] == "INT":
+                        return str(value)
+                    else:
+                        return "'" + str(value) + "'"
 
-            req = "INSERT OR IGNORE INTO {0}({1}) VALUES {2}"
-            keys = data[0].keys()
-            params = [
-                table,
-                ', '.join(keys),
-                ', '.join(
-                    ['(' + ', '.join([to_format(line[key], key) for key in keys]) + ')' for line in data])
-            ]
-            params[2] = params[2].replace("\r", "").replace("\n", "")
+                req = "INSERT OR IGNORE INTO {0}({1}) VALUES {2}"
+                print(data)
+                keys = data[0].keys()
+                params = [
+                    table,
+                    ', '.join(keys),
+                    ', '.join(
+                        ['(' + ', '.join([to_format(line[key], key) for key in keys]) + ')' for line in data])
+                ]
+                params[2] = params[2].replace("\r", "").replace("\n", "")
 
-            print(*tuple(params))
+                print(*tuple(params))
 
-            res = self.sql_request(req, *tuple(params), ignore_banned_symbols=True)
+                res = self.sql_request(req, *tuple(params), ignore_banned_symbols=True)
 
-        elif config.db == "mysql":
-            req = "INSERT IGNORE INTO {0}({1}) VALUES {2}"
-            keys = data[0].keys()
-            params = [
-                table,
-                ', '.join(keys),
-                ', '.join(
-                    ['(' + ', '.join([line[key] for key in keys]) + ')' for line in data])  # TODO: to foramt function
-            ]
+            elif config.db == "mysql":
+                req = "INSERT IGNORE INTO {0}({1}) VALUES {2}"
+                keys = data[0].keys()
+                params = [
+                    table,
+                    ', '.join(keys),
+                    ', '.join(
+                        ['(' + ', '.join([line[key] for key in keys]) + ')' for line in data])
+                    # TODO: to foramt function
+                ]
 
-            res = self.sql_request(req, *tuple(params))
-        return res
+                res = self.sql_request(req, *tuple(params))
+            return res
+        return True
 
     def load(self, table, data):
         if config.db == "sqlite":

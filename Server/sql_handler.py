@@ -164,13 +164,25 @@ class DataBaseWorker:
                 "user_type": i[4]} for i in self.sql_request(req, *tuple(params))]
         return res
 
-    def get_data_for_client(self, professor_card_id: int or str) -> object:
+    def get_data_for_client(self, professor_card_id: int or str=None, login: str=None) -> object:
         """
 
+        :param login: you can select data by professor login
         :param professor_card_id: card ID of professor
         :return: complete data for client for first connection
         """
-        res = self.sql_request("SELECT id FROM {0} WHERE card_id={1}", config.professors, professor_card_id)
+        req = "SELECT {0}.id FROM {0} "
+        params = [config.professors]
+
+        if login is not None:
+            req += "JOIN {1} on {1}.user_id={0}.id AND {1}.user_type=1 "
+            params.append(config.auth)
+            req, params = self.setParam(req, params, login, "{1}.login='{" + str(len(params)) + "}' ", 2)
+        if professor_card_id is not None:
+            req, params = self.setParam(req, params, professor_card_id, "{0}.card_id={" + str(len(params)) + "} ", 2)
+
+        res = self.sql_request(req, *tuple(params))
+
         if len(res) > 0:
             professor_id = res[0][0]
             return (True, {
@@ -184,7 +196,7 @@ class DataBaseWorker:
                 config.auth: self.get_auth_info(professor_id)
             })
         else:
-            return False, {'message': 'no such professor'}
+            return False, 'no such professor'
 
     def free_uid(self, value) -> bool:
         """
@@ -484,9 +496,9 @@ class DataBaseWorker:
         :param student_list: you can select visitations by student data
         :return:
         """
-        request = "SELECT DISTINCT {0}.student_id, {0}.id FROM {0} "
+        request = "SELECT DISTINCT {0}.student_id, {0}.lesson_id FROM {0} "
         params = [config.visitation]
-        request += "JOIN {1} ON {0}.id={1}.id "
+        request += "JOIN {1} ON {0}.lesson_id={1}.id "
         params.append(config.lessons)
         if student_list is not None or student_id is not None:
             if student_list is not None:
@@ -587,7 +599,7 @@ class DataBaseWorker:
                 JOIN {1} ON {0}.id={1}.student_id
                 JOIN {2} ON {1}.group_id={2}.id
                 JOIN {3} ON {2}.id={3}.group_id
-                LEFT JOIN {4} ON {3}.id={4}.id AND {0}.id={4}.student_id
+                LEFT JOIN {4} ON {3}.id={4}.lesson_id AND {0}.id={4}.student_id
                 GROUP BY {2}.id
             """
             params = [
@@ -618,11 +630,11 @@ class DataBaseWorker:
                 {0}.last_name,
                 {0}.first_name,
                 {0}.middle_name,
-                COUNT(distinct {3}.id, {3}.student_id)/(count(distinct {2}.id))*100 as '%'
+                COUNT(distinct {3}.lesson_id, {3}.student_id)/(count(distinct {2}.id))*100 as '%'
             FROM {0}
             JOIN {1} on {0}.id={1}.student_id
             JOIN {2} on {1}.group_id={2}.group_id
-            LEFT JOIN {3} on {2}.id={3}.id and {0}.id={3}.student_id
+            LEFT JOIN {3} on {2}.id={3}.lesson_id and {0}.id={3}.student_id
             WHERE {1}.group_id={4}
             GROUP BY {0}.id
             ORDER BY '%'
@@ -897,8 +909,6 @@ class DataBaseWorker:
             for v in visit:
                 data[v[1]][v[0]] = True
         return data
-
-
 
 
 def and_or_where(params, size):

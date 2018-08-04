@@ -85,34 +85,51 @@ class QMyAuthWidget(QWidget):
         except RFIDReaderNotFoundException:
             pass
 
-    @pyqtSlot()
-    def auth(self):
+    def _auth(self)->(DataBaseWorker.AuthStatus, int):
         status = DataBaseWorker.AuthStatus.Fail
         if self.login_input.image:
+            print("by card")
+            status, professor_id = self.db.auth(
+                card_id=self.login_input.text(),
+                password=self.password_input.text())
+        else:
             try:
                 status, professor_id = self.db.auth(
                     login=self.login_input.text(),
                     password=self.password_input.text())
             except Exception:
                 traceback.print_exc()
-        else:
-            status, professor_id = self.db.auth(
-                card_id=self.login_input.text(),
-                password=self.password_input.text())
+
+        return status, professor_id
+
+    def _first_load(self):
+        try:
+            if self.login_input.image:
+                print("FIRST LOAD by card")
+                FirstLoad(card_id=self.login_input.text(), password=self.password_input.text(), parent=self,
+                          on_finish=self.auth).run()
+            else:
+                FirstLoad(login=self.login_input.text(), password=self.password_input.text(), parent=self,
+                          on_finish=self.auth).run()
+        except Exception as e:
+            traceback.print_exc()
+
+    @pyqtSlot(name="auth")
+    def auth(self):
+        status, professor_id = self._auth()
+        print(status)
 
         if status == DataBaseWorker.AuthStatus.Success:
             try:
+                print("AUTH SUCCESS")
                 self.window.auth_success(professor_id)
-            except Exception as e:
-                print(e)
+            except Exception:
+                traceback.print_exc()
+
         elif status == DataBaseWorker.AuthStatus.NoData:
-            try:
-                FirstLoad(card_id=self.login_input.text(),
-                          password=self.password_input.text(),
-                          parent=self,
-                          on_finish=self.auth).run()
-            except Exception as e:
-                print("ERROR FirstLoad->", e)
+            print("start FIRST LOAD")
+            self._first_load()
+
         elif status == DataBaseWorker.AuthStatus.Fail:
             self.msg = QMessageBox()
             self.msg.setText("Неверная комбинация логина и пароля")
