@@ -51,12 +51,14 @@ class MailConnection:
             student = self.db_worker.get_students(student_id=student_id)[0]
 
             text = """
+            <html>
             <p>Уважаемый (-ая) {0}, <p>
             <p>Сообщаем вам, что по состоянию на {1} <br>
             {2} имеет следующие пропуски в учебе:<p>
             {3}
             <p> Данное письмо сформировано автоматически, пожалуйста не отвечайте на него <p>
             <p text-align=center> СПбГУТ, {4} <p>
+            </html>
             """.format(
                 parent["name"],
                 datetime.datetime.now().isoformat(),
@@ -73,7 +75,7 @@ class MailConnection:
             self.server.sendmail(to_addrs=parent["email"], from_addr=self.config.email, msg=message.as_string())
 
     def table(self, skips):
-        tb = "<html><table border='1px solid black'> <tr> <th> Дисциплина </th> <th> Количество пропусков </th> </tr>"
+        tb = "<table border='1px solid black'> <tr> <th> Дисциплина </th> <th> Количество пропусков </th> </tr>"
 
         for l in skips:
             discipline = self.db_worker.get_disciplines(discipline_id=l.discipline_id)
@@ -81,7 +83,7 @@ class MailConnection:
                 discipline = discipline[0]
                 tb += self._table_row(discipline["name"], l.skipCount)
 
-        tb += "</table> </html>"
+        tb += "</table>"
 
         return tb
 
