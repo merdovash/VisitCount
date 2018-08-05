@@ -20,7 +20,8 @@ class RFIDReader(threading.Thread):
 
     @staticmethod
     def instance() -> 'RFIDReader':
-        print("getting instance", RFIDReader.inst)
+        print("getting instance")
+        traceback.print_stack()
         if RFIDReader.inst is None:
             print("create new instance")
             RFIDReader.inst = RFIDReader(lambda x: 0)

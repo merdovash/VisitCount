@@ -157,7 +157,7 @@ class LessonNumberItem(QTableWidgetItem):
 class WeekDayItem(QTableWidgetItem):
     rule = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
 
-    def __init__(self, date:datetime):
+    def __init__(self, date: datetime):
         super().__init__()
         self.setTextAlignment(Qt.AlignCenter)
         self.setText(str(WeekDayItem.rule[date.weekday()]))
@@ -275,11 +275,17 @@ class PercentHeaderItem(QTableWidgetItem, AbstractContextItem):
 class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
     def __init__(self, student: dict, *__args):
         super().__init__(*__args)
-        self.setText("{} {}. {}.".format(
-            student["last_name"],
-            student['first_name'][0],
-            student["middle_name"][0]
-        ))
+        if len(student["middle_name"]) > 0:
+            self.setText("{} {}. {}.".format(
+                student["last_name"],
+                student['first_name'][0],
+                student["middle_name"][0]
+            ))
+        else:
+            self.setText("{} {}.".format(
+                student["last_name"],
+                student["first_name"][0]
+            ))
         self.student = student
 
         self.register_process = False

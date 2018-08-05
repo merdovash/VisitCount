@@ -164,7 +164,7 @@ def index():
         elif "login" in data.keys():
             auth_status = db_worker.auth(login=data["login"], password=data["password"])
             login = data["login"]
-            by_card=False
+            by_card = False
         else:
             return res.set_error("auth fail 2")()
 

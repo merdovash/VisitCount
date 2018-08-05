@@ -3,14 +3,13 @@ import os
 import sys
 import traceback
 
-from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QPushButton, QApplication, QAction, QMainWindow
 
-from Main import config
 import Main.Configuartion.WindowConfig as WindowConfig
+from Main import config
 from Main.DataBase import sql_handler
 from Main.DataBase.SendNew import send
 from Main.DataBase.sql_handler import DataBaseWorker
@@ -28,13 +27,24 @@ from Main.Types import WorkingData
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
 
 
-def getLessonIndex(lessons: list, lesson_id: int)->int:
+def getLessonIndex(lessons: list, lesson_id: int) -> int:
+    """
+
+    :param lessons: list of lessons
+    :param lesson_id: id of lessons that needs to find
+    :return: index of lesson in list
+    """
     for i in range(len(lessons)):
         if lessons[i]["id"] == lesson_id:
             return i
 
 
 def closest_lesson(lessons: list):
+    """
+
+    :param lessons: list of lessons
+    :return: closest lesson in list to current datetime
+    """
     closest = min(
         lessons,
         key=lambda x: abs(datetime.datetime.now() - datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p")))
@@ -42,6 +52,10 @@ def closest_lesson(lessons: list):
 
 
 class MainWindow(QMainWindow):
+    """
+    class represents main window in program. includes table, control elements, status info, professor data.
+    """
+
     def __init__(self, professor_id: int or str, program: 'MyProgram', window_config: WindowConfig.Config):
         super().__init__()
         self.config = self.__init_setting__(window_config, professor_id)
@@ -51,7 +65,6 @@ class MainWindow(QMainWindow):
         self.c_w = MainWindowWidget(professor_id, program, self.config)
         self.setCentralWidget(self.c_w)
 
-        print(self.centralWidget())
         self.__init_menu__()
         self.dialog = None
 
@@ -71,17 +84,30 @@ class MainWindow(QMainWindow):
         self.bar = bar
 
         self._init_menu_file()
+        self._init_menu_analysis()
+        self._init_menu_data()
+        self._init_menu_lessons()
 
-        analysis = bar.addMenu("Анализ")
+    def _init_menu_analysis(self):
+        analysis = self.bar.addMenu("Анализ")
+
         analysis_weeks = QAction("По неделям", self)
         analysis_weeks.triggered.connect(show(WeekChart, self))
+
         analysis.addAction(analysis_weeks)
 
         analysis_week_days = QAction("По дням недели", self)
         analysis_week_days.triggered.connect(show(WeekDayChart, self))
+
         analysis.addAction(analysis_week_days)
 
-        self._init_menu_data()
+    def _init_menu_lessons(self):
+        lessons = self.bar.addMenu("Занятия")
+
+        lessons_current = QAction("Выбрать текущее", self)
+        lessons_current.triggered.connect(self.centralWidget().setup_data)
+
+        lessons.addAction(lessons_current)
 
     def _init_menu_file(self):
         file = self.bar.addMenu("Файл")
@@ -112,6 +138,10 @@ class MainWindow(QMainWindow):
             DataAction(["Отображать тип занятия", "Не отображать тип занятия"], VisitTable.Header.LESSONTYPE, self))
 
     def setDialog(self, dialog: QAnalysisDialog):
+        """
+
+        :param dialog: QAnalysisDialog that contains graph to show
+        """
         self.dialog = dialog
         self.dialog.show()
 
@@ -222,6 +252,9 @@ class MainWindowWidget(QWidget):
             self.discipline_selector.addItems(disciplines)
             self.discipline_selector.currentIndexChanged.connect(self.discipline_changed)
 
+            if len(disciplines) == 1:
+                self.discipline_changed()
+
             self.discipline_selector.setCurrentId(closest["discipline_id"])
             self.group_selector.setCurrentId(closest["group_id"])
             self.lesson_selector.setCurrentId(closest["id"])
@@ -330,6 +363,8 @@ class MainWindowWidget(QWidget):
 
         # self.table.set_horizontal_header(lessons)
 
+        print(students)
+
         for st in students:
             self.table.add_student(st, self.db.get_visitations(
                 student_id=st["id"],
@@ -418,6 +453,6 @@ if __name__ == "__main__":
     window_config = WindowConfig.load()
 
     program = MyProgram()
-    program.auth_success(2)
+    program.auth_success(1)
 
     sys.exit(app.exec_())

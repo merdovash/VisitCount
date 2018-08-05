@@ -192,7 +192,8 @@ class VisitTable(QWidget, Configurable):
         completed_lessons = list(filter(lambda x: x["completed"] == 1, self.lessons))
         # print(completed_lessons)
         # fill row and find percents
-        visitations_id = [i["id"] for i in visitations]
+        print(student["last_name"], "visits", len(visitations))
+        visitations_id = [i["lesson_id"] for i in visitations]
         for j in range(len(self.lessons)):
             try:
                 if self.lessons[j] in completed_lessons:
@@ -234,7 +235,6 @@ class VisitTable(QWidget, Configurable):
         self.visit_table.setVerticalHeaderItem(current_row, PercentHeaderItem(vertical_percents))
 
     def insertRow(self, index: int):
-        print(self.visit_table.rowCount(), index)
         self.visit_table.insertRow(index)
         self.percent_table.insertRow(index)
         # self.home_work_table.insertRow(index)

@@ -106,25 +106,24 @@ class QMyAuthWidget(QWidget):
         try:
             if self.login_input.image:
                 print("FIRST LOAD by card")
-                FirstLoad(card_id=self.login_input.text(), password=self.password_input.text(), parent=self,
+                FirstLoad(card_id=self.login_input.text(),
+                          password=self.password_input.text(),
+                          parent=self,
                           on_finish=self.auth).run()
             else:
-                FirstLoad(login=self.login_input.text(), password=self.password_input.text(), parent=self,
+                FirstLoad(login=self.login_input.text(),
+                          password=self.password_input.text(),
+                          parent=self,
                           on_finish=self.auth).run()
         except Exception as e:
             traceback.print_exc()
 
-    @pyqtSlot(name="auth")
     def auth(self):
         status, professor_id = self._auth()
         print(status)
 
         if status == DataBaseWorker.AuthStatus.Success:
-            try:
-                print("AUTH SUCCESS")
-                self.window.auth_success(professor_id)
-            except Exception:
-                traceback.print_exc()
+            self._auth_success_event(professor_id)
 
         elif status == DataBaseWorker.AuthStatus.NoData:
             print("start FIRST LOAD")
@@ -134,6 +133,9 @@ class QMyAuthWidget(QWidget):
             self.msg = QMessageBox()
             self.msg.setText("Неверная комбинация логина и пароля")
             self.msg.show()
+
+    def _auth_success_event(self, professor_id):
+        self.window.auth_success(professor_id)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         print("keypressEvent", a0.key(), QtCore.Qt.Key_Enter)
