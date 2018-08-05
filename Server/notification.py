@@ -27,6 +27,14 @@ class MailConnection:
         self.server.starttls()
         self.server.login(login, password)
 
+    def skips(self, count):
+        if count % 10 == 1:
+            return "пропуск"
+        elif count % 10 < 5:
+            return "пропуска"
+        else:
+            return "пропусков"
+
     def send_msg(self, student_id: int or str, skips: [SkipLesson]):
         """
 
@@ -37,22 +45,39 @@ class MailConnection:
 
         parent = self.db_worker.get_parent(student_id)
 
-        if parent is not None:
+        if parent is not None or len(skips)==0:
             student = self.db_worker.get_students(student_id=student_id)[0]
             text = "From: Администрация СПбГУТ \n" \
                    "Subject: Пропуски занятий \n" \
                    "To: {} \n".format(parent["name"])
             text += "Уважаемый (-ая) {0}, \n".format(parent["name"])
             text += "Сообщаем вам, что по состоянию на {1} " \
-                    "{0} имеет следующие пропуски в учебе: \n".format(student["name"],
-                                                                      datetime.datetime.now())
-            for l in skips:
-                discipline = self.db_worker.get_disciplines(discipline_id=l.discipline_id)
-                if len(discipline) > 0:
-                    text += "{0} : {1} пропусков \n".format(discipline["name"], l.skipCount)
-            text += "С уважением, Администрация СПбГУТ."
+                    "{0} имеет следующие пропуски в учебе: \n".format(student["first_name"],
+                                                                      datetime.datetime.now().isoformat())
+            text += self.table(skips)
 
             self.server.sendmail(to_addrs=parent["email"], from_addr=self.config.email, msg=text.encode())
+
+    def table(self, skips):
+        tb = "<html><table> <tr> <td> Дисциплина </td> <td> Количество пропусков </td> </tr>"
+
+        for l in skips:
+            discipline = self.db_worker.get_disciplines(discipline_id=l.discipline_id)
+            if len(discipline) > 0:
+                discipline = discipline[0]
+                tb += self._table_row(discipline["name"], l.skipCount)
+
+        tb += "</table>"
+
+        return tb
+
+    def _table_row(self, name, skipCount):
+        return """
+            <tr>
+                <td> {0} </td>
+                <td> {1} </td>
+            </tr>
+        """.format(name, skipCount)
 
     def close(self):
         """
