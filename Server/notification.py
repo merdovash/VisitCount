@@ -50,17 +50,21 @@ class MailConnection:
         if parent is not None or len(skips) == 0:
             student = self.db_worker.get_students(student_id=student_id)[0]
 
-            text = "Уважаемый (-ая) {0}, \n".format(parent["name"])
-            text += "Сообщаем вам, что по состоянию на {1} " \
-                    "{0} имеет следующие пропуски в учебе: \n".format(student["first_name"],
-                                                                      datetime.datetime.now().isoformat())
+            text = """
+            <p>Уважаемый (-ая) {0}, <p>
+            <p>Сообщаем вам, что по состоянию на {1} <br>
+            {2} имеет следующие пропуски в учебе:<p>
+            {3}
+            <p> Данное письмо сформировано автоматически, пожалуйста не отвечайте на него <p>
+            <p text-align=center> СПбГУТ, {4} <p>
+            """.format(
+                parent["name"],
+                datetime.datetime.now().isoformat(),
+                student["first_name"],
+                self.table(skips),
+                datetime.datetime.now().year)
 
-            text += "{table}"
-
-            table = self.table(skips)
-
-            message = MIMEMultipart(
-                "alternative", None, [MIMEText(text), MIMEText(table, 'html')])
+            message = MIMEMultipart("alternative", None,  MIMEText(text, 'html'))
 
             message["Subject"] = "Пропуски занятий"
             message['From'] = "Администрация СПбГУТ"
@@ -69,7 +73,7 @@ class MailConnection:
             self.server.sendmail(to_addrs=parent["email"], from_addr=self.config.email, msg=message.as_string())
 
     def table(self, skips):
-        tb = "<html><table> <tr> <td> Дисциплина </td> <td> Количество пропусков </td> </tr>"
+        tb = "<html><table border='1px solid black'> <tr> <th> Дисциплина </th> <th> Количество пропусков </th> </tr>"
 
         for l in skips:
             discipline = self.db_worker.get_disciplines(discipline_id=l.discipline_id)
@@ -84,8 +88,8 @@ class MailConnection:
     def _table_row(self, name, skipCount):
         return """
             <tr>
-                <td> {0} </td>
-                <td> {1} </td>
+                <td text-align=center> {0} </td>
+                <td text-align=center> {1} </td>
             </tr>
         """.format(name, skipCount)
 
