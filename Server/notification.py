@@ -3,6 +3,8 @@ notification
 """
 import datetime
 import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 class SkipLesson:
@@ -45,18 +47,26 @@ class MailConnection:
 
         parent = self.db_worker.get_parent(student_id)
 
-        if parent is not None or len(skips)==0:
+        if parent is not None or len(skips) == 0:
             student = self.db_worker.get_students(student_id=student_id)[0]
-            text = "From: Администрация СПбГУТ \n" \
-                   "Subject: Пропуски занятий \n" \
-                   "To: {} \n".format(parent["name"])
-            text += "Уважаемый (-ая) {0}, \n".format(parent["name"])
+
+            text = "Уважаемый (-ая) {0}, \n".format(parent["name"])
             text += "Сообщаем вам, что по состоянию на {1} " \
                     "{0} имеет следующие пропуски в учебе: \n".format(student["first_name"],
                                                                       datetime.datetime.now().isoformat())
-            text += self.table(skips)
 
-            self.server.sendmail(to_addrs=parent["email"], from_addr=self.config.email, msg=text.encode())
+            text += "{table}"
+
+            table = self.table(skips)
+
+            message = MIMEMultipart(
+                "alternative", None, [MIMEText(text), MIMEText(table, 'html')])
+
+            message["Subject"] = "Пропуски занятий"
+            message['From'] = "Администрация СПбГУТ"
+            message['To'] = parent["name"]
+
+            self.server.sendmail(to_addrs=parent["email"], from_addr=self.config.email, msg=message.as_string())
 
     def table(self, skips):
         tb = "<html><table> <tr> <td> Дисциплина </td> <td> Количество пропусков </td> </tr>"
@@ -67,7 +77,7 @@ class MailConnection:
                 discipline = discipline[0]
                 tb += self._table_row(discipline["name"], l.skipCount)
 
-        tb += "</table>"
+        tb += "</table> </html>"
 
         return tb
 
