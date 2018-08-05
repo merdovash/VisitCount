@@ -57,7 +57,7 @@ class MailConnection:
             {2} имеет следующие пропуски в учебе:<p>
             {3}
             <p> Данное письмо сформировано автоматически, пожалуйста не отвечайте на него <p>
-            <p text-align=center> СПбГУТ, {4} <p>
+            <p align=center> СПбГУТ, {4} <p>
             </html>
             """.format(
                 parent["name"],
@@ -66,7 +66,7 @@ class MailConnection:
                 self.table(skips),
                 datetime.datetime.now().year)
 
-            message = MIMEMultipart("alternative", None,  MIMEText(text, 'html'))
+            message = MIMEMultipart("alternative", None,  [MIMEText(text, 'html')])
 
             message["Subject"] = "Пропуски занятий"
             message['From'] = "Администрация СПбГУТ"
@@ -90,8 +90,8 @@ class MailConnection:
     def _table_row(self, name, skipCount):
         return """
             <tr>
-                <td text-align=center> {0} </td>
-                <td text-align=center> {1} </td>
+                <td align=center> {0} </td>
+                <td align=center> {1} </td>
             </tr>
         """.format(name, skipCount)
 
