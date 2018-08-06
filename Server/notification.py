@@ -59,13 +59,15 @@ class MailConnection:
                 self._table(skips),
                 datetime.datetime.now().year)
 
-            message = MIMEMultipart("alternative", None,  [MIMEText(text, 'html')])
+            message = MIMEMultipart("alternative", None, [MIMEText(text, 'html')])
 
             message["Subject"] = "Пропуски занятий"
             message['From'] = "Администрация СПбГУТ"
             message['To'] = parent["name"]
 
             self.server.sendmail(to_addrs=parent["email"], from_addr=self.config.email, msg=message.as_string())
+        else:
+            print("no parents, so sad")
 
     def _table(self, skips):
         tb = "<table border='1px solid black'> <tr> <th> Дисциплина </th> <th> Количество пропусков </th> </tr>"
@@ -95,13 +97,14 @@ class MailConnection:
         self.server.close()
 
 
-def run(db_worker: 'DataBaseWorker', config) -> None:
+def run(db_worker: 'DataBaseWorker', config) -> int:
     """
 
     Runs notification process of parents
 
     :param config:
     :param db_worker: database worker
+    :return: total length of table
     """
     print("notification started")
     if config.mail_password is None or "":
@@ -110,18 +113,22 @@ def run(db_worker: 'DataBaseWorker', config) -> None:
     conn = MailConnection(db_worker, config.email, config.mail_password, config)
 
     students_list = db_worker.get_students()
+    count = 0
     for student in students_list:
         data_list = []
 
         disciplines_list = db_worker.get_disciplines(student_id=student["id"])
+        print(student["id"], disciplines_list)
         for discipline in disciplines_list:
             total_lessons = db_worker.get_the_lessons_count(student["id"], discipline["id"])
             visited_lessons = db_worker.get_visited_lessons_count(student["id"], discipline["id"])
 
             max_loss = 3
             if total_lessons - visited_lessons >= int(max_loss):
-                data_list.append((discipline["id"], total_lessons - visited_lessons))
+                data_list.append(SkipLesson(discipline["id"], total_lessons - visited_lessons))
+                count += 1
 
         if not len(data_list) == 0:
             conn.send_msg(student["id"], data_list)
     conn.close()
+    return count

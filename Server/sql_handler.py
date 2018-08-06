@@ -829,7 +829,7 @@ class DataBaseWorker:
                                               use_unicode=True,
                                               charset='utf8')
         elif self.config.db == "sqlite":
-            self.connection = sqlite.connect(self.config.datavase_path)
+            self.connection = sqlite.connect(self.config.database_path)
         return self.connection
 
     def update_student_card_id(self, student_id, card_id):
