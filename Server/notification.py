@@ -5,6 +5,7 @@ import datetime
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import List
 
 
 class SkipLesson:
@@ -29,15 +30,7 @@ class MailConnection:
         self.server.starttls()
         self.server.login(login, password)
 
-    def skips(self, count):
-        if count % 10 == 1:
-            return "пропуск"
-        elif count % 10 < 5:
-            return "пропуска"
-        else:
-            return "пропусков"
-
-    def send_msg(self, student_id: int or str, skips: [SkipLesson]):
+    def send_msg(self, student_id: int or str, skips: List[SkipLesson]):
         """
 
         :param skips: list of SkipLesson
@@ -63,7 +56,7 @@ class MailConnection:
                 parent["name"],
                 datetime.datetime.now().isoformat(),
                 student["first_name"],
-                self.table(skips),
+                self._table(skips),
                 datetime.datetime.now().year)
 
             message = MIMEMultipart("alternative", None,  [MIMEText(text, 'html')])
@@ -74,7 +67,7 @@ class MailConnection:
 
             self.server.sendmail(to_addrs=parent["email"], from_addr=self.config.email, msg=message.as_string())
 
-    def table(self, skips):
+    def _table(self, skips):
         tb = "<table border='1px solid black'> <tr> <th> Дисциплина </th> <th> Количество пропусков </th> </tr>"
 
         for l in skips:
@@ -111,9 +104,10 @@ def run(db_worker: 'DataBaseWorker', config) -> None:
     :param db_worker: database worker
     """
     print("notification started")
-    password = input("Введите пароль: ")
+    if config.mail_password is None or "":
+        config.mail_password = input("Введите пароль: ")
 
-    conn = MailConnection(db_worker, config.email, password, config)
+    conn = MailConnection(db_worker, config.email, config.mail_password, config)
 
     students_list = db_worker.get_students()
     for student in students_list:

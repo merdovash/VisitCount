@@ -3,7 +3,6 @@
 """
 from datetime import datetime
 
-import config
 import sqlite3 as sqlite
 import MySQLdb
 
@@ -21,7 +20,7 @@ class Logger:
 
         :param s: string, value to write
         """
-        logger = open(config.logger, "a+")
+        logger = open("logger.txt", "a+")
         logger.write(str(s) + "\n")
         logger.close()
 
@@ -31,22 +30,27 @@ class DataBaseWorker:
     class
     """
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, config=None):
+        if config is not None:
+            self.config = config
+        else:
+            from config2 import Config 
+            self.config = Config()
         self.app = app
         self.init_connection()
 
     def init_connection(self):
         try:
-            if config.db == "sqlite":
-                self.connection = sqlite.connect(config.database_path)
-            elif config.db == "oracle":
+            if self.config.db == "sqlite":
+                self.connection = sqlite.connect(self.config.database_path)
+            elif self.config.db == "oracle":
                 import cx_Oracle
-                self.connection = cx_Oracle.connect(config.connection)
-            elif config.db == "mysql":
-                self.connection = MySQLdb.connect(host=config.db_host,
-                                                  user=config.db_user,
-                                                  passwd=config.db_password,
-                                                  db=config.db_name,
+                self.connection = cx_Oracle.connect(self.config.connection)
+            elif self.config.db == "mysql":
+                self.connection = MySQLdb.connect(host=self.config.db_host,
+                                                  user=self.config.db_user,
+                                                  passwd=self.config.db_password,
+                                                  db=self.config.db_name,
                                                   use_unicode=True,
                                                   charset='utf8')
         except IOError:
@@ -64,7 +68,7 @@ class DataBaseWorker:
         :return: bool
         """
         res = self.sql_request("SELECT COUNT(login) FROM {0} WHERE login='{1}'",
-                               config.auth,
+                               self.config.auth,
                                login_name)
 
         if len(res) == 0:
@@ -86,7 +90,7 @@ class DataBaseWorker:
             account_type = 0
         if user_id is None:
             user_id = 0
-        self.sql_request("INSERT INTO {} (login,password,user_type,user_id) VALUES  ('{}','{}',{},{})", config.auth,
+        self.sql_request("INSERT INTO {} (login,password,user_type,user_id) VALUES  ('{}','{}',{},{})", self.config.auth,
                          login,
                          password, account_type, user_id)
 
@@ -105,7 +109,7 @@ class DataBaseWorker:
         if (login is not None or card_id is not None) and password is not None:
             if login is not None:
                 res = self.sql_request("SELECT id, user_type, user_id FROM {0} WHERE login='{1}' AND password='{2}';",
-                                       config.auth,
+                                       self.config.auth,
                                        login,
                                        password)
                 if len(res) > 0:
@@ -116,7 +120,7 @@ class DataBaseWorker:
                     return False
             elif card_id is not None:
                 res = self.sql_request("SELECT id FROM {0} WHERE card_id='{1}' AND password='{2}';",
-                                       config.auth,
+                                       self.config.auth,
                                        card_id,
                                        password)
                 if len(res) > 0:
@@ -126,7 +130,7 @@ class DataBaseWorker:
 
         elif uid is not None:
             res = self.sql_request("SELECT user_type, user_id, id FROM {0} WHERE uid='{1}';",
-                                   config.auth,
+                                   self.config.auth,
                                    uid)
             if len(res) > 0:
                 return {"type": res[0][0],
@@ -142,12 +146,12 @@ class DataBaseWorker:
         :return: data of table students_groups
         """
         request = "SELECT DISTINCT {0}.student_id, {0}.group_id FROM {0} "
-        params = [config.students_groups]
+        params = [self.config.students_groups]
 
         if professor_id is not None:
             request += "JOIN {1} ON {1}.group_id={0}.group_id " \
                        "WHERE {1}.professor_id={2} "
-            params.extend([config.lessons, professor_id])
+            params.extend([self.config.lessons, professor_id])
 
             res = self.sql_request(request, *tuple(params))
             return [{'student_id': str(res[i][0]), 'group_id': str(res[i][1])} for i in range(len(res))]
@@ -156,7 +160,7 @@ class DataBaseWorker:
 
     def get_auth_info(self, professor_id: int or str) -> object:
         req = "SELECT login, password, card_id, user_id, user_type FROM {0} WHERE user_type=1 AND user_id={1}"
-        params = [config.auth, professor_id]
+        params = [self.config.auth, professor_id]
         res = [{"login": i[0],
                 "password": i[1],
                 "card_id": i[2],
@@ -172,11 +176,11 @@ class DataBaseWorker:
         :return: complete data for client for first connection
         """
         req = "SELECT {0}.id FROM {0} "
-        params = [config.professors]
+        params = [self.config.professors]
 
         if login is not None:
             req += "JOIN {1} on {1}.user_id={0}.id AND {1}.user_type=1 "
-            params.append(config.auth)
+            params.append(self.config.auth)
             req, params = self.setParam(req, params, login, "{1}.login='{" + str(len(params)) + "}' ", 2)
         if professor_card_id is not None:
             req, params = self.setParam(req, params, professor_card_id, "{0}.card_id={" + str(len(params)) + "} ", 2)
@@ -186,14 +190,14 @@ class DataBaseWorker:
         if len(res) > 0:
             professor_id = res[0][0]
             return (True, {
-                config.professors: self.get_professors(professor_id=professor_id),
-                config.disciplines: self.get_disciplines(professor_id=professor_id),
-                config.lessons: self.get_lessons(professor_id=professor_id),
-                config.groups: self.get_groups(professor_id=professor_id),
-                config.students: self.get_students(professor_id=professor_id),
-                config.students_groups: self.get_students_groups(professor_id=professor_id),
-                config.visitation: self.get_visitations(professor_id=professor_id),
-                config.auth: self.get_auth_info(professor_id)
+                self.config.professors: self.get_professors(professor_id=professor_id),
+                self.config.disciplines: self.get_disciplines(professor_id=professor_id),
+                self.config.lessons: self.get_lessons(professor_id=professor_id),
+                self.config.groups: self.get_groups(professor_id=professor_id),
+                self.config.students: self.get_students(professor_id=professor_id),
+                self.config.students_groups: self.get_students_groups(professor_id=professor_id),
+                self.config.visitation: self.get_visitations(professor_id=professor_id),
+                self.config.auth: self.get_auth_info(professor_id)
             })
         else:
             return False, 'no such professor'
@@ -208,7 +212,7 @@ class DataBaseWorker:
         """
         res = self.sql_request("SELECT * FROM {} "
                                "WHERE uid='{}'",
-                               config.auth,
+                               self.config.auth,
                                value)
         return len(res) == 0
 
@@ -226,7 +230,7 @@ class DataBaseWorker:
             SET uid='{1}'
             WHERE id={2}
         """,
-                             config.auth,
+                             self.config.auth,
                              uid,
                              account_id)
         Logger.write("update uid, row count=" + str(t) + " || " + str(
@@ -241,19 +245,19 @@ class DataBaseWorker:
         lessons = []
         print(data)
         try:
-            if config.db == "sqlite":
+            if self.config.db == "sqlite":
                 req = "INSERT OR IGNORE {0} (id, student_id) Values ('{1}', '{2}');"
-            elif config.db == "mysql":
+            elif self.config.db == "mysql":
                 req = "INSERT IGNORE {0} (id, student_id) VALUES ('{1}', '{2}');"
             for visit in data:
                 self.sql_request(req,
-                                 config.visitation,
+                                 self.config.visitation,
                                  visit["id"],
                                  visit["student_id"])
                 if visit["id"] not in lessons:
                     lessons.append(visit["id"])
                     self.sql_request("UPDATE {0} SET complete=True WHERE id={1}",
-                                     config.lessons,
+                                     self.config.lessons,
                                      visit["id"])
             return True, "OK"
         except Exception as e:
@@ -261,7 +265,7 @@ class DataBaseWorker:
 
     def get_telegram_temp(self, code=None, account_id=None):
         request = "SELECT code, account_id FROM {0} "
-        params = [config.telegram_temp]
+        params = [self.config.telegram_temp]
         if code is not None:
             request += and_or_where(params, 1) + "code={" + str(len(params)) + "} "
             params.append(code)
@@ -275,7 +279,7 @@ class DataBaseWorker:
 
     def set_telegram_temp(self, account_id, code):
         request = "INSERT INTO {0} (account_id, code) VALUES ({1}, {2})"
-        params = [config.telegram_temp, account_id, code]
+        params = [self.config.telegram_temp, account_id, code]
         return self.sql_request(request, *tuple(params))
 
     def get_parent(self, student_id=None) -> dict:
@@ -287,8 +291,8 @@ class DataBaseWorker:
         request = "SELECT email, first_name, last_name, middle_name FROM {0} " \
                   "JOIN {1} ON {0}.id={1}.parent_id " \
                   "WHERE {1}.student_id={2}"
-        params = [config.parents,
-                  config.parents_students,
+        params = [self.config.parents,
+                  self.config.parents_students,
                   student_id]
         res = self.sql_request(request, *tuple(params))
         if len(res) == 0:
@@ -316,13 +320,13 @@ class DataBaseWorker:
         """
 
         request = "SELECT {0}.first_name, {0}.last_name, {0}.middle_name, {0}.id, {0}.card_id FROM {0} "
-        params = [config.professors]
+        params = [self.config.professors]
         if group_id is not None or discipline_id is not None or student_id is not None:
             request += "JOIN {1} ON {0}.id={1}.professor_id "
-            params.append(config.lessons)
+            params.append(self.config.lessons)
             if student_id is not None:
                 request += "JOIN {2} ON {1}.group_id={2}.group_id "
-                params.append(config.students_groups)
+                params.append(self.config.students_groups)
                 request += and_or_where(params, 3)
                 request += "{2}.student_id={" + str(len(params)) + "} "
             request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 2)
@@ -361,14 +365,14 @@ class DataBaseWorker:
         :return: data of {"name": res[i][name], "id": res[i][id]}
         """
         request = "SELECT DISTINCT {0}.id, {0}.name FROM {0} "
-        params = [config.groups]
+        params = [self.config.groups]
 
         if professor_id is not None or discipline_id is not None or student_id is not None:
             request += "JOIN {1} ON {1}.group_id={0}.id "
-            params.append(config.lessons)
+            params.append(self.config.lessons)
             if student_id is not None:
                 request += "JOIN {2} ON {2}.group_id ={1}.group_id "
-                params.append(config.students_groups)
+                params.append(self.config.students_groups)
                 request += and_or_where(params, 2)
                 request += "{2}.student_id={" + str(len(params)) + "} "
                 params.append(student_id)
@@ -398,11 +402,11 @@ class DataBaseWorker:
 
         request = "SELECT DISTINCT {0}.id, {0}.name FROM {0} " \
                   "JOIN {1} ON {0}.id={1}.discipline_id "
-        params = [config.disciplines, config.lessons]
+        params = [self.config.disciplines, self.config.lessons]
         if student_id is not None:
             request += "JOIN {2} ON {1}.group_id={2}.group_id " \
                        "WHERE {2}.student_id={3}"
-            params.extend([config.students_groups, student_id])
+            params.extend([self.config.students_groups, student_id])
         request, params = self.setParam(request, params, professor_id, "{1}.professor_id={" + str(len(params)) + "} ",
                                         2)
         request, params = self.setParam(request, params, discipline_id, "{0}.id={" + str(len(params)) + "} ", 2)
@@ -427,12 +431,12 @@ class DataBaseWorker:
         """
         request = "SELECT DISTINCT {0}.id, {0}.first_name, {0}.last_name, {0}.middle_name, {0}.card_id " \
                   "FROM {0} "
-        params = [config.students]
+        params = [self.config.students]
 
         if group_id is not None or professor_id is not None:
             request += "JOIN {1} ON {1}.student_id={0}.id " \
                        "JOIN {2} ON {2}.group_id={1}.group_id "
-            params.extend([config.students_groups, config.lessons])
+            params.extend([self.config.students_groups, self.config.lessons])
             request, params = self.setParam(request, params, professor_id,
                                             "{2}.professor_id={" + str(len(params)) + "} ", 3)
             request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 3)
@@ -459,10 +463,10 @@ class DataBaseWorker:
         """
         request = "SELECT DISTINCT {0}.id, {0}.date, {0}.room_id, {0}.group_id, {0}.discipline_id, {0}.professor_id," \
                   " {0}.complete, {0}.type FROM {0} "
-        params = [config.lessons]
+        params = [self.config.lessons]
         if student_id is not None:
             request += "JOIN {1} ON {0}.group_id={1}.group_id "
-            params.append(config.students_groups)
+            params.append(self.config.students_groups)
             request += and_or_where(params, 2)
             request += "{1}.student_id={" + str(len(params)) + "} "
             params.append(student_id)
@@ -497,9 +501,9 @@ class DataBaseWorker:
         :return:
         """
         request = "SELECT DISTINCT {0}.student_id, {0}.lesson_id FROM {0} "
-        params = [config.visitation]
+        params = [self.config.visitation]
         request += "JOIN {1} ON {0}.lesson_id={1}.id "
-        params.append(config.lessons)
+        params.append(self.config.lessons)
         if student_list is not None or student_id is not None:
             if student_list is not None:
                 request += "WHERE {0}.student_id IN ({" + str(len(params)) + "}) "
@@ -532,7 +536,7 @@ class DataBaseWorker:
             JOIN {1} ON {1}.group_id={0}.group_id
             LEFT JOIN {2} ON {2}.student_id={1}.student_id AND {0}.id={2}.lesson_id
             """
-            params = [config.lessons, config.students_groups, config.visitation]
+            params = [self.config.lessons, self.config.students_groups, self.config.visitation]
             if student_id is not None:
                 request += and_or_where(params, 3) + "{1}.student_id={" + str(len(params)) + "} "
                 params.append(student_id)
@@ -603,11 +607,11 @@ class DataBaseWorker:
                 GROUP BY {2}.id
             """
             params = [
-                config.students,
-                config.students_groups,
-                config.groups,
-                config.lessons,
-                config.visitation]
+                self.config.students,
+                self.config.students_groups,
+                self.config.groups,
+                self.config.lessons,
+                self.config.visitation]
             return [{
                 "id": i[0],
                 "%": float(i[1]),
@@ -640,10 +644,10 @@ class DataBaseWorker:
             ORDER BY '%'
             """
             params = [
-                config.students,
-                config.students_groups,
-                config.lessons,
-                config.visitation,
+                self.config.students,
+                self.config.students_groups,
+                self.config.lessons,
+                self.config.visitation,
                 group_id]
 
             return [{
@@ -665,8 +669,8 @@ class DataBaseWorker:
         return self.sql_request("SELECT COUNT(DISTINCT id) FROM {0} "
                                 "JOIN {1} ON {1}.group_id={0}.group_id "
                                 "WHERE {1}.student_id={2} AND {0}.discipline_id={3}",
-                                config.lessons,
-                                config.students_groups,
+                                self.config.lessons,
+                                self.config.students_groups,
                                 student_id,
                                 discipline_id)[0][0]
 
@@ -681,9 +685,9 @@ class DataBaseWorker:
                                 "JOIN {1} ON {1}.id={0}.id "
                                 "JOIN {2} ON {1}.group_id={2}.group_id "
                                 "WHERE {2}.student_id={3} AND {1}.discipline_id={4}",
-                                config.visitation,
-                                config.lessons,
-                                config.students_groups,
+                                self.config.visitation,
+                                self.config.lessons,
+                                self.config.students_groups,
                                 student_id,
                                 discipline_id)[0][0]
 
@@ -709,7 +713,7 @@ class DataBaseWorker:
         if len(request) > 7:
             request += ", "
         request += "max_loss FROM {0} "
-        params = [config.notification_params]
+        params = [self.config.notification_params]
         if professor_id is not None or discipline_id is not None or group_id is not None:
             request += "WHERE "
             if professor_id is not None:
@@ -738,7 +742,7 @@ class DataBaseWorker:
         :param group_id:
         """
         request = "UPDATE {0} SET max_loss={1} "
-        params = [config.notification_params, new_value]
+        params = [self.config.notification_params, new_value]
         if professor_id is not None:
             request += and_or_where(params, 2)
             request += "professor_id={" + str(len(params)) + "} "
@@ -765,8 +769,8 @@ class DataBaseWorker:
         visitation = self.sql_request("SELECT DISTINCT {0}.id, {1}.discipline_id, {1}.date FROM {0} "
                                       "JOIN {1} ON {1}.id={0}.id "
                                       "WHERE {0}.student_id={2} AND {1}.group_id={3} AND {1}.discipline_id in ({4})",
-                                      config.visitation,
-                                      config.lessons,
+                                      self.config.visitation,
+                                      self.config.lessons,
                                       student_id,
                                       group_id,
                                       discipline_id
@@ -817,32 +821,32 @@ class DataBaseWorker:
     def connect(self):
         if self.connection:
             self.connection.close()
-        if config.db == "mysql":
-            self.connection = MySQLdb.connect(host=config.db_host,
-                                              user=config.db_user,
-                                              passwd=config.db_password,
-                                              db=config.db_name,
+        if self.config.db == "mysql":
+            self.connection = MySQLdb.connect(host=self.config.db_host,
+                                              user=self.config.db_user,
+                                              passwd=self.config.db_password,
+                                              db=self.config.db_name,
                                               use_unicode=True,
                                               charset='utf8')
-        elif config.db == "sqlite":
-            self.connection = sqlite.connect(config.datavase_path)
+        elif self.config.db == "sqlite":
+            self.connection = sqlite.connect(self.config.datavase_path)
         return self.connection
 
     def update_student_card_id(self, student_id, card_id):
         req = "UPDATE {} SET card_id={} WHERE id={}"
-        params = [config.students, card_id, student_id]
+        params = [self.config.students, card_id, student_id]
 
         res = self.sql_request(req, *tuple(params))
 
-        self.field_updated(table=config.students, id=student_id)
+        self.field_updated(table=self.config.students, id=student_id)
 
     def field_updated(self, table, id):
         req = "INSERT INTO {} VALUES ('{}',{})"
-        params = [config.updates, table, id]
+        params = [self.config.updates, table, id]
 
         res = self.sql_request(req, *tuple(params))
 
-        if table == config.students:
+        if table == self.config.students:
             3
 
     def sql_request(self, msg, *args) -> list:
@@ -883,10 +887,10 @@ class DataBaseWorker:
                       "JOIN {3} ON {3}.group_id={0}.group_id " \
                       "WHERE {0}.discipline_id IN {4} AND {3}.student_id={5} " \
                       "ORDER  BY {0}.date"
-            params = [config.lessons,
-                      config.visitation,
-                      config.disciplines,
-                      config.students_groups,
+            params = [self.config.lessons,
+                      self.config.visitation,
+                      self.config.disciplines,
+                      self.config.students_groups,
                       discipline_id if discipline_id is tuple else "({})".format(discipline_id),
                       student_id]
             lessons = self.sql_request(request, *tuple(params))
@@ -899,9 +903,9 @@ class DataBaseWorker:
                       "JOIN {1} ON {1}.id={0}.id " \
                       "JOIN {2} ON {0}.discipline_id={2}.id " \
                       "WHERE {0}.discipline_id IN {3} AND {1}.student_id={4} "
-            params = [config.lessons,
-                      config.visitation,
-                      config.disciplines,
+            params = [self.config.lessons,
+                      self.config.visitation,
+                      self.config.disciplines,
                       discipline_id if discipline_id is tuple else "({})".format(discipline_id),
                       student_id]
             visit = self.sql_request(request, *tuple(params))
@@ -930,7 +934,7 @@ def remove_banned_symbols(string):
     :param string: String that will be insert into sql request
     :return: String without restricted symbols
     """
-    for banned_symbol in config.sql_banned_symbols:
+    for banned_symbol in ["\'", ";", "\""]:
         string = string.split(banned_symbol)[0]
     return string
 
