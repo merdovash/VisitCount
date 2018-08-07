@@ -304,8 +304,7 @@ class DataBaseWorker:
             if student_id is not None:
                 request += "JOIN {2} ON {1}.group_id={2}.group_id "
                 params.append(Tables.StudentsGroups)
-                request += and_or_where(params, 3)
-                request += "{2}.student_id={" + str(len(params)) + "} "
+                request, params = self.setParam(request, params, student_id, "{2}.student_id={" + str(len(params)) + "} ")
             request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 2)
             request, params = self.setParam(request, params, discipline_id,
                                             "{1}.discipline_id={" + str(len(params)) + "} ", 2)
