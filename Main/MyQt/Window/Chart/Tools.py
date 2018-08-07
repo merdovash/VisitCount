@@ -1,5 +1,5 @@
+from DataBase.sql_handler import DataBaseWorker as sql
 from Main import config
-from Main.DataBase.sql_handler import DataBaseWorker as sql
 
 
 def get_visit_count(lesson_id):

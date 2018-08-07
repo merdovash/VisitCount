@@ -1,12 +1,11 @@
 import datetime
 import traceback
 
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
-from Main.DataBase.sql_handler import DataBaseWorker as sql
-from Main.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData, LessonAccumulator
+from DataBase.sql_handler import DataBaseWorker as sql
+from Main.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
 from Main.Types import WorkingData
 
 

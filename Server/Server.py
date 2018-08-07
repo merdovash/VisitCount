@@ -10,7 +10,7 @@ import sys
 from flask import Flask, make_response, request, render_template
 
 from notification import run as notification
-from sql_handler import DataBaseWorker
+from DataBase.sql_handler import DataBaseWorker
 import config
 
 path, file = os.path.split(os.path.abspath(__file__))

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QWidget
 
-from Main.DataBase.sql_handler import DataBaseWorker
+from DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyLoginInput import QLoginInput
 from Main.MyQt.Window.QtMyMainWindow import MainWindowWidget
 

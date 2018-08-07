@@ -3,6 +3,7 @@ import os
 import sys
 import traceback
 
+from DataBase.sql_handler import DataBaseWorker
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
@@ -10,9 +11,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
 
 import Main.Configuartion.WindowConfig as WindowConfig
 from Main import config
-from Main.DataBase import sql_handler
-from Main.DataBase.SendNew import send
-from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QAction.DataAction import DataAction
 from Main.MyQt.QtMyComboBox import QMyComboBox
 from Main.MyQt.QtMyStatusBar import QStatusMessage
@@ -21,6 +19,7 @@ from Main.MyQt.QtMyWidgetItem import VisitItem
 from Main.MyQt.Window.Chart.QAnalysisDialog import show, QAnalysisDialog
 from Main.MyQt.Window.Chart.WeekAnalysis import WeekChart
 from Main.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
+from Main.Requests.SendNew import send
 from Main.SerialsReader import RFIDReader, nothing, RFIDReaderNotFoundException
 from Main.Types import WorkingData
 
@@ -147,17 +146,17 @@ class MainWindow(QMainWindow):
 
 
 class MainWindowWidget(QWidget):
-    def __init__(self, professor_id, program: 'MyProgram', window_config: WindowConfig.Config):
+    def __init__(self, professor_id, program: 'MyProgram', window_config: WindowConfig.Config, **kwargs):
         super().__init__()
         self.table = None
 
         self.window_config = window_config
         # self.program = program
 
-        self.db = sql_handler.DataBaseWorker.instance()
+        self.db: DataBaseWorker = kwargs.get("database", DataBaseWorker(config))
 
-        print(DataBaseWorker.instance().get_professors())
-        WorkingData.instance().professor = DataBaseWorker.instance().get_professors(professor_id=professor_id)[0]
+        print(self.db.get_professors())
+        WorkingData.instance().professor = self.db.get_professors(professor_id=professor_id)[0]
         try:
             self.setup_select_lesson()
             self.setup_geometry()
@@ -274,11 +273,11 @@ class MainWindowWidget(QWidget):
         self.group_selector.currentIndexChanged.connect(self.group_changed)
         self.group_selector.addItems(groups)
 
-        WorkingData.instance().discipline = DataBaseWorker.instance().get_disciplines(discipline_id=disc)[0]
+        WorkingData.instance().discipline = self.db.get_disciplines(discipline_id=disc)[0]
 
     def refresh_table(self):
         self.table.clear()
-        lessons = DataBaseWorker.instance().get_lessons(
+        lessons = self.db.get_lessons(
             professor_id=WorkingData.instance().professor["id"],
             group_id=WorkingData.instance().group["id"],
             discipline_id=WorkingData.instance().discipline["id"])
@@ -303,7 +302,7 @@ class MainWindowWidget(QWidget):
         self.last_lesson = None
         group = self.group_selector.currentId()
 
-        WorkingData.instance().group = DataBaseWorker.instance().get_groups(group_id=group)[0]
+        WorkingData.instance().group = self.db.get_groups(group_id=group)[0]
 
         if group is None:
             return
@@ -347,7 +346,7 @@ class MainWindowWidget(QWidget):
         self.last_lesson = current_col
         self.table.visit_table.scrollTo(self.table.visit_table.model().index(1, self.last_lesson))
 
-        WorkingData.instance().lesson = DataBaseWorker.instance().get_lessons(
+        WorkingData.instance().lesson = self.db.get_lessons(
             lesson_id=self.lesson_selector.currentId())[0]
 
     def fill_table(self):

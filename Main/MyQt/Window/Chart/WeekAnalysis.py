@@ -2,12 +2,11 @@ import datetime
 import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
 from PyQt5.QtWidgets import QApplication
 
 import Main.config as config
-from Main.DataBase.sql_handler import DataBaseWorker as sql
-from Main.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData, LessonAccumulator
+from DataBase.sql_handler import DataBaseWorker as sql
+from Main.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
 
 
 class WeekChart(QAnalysisDialog):

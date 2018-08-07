@@ -1,16 +1,14 @@
 import traceback
 
+from DataBase.sql_handler import DataBaseWorker
 from PyQt5 import QtGui, QtCore
-
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QMessageBox, QDialog
 
 from Main import config
-from Main.DataBase import sql_handler
-from Main.DataBase.Load import FirstLoad
 from Main.MyQt.QtMyLoginInput import QLoginInput
+from Main.Requests.Load import FirstLoad
 from Main.SerialsReader import RFIDReader, RFIDReaderNotFoundException
-from Main.DataBase.sql_handler import DataBaseWorker
 
 
 class QMyAuthWidget(QWidget):
@@ -19,7 +17,7 @@ class QMyAuthWidget(QWidget):
 
         self.window = window
 
-        self.db = sql_handler.DataBaseWorker.instance()
+        self.db = DataBaseWorker(config)
 
         self.setup_geometry()
         self.setupUI()

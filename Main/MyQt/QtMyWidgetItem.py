@@ -3,9 +3,9 @@ from datetime import datetime
 
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor, QFont
-from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget, QCalendarWidget, QDialog
+from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget
 
-from Main.DataBase.sql_handler import DataBaseWorker
+from DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyCalendar import LessonDateChanger
 from Main.MyQt.QtMyStatusBar import QStatusMessage
 from Main.MyQt.Time import from_time_to_index

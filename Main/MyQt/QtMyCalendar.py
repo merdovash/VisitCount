@@ -3,8 +3,8 @@ from datetime import datetime
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, QHBoxLayout, QLabel, QPushButton
 
+from DataBase.sql_handler import DataBaseWorker
 from Main import config
-from Main.DataBase.sql_handler import DataBaseWorker
 from Main.MyQt.QtMyStatusBar import QStatusMessage
 from Main.MyQt.Time import from_index_to_time
 
