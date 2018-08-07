@@ -38,7 +38,7 @@ class MailConnection:
         :return: None
         """
 
-        parents = self.db_worker.get_parent(student_id)
+        parents = self.db_worker.get_parents(student_id)
 
         for parent in parents:
             student = self.db_worker.get_students(student_id=student_id)[0]

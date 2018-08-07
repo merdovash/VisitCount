@@ -3,6 +3,8 @@
 """
 
 import sqlite3 as sqlite
+import traceback
+
 import MySQLdb
 
 from typing import List
@@ -255,18 +257,18 @@ class DataBaseWorker:
         except Exception as e:
             return False, e
 
-    def get_parent(self, student_id=None) -> List[Parent]:
+    def get_parents(self, student_id=None) -> List[Parent]:
         """
 
         :param student_id: students ID of parent's child
         :return: dictionary of full parent information
         """
-        request = "SELECT email, first_name, last_name, middle_name FROM {0} " \
-                  "JOIN {1} ON {0}.id={1}.parent_id " \
-                  "WHERE {1}.student_id={2}"
-        params = [Tables.Parents,
-                  Tables.ParentsStudents,
-                  student_id]
+        request = "SELECT email, first_name, last_name, middle_name FROM {0} "
+        params = [Tables.Parents]
+        if student_id is not None:
+            request += "JOIN {1} ON {0}.id={1}.parent_id WHERE {1}.student_id={2}"
+            params.extend([Tables.ParentsStudents, student_id])
+
         res = self.sql_request(request, *tuple(params))
         return [Parent(**{
             Parent.Email: line[0],
@@ -760,7 +762,9 @@ class DataBaseWorker:
             cursor.execute(sql)
             self.connection.commit()
         except IndexError as e:
-            Logger.write("index out of range {0} in {1}".format(arg, message))
+            print("request: ", message)
+            print("args: ", args)
+            traceback.print_exc()
             return []
         except sqlite.OperationalError as e:
             print(sql, str(e))

@@ -10,7 +10,7 @@ class Tables:
     """
 
     Parents = "parents"
-    parentsStudents = "parents_students"
+    ParentsStudents = "parents_students"
     Students = "students"
     Professors = "professors"
     Discipline = "disciplines"
