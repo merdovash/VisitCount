@@ -5,9 +5,9 @@ import sqlite3
 import traceback
 from datetime import datetime
 
-from Main import config
 import MySQLdb
-import _mysql_exceptions
+
+from Main import config
 
 not_selected = "not selected"
 
@@ -503,7 +503,7 @@ class DataBaseWorker:
                 connection = sqlite3.connect(config.database_path)
 
                 if self.created is None or not self.created:
-                    from Main.DataBase.Creator import create
+                    from DataBase.Creator import create
                     create(connection.cursor())
                     self.created = True
 

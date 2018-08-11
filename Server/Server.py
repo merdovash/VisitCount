@@ -9,9 +9,11 @@ import random
 import sys
 from flask import Flask, make_response, request, render_template
 
-from notification import run as notification
-from sql_handler import DataBaseWorker
-import config
+from Server.notification import run as notification
+from DataBase.sql_handler import DataBaseWorker
+import config2
+
+from DataBase.Authentication import Authentication
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -154,6 +156,8 @@ def index():
     if request.method == "POST":
         data = json_read(request.data.decode('utf8').replace("'", '"'))
         res = Response(data["type"])
+        # auth = Authentication(db_worker, config, login=data.get('login'), password=data.get('password'),
+        #                       card_id=data.get('card_id'), uid=data.get('uid'))
         print("from client", data)
 
         # auth procedure
@@ -202,6 +206,33 @@ def index():
                 return res.set_error("no such type")()
         else:
             return res.set_error("auth failed")()
+
+
+@app.route("/update", methods=["POST"])
+def update_local_database():
+    """
+    work on update local database request
+
+    :return type: Response()
+    :return:
+    """
+    if request.method == "POST":
+        data = json_read(request.data.decode('utf8').replace("'", '"'))
+        auth = Authentication(db_worker, config,
+                              login=data.get('login'),
+                              password=data.get('password'),
+                              card_id=data.get('card_id'),
+                              uid=data.get('uid'))
+        res = Response('update')
+        if auth.status:
+            if auth.user_type == 1:
+                res.set_data(db_worker.get_updates(auth.user_id))
+            else:
+                res.set_error("no such privileges")
+        else:
+            res.set_error("auth failed")
+
+        return res()
 
 
 @app.route("/visit", methods=['GET', 'POST'])

@@ -959,3 +959,55 @@ def valid(*args) -> tuple:
             valid_list.append(val)
 
     return tuple(valid_list)
+
+
+class ClientDataBase(DataBaseWorker):
+    def add_visit(self, student_id: int, lesson_id: int):
+        r = self.sql_request("INSERT INTO {0}(student_id, id, synch) VALUES ({1}, {2}, {3})",
+                             self.config.visitation,
+                             student_id,
+                             lesson_id,
+                             0)
+        print("new visit", student_id, lesson_id, r)
+        return r
+
+    def complete_lesson(self, lesson_id: int):
+        r = self.sql_request("UPDATE {0} SET completed=1 WHERE id={1}",
+                             self.config.lessons,
+                             lesson_id)
+        return r
+
+    def update_lesson_date(self, lesson_id: int, new_date: datetime):
+        # TODO send update on server
+        r = self.sql_request("UPDATE {0} SET date='{1}' WHERE id={2}",
+                             self.config.lessons,
+                             new_date.strftime("%d-%m-%Y %I:%M%p"),
+                             lesson_id)
+
+    def get_auth(self, professor_id) -> list:
+        req = "SELECT card_id, password FROM {0} WHERE user_id={1}"
+        params = [self.config.auth, professor_id]
+
+        res = self.sql_request(req, *tuple(params))
+
+        return [{
+            "card_id": i[0],
+            "password": i[1]
+        } for i in res]
+
+    def start_lesson(self, lesson_id=None):
+        req = "UPDATE {} SET completed=1 WHERE id={}"
+        params = [self.config.lessons, lesson_id]
+
+        res = self.sql_request(req, *tuple(params))
+
+        return res
+
+    def add_card_id_to(self, card_id: int, student_id=None):
+        req = "UPDATE {} SET card_id={} WHERE id={}"
+        params = [self.config.students,
+                  card_id,
+                  student_id]
+
+        res = self.sql_request(req, *tuple(params))
+        return res
