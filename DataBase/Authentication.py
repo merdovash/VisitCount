@@ -30,7 +30,11 @@ class Authentication:
                 self.status = Authentication.Status.Complete
                 self.user_id = t[0]
                 self.user_type = t[1]
+            else:
+                self.error = db.last_error()
+                self.status = Authentication.Status.Fail
         else:
+            self.error = db.last_error()
             self.status = Authentication.Status.Fail
 
     def get_user_info(self):

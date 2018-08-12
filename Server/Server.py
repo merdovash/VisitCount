@@ -6,40 +6,25 @@ import _md5
 import json
 import os
 import random
-import sys
-from flask import Flask, make_response, request, render_template
+from flask import Flask, make_response, request
 
 from Server.notification import run as notification
-from DataBase.sql_handler import DataBaseWorker
-import config2
+from Server.config2 import Config
+from Server.Response import Response
 
 from DataBase.Authentication import Authentication
+from DataBase.sql_handler import DataBaseWorker
+
+config = Config()
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static")
-db_worker = DataBaseWorker(app)
+
+db = DataBaseWorker()
 
 print(path)
-
-
-class Response:
-    def __init__(self, type):
-        self.type = type
-
-    def set_data(self, data):
-        self.status = "OK"
-        self.data = data
-        return self
-
-    def set_error(self, msg):
-        self.status = "ERROR"
-        self.message = msg
-        return self
-
-    def __call__(self, *args, **kwargs):
-        return json_create(self.__dict__)
 
 
 def related(a):
@@ -51,25 +36,13 @@ def related(a):
     return os.path.join(path, a)
 
 
-def page(body, *args, part=False, js=False):
+def page(p):
     """
 
-    :param body: html body
-    :param args: inner html content
-    :param part:
-    :param js: is javascript file
+    :param p:
     :return: complete html page
     """
-    if not js:
-        if part:
-            current_page = open(related(body), encoding='utf-8').read().format(*args)
-        else:
-            main_body = open(related("Site/head.html"), encoding='utf-8').read()
-            # print(main_body)
-            current_page = main_body.format(open(related(body), encoding='utf-8').read().format(*args))
-    else:
-        current_page = open(related(body), encoding='utf-8').read()
-    return current_page
+    return open(p, encoding='utf-8').read()
 
 
 def json_read(val):
@@ -91,29 +64,14 @@ def json_read(val):
     return json.loads(decode(val))
 
 
-def json_create(val):
-    """
-
-    :param val: object
-    :return: encoded json string
-    """
-
-    def encode(v) -> str:
-        # TODO: сделать кодировку
-        """
-
-        :param v: string
-        :return: encoded string
-        """
-        return v
-
-    return json.dumps(encode(val)).encode("utf-8")
-
-
 @app.route("/super_secret")
 def super_secret():
+
+    """
+    do not uncomment this lines
+    """
     # import create_sql
-    # create_sql.recreate(db_worker)
+    # create_sql.recreate(db)
     pass
 
 
@@ -125,22 +83,29 @@ def get_resource(p):  # pragma: no cover
     :return: file
     """
     mimetypes = {
-        ".css": ["text/css", True],
-        ".html": ["text/html", False],
-        ".htm": ["text/html", False],
-        ".js": ["application/javascript", True],
-        ".img": ["image/gif", True],
-        ".png": ["image/gif", True],
-        ".gif": ["image/gif", True],
+        ".css": "text/css",
+        ".html": "text/html",
+        ".htm": "text/html",
+        ".js": "application/javascript",
+        ".img": "image/gif",
+        ".png": "image/gif",
+        ".gif": "image/gif",
     }
     filename, file_extension = os.path.splitext(p)
-    mimetype = mimetypes.get(file_extension)
-    if mimetype[1]:
-        content = open(path + "/static" + "/" + p).read()
-    else:
-        content = open(templates_path + p).read()
+
+    file_type = file_extension[1:]
+    content = ""
+    if file_type in ["js"]:
+        content = page(path + "\\javascript\\" + p)
+    elif file_type in ["css"]:
+        content = page(path + "\\css\\" + p)
+    elif file_type in ["html", "htm"]:
+        content = page(path + "\\templates\\" + p)
+    elif file_type in ["gif", "png", "img"]:
+        content = page(path + "\\resources\\" + p)
+
     response = make_response(content)
-    response.headers['Content-Type'] = mimetype[0]
+    response.headers['Content-Type'] = mimetypes.get(file_extension)
 
     return response
 
@@ -152,55 +117,39 @@ def index():
     :return: index.html
     """
     if request.method == "GET":
-        return page("index/index.html", js=True)
+        return open(path + "\\templates\\index.html", encoding='utf-8').read()
     if request.method == "POST":
         data = json_read(request.data.decode('utf8').replace("'", '"'))
         res = Response(data["type"])
-        # auth = Authentication(db_worker, config, login=data.get('login'), password=data.get('password'),
-        #                       card_id=data.get('card_id'), uid=data.get('uid'))
-        print("from client", data)
 
-        # auth procedure
-        if "card_id" in data.keys():
-            auth_status = db_worker.auth(card_id=data["card_id"], password=data["password"])
-            card_id = data["card_id"]
-            by_card = True
-        elif "login" in data.keys():
-            auth_status = db_worker.auth(login=data["login"], password=data["password"])
-            login = data["login"]
-            by_card = False
-        else:
-            return res.set_error("auth fail 2")()
+        auth = Authentication(db, config, login=data.get('login'), password=data.get('password'),
+                              card_id=data.get('card_id'), uid=data.get('uid'))
 
         # main body
-        if auth_status:
+        if auth.status:
             if data["type"] == "first":
                 # send data for client database
-                if by_card:
-                    status, r = db_worker.get_data_for_client(professor_card_id=card_id)
-                else:
-                    status, r = db_worker.get_data_for_client(login=login)
-
+                status, r = db.get_data_for_client(professor_card_id=auth.get_user_info()["card_id"])
                 if status:
                     return res.set_data(r)()
                 else:
                     return res.set_error(r)()
             elif data["type"] == "synch":
                 # synchronizing client to server
-                status, msg = db_worker.synchronize(data["data"])
+                status, msg = db.synchronize(data["data"])
                 if status:
-                    notification(db_worker)
+                    notification(db, config)
                     return res.set_data("")()
                 else:
                     return res.set_error(str(msg))()
             elif data["type"] == "notification_params":
                 # change all notification params
-                professor_id = db_worker.get_professors(card_id=data["card_id"])[0]["id"]
+                professor_id = db.get_professors(card_id=data["card_id"])[0]["id"]
                 for change in data["data"]:
-                    db_worker.set_notification_params(new_value=change["new_max_loss"],
-                                                      professor_id=professor_id,
-                                                      discipline_id=change["discipline_id"],
-                                                      group_id=change["group_id"])
+                    db.set_notification_params(new_value=change["new_max_loss"],
+                                               professor_id=professor_id,
+                                               discipline_id=change["discipline_id"],
+                                               group_id=change["group_id"])
                 return res.set_data("")()
             else:
                 return res.set_error("no such type")()
@@ -218,7 +167,7 @@ def update_local_database():
     """
     if request.method == "POST":
         data = json_read(request.data.decode('utf8').replace("'", '"'))
-        auth = Authentication(db_worker, config,
+        auth = Authentication(db, config,
                               login=data.get('login'),
                               password=data.get('password'),
                               card_id=data.get('card_id'),
@@ -226,7 +175,7 @@ def update_local_database():
         res = Response('update')
         if auth.status:
             if auth.user_type == 1:
-                res.set_data(db_worker.get_updates(auth.user_id))
+                res.set_data(db.get_updates(auth.user_id))
             else:
                 res.set_error("no such privileges")
         else:
@@ -237,8 +186,12 @@ def update_local_database():
 
 @app.route("/visit", methods=['GET', 'POST'])
 def visit():
+    """
+
+    :return:
+    """
     if request.method == 'GET':
-        return render_template('index.htm')
+        return page(f'{path}\\templates\\visit.htm')
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -255,7 +208,7 @@ def register():
         password = request.form.get("password")
         account_type = request.form.get("type")
         user_id = request.form.get("id")
-        db_worker.create_account(login, password, user_id=user_id, account_type=account_type)
+        db.create_account(login, password, user_id=user_id, account_type=account_type)
         return page("Site/index.html")
 
 
@@ -266,33 +219,10 @@ def new_uid():
     """
     number = (random.random() * 100000000000000000) % 13082761331670031
     value = _md5.md5(str(number).encode()).hexdigest()
-    while not db_worker.free_uid(value):
+    while not db.free_uid(value):
         number = (random.random() * 100000000000000000) % 13082761331670031
         value = _md5.md5(str(number).encode()).hexdigest()
     return value
-
-
-def generate_code():
-    value = random.randrange(10000, 100001, 1)
-    while len(db_worker.get_telegram_temp(code=value)) != 0:
-        value = random.randrange(10000, 100001, 1)
-    return value
-
-
-@app.route("/generateTelegram", methods=["GET"])
-def autorizeTelegram():
-    response = Response("generateTelegram")
-    user_data = db_worker.auth(uid=request.args["uid"])
-    if user_data:
-        code = generate_code()
-        if user_data["telegram"] == "" or user_data["telegram"] == "None":
-            response.set_data({"code": code, "connected": False})
-        else:
-            response.set_data({"code": code, "connected": True})
-        db_worker.set_telegram_temp(user_data["id"], code)
-    else:
-        response.set_error("auth failed")
-    return response()
 
 
 @app.route("/login", methods=["POST"])
@@ -301,43 +231,28 @@ def log_in():
 
     :return: check whether user exist.
     """
+    res = Response("login")
     if request.method == "POST":
-        res = Response("login")
         login = request.form.get("login")
         password = request.form.get("password")
-        user_data = db_worker.auth(login=login, password=password)
-        if user_data:
+        auth = Authentication(db, config, login=login, password=password)
+        if auth.status:
+            user_data = auth.get_user_info()
             print(user_data["id"], config.session_life)
             uid = new_uid()
-            db_worker.set_session(uid=uid, account_id=user_data["id"])
-            return res.set_data(
+            db.set_session(uid=uid, account_id=user_data["id"])
+            res.set_data(
                 {
                     "uid": uid,
                     "user_type": user_data["user_type"],
-                    "user": db_worker.get_students(student_id=user_data["id"]) \
-                        if str(user_data["user_type"]) == "0" \
-                        else db_worker.get_professors(professor_id=user_data["user_id"])
+                    "user": db.get_students(student_id=user_data["id"]) if str(user_data["user_type"]) == "0" else db.get_professors(professor_id=user_data["user_id"])
                 }
-            )()
+            )
         else:
-            return res.set_error('No such user')()
-
-
-@app.route("/check_login:<string:login>", methods=["GET"])
-def check_login(login):
-    """
-
-    :param login: login to check
-    :return: is login exist
-    """
-    if request.method == "GET":
-        message = {"answer": None}
-        if db_worker.is_login_exist(login):
-            message["answer"] = "YES"
-        else:
-            message["answer"] = "NO"
-        print(json_create(message))
-        return json_create(message)
+            res.set_error(auth.error)
+    else:
+        res.set_error("access denied")
+    return res()
 
 
 @app.route("/notification")
@@ -349,7 +264,7 @@ def note():
 
     :return: data of loss
     """
-    notification(db_worker)
+    notification(db, config)
     return str("")
 
 
@@ -415,7 +330,7 @@ def get_field():
     if request.method == "GET":
         res = Response("get")
         if "uid" in request.args:
-            auth_status = db_worker.auth(uid=request.args["uid"])
+            auth_status = db.auth(uid=request.args["uid"])
             if auth_status:
 
                 user_type, user_id = auth_status["type"], auth_status["user_id"]
@@ -432,7 +347,7 @@ def get_field():
                                      "total",
                                      "groups_of_total"]
                 if request.args["data"] in possible_requests:
-                    get_func = getattr(db_worker, "get_" + request.args["data"])
+                    get_func = getattr(db, "get_" + request.args["data"])
 
                     keys = list(get_func.__code__.co_varnames)
                     for special in ["self", "request", "params"]:
@@ -451,56 +366,8 @@ def get_field():
             return res.set_error("missing 'uid' argument")()
 
 
-@app.route("/table")
-def get_table2():
-    res = Response("table")
-    owner = request.args["owner"]
-    student_id = request.args["student_id"]
-    discipline_id = request.args["discipline_id"]
-    return res.set_data(db_worker.get_table(owner,
-                                            student_id=student_id,
-                                            discipline_id=discipline_id))()
-
-
-@app.route("/get_table:<string:uid>:<int:discipline_id>")
-def get_table(uid, discipline_id):
+def run():
     """
-
-    returns all data for table
-
-    :param uid:
-    :param discipline_id:
-    :return:
+    run server
     """
-    if request.method == "GET":
-        user = db_worker.auth(uid=uid)
-
-        response = None
-
-        if user["type"] == 0 or user["type"] == "0":
-            student_id = user["id"]
-            group = db_worker.get_groups(student_id=student_id)[0]
-            data = db_worker.get_data_for_student_table(student_id=student_id, group_id=group["id"],
-                                                        discipline_id=discipline_id)
-
-            response = make_response(json_create(data))
-
-        return response
-
-
-if __name__ == "__main__":
-    # читаем конфигурацию
-
-    '''
-        парметры конфигурации:
-        database_path - путь к базе данных
-        auth_database - путь к базе данных аутентификации
-        visitation_table - название таблицы да записи посещений
-    '''
-
-    # создаем подключение к таблице
-
-
-    print(db_worker.get_table.__code__.co_varnames)
-    # Запускаем сервер
     app.run(host="127.0.0.1", port=5000)

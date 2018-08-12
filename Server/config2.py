@@ -1,7 +1,15 @@
 class Config:
     def __init__(self):
         self.db = 'sqlite'
-        self.database_path = "C:\\Users\\Egor\\Desktop\\VisitCount-master\\Main\\local_db.db"
+        if self.db == "mysql":
+            self.db_user = "pythonserver"
+            self.db_password = "bisitor123456"
+            self.db_host = "localhost"
+            self.db_name = "pythonserver"
+        elif self.db == "sqlite":
+            self.database_path = "db.db"
+        elif self.db == 'oracle':
+            self.connection = ""
         self.logger = "logger.txt"
         self.visitation = "visitations"
         self.auth = "auth5"
@@ -21,4 +29,3 @@ class Config:
         self.sql_banned_symbols = ["\'", ";", "\""]
         self.session_life = "57600"
         self.email = "valeraolegovna228@gmail.com"
-

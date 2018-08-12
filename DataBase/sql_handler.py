@@ -3,9 +3,6 @@
 """
 from datetime import datetime
 
-import sqlite3 as sqlite
-import MySQLdb
-
 not_selected = "not selected"
 
 
@@ -25,39 +22,85 @@ class Logger:
         logger.close()
 
 
-class DataBaseWorker:
+class DataBase:
     """
-    class
+    Base class of sqlDataBase wrapper
     """
 
-    def __init__(self, app=None, config=None):
+    def __init__(self, config=None):
         if config is not None:
             self.config = config
         else:
-            from config2 import Config 
+            from Server.config2 import Config
             self.config = Config()
-        self.app = app
-        self.init_connection()
 
-    def init_connection(self):
-        try:
-            if self.config.db == "sqlite":
-                self.connection = sqlite.connect(self.config.database_path)
-            elif self.config.db == "oracle":
-                import cx_Oracle
-                self.connection = cx_Oracle.connect(self.config.connection)
-            elif self.config.db == "mysql":
+        self.connection = self.connect()
+
+        self._last_error = ""
+
+    def last_error(self):
+        """
+
+        :return: last sql error
+        """
+        return self._last_error
+
+    def connect(self):
+        """
+        connects to database
+        :return: sql connection
+        """
+
+        def _connect():
+            if self.config.db == "mysql":
+                import MySQLdb
                 self.connection = MySQLdb.connect(host=self.config.db_host,
                                                   user=self.config.db_user,
                                                   passwd=self.config.db_password,
                                                   db=self.config.db_name,
                                                   use_unicode=True,
                                                   charset='utf8')
-        except IOError:
+            elif self.config.db == "sqlite":
+                import sqlite3 as sqlite
+                self.connection = sqlite.connect(self.config.database_path)
 
-            # если база данных не найдена - завершаем приложение
-            print("no db found")
-            exit()
+        _connect()
+        return self.connection
+
+    def sql_request(self, msg, *args) -> list:
+        """
+
+        :rtype: list
+        :param msg Содержит шаблон строки запроса
+        :param args: Аргументы для форматирования запроса
+        :return: Возвращает результат SQL запроса
+        """
+        message = msg.replace('\t', '').replace("  ", " ")
+        arg = valid(*args)
+
+        connection = self.connect()
+        cursor = connection.cursor()
+        try:
+            sql = message.format(*arg)
+            Logger.write(sql)
+            print(sql)
+
+            cursor.execute(sql)
+            self.connection.commit()
+        except IndexError:
+            Logger.write('index out of range {0} in {1}'.format(arg, message))
+            self._last_error = 'internal error @ request syntax'
+        except Exception as e:
+            self._last_error = f'internal error @ {e}'
+
+        temp = cursor.fetchall()
+        return temp
+
+
+class DataBaseWorker(DataBase):
+    """
+    class
+    """
 
     def is_login_exist(self, login_name):
         """
@@ -90,7 +133,8 @@ class DataBaseWorker:
             account_type = 0
         if user_id is None:
             user_id = 0
-        self.sql_request("INSERT INTO {} (login,password,user_type,user_id) VALUES  ('{}','{}',{},{})", self.config.auth,
+        self.sql_request("INSERT INTO {} (login,password,user_type,user_id) VALUES  ('{}','{}',{},{})",
+                         self.config.auth,
                          login,
                          password, account_type, user_id)
 
@@ -168,7 +212,7 @@ class DataBaseWorker:
                 "user_type": i[4]} for i in self.sql_request(req, *tuple(params))]
         return res
 
-    def get_data_for_client(self, professor_card_id: int or str=None, login: str=None) -> object:
+    def get_data_for_client(self, professor_card_id: int or str = None, login: str = None) -> object:
         """
 
         :param login: you can select data by professor login
@@ -818,20 +862,6 @@ class DataBaseWorker:
                 }
         return data
 
-    def connect(self):
-        if self.connection:
-            self.connection.close()
-        if self.config.db == "mysql":
-            self.connection = MySQLdb.connect(host=self.config.db_host,
-                                              user=self.config.db_user,
-                                              passwd=self.config.db_password,
-                                              db=self.config.db_name,
-                                              use_unicode=True,
-                                              charset='utf8')
-        elif self.config.db == "sqlite":
-            self.connection = sqlite.connect(self.config.database_path)
-        return self.connection
-
     def update_student_card_id(self, student_id, card_id):
         req = "UPDATE {} SET card_id={} WHERE id={}"
         params = [self.config.students, card_id, student_id]
@@ -848,36 +878,6 @@ class DataBaseWorker:
 
         if table == self.config.students:
             3
-
-    def sql_request(self, msg, *args) -> list:
-        """
-
-        :rtype: list
-        :param msg Содержит шаблон строки запроса
-        :param args: Аргументы для форматирования запроса
-        :return: Возвращает результат SQL запроса
-        """
-        message = msg.replace('\t', '').replace("  ", " ")
-        arg = valid(*args)
-
-        connection = self.connect()
-        cursor = connection.cursor()
-        try:
-            sql = message.format(*arg)
-            Logger.write(sql)
-            print(sql)
-
-            cursor.execute(sql)
-            self.connection.commit()
-        except IndexError as e:
-            Logger.write("index out of range {0} in {1}".format(arg, message))
-            return []
-        except sqlite.OperationalError as e:
-            print(sql, str(e))
-            return []
-
-        temp = cursor.fetchall()
-        return temp
 
     def get_table2(self, owner, student_id=None, professor_id=None, group_id=None, discipline_id=None):
         if owner == "student":

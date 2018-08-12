@@ -35,7 +35,7 @@ function getRequest(request, handler) {
 
 function exit() {
     ["uid", "user", "user_type"].forEach(x=> deleteCookie(x));
-    document.location.href = "http://schekochikhin.pythonanywhere.com/";
+    document.location.href = "/";
 }
 
 function createLoading(loadingPlace) {
