@@ -3,7 +3,7 @@ class Config:
         self.db = 'sqlite'
         if self.db == "mysql":
             self.db_user = "pythonserver"
-            self.db_password = "bisitor123456"
+            self.db_password = ""
             self.db_host = "localhost"
             self.db_name = "pythonserver"
         elif self.db == "sqlite":
