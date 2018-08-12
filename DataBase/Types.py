@@ -1,4 +1,4 @@
-from Server.config2 import Config
+from config2 import DataBaseConfig
 
 
 def to_student(data):
@@ -54,6 +54,6 @@ def to_lesson(data):
         }
 
 
-def to_dict(table, data, config: Config = None):
+def to_dict(table, data, config: DataBaseConfig = None):
     if (config is None and table == "students") or (config is not None and table == config.students):
         return to_student(data)

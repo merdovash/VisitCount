@@ -6,16 +6,16 @@ import _md5
 import json
 import os
 import random
-from flask import Flask, make_response, request
 
-from Server.notification import run as notification
-from Server.config2 import Config
-from Server.Response import Response
+from flask import Flask, make_response, request
 
 from DataBase.Authentication import Authentication
 from DataBase.sql_handler import DataBaseWorker
+from Server.Response import Response
+from Server.notification import run as notification
+from config2 import DataBaseConfig
 
-config = Config()
+config = DataBaseConfig()
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"

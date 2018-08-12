@@ -31,8 +31,8 @@ class DataBase:
         if config is not None:
             self.config = config
         else:
-            from Server.config2 import Config
-            self.config = Config()
+            from config2 import DataBaseConfig
+            self.config = DataBaseConfig()
 
         self.connection = self.connect()
 
@@ -84,7 +84,6 @@ class DataBase:
             sql = message.format(*arg)
             Logger.write(sql)
             print(sql)
-
             cursor.execute(sql)
             self.connection.commit()
         except IndexError:
@@ -94,6 +93,7 @@ class DataBase:
             self._last_error = f'internal error @ {e}'
 
         temp = cursor.fetchall()
+        print(temp)
         return temp
 
 
@@ -506,7 +506,7 @@ class DataBaseWorker(DataBase):
         :return: data of lessons
         """
         request = "SELECT DISTINCT {0}.id, {0}.date, {0}.room_id, {0}.group_id, {0}.discipline_id, {0}.professor_id," \
-                  " {0}.complete, {0}.type FROM {0} "
+                  " {0}.completed, {0}.type FROM {0} "
         params = [self.config.lessons]
         if student_id is not None:
             request += "JOIN {1} ON {0}.group_id={1}.group_id "
@@ -534,9 +534,10 @@ class DataBaseWorker(DataBase):
                  } for res in self.sql_request(request, *tuple(params))]
 
     def get_visitations(self, group_id=None, professor_id=None, discipline_id=None, student_list=None,
-                        student_id=None) -> list:
+                        student_id=None, synch=None) -> list:
         """
 
+        :param synch: you can select visitation by synch status
         :param student_id: you can select visitations by student
         :param group_id: you can select visitations by group
         :param professor_id: you can select visitations by professor
@@ -560,6 +561,7 @@ class DataBaseWorker(DataBase):
                                         2)
         request, params = self.setParam(request, params, discipline_id, "{1}.discipline_id={" + str(len(params)) + "} ",
                                         2)
+        request, params = self.setParam(request, params, synch, "{0}.synch={" + str(len(params)) + "}", 2)
 
         return [{
             "student_id": str(res[0]),
@@ -1011,3 +1013,17 @@ class ClientDataBase(DataBaseWorker):
 
         res = self.sql_request(req, *tuple(params))
         return res
+
+    def update_student(self, **kwargs):
+        keys = ["id", "last_name", "middle_name", "first_name", "card_id"]
+        c = {}
+        for key in keys:
+            c[key] = kwargs.get(key, None)
+
+        self.insert_into(self.config.students, **c)
+
+    def insert_into(self, table, **kwargs):
+        return self.sql_request("""INSERT OR UPDATE INTO {} ({}) VALUES ({});""",
+                                table,
+                                ','.join(kwargs.keys()),
+                                ','.join([kwargs[i] for i in kwargs.keys()]))

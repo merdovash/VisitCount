@@ -1,4 +1,4 @@
-class Config:
+class DataBaseConfig:
     def __init__(self):
         self.db = 'sqlite'
         if self.db == "mysql":
@@ -7,7 +7,7 @@ class Config:
             self.db_host = "localhost"
             self.db_name = "pythonserver"
         elif self.db == "sqlite":
-            self.database_path = "db.db"
+            self.database_path = "C:\\Users\\MERDovashkinar\\PycharmProjects\\VisitCount\\db.db"
         elif self.db == 'oracle':
             self.connection = ""
         self.logger = "logger.txt"
@@ -29,3 +29,4 @@ class Config:
         self.sql_banned_symbols = ["\'", ";", "\""]
         self.session_life = "57600"
         self.email = "valeraolegovna228@gmail.com"
+        self.main_button_css = "background-color: #ff8000; color: #ffffff; font-weight: bold;"
