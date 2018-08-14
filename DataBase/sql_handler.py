@@ -83,7 +83,8 @@ class DataBase:
         try:
             sql = message.format(*arg)
             Logger.write(sql)
-            print(sql)
+            if self.config.print:
+                print(sql)
             cursor.execute(sql)
             self.connection.commit()
         except IndexError:
@@ -93,7 +94,8 @@ class DataBase:
             self._last_error = f'internal error @ {e}'
 
         temp = cursor.fetchall()
-        print(temp)
+        if self.config.print:
+            print(temp)
         return temp
 
 
@@ -464,7 +466,7 @@ class DataBaseWorker(DataBase):
             for res in self.sql_request(request, *tuple(params))
         ]
 
-    def get_students(self, group_id=None, student_list=None, professor_id=None, student_id=None) -> list:
+    def get_students(self, group_id=None, student_list=None, professor_id=None, student_id=None, card_id=None) -> list:
         """
 
         :param student_id: you can select students by id
@@ -486,6 +488,7 @@ class DataBaseWorker(DataBase):
             request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 3)
         request, params = self.setParam(request, params, student_list, "{0}.id IN {" + str(len(params)) + "} ", 1)
         request, params = self.setParam(request, params, student_id, "{0}.id={" + str(len(params)) + "} ", 1)
+        request, params = self.setParam(request, params, card_id, "{0}.card_id={" + str(len(params)) + "} ", 1)
 
         return [{"id": str(res[0]),
                  "last_name": res[2],

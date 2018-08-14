@@ -1,6 +1,8 @@
 class DataBaseConfig:
     def __init__(self):
+        self.server="http://bisitor.itut.ru"
         self.db = 'sqlite'
+        self.print = False
         if self.db == "mysql":
             self.db_user = "pythonserver"
             self.db_password = ""

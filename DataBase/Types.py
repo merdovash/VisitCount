@@ -1,6 +1,10 @@
 from config2 import DataBaseConfig
 
 
+def name(user):
+    return f'{user["last_name"]} {user["first_name"][0]}.{user["first_name"][0]}.'
+
+
 def to_student(data):
     if type(data) is list:
         return [to_student(i) for i in data]
