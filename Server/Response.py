@@ -1,23 +1,4 @@
-import json
-
-
-def json_create(val):
-    """
-
-    :param val: object
-    :return: encoded json string
-    """
-
-    def encode(v) -> str:
-        # TODO: сделать кодировку
-        """
-
-        :param v: string
-        :return: encoded string
-        """
-        return v
-
-    return json.dumps(encode(val)).encode("utf-8")
+from Parser.JsonParser import jsonParser
 
 
 class Response:
@@ -35,4 +16,4 @@ class Response:
         return self
 
     def __call__(self, *args, **kwargs):
-        return json_create(self.__dict__)
+        return jsonParser.dump(self.__dict__)

@@ -7,7 +7,7 @@ class Authentication:
         Complete = 1
         Fail = 0
 
-    def __init__(self, db: DataBaseWorker, login=None, password=None, card_id=None, uid=None):
+    def __init__(self, db: DataBaseWorker, login=None, password=None, card_id=None, uid=None, **kwargs):
         self._info = None
         self.db = db
         if (password and (card_id or login)) or uid is not None:

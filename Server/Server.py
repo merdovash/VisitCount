@@ -1,9 +1,7 @@
-#!/usr/bin/python3
 """
     Server
 """
 import _md5
-import json
 import os
 import random
 
@@ -11,18 +9,28 @@ from flask import Flask, make_response, request
 
 from DataBase.Authentication import Authentication
 from DataBase.sql_handler import DataBaseWorker
+from Modules.FirstLoad.ServerSide import FirstLoadModule
+from Modules.NewVisits.ServerSide import NewVisitsModule
+from Modules.Synchronize.ServerSide import SynchronizeModule
+from Modules.UpdateStudentCard.ServerSide import UpdateStudentCardModule
 from Server.Response import Response
 from Server.notification import run as notification
 from config2 import DataBaseConfig
-
-config = DataBaseConfig()
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static")
 
-db = DataBaseWorker()
+config = DataBaseConfig()
+
+db = DataBaseWorker(config)
+
+# load modules
+FirstLoadModule(app, db, request)
+SynchronizeModule(app, db, request)
+NewVisitsModule(app, db, request)
+UpdateStudentCardModule(app, db, request)
 
 print(path)
 
@@ -45,28 +53,8 @@ def page(p):
     return open(p, encoding='utf-8').read()
 
 
-def json_read(val):
-    """
-
-    :param val: json encoded string
-    :return: json object
-    """
-
-    def decode(v) -> str:
-        # TODO: сделать
-        """
-
-        :param v: encoded string
-        :return: decoded string
-        """
-        return v
-
-    return json.loads(decode(val))
-
-
 @app.route("/super_secret")
 def super_secret():
-
     """
     do not uncomment this lines
     """
@@ -110,7 +98,7 @@ def get_resource(p):  # pragma: no cover
     return response
 
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/", methods=['GET'])
 def index():
     """
 
@@ -118,70 +106,6 @@ def index():
     """
     if request.method == "GET":
         return open(path + "\\templates\\index.html", encoding='utf-8').read()
-    if request.method == "POST":
-        data = json_read(request.data.decode('utf8').replace("'", '"'))
-        res = Response(data["type"])
-
-        auth = Authentication(db, config, login=data.get('login'), password=data.get('password'),
-                              card_id=data.get('card_id'), uid=data.get('uid'))
-
-        # main body
-        if auth.status:
-            if data["type"] == "first":
-                # send data for client database
-                status, r = db.get_data_for_client(professor_card_id=auth.get_user_info()["card_id"])
-                if status:
-                    return res.set_data(r)()
-                else:
-                    return res.set_error(r)()
-            elif data["type"] == "synch":
-                # synchronizing client to server
-                status, msg = db.synchronize(data["data"])
-                if status:
-                    notification(db, config)
-                    return res.set_data("")()
-                else:
-                    return res.set_error(str(msg))()
-            elif data["type"] == "notification_params":
-                # change all notification params
-                professor_id = db.get_professors(card_id=data["card_id"])[0]["id"]
-                for change in data["data"]:
-                    db.set_notification_params(new_value=change["new_max_loss"],
-                                               professor_id=professor_id,
-                                               discipline_id=change["discipline_id"],
-                                               group_id=change["group_id"])
-                return res.set_data("")()
-            else:
-                return res.set_error("no such type")()
-        else:
-            return res.set_error("auth failed")()
-
-
-@app.route("/update", methods=["POST"])
-def update_local_database():
-    """
-    work on update local database request
-
-    :return type: Response()
-    :return:
-    """
-    if request.method == "POST":
-        data = json_read(request.data.decode('utf8').replace("'", '"'))
-        auth = Authentication(db, config,
-                              login=data.get('login'),
-                              password=data.get('password'),
-                              card_id=data.get('card_id'),
-                              uid=data.get('uid'))
-        res = Response('update')
-        if auth.status:
-            if auth.user_type == 1:
-                res.set_data(db.get_updates(auth.user_id))
-            else:
-                res.set_error("no such privileges")
-        else:
-            res.set_error("auth failed")
-
-        return res()
 
 
 @app.route("/visit", methods=['GET', 'POST'])
@@ -235,7 +159,7 @@ def log_in():
     if request.method == "POST":
         login = request.form.get("login")
         password = request.form.get("password")
-        auth = Authentication(db, config, login=login, password=password)
+        auth = Authentication(db, login=login, password=password)
         if auth.status:
             user_data = auth.get_user_info()
             print(user_data["id"], config.session_life)
@@ -245,7 +169,8 @@ def log_in():
                 {
                     "uid": uid,
                     "user_type": user_data["user_type"],
-                    "user": db.get_students(student_id=user_data["id"]) if str(user_data["user_type"]) == "0" else db.get_professors(professor_id=user_data["user_id"])
+                    "user": db.get_students(student_id=user_data["id"]) if str(
+                        user_data["user_type"]) == "0" else db.get_professors(professor_id=user_data["user_id"])
                 }
             )
         else:

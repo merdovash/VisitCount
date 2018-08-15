@@ -2,6 +2,7 @@
     sql_handler.py
 """
 from datetime import datetime
+from typing import Dict, List
 
 not_selected = "not selected"
 
@@ -214,39 +215,23 @@ class DataBaseWorker(DataBase):
                 "user_type": i[4]} for i in self.sql_request(req, *tuple(params))]
         return res
 
-    def get_data_for_client(self, professor_card_id: int or str = None, login: str = None) -> object:
+    def get_data_for_client(self, professor_id) -> Dict[str, List[Dict[str, str or int]]]:
         """
 
-        :param login: you can select data by professor login
-        :param professor_card_id: card ID of professor
+        :param professor_id: returns data for professor by his id
         :return: complete data for client for first connection
         """
-        req = "SELECT {0}.id FROM {0} "
-        params = [self.config.professors]
 
-        if login is not None:
-            req += "JOIN {1} on {1}.user_id={0}.id AND {1}.user_type=1 "
-            params.append(self.config.auth)
-            req, params = self.setParam(req, params, login, "{1}.login='{" + str(len(params)) + "}' ", 2)
-        if professor_card_id is not None:
-            req, params = self.setParam(req, params, professor_card_id, "{0}.card_id={" + str(len(params)) + "} ", 2)
-
-        res = self.sql_request(req, *tuple(params))
-
-        if len(res) > 0:
-            professor_id = res[0][0]
-            return (True, {
-                self.config.professors: self.get_professors(professor_id=professor_id),
-                self.config.disciplines: self.get_disciplines(professor_id=professor_id),
-                self.config.lessons: self.get_lessons(professor_id=professor_id),
-                self.config.groups: self.get_groups(professor_id=professor_id),
-                self.config.students: self.get_students(professor_id=professor_id),
-                self.config.students_groups: self.get_students_groups(professor_id=professor_id),
-                self.config.visitation: self.get_visitations(professor_id=professor_id),
-                self.config.auth: self.get_auth_info(professor_id)
-            })
-        else:
-            return False, 'no such professor'
+        return {
+            self.config.professors: self.get_professors(professor_id=professor_id),
+            self.config.disciplines: self.get_disciplines(professor_id=professor_id),
+            self.config.lessons: self.get_lessons(professor_id=professor_id),
+            self.config.groups: self.get_groups(professor_id=professor_id),
+            self.config.students: self.get_students(professor_id=professor_id),
+            self.config.students_groups: self.get_students_groups(professor_id=professor_id),
+            self.config.visitation: self.get_visitations(professor_id=professor_id),
+            self.config.auth: self.get_auth_info(professor_id)
+        }
 
     def free_uid(self, value) -> bool:
         """
@@ -867,23 +852,6 @@ class DataBaseWorker(DataBase):
                 }
         return data
 
-    def update_student_card_id(self, student_id, card_id):
-        req = "UPDATE {} SET card_id={} WHERE id={}"
-        params = [self.config.students, card_id, student_id]
-
-        res = self.sql_request(req, *tuple(params))
-
-        self.field_updated(table=self.config.students, id=student_id)
-
-    def field_updated(self, table, id):
-        req = "INSERT INTO {} VALUES ('{}',{})"
-        params = [self.config.updates, table, id]
-
-        res = self.sql_request(req, *tuple(params))
-
-        if table == self.config.students:
-            3
-
     def get_table2(self, owner, student_id=None, professor_id=None, group_id=None, discipline_id=None):
         if owner == "student":
             request = "SELECT DISTINCT {0}.date, {2}.name FROM {0} " \
@@ -918,6 +886,60 @@ class DataBaseWorker(DataBase):
             for v in visit:
                 data[v[1]][v[0]] = True
         return data
+
+    def update_student_card_id(self, student_id, card_id):
+        req = "UPDATE {} SET card_id={} WHERE id={}"
+        params = [self.config.students, card_id, student_id]
+
+        res = self.sql_request(req, *tuple(params))
+
+        self.field_updated(table=self.config.students, id=student_id)
+
+    def field_updated(self, table, id):
+        updates_list = self.sql_request("SELECT id FROM updates WHERE table_name='{0}' AND row_id={1};", table, id)
+        if len(updates_list) == 0:
+            req = "INSERT INTO {0} (table_name, row_id) VALUES ('{1}',{2});".format(self.config.updates, table, id)
+            res = self.sql_request(req)
+            update_id = self.cursor.lastrowid[0]
+        else:
+            update_id = updates_list[0][0]
+
+        if table == self.config.students:
+            professors_list = self.sql_request("""
+            SELECT DISTINCT professor_id 
+            FROM {0} 
+            JOIN {1} ON {0}.group_id={1}.group_id 
+            WHERE {1}.student_id={2}""",
+                                               self.config.lessons,
+                                               self.config.students_groups,
+                                               id)
+            self.sql_request("insert into {0}(update_id, professor_id) Values {1}", self.config.professors_updates,
+                             ','.join(
+                                 ["({}, {})".format(update_id, professor_id[0]) for professor_id in professors_list]))
+
+    def get_updates_list(self, professor_id):
+
+        return self.sql_request("""
+        SELECT DISTINCT table_name, row_id 
+        FROM {0} 
+        JOIN {1} ON {0}.id={1}.update_id 
+        WHERE {1}.professor_id = {2}""",
+                                self.config.updates,
+                                self.config.professors_updates,
+                                professor_id)
+
+    def get_updates(self, professor_id):
+        updates_list = self.get_updates_list(professor_id)
+        sorted_updates = {}
+        for update in updates_list:
+            if update[0] not in sorted_updates:
+                sorted_updates[update[0]] = []
+            sorted_updates[update[0]].append(update[1])
+        updates = {}
+        for table in sorted_updates:
+            updates[table] = self.sql_request("SELECT * FROM {0} WHERE id IN ({1})", table,
+                                              ",".join([str(i) for i in sorted_updates[table]]))
+        return updates
 
 
 def and_or_where(params, size):
