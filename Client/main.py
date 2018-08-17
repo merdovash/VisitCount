@@ -1,6 +1,5 @@
 import os
 import sys
-from PyQt5 import QtCore
 
 import PyQt5
 from PyQt5.QtWidgets import *
@@ -11,8 +10,8 @@ from Client.MyQt.AuthWindow import QMyAuthWidget, AuthWindow
 from Client.MyQt.Window.QtMyMainWindow import MainWindow
 from Client.test import try_except
 from DataBase.Authentication import Authentication
+from DataBase.config2 import DataBaseConfig
 from DataBase.sql_handler import ClientDataBase
-from config2 import DataBaseConfig
 
 pyqt = os.path.dirname(PyQt5.__file__)
 QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
@@ -22,7 +21,8 @@ print(os.path.dirname(__file__))
 
 class MyProgram:
     def __init__(self, widget=None, win_config: Config = None):
-        self.state = {'marking_visits': False}
+        self.state = {'marking_visits': False,
+                      'host': 'http://bisitor.itur.ru'}
 
         db_config = DataBaseConfig()
         self.db = ClientDataBase(db_config)

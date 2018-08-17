@@ -1,16 +1,27 @@
+
+
+
 class DataBaseConfig:
     def __init__(self):
-        self.server="http://bisitor.itut.ru"
-        self.db = 'sqlite'
+        self.server = "http://bisitor.itut.ru"
+        self.dt_type = 'sqlite'
         self.print = False
-        if self.db == "mysql":
-            self.db_user = "pythonserver"
-            self.db_password = ""
-            self.db_host = "localhost"
-            self.db_name = "pythonserver"
-        elif self.db == "sqlite":
-            self.database_path = "C:\\Users\\MERDovashkinar\\PycharmProjects\\VisitCount\\db.db"
-        elif self.db == 'oracle':
+        if self.dt_type == "mysql":
+            import pymysql
+            self.db = {
+                "host": "localhost",
+                "user": "pythonserver",
+                "password": "bisitor123456",
+                "db": "pythonserver",
+                "use_unicode": True,
+                "charset": 'utf8',
+                # 'cursorclass': pymysql.cursors.DictCursor
+            }
+        elif self.dt_type == "sqlite":
+            self.db = {
+                "database": "C:\\Users\\MERDovashkinar\\PycharmProjects\\VisitCount\\dt_type.dt_type"
+            }
+        elif self.dt_type == 'oracle':
             self.connection = ""
         self.logger = "logger.txt"
         self.visitation = "visitations"
@@ -24,6 +35,8 @@ class DataBaseConfig:
         self.lessons = "lessons"
         self.rooms = "rooms"
         self.notification = "notification"
+        self.updates = "updates"
+        self.professors_updates = "professors_updates"
         self.parents = "parents"
         self.parents_students = "parents_students"
         self.loss = "loss"

@@ -3,6 +3,7 @@
 """
 from datetime import datetime
 from typing import Dict, List
+from DataBase.config2 import DataBaseConfig
 
 not_selected = "not selected"
 
@@ -30,12 +31,12 @@ class DataBase:
 
     def __init__(self, config=None):
         if config is not None:
-            self.config = config
+            self.config: DataBaseConfig = config
         else:
-            from config2 import DataBaseConfig
-            self.config = DataBaseConfig()
+            self.config: DataBaseConfig = DataBaseConfig()
 
         self.connection = self.connect()
+        self.cursor = self.connection.cursor
 
         self._last_error = ""
 
@@ -53,17 +54,12 @@ class DataBase:
         """
 
         def _connect():
-            if self.config.db == "mysql":
-                import MySQLdb
-                self.connection = MySQLdb.connect(host=self.config.db_host,
-                                                  user=self.config.db_user,
-                                                  passwd=self.config.db_password,
-                                                  db=self.config.db_name,
-                                                  use_unicode=True,
-                                                  charset='utf8')
-            elif self.config.db == "sqlite":
+            if self.config.dt_type == "mysql":
+                import pymysql
+                self.connection = pymysql.connect(**self.config.db)
+            elif self.config.dt_type == "sqlite":
                 import sqlite3 as sqlite
-                self.connection = sqlite.connect(self.config.database_path)
+                self.connection = sqlite.connect(**self.config.db)
 
         _connect()
         return self.connection
@@ -83,13 +79,13 @@ class DataBase:
         cursor = connection.cursor()
         try:
             sql = message.format(*arg)
-            Logger.write(sql)
+            # Logger.write(sql)
             if self.config.print:
                 print(sql)
             cursor.execute(sql)
             self.connection.commit()
         except IndexError:
-            Logger.write('index out of range {0} in {1}'.format(arg, message))
+            # Logger.write('index out of range {0} in {1}'.format(arg, message))
             self._last_error = 'internal error @ request syntax'
         except Exception as e:
             self._last_error = f'internal error @ {e}'
@@ -255,7 +251,7 @@ class DataBaseWorker(DataBase):
         :param uid: free session ID
         :param account_id: account ID
         """
-        Logger.write("before: " + str(self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
+        # Logger.write("before: " + str(self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
         t = self.sql_request("""
             UPDATE {0}
             SET uid='{1}'
@@ -264,8 +260,8 @@ class DataBaseWorker(DataBase):
                              self.config.auth,
                              uid,
                              account_id)
-        Logger.write("update uid, row count=" + str(t) + " || " + str(
-            self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
+        # Logger.write("update uid, row count=" + str(t) + " || " + str(
+        #     self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
 
     def synchronize(self, data: list) -> tuple:
         """
@@ -276,9 +272,9 @@ class DataBaseWorker(DataBase):
         lessons = []
         print(data)
         try:
-            if self.config.db == "sqlite":
+            if self.config.dt_type == "sqlite":
                 req = "INSERT OR IGNORE {0} (id, student_id) Values ('{1}', '{2}');"
-            elif self.config.db == "mysql":
+            elif self.config.dt_type == "mysql":
                 req = "INSERT IGNORE {0} (id, student_id) VALUES ('{1}', '{2}');"
             for visit in data:
                 self.sql_request(req,

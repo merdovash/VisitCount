@@ -2,6 +2,7 @@ import datetime
 import os
 import sys
 
+from Modules.NewVisits.ClientSide import SendNewVisitation
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
@@ -16,11 +17,10 @@ from Client.MyQt.QtMyWidgetItem import VisitItem
 from Client.MyQt.Window.Chart.QAnalysisDialog import show, QAnalysisDialog
 from Client.MyQt.Window.Chart.WeekAnalysis import WeekChart
 from Client.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
-from Client.Requests.SendNew import SendNewVisitation
-from Client.Requests.Synchronize import Synchronize
 from Client.SerialsReader import RFIDReader, nothing, RFIDReaderNotFoundException
 from Client.test import try_except
 from DataBase.Authentication import Authentication
+from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
 

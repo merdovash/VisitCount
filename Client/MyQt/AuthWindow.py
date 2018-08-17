@@ -6,10 +6,10 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel
     QErrorMessage, QMainWindow
 
 from Client.MyQt.QtMyLoginInput import QLoginInput
-from Client.Requests.Load import FirstLoad
 from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import try_except
 from DataBase.Authentication import Authentication
+from Modules.FirstLoad.ClientSide import FirstLoad
 
 
 class AuthWindow(QMainWindow):
@@ -107,23 +107,23 @@ class QMyAuthWidget(QWidget):
             pass
 
     @try_except
-    def _first_load(self):
+    def _first_load(self, auth:Authentication):
         FirstLoad(db=self.db,
+                  auth=auth,
                   card_id=self.login_input.card_id(),
                   login=self.login_input.login(),
                   password=self.password_input.text(),
-                  parent=self.program,
+                  program=self.program,
                   on_finish=self.auth).run()
 
     def auth(self):
         auth = Authentication(self.db, login=self.login_input.login(),
                               password=self.password_input.text(), card_id=self.login_input.card_id())
 
-
         if auth.status:
             self._auth_success_event(auth)
         else:
-            self._first_load()
+            self._first_load(auth)
 
     def _auth_success_event(self, auth):
         self.program.auth_success(auth)

@@ -6,6 +6,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import List
+from DataBase.sql_handler import DataBaseWorker
 
 
 class SkipLesson:
@@ -97,31 +98,31 @@ class MailConnection:
         self.server.close()
 
 
-def run(db_worker: 'DataBaseWorker', config) -> int:
+def run(db: DataBaseWorker) -> int:
     """
 
     Runs notification process of parents
 
     :param config:
-    :param db_worker: database worker
+    :param db: database worker
     :return: total length of table
     """
     print("notification started")
-    if config.mail_password is None or "":
-        config.mail_password = input("Введите пароль: ")
+    if db.config.mail_password is None or "":
+        db.config.mail_password = input("Введите пароль: ")
 
-    conn = MailConnection(db_worker, config.email, config.mail_password, config)
+    conn = MailConnection(db, db.config.email, db.config.mail_password, db.config)
 
-    students_list = db_worker.get_students()
+    students_list = db.get_students()
     count = 0
     for student in students_list:
         data_list = []
 
-        disciplines_list = db_worker.get_disciplines(student_id=student["id"])
+        disciplines_list = db.get_disciplines(student_id=student["id"])
         print(student["id"], disciplines_list)
         for discipline in disciplines_list:
-            total_lessons = db_worker.get_the_lessons_count(student["id"], discipline["id"])
-            visited_lessons = db_worker.get_visited_lessons_count(student["id"], discipline["id"])
+            total_lessons = db.get_the_lessons_count(student["id"], discipline["id"])
+            visited_lessons = db.get_visited_lessons_count(student["id"], discipline["id"])
 
             max_loss = 3
             if total_lessons - visited_lessons >= int(max_loss):

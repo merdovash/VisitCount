@@ -1,4 +1,4 @@
-from config2 import DataBaseConfig
+from DataBase.config2 import DataBaseConfig
 
 
 def name(user):

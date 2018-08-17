@@ -1,5 +1,4 @@
 from DataBase.sql_handler import DataBaseWorker
-from config2 import DataBaseConfig
 
 
 class Authentication:
@@ -49,6 +48,7 @@ class Authentication:
                     self._info = self.db.get_students(student_id=self.user_id)[0]
                 elif self.user_type == 1:
                     self._info = self.db.get_professors(professor_id=self.user_id)[0]
+            self._info["user_type"] = self.user_type
             return self._info
         else:
             return None

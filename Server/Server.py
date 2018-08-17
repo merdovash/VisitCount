@@ -1,21 +1,18 @@
 """
     Server
 """
-import _md5
 import os
-import random
 
 from flask import Flask, make_response, request
 
-from DataBase.Authentication import Authentication
+from DataBase.config2 import DataBaseConfig
 from DataBase.sql_handler import DataBaseWorker
+from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.NewVisits.ServerSide import NewVisitsModule
 from Modules.Synchronize.ServerSide import SynchronizeModule
 from Modules.UpdateStudentCard.ServerSide import UpdateStudentCardModule
 from Server.Response import Response
-from Server.notification import run as notification
-from config2 import DataBaseConfig
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -31,6 +28,7 @@ FirstLoadModule(app, db, request)
 SynchronizeModule(app, db, request)
 NewVisitsModule(app, db, request)
 UpdateStudentCardModule(app, db, request)
+CabinetLogInModule(app, db, request)
 
 print(path)
 
@@ -59,7 +57,7 @@ def super_secret():
     do not uncomment this lines
     """
     # import create_sql
-    # create_sql.recreate(db)
+    # create_sql.recreate(dt_type)
     pass
 
 
@@ -84,13 +82,13 @@ def get_resource(p):  # pragma: no cover
     file_type = file_extension[1:]
     content = ""
     if file_type in ["js"]:
-        content = page(path + "\\javascript\\" + p)
+        content = page(path + "/javascript/" + p)
     elif file_type in ["css"]:
-        content = page(path + "\\css\\" + p)
+        content = page(path + "/css/" + p)
     elif file_type in ["html", "htm"]:
-        content = page(path + "\\templates\\" + p)
+        content = page(path + "/templates/" + p)
     elif file_type in ["gif", "png", "img"]:
-        content = page(path + "\\resources\\" + p)
+        content = page(path + "/resources/" + p)
 
     response = make_response(content)
     response.headers['Content-Type'] = mimetypes.get(file_extension)
@@ -105,7 +103,7 @@ def index():
     :return: index.html
     """
     if request.method == "GET":
-        return open(path + "\\templates\\index.html", encoding='utf-8').read()
+        return page(path + "/templates/index.html")
 
 
 @app.route("/visit", methods=['GET', 'POST'])
@@ -115,82 +113,7 @@ def visit():
     :return:
     """
     if request.method == 'GET':
-        return page(f'{path}\\templates\\visit.htm')
-
-
-@app.route("/register", methods=['GET', 'POST'])
-def register():
-    """
-
-    :return: register.html if user goes to register page, if he submits register information create new user and
-    returns index.html
-    """
-    if request.method == "GET":
-        return page("Site/register.html")
-    elif request.method == "POST":
-        login = request.form.get("login")
-        password = request.form.get("password")
-        account_type = request.form.get("type")
-        user_id = request.form.get("id")
-        db.create_account(login, password, user_id=user_id, account_type=account_type)
-        return page("Site/index.html")
-
-
-def new_uid():
-    """
-
-    :return: new unique session id
-    """
-    number = (random.random() * 100000000000000000) % 13082761331670031
-    value = _md5.md5(str(number).encode()).hexdigest()
-    while not db.free_uid(value):
-        number = (random.random() * 100000000000000000) % 13082761331670031
-        value = _md5.md5(str(number).encode()).hexdigest()
-    return value
-
-
-@app.route("/login", methods=["POST"])
-def log_in():
-    """
-
-    :return: check whether user exist.
-    """
-    res = Response("login")
-    if request.method == "POST":
-        login = request.form.get("login")
-        password = request.form.get("password")
-        auth = Authentication(db, login=login, password=password)
-        if auth.status:
-            user_data = auth.get_user_info()
-            print(user_data["id"], config.session_life)
-            uid = new_uid()
-            db.set_session(uid=uid, account_id=user_data["id"])
-            res.set_data(
-                {
-                    "uid": uid,
-                    "user_type": user_data["user_type"],
-                    "user": db.get_students(student_id=user_data["id"]) if str(
-                        user_data["user_type"]) == "0" else db.get_professors(professor_id=user_data["user_id"])
-                }
-            )
-        else:
-            res.set_error(auth.error)
-    else:
-        res.set_error("access denied")
-    return res()
-
-
-@app.route("/notification")
-def note():
-    """
-
-    This function execute only for tests
-    Real usage should be automatic
-
-    :return: data of loss
-    """
-    notification(db, config)
-    return str("")
+        return page(f'{path}/templates/visit.htm')
 
 
 def fix_request_args(args, user_type, user_id):
