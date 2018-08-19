@@ -2,6 +2,7 @@ import random
 
 import _md5
 
+from Date import semester_start
 from DataBase.Authentication import Authentication
 from Modules import Module
 from Modules.CabinetLogIn import address
@@ -18,8 +19,7 @@ class CabinetLogInModule(Module):
         response.set_data(
             {
                 "uid": uid,
-                "user_type": auth.user_type,
-                "user": auth.get_user_info()
+                "page": '/cabinet'
             }
         )
 

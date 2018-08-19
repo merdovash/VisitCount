@@ -12,6 +12,7 @@ from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.NewVisits.ServerSide import NewVisitsModule
 from Modules.Synchronize.ServerSide import SynchronizeModule
 from Modules.UpdateStudentCard.ServerSide import UpdateStudentCardModule
+from Modules.Cabinet.ServerSide import CabinetModule
 from Server.Response import Response
 
 path, file = os.path.split(os.path.abspath(__file__))
@@ -24,11 +25,12 @@ config = DataBaseConfig()
 db = DataBaseWorker(config)
 
 # load modules
-FirstLoadModule(app, db, request)
-SynchronizeModule(app, db, request)
-NewVisitsModule(app, db, request)
-UpdateStudentCardModule(app, db, request)
-CabinetLogInModule(app, db, request)
+CabinetModule(app, request, db)
+FirstLoadModule(app, request, db)
+SynchronizeModule(app, request, db)
+NewVisitsModule(app, request, db)
+UpdateStudentCardModule(app, request, db)
+CabinetLogInModule(app, request, db)
 
 print(path)
 
@@ -113,7 +115,17 @@ def visit():
     :return:
     """
     if request.method == 'GET':
-        return page(f'{path}/templates/visit.htm')
+        return page(f'{path}/templates/login2.htm')
+
+
+@app.route('/cabinet', methods=['GET'])
+def cabinet():
+    """
+
+    :return:
+    """
+    if request.method == 'GET':
+        return page(f'{path}/templates/cabinet.html')
 
 
 def fix_request_args(args, user_type, user_id):

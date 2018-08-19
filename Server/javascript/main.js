@@ -95,26 +95,24 @@ function updateUserInfo() {
 
 	//getRequest(host + "/get?data=" + type + "&uid=" + uid, userHandler);
 	console.log(user);
-	userHandler(JSON.parse(getCookie("user")));
+	userHandler(JSON.parse(getCookie("data")));
 }
 
 function userHandler(data) {
 
-	var info = data[0];
+    console.log(data);
+	var info = data['user'];
 
 	// определение имени
 	var title_name = document.getElementById("title_name");
-	//ещё один хак
-	if (user_type == 0)
-		title_name.innerHTML = info["first_name"] +" "+ info["middle_name"] +" "+ info["last_name"];
-    else
-        title_name.innerHTML = info["last_name"] +" "+ info["middle_name"] +" "+ info["first_name"];
+
+	title_name.innerHTML = info["last_name"] +" "+ info["middle_name"] +" "+ info["first_name"];
 	// определение даты и номера недели
 	var date_pl = document.getElementById("date_pl");
 	var week_pl = document.getElementById("week_pl");
 
 	var datee = new Date();
-	var weke = new Date(2017, 7, 28); // начало учебного года
+	var weke = new Date(parseInt(data['semester_start'])*1000); // начало учебного года
 	var options = {
 	  year: 'numeric',
 	  month: 'long',

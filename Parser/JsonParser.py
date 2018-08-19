@@ -19,7 +19,10 @@ class jsonParser:
             """
             return v
 
-        return json.loads(decode(val))
+        if val is not None and val != "":
+            return json.loads(decode(val))
+        else:
+            return None
 
     @staticmethod
     def dump(val):
