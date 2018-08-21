@@ -1,8 +1,6 @@
+import _md5
 import random
 
-import _md5
-
-from Date import semester_start
 from DataBase.Authentication import Authentication
 from Modules import Module
 from Modules.CabinetLogIn import address
@@ -15,7 +13,7 @@ class CabinetLogInModule(Module):
 
     def post(self, data, response: Response, auth: Authentication, **kwargs):
         uid = self.new_uid()
-        self.db.set_session(uid=uid, account_id=auth.get_user_info()["id"])
+        self.db.set_session(uid=uid, account_id=auth.account_id)
         response.set_data(
             {
                 "uid": uid,

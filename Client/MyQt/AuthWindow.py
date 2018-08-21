@@ -1,10 +1,10 @@
-import traceback
-
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
-    QErrorMessage, QMainWindow
+    QErrorMessage
 
+from Client.MyQt.AbstractWindow import AbstractWindow
+from Client.MyQt.Program import MyProgram
 from Client.MyQt.QtMyLoginInput import QLoginInput
 from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import try_except
@@ -12,24 +12,15 @@ from DataBase.Authentication import Authentication
 from Modules.FirstLoad.ClientSide import FirstLoad
 
 
-class AuthWindow(QMainWindow):
+class AuthWindow(AbstractWindow):
     error = QtCore.pyqtSignal(str)
 
-    def __init__(self, program: 'MyProgram', flags, *args, **kwargs):
+    def __init__(self, program: MyProgram, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
-        self.setCentralWidget(QMyAuthWidget(program=program, *args, **kwargs))
+        self.resize(300, 200)
+        self.setCentralWidget(QMyAuthWidget(program))
         self.dialog = None
         self.error.connect(self.on_error)
-
-    @pyqtSlot(str)
-    def on_error(self, msg):
-        try:
-            # print("hello")
-            # print(threading.current_thread().name)
-            self.dialog = QErrorMessage(self)
-            self.dialog.showMessage(msg)
-        except Exception:
-            traceback.print_exc()
 
 
 class QMyAuthWidget(QWidget):
@@ -102,7 +93,7 @@ class QMyAuthWidget(QWidget):
                 self.login_input.set_image_text(prof_card_id, name)
 
         try:
-            RFIDReader.instance().onRead = imaged_value
+            RFIDReader.instance().onRead(imaged_value)
         except RFIDReaderNotFoundException:
             pass
 
@@ -116,17 +107,16 @@ class QMyAuthWidget(QWidget):
                   program=self.program,
                   on_finish=self.auth).run()
 
-    def auth(self):
+    @try_except
+    def auth(self, *args):
         auth = Authentication(self.db, login=self.login_input.login(),
                               password=self.password_input.text(), card_id=self.login_input.card_id())
-
         if auth.status:
-            self._auth_success_event(auth)
+            from Client.MyQt.Window.QtMyMainWindow import MainWindow
+            self.program.set_new_window(MainWindow(auth, self.program, self.program.win_config))
+
         else:
             self._first_load(auth)
-
-    def _auth_success_event(self, auth):
-        self.program.auth_success(auth)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         print("keypressEvent", a0.key(), QtCore.Qt.Key_Enter)

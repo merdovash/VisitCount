@@ -10,10 +10,10 @@ from Client.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
 
 
 class WeekDayChart(QAnalysisDialog):
-    def __init__(self, db: ClientDataBase, parent=None):
+    def __init__(self, program: 'MyProgram', parent=None):
         try:
             self.data_type = QAnalysisDialog.DataType.WEEK_DAY
-            super().__init__(db, parent)
+            super().__init__(program, parent)
 
             self.global_acc.data = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
             self.count = 7
@@ -45,5 +45,5 @@ class WeekDayChart(QAnalysisDialog):
                 self.db,
                 i["id"],
                 datetime.datetime.strptime(i["date"], '%d-%m-%Y %I:%M%p').weekday() - 1
-            ) for i in self.db.get_lessons(professor_id=self.program.professor["id"])
+            ) for i in self.db.get_lessons(professor_id=self.program['professor']["id"])
         ]

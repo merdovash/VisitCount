@@ -34,7 +34,7 @@ class RFIDReader(threading.Thread):
 
     def __init__(self, method=nothing):
         self.state = True
-        self.onRead = method
+        self.method = method
         self.connection = None
         super().__init__()
         self.status = RFIDReader.NotFound
@@ -54,7 +54,13 @@ class RFIDReader(threading.Thread):
                 a = self.connection.readline().decode('UTF-8')
                 if (len(a)) > 10:
                     number = a.split(",")[1].replace("\r\n", "")
-                    self.onRead(number)
+                    self.method(number)
+
+    def onRead(self, method):
+        self.method = method
+
+    def stopRead(self):
+        self.method = nothing
 
     def onReadOnce(self, method):
         self.temp = self.onRead

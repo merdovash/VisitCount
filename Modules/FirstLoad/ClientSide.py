@@ -25,7 +25,8 @@ class FirstLoad(ServerConnection):
         else:
             raise Exception("expected card_id or login parameter")
 
-        self.on_response = on_finish
+        if on_finish is not None:
+            self.on_finish = on_finish
 
     def get_request_body(self):
         if self.auth_type == FirstLoad.AuthType.ByLogin:
@@ -57,6 +58,7 @@ class FirstLoad(ServerConnection):
                       config.visitation,
                       config.auth]:
             self.db.loads(table, data[table])
+        self.on_finish()
 
     def on_error(self, msg):
         self.program.window.error.emit(msg)

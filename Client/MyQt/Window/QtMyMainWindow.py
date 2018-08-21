@@ -1,25 +1,25 @@
 import datetime
-import os
-import sys
 
-from Modules.NewVisits.ClientSide import SendNewVisitation
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QPushButton, QApplication, QAction, QMainWindow
+    QLabel, QPushButton, QAction
 
 import Client.Configuartion.WindowConfig as WindowConfig
+from Client.MyQt.AbstractWindow import AbstractWindow
+from Client.MyQt.Program import MyProgram
 from Client.MyQt.QAction.DataAction import DataAction
 from Client.MyQt.QtMyComboBox import QMyComboBox
 from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.QtMyTableWidget import VisitTable
 from Client.MyQt.QtMyWidgetItem import VisitItem
-from Client.MyQt.Window.Chart.QAnalysisDialog import show, QAnalysisDialog
+from Client.MyQt.Window.Chart.QAnalysisDialog import show
 from Client.MyQt.Window.Chart.WeekAnalysis import WeekChart
 from Client.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
-from Client.SerialsReader import RFIDReader, nothing, RFIDReaderNotFoundException
+from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import try_except
 from DataBase.Authentication import Authentication
+from Modules.NewVisits.ClientSide import SendNewVisitation
 from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -49,13 +49,13 @@ def closest_lesson(lessons: list):
     return closest
 
 
-class MainWindow(QMainWindow):
+class MainWindow(AbstractWindow):
     """
     class represents main window in program. includes table, control elements, status info, professor data.
     """
 
     @try_except
-    def __init__(self, auth: Authentication, program: 'MyProgram',
+    def __init__(self, auth: Authentication, program: MyProgram,
                  window_config: WindowConfig.Config):
         super().__init__()
         self.program = program
@@ -93,12 +93,12 @@ class MainWindow(QMainWindow):
         analysis = self.bar.addMenu("Анализ")
 
         analysis_weeks = QAction("По неделям", self)
-        analysis_weeks.triggered.connect(show(WeekChart, self))
+        analysis_weeks.triggered.connect(show(WeekChart, self.program))
 
         analysis.addAction(analysis_weeks)
 
         analysis_week_days = QAction("По дням недели", self)
-        analysis_week_days.triggered.connect(show(WeekDayChart, self))
+        analysis_week_days.triggered.connect(show(WeekDayChart, self.program))
 
         analysis.addAction(analysis_week_days)
 
@@ -108,6 +108,9 @@ class MainWindow(QMainWindow):
 
         lessons_current = QAction("Выбрать текущее", self)
         lessons_current.triggered.connect(self.centralWidget()._setup_data)
+
+        lessons_current_for_group = QAction("Выбрать текущее для группы", self)
+        lessons_current_for_group.triggered.connect(self.centralWidget()._set_current_group_lesson)
 
         lessons.addAction(lessons_current)
 
@@ -146,18 +149,9 @@ class MainWindow(QMainWindow):
         updates = self.bar.addMenu("Синхронизация")
 
         updates_action = QAction("Обновить локальную базу данных", self)
-        updates_action.triggered.connect(Synchronize(self.db, self.program['professor']['id']).run)
+        updates_action.triggered.connect(Synchronize(self.program, self.db, self.auth).run)
 
         updates.addAction(updates_action)
-
-    @try_except
-    def setDialog(self, dialog: QAnalysisDialog):
-        """
-
-        :param dialog: QAnalysisDialog that contains graph to show
-        """
-        self.dialog = dialog
-        self.dialog.show()
 
 
 class MainWindowWidget(QWidget):
@@ -275,6 +269,7 @@ class MainWindowWidget(QWidget):
 
         disciplines = self.db.get_disciplines(professor_id=self.program['professor']["id"])
         self.discipline_selector.disconnect()
+        self.discipline_selector.clear()
         self.discipline_selector.addItems(disciplines)
         self.discipline_selector.currentIndexChanged.connect(self.discipline_changed)
 
@@ -369,7 +364,7 @@ class MainWindowWidget(QWidget):
         self._lesson_changed()
 
         try:
-            RFIDReader.instance().method = nothing
+            RFIDReader.instance().stopRead()
         except RFIDReaderNotFoundException:
             pass
         QStatusMessage.instance().setText("Выбрана группа {}".format(self.group_selector.currentText()))
@@ -430,27 +425,31 @@ class MainWindowWidget(QWidget):
     @pyqtSlot(bool)
     @try_except
     def _start_lesson(self, b):
-        self.program['marking_visits'] = True
-        self.lesson_selector.setEnabled(False)
-        self.group_selector.setEnabled(False)
-        self.discipline_selector.setEnabled(False)
+        if self.program.reader is not None:
+            self.program.reader.onRead(self._new_visit)
 
-        self.db.start_lesson(lesson_id=self.lesson_selector.currentId())
+            self.program['marking_visits'] = True
+            self.lesson_selector.setEnabled(False)
+            self.group_selector.setEnabled(False)
+            self.discipline_selector.setEnabled(False)
 
-        if self.last_lesson is None:
-            self.last_lessons = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data()))
+            self.db.start_lesson(lesson_id=self.lesson_selector.currentId())
 
-        self.start_button.disconnect()
-        self.start_button.setText("Завершить занятие")
-        self.start_button.clicked.connect(self._end_lesson)
-        for i in range(3, self.table.rowCount()):
-            item = self.table.visit_table.item(i, self.last_lesson)
-            if type(item) == VisitItem:
-                if item.status == VisitItem.Status.NoInfo:
-                    item.set_visit_status(VisitItem.Status.NotVisited)
+            if self.last_lesson is None:
+                self.last_lessons = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data()))
 
-        QStatusMessage.instance().setText("Учет начался. Приложите карту студента к считывателю.")
-        RFIDReader.instance().onRead = self._new_visit
+            self.start_button.disconnect()
+            self.start_button.setText("Завершить занятие")
+            self.start_button.clicked.connect(self._end_lesson)
+            for i in range(3, self.table.rowCount()):
+                item = self.table.visit_table.item(i, self.last_lesson)
+                if type(item) == VisitItem:
+                    if item.status == VisitItem.Status.NoInfo:
+                        item.set_visit_status(VisitItem.Status.NotVisited)
+
+            QStatusMessage.instance().setText("Учет начался. Приложите карту студента к считывателю.")
+        else:
+            self.program.window.on_error.emit("У вас не подключен считыватель.")
 
     @try_except
     def _new_visit(self, ID):
@@ -477,7 +476,7 @@ class MainWindowWidget(QWidget):
         self.program['marking_visits'] = False
         SendNewVisitation(self.db, self.auth).run()
 
-        RFIDReader.instance().method = nothing
+        RFIDReader.instance().stopRead()
 
         self.lesson_selector.setEnabled(True)
         self.group_selector.setEnabled(True)
@@ -490,18 +489,3 @@ class MainWindowWidget(QWidget):
             r = self.db.complete_lesson(self.last_lesson)
             self.info_label.setText("Учет посещений завершен.")
             print(r)
-
-
-if __name__ == "__main__":
-    from Client.main import MyProgram
-
-    app = QApplication(sys.argv)
-    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Flat Style"
-    app.setApplicationName("СПбГУТ - Учет посещений")
-
-    window_config = WindowConfig.load()
-
-    program = MyProgram()
-    program.auth_success(1)
-
-    sys.exit(app.exec_())

@@ -20,17 +20,19 @@ class ServerConnection(Thread):
     def _get_professor(self, professor_id):
         return self.db.sql_request(f"""
         SELECT login, password 
-        FROM {self.dt_type.config.auth} 
+        FROM {self.db.config.auth} 
         WHERE user_id={professor_id} AND user_type=1;""")[0]
 
     @try_except
     def send(self, data: dict):
         try:
+
             r = post(url=self.url,
                      headers={"Content-Type": "application/json"},
                      data=jsonParser.dump(data))
 
             res_status = Status(r.text)
+            print(r.text)
             if res_status == Response.JSON:
                 res = jsonParser.read(r.text)
                 if res["status"] == "OK":
@@ -38,7 +40,7 @@ class ServerConnection(Thread):
                 else:
                     self.on_error(res["message"])
             else:
-                self.on_error(r.status_code)
+                self.on_error(str(r.status_code) + '<br>' + str(r.text))
         except requests.exceptions.ConnectionError as e:
             self.on_error(f"""Отсутсвует возможность аутентификации так как: <br>
                 1. Не удалось аутентифицировать локально (возможно неверно введен логин или пароль) <br>

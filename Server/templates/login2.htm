@@ -1,5 +1,7 @@
 <html>
+
 <head>
+    <script src='file/connection.js'></script>
     <script src="file/login.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
@@ -10,6 +12,7 @@
 
 
 </head>
+
 <body>
     <div class="mdl-card mdl-shadow--2dp" style="margin:auto;width: 320px;height: 450px;">
         <div class="mdl-card__title mdl-card--expand">
@@ -23,23 +26,22 @@
         <div class="mdl-card__actions mdl-card--border">
             <!-- Textfield with Floating Label -->
 
-        <form action="#">
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="log">
-                <label class="mdl-textfield__label" for="log">Логин...</label>
-            </div>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="password" id="pass">
-                <label class="mdl-textfield__label" for="pass">Пароль...</label>
-            </div>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
-                    style="background=#ff8000"
-                    onclick="login();">
+            <form action="#">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="log">
+                    <label class="mdl-textfield__label" for="log">Логин...</label>
+                </div>
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="password" id="pass">
+                    <label class="mdl-textfield__label" for="pass">Пароль...</label>
+                </div>
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" style="background=#ff8000" onclick="login();">
                 Войти
             </button>
-        </form>
+            </form>
 
         </div>
     </div>
 </body>
+
 </html>

@@ -19,7 +19,7 @@ class DataBaseConfig:
             }
         elif self.dt_type == "sqlite":
             self.db = {
-                "database": "C:\\Users\\MERDovashkinar\\PycharmProjects\\VisitCount\\dt_type.dt_type"
+                "database": "C:\\Users\\MERDovashkinar\\PycharmProjects\\VisitCount\\db.db"
             }
         elif self.dt_type == 'oracle':
             self.connection = ""

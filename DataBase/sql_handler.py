@@ -29,6 +29,255 @@ class DataBase:
     Base class of sqlDataBase wrapper
     """
 
+    schema = {
+        'tables': {
+            'auth': 'auth5',
+            'students': 'students',
+            'professors': 'professors',
+            'parents': 'parents',
+            'groups': 'groups',
+            'lessons': 'lessons',
+            'visitations': 'visitations',
+            'students_groups': 'students_groups',
+            'disciplines': 'disciplines',
+            'updates': 'updates',
+            'professors_updates': 'professors_updates'
+        }
+    }
+
+    schema[schema['tables']['auth']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT '
+        },
+        {
+            'name': 'login',
+            'type': 'TEXT',
+            'spec': 'UNIQUE'
+        },
+        {
+            'name': 'password',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'user_id',
+            'type': 'INT',
+            'spec': ''
+        },
+        {
+            'name': 'user_type',
+            'type': 'INT',
+            'spec': ''
+        },
+        {
+            'name': 'uid',
+            'type': 'TEXT',
+            'spec': 'UNIQUE'
+        },
+        {
+            'name': 'card_id',
+            'type': 'TEXT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['students']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT '
+        },
+        {
+            'name': 'last_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'first_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'middle_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'card_id',
+            'type': 'TEXT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['professors']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT '
+        },
+        {
+            'name': 'last_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'first_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'middle_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'card_id',
+            'type': 'TEXT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['parents']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT'
+        },
+        {
+            'name': 'last_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'first_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'middle_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'email',
+            'type': 'TEXT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['groups']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT'
+        },
+        {
+            'name': 'name',
+            'type': 'TEXT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['disciplines']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT'
+        },
+        {
+            'name': 'name',
+            'type': 'TEXT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['students_groups']] = [
+        {
+            'name': 'student_id',
+            'type': 'INT',
+            'spec': ''
+        },
+        {
+            'name': 'group_id',
+            'type': 'INT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['lessons']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT'
+        },
+        {
+            'name': 'professor_id',
+            'type': 'INT',
+            'spec': ''
+        },
+        {
+            'name': 'group_id',
+            'type': 'INT',
+            'spec': ''
+        },
+        {
+            'name': 'discipline_id',
+            'type': 'INT',
+            'spec': ''
+        },
+        {
+            'name': 'date',
+            'type': 'DATE',
+            'spec': ''
+        },
+        {
+            'name': 'room_id',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'type',
+            'type': 'INT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['visitations']] = [
+        {
+            'name': 'student_id',
+            'type': 'INT',
+            'spec': ''
+        },
+        {
+            'name': 'lesson_id',
+            'type': 'INT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['updates']] = [
+        {
+            'name': 'id',
+            'type': 'INTEGER',
+            'spec': 'PRIMARY KEY AUTOINCREMENT'
+        },
+        {
+            'name': 'table_name',
+            'type': 'TEXT',
+            'spec': ''
+        },
+        {
+            'name': 'row_id',
+            'type': 'INT',
+            'spec': ''
+        }
+    ]
+    schema[schema['tables']['professors_updates']] = [
+        {
+            'name': 'professor_id',
+            'type': 'INTEGER',
+            'spec': ''
+        },
+        {
+            'name': 'update_id',
+            'type': 'INT',
+            'spec': ''
+        }
+    ]
+
     def __init__(self, config=None):
         if config is not None:
             self.config: DataBaseConfig = config
@@ -36,9 +285,30 @@ class DataBase:
             self.config: DataBaseConfig = DataBaseConfig()
 
         self.connection = self.connect()
-        self.cursor = self.connection.cursor
+        self.cursor = self.connection.cursor()
 
         self._last_error = ""
+
+        self.check_tables()
+
+    def check_tables(self):
+        for t in DataBase.schema['tables'].keys():
+            try:
+                self.cursor.execute("SELECT count(*) FROM {}".format(DataBase.schema['tables'][t]))
+            except Exception as e:
+                self.create_table(t)
+                print(f'table {t}, {e}')
+
+    def create_table(self, name):
+        req = "CREATE TABLE {0} ({1});".format(
+            DataBase.schema['tables'][name],
+            ', '.join([f"{rule['name']} {rule['type']} {rule['spec']}"
+                       for rule in DataBase.schema[DataBase.schema['tables'][name]]])
+        )
+        print(req)
+        self.cursor.execute(req)
+
+        self.connection.commit()
 
     def last_error(self):
         """
@@ -62,6 +332,7 @@ class DataBase:
                 self.connection = sqlite.connect(**self.config.db)
 
         _connect()
+        self.cursor = self.connection.cursor()
         return self.connection
 
     def sql_request(self, msg, *args) -> list:
@@ -75,8 +346,7 @@ class DataBase:
         message = msg.replace('\t', '').replace("  ", " ")
         arg = valid(*args)
 
-        connection = self.connect()
-        cursor = connection.cursor()
+        cursor = self.cursor
         try:
             sql = message.format(*arg)
             # Logger.write(sql)
@@ -252,14 +522,14 @@ class DataBaseWorker(DataBase):
         :param account_id: account ID
         """
         # Logger.write("before: " + str(self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
-        t = self.sql_request("""
+        self.sql_request("""
             UPDATE {0}
             SET uid='{1}'
             WHERE id={2}
         """,
-                             self.config.auth,
-                             uid,
-                             account_id)
+                         self.config.auth,
+                         uid,
+                         account_id)
         # Logger.write("update uid, row count=" + str(t) + " || " + str(
         #     self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
 
@@ -364,8 +634,8 @@ class DataBaseWorker(DataBase):
 
         return [
             {
-                "first_name": res[1],
-                "last_name": res[0],
+                "first_name": res[0],
+                "last_name": res[1],
                 "middle_name": res[2],
                 "id": str(res[3]),
                 "card_id": str(res[4])
@@ -381,6 +651,34 @@ class DataBaseWorker(DataBase):
         """
         res = self.get_students(student_id=student_id)
         return res[0]["last_name"] + " " + res[0]["first_name"] + " " + res[0]["middle_name"]
+
+    def get_group_visit(self, professor_id=None, *args):
+        dates = [{'id': i, 'name': i} for i in range(18)]
+        rows = [{'id': i[0], 'name': i[1]} for i in self.sql_request("""
+        SELECT {0}.id, {0}.name 
+        FROM {0} 
+        JOIN {1} ON {0}.id={1}.group_id
+        WHERE {1}.professor_id={2}""",
+                                                                     self.config.groups,
+                                                                     self.config.lessons,
+                                                                     professor_id)]
+        visit = [[i[2], i[1], i[0]] for i in self.sql_request("""
+        SELECT count({1}.lesson_id)/count({0}.id), {1}.group_id, WEEK({0}.date) as 'week' 
+        FROM {0}
+        JOIN {1} ON {1}.lesson_id={0}.id
+        LEFT JOIN {2} ON {2}.student_id={1}.student_id AND {1}.lesson_id={0].id
+        WHERE {0}.professor_id={3}
+        GROUP BY {0}.group_id, week""",
+                                                              self.config.visitation,
+                                                              self.config.lessons,
+                                                              self.config.students_groups,
+                                                              professor_id)]
+
+        return {
+            'dates': dates,
+            'rows': rows,
+            'visit': visit
+        }
 
     def get_groups(self, professor_id=None, discipline_id=None, student_id=None, group_id=None) -> list:
         """
@@ -1048,3 +1346,13 @@ class ClientDataBase(DataBaseWorker):
                                 table,
                                 ','.join(kwargs.keys()),
                                 ','.join([kwargs[i] for i in kwargs.keys()]))
+
+    def loads(self, table, data):
+        print(data)
+        if len(data) > 0:
+            keys = data[0].keys()
+            req = "INSERT INTO {0}({1}) VALUES {2};".format(
+                             table,
+                             ', '.join(keys),
+                             ','.join(['(' + ','.join([f"'{str(d[key])}'" for key in keys]) + ')' for d in data]))
+            self.sql_request(req)

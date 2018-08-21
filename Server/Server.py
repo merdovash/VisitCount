@@ -205,13 +205,15 @@ def get_field():
                                      "notification_params",
                                      "table",
                                      "total",
-                                     "groups_of_total"]
+                                     "groups_of_total",
+                                     "group_visit"]
                 if request.args["data"] in possible_requests:
                     get_func = getattr(db, "get_" + request.args["data"])
 
                     keys = list(get_func.__code__.co_varnames)
                     for special in ["self", "request", "params"]:
-                        keys.remove(special)
+                        if special in keys:
+                            keys.remove(special)
 
                     params = read_params(request_args, keys)
                     params = tuple(params[key] for key in keys)

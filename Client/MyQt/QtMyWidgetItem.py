@@ -131,6 +131,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
                 #     menu.addAction("Отменить запись", self._del_visit_by_professor)
         menu.exec_()
 
+    @try_except
     def _show_info(self):
         msg = "{} {}.{}. {}посетил занятие {}".format(self.student["last_name"],
                                                       self.student["first_name"][0],
@@ -138,11 +139,11 @@ class VisitItem(MyTableItem, AbstractContextItem):
                                                       "" if self.status == VisitItem.Status.Visited else "не ",
                                                       self.lesson["date"])
         QStatusMessage.instance().setText(msg)
-        RFIDReader.instance().method = nothing
+        # RFIDReader.instance().method = nothing
 
     def _set_visited_by_professor(self):
         QStatusMessage.instance().setText("Приложите карточку преподавателя для подтверждения")
-        RFIDReader.instance().onReadOnce(self._set_visited_by_professor_onReadCard)
+        self.program.reader.onReadOnce(self._set_visited_by_professor_onReadCard)
 
     def _set_visited_by_professor_onReadCard(self, card_id):
         if int(card_id) == int(self.program['professor']["card_id"]):

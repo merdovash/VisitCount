@@ -12,13 +12,17 @@ class Authentication:
         if (password and (card_id or login)) or uid is not None:
             if password is not None:
                 if login is not None:
-                    t = db.sql_request("SELECT user_id, user_type FROM {} WHERE login='{}' AND password='{}'",
+                    t = db.sql_request("""
+                    SELECT user_id, user_type, id 
+                    FROM {} 
+                    WHERE login='{}' AND password='{}'""",
                                        db.config.auth,
                                        login,
                                        password)
                 else:
                     t = db.sql_request("""
-                    SELECT user_id, user_type FROM {0} 
+                    SELECT user_id, user_type, id 
+                    FROM {0} 
                     JOIN {1} ON {0}.user_id={1}.id AND {0}.user_type=1 
                     WHERE {1}.card_id='{2}' AND password='{3}'""",
                                        db.config.auth,
@@ -26,14 +30,16 @@ class Authentication:
                                        card_id,
                                        password)
             else:
-                t = db.sql_request("SELECT user_id, user_type FROM {0} WHERE uid='{1}'",
+                t = db.sql_request("SELECT user_id, user_type, id FROM {0} WHERE uid='{1}'",
                                    db.config.auth,
                                    uid)
 
+            print(db.sql_request("SELECT * FROM {}", db.config.auth))
             if len(t) > 0:
                 self.status = Authentication.Status.Complete
                 self.user_id = t[0][0]
                 self.user_type = t[0][1]
+                self.account_id = t[0][2]
             else:
                 self.error = db.last_error()
                 self.status = Authentication.Status.Fail

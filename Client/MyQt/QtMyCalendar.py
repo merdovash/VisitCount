@@ -1,19 +1,19 @@
-import traceback
 from datetime import datetime
 
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, QHBoxLayout, QLabel, QPushButton
 
+from Client.MyQt.Program import MyProgram
+from Client.MyQt.QtMyStatusBar import QStatusMessage
+from Client.MyQt.Time import from_index_to_time
 from Client.test import try_except
 from DataBase.sql_handler import ClientDataBase
 
-from Client.MyQt.QtMyStatusBar import QStatusMessage
-from Client.MyQt.Time import from_index_to_time
-
 
 class LessonDateChanger(QWidget):
-    def __init__(self, db: ClientDataBase, date: datetime, lesson_id: int, program: 'MyProgram' = None):
-        super().__init__()
-        self.program: 'MainWindow' = program
+    def __init__(self, db: ClientDataBase, date: datetime, lesson_id: int, program: MyProgram = None):
+        super().__init__(flags=QtCore.Qt.WindowStaysOnTopHint)
+        self.program: MyProgram = program
         self.lesson_id = lesson_id
         self.db: ClientDataBase = db
         self.l = QVBoxLayout()

@@ -27,9 +27,10 @@ class Module:
                             self.post(data=data.get('data'), response=response, auth=authentication, **kwargs)
                         else:
                             response.set_error('auth failed')
-                        return response()
                     else:
-                        return response.set_error("you send no data: {}".format(request.data))()
+                        return response.set_error("you send no data: {}".format(request.data))
+
+                    return response()
             if 'GET' in methods:
                 pass
 

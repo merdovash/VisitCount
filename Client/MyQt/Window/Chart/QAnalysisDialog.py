@@ -15,13 +15,14 @@ from Client.MyQt.Window.Chart.Tools import get_visit_count, get_student_count
 from DataBase.sql_handler import ClientDataBase
 
 
-def show(c, parent: 'QMyMainWindow'):
+def show(c, program: 'MyProgram'):
     def x():
+        window = program.window
         try:
-            if parent.dialog is not None:
-                parent.dialog.done(0)
-                parent.dialog = None
-            parent.setDialog(c(parent.centralWidget().db))
+            if window.dialog is not None:
+                window.dialog.done(0)
+                window.dialog = None
+            window.setDialog(c(program))
         except Exception as e:
             traceback.print_exc()
 
@@ -101,7 +102,7 @@ class QAnalysisDialog(QDialog):
         WEEK_DAY = 2
 
     # TODO destroy on exit (memory leak)
-    def __init__(self, program:'MyProgram', parent=None):
+    def __init__(self, program: 'MyProgram', parent=None):
         super().__init__(parent)
         self.program = program
         self.db = program.db
