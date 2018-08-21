@@ -4,7 +4,7 @@ import requests
 from requests import post
 
 from Client.Types import Status, Response
-from Client.test import try_except
+from Client.test import safe
 from DataBase.Authentication import Authentication
 from DataBase.sql_handler import ClientDataBase
 from Parser.JsonParser import jsonParser
@@ -23,7 +23,7 @@ class ServerConnection(Thread):
         FROM {self.db.config.auth} 
         WHERE user_id={professor_id} AND user_type=1;""")[0]
 
-    @try_except
+    @safe
     def send(self, data: dict):
         try:
 

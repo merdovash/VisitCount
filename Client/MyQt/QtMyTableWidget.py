@@ -1,7 +1,6 @@
 import datetime
-import traceback
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QMainWindow
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout
 
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.Configurable import Configurable
@@ -13,8 +12,7 @@ from Client.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, MonthTableItem
 from Client.MyQt.Section.QtMyHomeworkSection import HomeworkSection
 from Client.MyQt.Section.QtMyPercentSection import PercentSection
 from Client.MyQt.Section.QtMyVisitSection import VisitSection
-from Client.test import try_except
-from DataBase.sql_handler import ClientDataBase
+from Client.test import safe
 
 
 class VisitTable(QWidget, Configurable):
@@ -38,7 +36,7 @@ class VisitTable(QWidget, Configurable):
             }
         }
 
-    @try_except
+    @safe
     def __init__(self, parent: QVBoxLayout, program: 'MyProgram', window_config: WindowConfig.Config):
         super().__init__()
         self.program = program
@@ -72,21 +70,21 @@ class VisitTable(QWidget, Configurable):
 
         self.lessons = None
 
-    @try_except
+    @safe
     def _setup_config(self, window_config: Config):
         self.window_config = window_config
         self.window_config.check(self)
 
-    @try_except
+    @safe
     def rowCount(self):
         return self.visit_table.rowCount()
 
-    @try_except
+    @safe
     def columnCount(self):
         print("visit table", self.visit_table.columnCount())
         return self.visit_table.columnCount()
 
-    @try_except
+    @safe
     def clear(self):
         self.visit_table.clear()
         self.visit_table.setRowCount(0)
@@ -103,12 +101,12 @@ class VisitTable(QWidget, Configurable):
         self.students = []
         self.lessons = []
 
-    @try_except
+    @safe
     def show_header(self, i):
         if i == 1:
             self._show_day = not self._show_day
 
-    @try_except
+    @safe
     def set_horizontal_header(self, lessons: list):
         self.lessons = lessons
         self.visit_table.setColumnCount(len(lessons))
@@ -185,7 +183,7 @@ class VisitTable(QWidget, Configurable):
                 self.visit_table.setSpan(0, start, 1, len(lessons) - start)
             self.visit_table.setColumnWidth(column, 5)
 
-    @try_except
+    @safe
     def add_student(self, student: dict, visitations: list):
         self.students.append(student)
         row = self.visit_table.rowCount()
@@ -225,7 +223,7 @@ class VisitTable(QWidget, Configurable):
         self.visit_table.resizeRowsToContents()
         self.percent_table.resizeRowsToContents()
 
-    @try_except
+    @safe
     def fill_percents_byStudent(self):
         current_row = self.rowCount()
         self.insertRow(current_row)
@@ -241,19 +239,19 @@ class VisitTable(QWidget, Configurable):
 
         self.visit_table.setVerticalHeaderItem(current_row, PercentHeaderItem(vertical_percents))
 
-    @try_except
+    @safe
     def insertRow(self, index: int):
         self.visit_table.insertRow(index)
         self.percent_table.insertRow(index)
         # self.home_work_table.insertRow(index)
 
-    @try_except
+    @safe
     def removeRow(self, index: int):
         self.visit_table.removeRow(index)
         self.percent_table.removeRow(index)
         # self.home_work_table.removeRow(index)
 
-    @try_except
+    @safe
     def row(self, student_id: int) -> int:
         for row in range(self.rowCount()):
             item = self.visit_table.verticalHeaderItem(row)
@@ -262,14 +260,14 @@ class VisitTable(QWidget, Configurable):
                     return row
         return -1
 
-    @try_except
+    @safe
     def col(self, lesson_id) -> int:
         for col in range(self.columnCount()):
             if self.lessons[col]["id"] == lesson_id:
                 return col
         return -1
 
-    @try_except
+    @safe
     def new_visit(self, student_id, lesson_id):
         col = self.col(lesson_id)
         row = self.row(student_id)
@@ -286,12 +284,12 @@ class VisitTable(QWidget, Configurable):
             self.percent_table.item(row, 0).refresh()
             self.visit_table.item(self.rowCount() - 1, col).refresh()
 
-    @try_except
+    @safe
     def ForEachRow(self, col_index, func):
         for i in range(self.visit_table.rowCount()):
             func(self.visit_table.item(i, col_index))
 
-    @try_except
+    @safe
     def ForEachColumn(self, row_index, func):
         for i in range(self.visit_table.colorCount()):
             func(self.visit_table.item(row_index, i))

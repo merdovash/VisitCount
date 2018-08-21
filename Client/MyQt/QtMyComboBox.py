@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QComboBox
 
-from Client.test import try_except
+from Client.test import safe
 
 
 class QMyComboBox(QComboBox):
@@ -30,7 +30,7 @@ class QMyComboBox(QComboBox):
         super().clear()
         self.items = {}
 
-    @try_except
+    @safe
     def setCurrentId(self, ID: int):
         print(self.items)
         for key in self.items:

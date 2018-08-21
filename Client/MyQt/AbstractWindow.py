@@ -4,7 +4,7 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QMainWindow, QErrorMessage
 
 from Client.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog
-from Client.test import try_except
+from Client.test import safe
 
 
 # TODO replace MyProgram with AbstractWindow
@@ -13,7 +13,7 @@ class AbstractWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @try_except
+    @safe
     def setDialog(self, dialog: QAnalysisDialog):
         """
 

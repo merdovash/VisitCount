@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget, QCalendarWidget, QDialog
 
-from Client.test import try_except
+from Client.test import safe
 from DataBase.sql_handler import ClientDataBase
 from DataBase.Types import name
 from Client.MyQt.QtMyCalendar import LessonDateChanger
@@ -131,7 +131,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
                 #     menu.addAction("Отменить запись", self._del_visit_by_professor)
         menu.exec_()
 
-    @try_except
+    @safe
     def _show_info(self):
         msg = "{} {}.{}. {}посетил занятие {}".format(self.student["last_name"],
                                                       self.student["first_name"][0],
@@ -226,7 +226,7 @@ class LessonDateItem(QTableWidgetItem, AbstractContextItem):
         self.setTextAlignment(Qt.AlignCenter)
         self.setText(str(date.day))
 
-    @try_except
+    @safe
     def show_context_menu(self, pos):
         """
         override base method
@@ -241,7 +241,7 @@ class LessonDateItem(QTableWidgetItem, AbstractContextItem):
             menu.addAction("Перенести занятие", self._move_lesson)
             menu.exec_()
 
-    @try_except
+    @safe
     def _move_lesson(self):
         try:
             self.calendar = LessonDateChanger(self.program.db, self.date, self.lesson_id, self.program)
@@ -359,6 +359,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
 
         self.register_process = False
 
+    @safe
     def show_context_menu(self, pos):
         """
         override base method
@@ -379,6 +380,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         menu.addAction("Показать номер карты", lambda: QStatusMessage.instance().setText(f'{name(self.student)} - "{self.student["card_id"]}"'))
         menu.exec_()
 
+    @safe
     def _register_student_card(self):
         QStatusMessage.instance().setText("Приложите карту {} {}.{}. для регистрации".format(
             self.student["last_name"],
@@ -387,6 +389,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         RFIDReader.instance().onReadOnce(self._register_student_card_onRead)
         self.register_process = True
 
+    @safe
     def _register_student_card_onRead(self, card_id):
         self.stop_card_register_process()
 

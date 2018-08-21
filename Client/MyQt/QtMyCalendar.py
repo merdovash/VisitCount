@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, QH
 from Client.MyQt.Program import MyProgram
 from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Time import from_index_to_time
-from Client.test import try_except
+from Client.test import safe
 from DataBase.sql_handler import ClientDataBase
 
 
@@ -38,7 +38,7 @@ class LessonDateChanger(QWidget):
 
         self.setLayout(self.l)
 
-    @try_except
+    @safe
     def accept(self, b=None):
         d = self.calendar.selectedDate()
 

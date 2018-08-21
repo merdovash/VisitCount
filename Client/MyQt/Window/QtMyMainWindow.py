@@ -17,7 +17,7 @@ from Client.MyQt.Window.Chart.QAnalysisDialog import show
 from Client.MyQt.Window.Chart.WeekAnalysis import WeekChart
 from Client.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
 from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
-from Client.test import try_except
+from Client.test import safe
 from DataBase.Authentication import Authentication
 from Modules.NewVisits.ClientSide import SendNewVisitation
 from Modules.Synchronize.ClientSide import Synchronize
@@ -54,7 +54,7 @@ class MainWindow(AbstractWindow):
     class represents main window in program. includes table, control elements, status info, professor data.
     """
 
-    @try_except
+    @safe
     def __init__(self, auth: Authentication, program: MyProgram,
                  window_config: WindowConfig.Config):
         super().__init__()
@@ -76,7 +76,7 @@ class MainWindow(AbstractWindow):
 
         self.showMaximized()
 
-    @try_except
+    @safe
     def __init_menu__(self):
         bar = self.menuBar()
 
@@ -88,7 +88,7 @@ class MainWindow(AbstractWindow):
         self._init_menu_lessons()
         self._init_menu_updates()
 
-    @try_except
+    @safe
     def _init_menu_analysis(self):
         analysis = self.bar.addMenu("Анализ")
 
@@ -102,7 +102,7 @@ class MainWindow(AbstractWindow):
 
         analysis.addAction(analysis_week_days)
 
-    @try_except
+    @safe
     def _init_menu_lessons(self):
         lessons = self.bar.addMenu("Занятия")
 
@@ -114,7 +114,7 @@ class MainWindow(AbstractWindow):
 
         lessons.addAction(lessons_current)
 
-    @try_except
+    @safe
     def _init_menu_file(self):
         file = self.bar.addMenu("Файл")
 
@@ -128,7 +128,7 @@ class MainWindow(AbstractWindow):
 
         file.addAction(file_exit)
 
-    @try_except
+    @safe
     def _init_menu_data(self):
         data = self.bar.addMenu("Данные")
 
@@ -144,7 +144,7 @@ class MainWindow(AbstractWindow):
         data.addAction(
             DataAction(["Отображать тип занятия", "Не отображать тип занятия"], VisitTable.Header.LESSONTYPE, self))
 
-    @try_except
+    @safe
     def _init_menu_updates(self):
         updates = self.bar.addMenu("Синхронизация")
 
@@ -159,7 +159,7 @@ class MainWindowWidget(QWidget):
     contains select lesson menu and table
     """
 
-    @try_except
+    @safe
     def __init__(self, auth: Authentication, program: 'MyProgram',
                  window_config: WindowConfig.Config):
         super().__init__()
@@ -179,11 +179,11 @@ class MainWindowWidget(QWidget):
 
         self._setup_data()
 
-    @try_except
+    @safe
     def _setup_geometry(self):
         pass
 
-    @try_except
+    @safe
     def _setup_select_lesson(self):
         self.main_layout = QVBoxLayout()
 
@@ -263,7 +263,7 @@ class MainWindowWidget(QWidget):
         closest = closest_lesson(lessons)
         self.lesson_selector.setCurrentId(closest['id'])
 
-    @try_except
+    @safe
     def _setup_data(self, *args):
         self._set_current_lesson()
 
@@ -286,7 +286,7 @@ class MainWindowWidget(QWidget):
         self.lesson_selector.setCurrentId(self.program['lesson']["id"])
 
     # @pyqtSlot(int)
-    @try_except
+    @safe
     def discipline_changed(self, index=None):
         """
         update groups ComboBox
@@ -306,7 +306,7 @@ class MainWindowWidget(QWidget):
 
         pass
 
-    @try_except
+    @safe
     def refresh_table(self):
         """
         refill table
@@ -333,7 +333,7 @@ class MainWindowWidget(QWidget):
         self._lesson_changed()
 
     # @pyqtSlot(int)
-    @try_except
+    @safe
     def _group_changed(self, index=None):
         self.table.clear()
         self.last_lesson = None
@@ -370,7 +370,7 @@ class MainWindowWidget(QWidget):
         QStatusMessage.instance().setText("Выбрана группа {}".format(self.group_selector.currentText()))
 
     # @pyqtSlot(int)
-    @try_except
+    @safe
     def _lesson_changed(self, index=None):
 
         def select_current_col(col):
@@ -392,7 +392,7 @@ class MainWindowWidget(QWidget):
         self.program['lesson'] = self.db.get_lessons(
             lesson_id=self.lesson_selector.currentId())[0]
 
-    @try_except
+    @safe
     def fill_table(self):
         """
         fill table with current group students and lessons
@@ -423,7 +423,7 @@ class MainWindowWidget(QWidget):
         return
 
     @pyqtSlot(bool)
-    @try_except
+    @safe
     def _start_lesson(self, b):
         if self.program.reader is not None:
             self.program.reader.onRead(self._new_visit)
@@ -451,7 +451,7 @@ class MainWindowWidget(QWidget):
         else:
             self.program.window.on_error.emit("У вас не подключен считыватель.")
 
-    @try_except
+    @safe
     def _new_visit(self, ID):
         students = self.db.get_students(card_id=ID, group_id=self.group_selector.currentId())
         if len(students) == 0:
@@ -471,7 +471,7 @@ class MainWindowWidget(QWidget):
                 )
 
     @pyqtSlot()
-    @try_except
+    @safe
     def _end_lesson(self):
         self.program['marking_visits'] = False
         SendNewVisitation(self.db, self.auth).run()

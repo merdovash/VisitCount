@@ -2,11 +2,11 @@ from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView
 
 from Client.MyQt.QtMyWidgetItem import StudentHeaderItem, PercentHeaderItem, VisitItem, LessonDateItem
-from Client.test import try_except
+from Client.test import safe
 
 
 class VisitSection(QTableWidget):
-    @try_except
+    @safe
     def __init__(self, *__args):
         super().__init__(*__args)
 

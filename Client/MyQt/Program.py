@@ -2,7 +2,7 @@ from Client.Configuartion import WindowConfig
 from Client.Configuartion.WindowConfig import Config
 from Client.MyQt.AbstractWindow import AbstractWindow
 from Client.SerialsReader import RFIDReaderNotFoundException, RFIDReader
-from Client.test import try_except
+from Client.test import safe
 from DataBase.Authentication import Authentication
 from DataBase.config2 import DataBaseConfig
 from DataBase.sql_handler import ClientDataBase
@@ -30,18 +30,18 @@ class MyProgram:
 
         self.window.show()
 
-    @try_except
+    @safe
     def set_new_window(self, widget):
         self.window.close()
         self.window = widget
         self.window.show()
 
-    @try_except
+    @safe
     def auth_success(self, auth: Authentication):
         from Client.MyQt.Window.QtMyMainWindow import MainWindow
         self.set_new_window(MainWindow(auth=auth, program=self, window_config=self.win_config))
 
-    @try_except
+    @safe
     def change_user(self, *args):
         from Client.MyQt.AuthWindow import AuthWindow
         self.set_new_window(AuthWindow(self))

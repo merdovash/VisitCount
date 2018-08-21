@@ -7,7 +7,7 @@ from Client.MyQt.AbstractWindow import AbstractWindow
 from Client.MyQt.Program import MyProgram
 from Client.MyQt.QtMyLoginInput import QLoginInput
 from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
-from Client.test import try_except
+from Client.test import safe
 from DataBase.Authentication import Authentication
 from Modules.FirstLoad.ClientSide import FirstLoad
 
@@ -97,7 +97,7 @@ class QMyAuthWidget(QWidget):
         except RFIDReaderNotFoundException:
             pass
 
-    @try_except
+    @safe
     def _first_load(self, auth:Authentication):
         FirstLoad(db=self.db,
                   auth=auth,
@@ -107,7 +107,7 @@ class QMyAuthWidget(QWidget):
                   program=self.program,
                   on_finish=self.auth).run()
 
-    @try_except
+    @safe
     def auth(self, *args):
         auth = Authentication(self.db, login=self.login_input.login(),
                               password=self.password_input.text(), card_id=self.login_input.card_id())
