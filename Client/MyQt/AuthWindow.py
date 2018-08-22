@@ -13,14 +13,12 @@ from Modules.FirstLoad.ClientSide import FirstLoad
 
 
 class AuthWindow(AbstractWindow):
-    error = QtCore.pyqtSignal(str)
 
     def __init__(self, program: MyProgram, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
         self.resize(300, 200)
         self.setCentralWidget(QMyAuthWidget(program))
         self.dialog = None
-        self.error.connect(self.on_error)
 
 
 class QMyAuthWidget(QWidget):
@@ -105,7 +103,7 @@ class QMyAuthWidget(QWidget):
                   login=self.login_input.login(),
                   password=self.password_input.text(),
                   program=self.program,
-                  on_finish=self.auth).run()
+                  on_finish=self.auth).start()
 
     @safe
     def auth(self, *args):

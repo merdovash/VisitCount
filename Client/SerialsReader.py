@@ -1,6 +1,6 @@
-import serial
 import threading
-import traceback
+
+import serial
 
 
 def nothing(card_id):

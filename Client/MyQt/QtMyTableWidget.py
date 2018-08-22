@@ -1,10 +1,11 @@
 import datetime
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QHeaderView
 
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.Configurable import Configurable
 from Client.Configuartion.WindowConfig import Config
+from Client.MyQt.Program import MyProgram
 from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, MonthTableItem, \
     StudentHeaderItem, \
@@ -37,7 +38,7 @@ class VisitTable(QWidget, Configurable):
         }
 
     @safe
-    def __init__(self, parent: QVBoxLayout, program: 'MyProgram', window_config: WindowConfig.Config):
+    def __init__(self, parent: QVBoxLayout, program: MyProgram, window_config: WindowConfig.Config):
         super().__init__()
         self.program = program
         self.db = program.db
@@ -183,6 +184,8 @@ class VisitTable(QWidget, Configurable):
                 self.visit_table.setSpan(0, start, 1, len(lessons) - start)
             self.visit_table.setColumnWidth(column, 5)
 
+        self.visit_table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+
     @safe
     def add_student(self, student: dict, visitations: list):
         self.students.append(student)
@@ -190,7 +193,7 @@ class VisitTable(QWidget, Configurable):
         self.insertRow(row)
 
         # set row header
-        header_item = StudentHeaderItem(self.db, student)
+        header_item = StudentHeaderItem(self.program, student)
         self.visit_table.setVerticalHeaderItem(row, header_item)
 
         completed_lessons = list(filter(lambda x: x["completed"] == 1, self.lessons))

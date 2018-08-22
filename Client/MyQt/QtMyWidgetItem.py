@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget, QCalendarWidget, QDialog
 
+from Client.MyQt.Program import MyProgram
 from Client.test import safe
 from DataBase.sql_handler import ClientDataBase
 from DataBase.Types import name
@@ -141,9 +142,13 @@ class VisitItem(MyTableItem, AbstractContextItem):
         QStatusMessage.instance().setText(msg)
         # RFIDReader.instance().method = nothing
 
+    @safe
     def _set_visited_by_professor(self):
-        QStatusMessage.instance().setText("Приложите карточку преподавателя для подтверждения")
-        self.program.reader.onReadOnce(self._set_visited_by_professor_onReadCard)
+        if self.program.reader() is not None:
+            QStatusMessage.instance().setText("Приложите карточку преподавателя для подтверждения")
+            self.program.reader().onReadOnce(self._set_visited_by_professor_onReadCard)
+        else:
+            self.program.window.emit("Подключите считыватель для подвтерждения внесения изменений.")
 
     def _set_visited_by_professor_onReadCard(self, card_id):
         if int(card_id) == int(self.program['professor']["card_id"]):
@@ -341,9 +346,9 @@ class PercentHeaderItem(QTableWidgetItem, AbstractContextItem):
 
 
 class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
-    def __init__(self, db: ClientDataBase, student: dict, *__args):
+    def __init__(self, program : MyProgram, student: dict, *__args):
         super().__init__(*__args)
-        self.db = db
+        self.program = program
         if len(student["middle_name"]) > 0:
             self.setText("{} {}. {}.".format(
                 student["last_name"],
@@ -382,18 +387,24 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
 
     @safe
     def _register_student_card(self):
-        QStatusMessage.instance().setText("Приложите карту {} {}.{}. для регистрации".format(
-            self.student["last_name"],
-            self.student['first_name'][0],
-            self.student["middle_name"][0]))
-        RFIDReader.instance().onReadOnce(self._register_student_card_onRead)
-        self.register_process = True
+        if self.program.reader() is not None:
+            self.program.reader().onReadOnce(self._register_student_card_onRead)
+
+            QStatusMessage.instance().setText("Приложите карту {} {}.{}. для регистрации".format(
+                self.student["last_name"],
+                self.student['first_name'][0],
+                self.student["middle_name"][0]))
+
+            self.register_process = True
+
+        else:
+            self.program.window.error.emit("Для регистрации карты необходимо подключение к считывателю")
 
     @safe
     def _register_student_card_onRead(self, card_id):
         self.stop_card_register_process()
 
-        self.db.add_card_id_to(card_id=card_id, student_id=self.student["id"])
+        self.program.db.add_card_id_to(card_id=card_id, student_id=self.student["id"])
 
         if self.student["card_id"] is not None:
             QStatusMessage.instance().setText("Студенту {} {} перезаписали номер карты".format(
@@ -404,9 +415,9 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
                 self.student["last_name"],
                 self.student["first_name"]))
 
-        self.student = self.db.get_students(student_id=self.student["id"])[0]
+        self.student = self.program.db.get_students(student_id=self.student["id"])[0]
 
     def stop_card_register_process(self):
         QStatusMessage.instance().setText("Регистрация карты остановлена")
         self.register_process = False
-        RFIDReader.instance().remove_temporary_function()
+        self.program.reader().remove_temporary_function()

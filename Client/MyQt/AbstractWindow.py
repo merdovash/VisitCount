@@ -1,6 +1,6 @@
 import traceback
 
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QErrorMessage
 
 from Client.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog
@@ -10,8 +10,12 @@ from Client.test import safe
 # TODO replace MyProgram with AbstractWindow
 
 class AbstractWindow(QMainWindow):
+    error = pyqtSignal(str)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.error.connect(self.on_error)
 
     @safe
     def setDialog(self, dialog: QAnalysisDialog):

@@ -113,6 +113,7 @@ class MainWindow(AbstractWindow):
         lessons_current_for_group.triggered.connect(self.centralWidget()._set_current_group_lesson)
 
         lessons.addAction(lessons_current)
+        lessons.addAction(lessons_current_for_group)
 
     @safe
     def _init_menu_file(self):
@@ -425,8 +426,8 @@ class MainWindowWidget(QWidget):
     @pyqtSlot(bool)
     @safe
     def _start_lesson(self, b):
-        if self.program.reader is not None:
-            self.program.reader.onRead(self._new_visit)
+        if self.program.reader() is not None:
+            self.program.reader().onRead(self._new_visit)
 
             self.program['marking_visits'] = True
             self.lesson_selector.setEnabled(False)
@@ -449,7 +450,7 @@ class MainWindowWidget(QWidget):
 
             QStatusMessage.instance().setText("Учет начался. Приложите карту студента к считывателю.")
         else:
-            self.program.window.on_error.emit("У вас не подключен считыватель.")
+            self.program.window.error.emit("Для учета посещений необходимо подключение считывателя.")
 
     @safe
     def _new_visit(self, ID):

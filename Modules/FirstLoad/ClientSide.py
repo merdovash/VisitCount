@@ -10,7 +10,7 @@ class FirstLoad(ServerConnection):
         ByCard = 1
 
     def __init__(self, program: 'MyProgram', db: ClientDataBase, auth: Authentication,
-                 login=None, card_id=None, password=None, on_finish: callable = None):
+                 login=None, card_id=None, password=None, on_finish: callable = lambda *args: None):
         super().__init__(db=db, auth=auth, url=program['host']+address)
 
         self.program = program
@@ -25,8 +25,7 @@ class FirstLoad(ServerConnection):
         else:
             raise Exception("expected card_id or login parameter")
 
-        if on_finish is not None:
-            self.on_finish = on_finish
+        self.on_finish = on_finish
 
     def get_request_body(self):
         if self.auth_type == FirstLoad.AuthType.ByLogin:

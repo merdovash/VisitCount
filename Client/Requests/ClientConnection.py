@@ -32,13 +32,13 @@ class ServerConnection(Thread):
                      data=jsonParser.dump(data))
 
             res_status = Status(r.text)
-            print(r.text)
+            # print(r.text)
             if res_status == Response.JSON:
                 res = jsonParser.read(r.text)
                 if res["status"] == "OK":
                     self.on_response(res["data"])
                 else:
-                    self.on_error(res["message"])
+                    self.on_error("Неудачная удаленная аутентификациия: "+res["message"])
             else:
                 self.on_error(str(r.status_code) + '<br>' + str(r.text))
         except requests.exceptions.ConnectionError as e:

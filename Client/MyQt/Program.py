@@ -9,22 +9,20 @@ from DataBase.sql_handler import ClientDataBase
 
 
 class MyProgram:
-    def __init__(self, widget=None, win_config: Config = WindowConfig.load()):
+    def __init__(self, widget: AbstractWindow=None, win_config: Config = WindowConfig.load()):
         self.state = {'marking_visits': False,
                       'host': 'http://bisitor.itut.ru'}
 
         db_config = DataBaseConfig()
         self.db = ClientDataBase(db_config)
-        try:
-            self.reader = RFIDReader.instance()
-        except RFIDReaderNotFoundException:
-            self.reader = None
+
+        self._reader = None
 
         if widget is None:
             from Client.MyQt.AuthWindow import AuthWindow
             self.window: AbstractWindow = AuthWindow(self, flags=None)
         else:
-            self.window = widget
+            self.window: AbstractWindow = widget
 
         self.win_config = win_config
 
@@ -35,6 +33,15 @@ class MyProgram:
         self.window.close()
         self.window = widget
         self.window.show()
+
+    @safe
+    def reader(self):
+        if self._reader is None:
+            try:
+                self._reader = RFIDReader.instance()
+            except RFIDReaderNotFoundException:
+                self._reader = None
+        return self._reader
 
     @safe
     def auth_success(self, auth: Authentication):
