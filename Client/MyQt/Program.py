@@ -9,18 +9,18 @@ from DataBase.sql_handler import ClientDataBase
 
 
 class MyProgram:
-    def __init__(self, widget: AbstractWindow=None, win_config: Config = WindowConfig.load()):
+    def __init__(self, widget: AbstractWindow = None, win_config: Config = WindowConfig.load()):
         self.state = {'marking_visits': False,
-                      'host': 'http://bisitor.itut.ru'}
+                      'host': 'http://bisitor.itut.ru',
+                      'date_format': '%Y-%m-%d %H:%M:%f'}
 
-        db_config = DataBaseConfig()
-        self.db = ClientDataBase(db_config)
+        self.db = ClientDataBase()
 
         self._reader = None
 
         if widget is None:
             from Client.MyQt.AuthWindow import AuthWindow
-            self.window: AbstractWindow = AuthWindow(self, flags=None)
+            self.window: AbstractWindow = AuthWindow(self)
         else:
             self.window: AbstractWindow = widget
 
@@ -46,11 +46,14 @@ class MyProgram:
     @safe
     def auth_success(self, auth: Authentication):
         from Client.MyQt.Window.QtMyMainWindow import MainWindow
+        self.state['professor_id'] = auth.user_id
         self.set_new_window(MainWindow(auth=auth, program=self, window_config=self.win_config))
+
 
     @safe
     def change_user(self, *args):
         from Client.MyQt.AuthWindow import AuthWindow
+        self.win_config.log_out()
         self.set_new_window(AuthWindow(self))
 
     def __setitem__(self, key, value):

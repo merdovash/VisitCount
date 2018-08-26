@@ -1,5 +1,5 @@
 from DataBase.Authentication import Authentication
-from Parser.JsonParser import jsonParser
+from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
 default_methods = ['POST']
@@ -43,7 +43,7 @@ class Module:
                 'data': {}
             }
         else:
-            return jsonParser.read(request.data.decode('utf8').replace("'", '"'))
+            return JsonParser.read(request.data.decode('utf8').replace("'", '"'))
 
-    def post(self, data, response, auth, **kwargs):
+    def post(self, data: dict, response: Response, auth: Authentication, **kwargs):
         pass

@@ -35,7 +35,7 @@ class WeekChart(QAnalysisDialog):
             LessonData(
                 self.db,
                 i[0],
-                datetime.datetime.strptime(i[1], '%d-%m-%Y %I:%M%p').isocalendar()[1]
+                datetime.datetime.strptime(i[1], self.program['date_format']).isocalendar()[1]
             ) for i in self.db.sql_request("SELECT id, {0}.date from {0}", self.db.config.lessons)
         ]
 

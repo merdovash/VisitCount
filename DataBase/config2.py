@@ -1,12 +1,12 @@
 
 
-
 class DataBaseConfig:
     def __init__(self):
         self.server = "http://bisitor.itut.ru"
-        self.dt_type = 'sqlite'
+        self.db_type = 'sqlite'
+        self.check_tables = True
         self.print = False
-        if self.dt_type == "mysql":
+        if self.db_type == "mysql":
             import pymysql
             self.db = {
                 "host": "localhost",
@@ -17,11 +17,12 @@ class DataBaseConfig:
                 "charset": 'utf8',
                 # 'cursorclass': pymysql.cursors.DictCursor
             }
-        elif self.dt_type == "sqlite":
+        elif self.db_type == "sqlite":
             self.db = {
-                "database": "C:\\Users\\MERDovashkinar\\PycharmProjects\\VisitCount\\db.db"
+                "database": "C:\\Users\\MERDovashkinar\\PycharmProjects\\VisitCount\\db.db",
+                "check_same_thread": False
             }
-        elif self.dt_type == 'oracle':
+        elif self.db_type == 'oracle':
             self.connection = ""
         self.logger = "logger.txt"
         self.visitation = "visitations"

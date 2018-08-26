@@ -13,9 +13,13 @@ class QStatusMessage(QLabel):
 
     @staticmethod
     def instance():
-        if QStatusMessage.inst is None:
-            QStatusMessage.inst = QStatusMessage()
-        return QStatusMessage.inst
+        try:
+            if QStatusMessage.inst is None:
+                QStatusMessage.inst = QStatusMessage()
+            return QStatusMessage.inst
+        except RuntimeError:
+            QStatusMessage.inst = None
+            return QStatusMessage.instance()
 
     def __init__(self, *__args):
         if QStatusMessage.inst is None:

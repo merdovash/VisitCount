@@ -82,7 +82,6 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def columnCount(self):
-        print("visit table", self.visit_table.columnCount())
         return self.visit_table.columnCount()
 
     @safe
@@ -161,7 +160,7 @@ class VisitTable(QWidget, Configurable):
 
         # months = get_months(lessons)
         for column in range(len(lessons)):
-            dt = datetime.datetime.strptime(lessons[column]["date"], "%d-%m-%Y %I:%M%p")
+            dt = datetime.datetime.strptime(lessons[column]["date"], self.program['date_format'])
 
             self.visit_table.setColumnWidth(column, 5)
 
@@ -184,7 +183,7 @@ class VisitTable(QWidget, Configurable):
                 self.visit_table.setSpan(0, start, 1, len(lessons) - start)
             self.visit_table.setColumnWidth(column, 5)
 
-        self.visit_table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+        # self.visit_table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
 
     @safe
     def add_student(self, student: dict, visitations: list):
@@ -296,3 +295,4 @@ class VisitTable(QWidget, Configurable):
     def ForEachColumn(self, row_index, func):
         for i in range(self.visit_table.colorCount()):
             func(self.visit_table.item(row_index, i))
+

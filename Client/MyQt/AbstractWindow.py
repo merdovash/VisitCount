@@ -31,14 +31,13 @@ class AbstractWindow(QMainWindow):
         self.dialog.showMessage(msg)
 
     @pyqtSlot(str)
+    @safe
     def on_error(self, msg):
-        try:
-            # print("hello")
-            # print(threading.current_thread().name)
-            self.dialog = QErrorMessage(self)
-            self.dialog.showMessage(msg)
-        except Exception:
-            traceback.print_exc()
+        # print("hello")
+        # print(threading.current_thread().name)
+        self.dialog = QErrorMessage(self)
+        self.dialog.showMessage(msg)
+
 
     def change_widget(self, widget):
         self.setCentralWidget(widget)

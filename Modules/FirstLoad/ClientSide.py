@@ -56,6 +56,7 @@ class FirstLoad(ServerConnection):
                       config.lessons,
                       config.visitation,
                       config.auth]:
+            print(f"loading table {table}: {data[table]}")
             self.db.loads(table, data[table])
         self.on_finish()
 

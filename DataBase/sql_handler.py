@@ -2,25 +2,21 @@
     sql_handler.py
 """
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Any, Iterable
+
+import pymysql
+
+from DataBase.Types import AtrDict, Table, Column
 from DataBase.config2 import DataBaseConfig
 
-not_selected = "not selected"
 
-
-class Logger:
-    """
-        log
+def log(text: str):
     """
 
-    @staticmethod
-    def write(s: str) -> None:
-        """
-
-        :param s: string, value to write
-        """
-        logger = open("logger.txt", "a+")
-        logger.write(str(s) + "\n")
+    :param text: string, value to write
+    """
+    with open("logger.txt", "a+") as logger:
+        logger.write(str(text) + "\n")
         logger.close()
 
 
@@ -29,254 +25,262 @@ class DataBase:
     Base class of sqlDataBase wrapper
     """
 
-    schema = {
-        'tables': {
-            'auth': 'auth5',
-            'students': 'students',
-            'professors': 'professors',
-            'parents': 'parents',
-            'groups': 'groups',
-            'lessons': 'lessons',
-            'visitations': 'visitations',
-            'students_groups': 'students_groups',
-            'disciplines': 'disciplines',
-            'updates': 'updates',
-            'professors_updates': 'professors_updates'
-        }
-    }
+    class Schema(object):
+        auth = Table(
+            'auth5',
+            AtrDict({
+                'id': Column('id', 'INTEGER', 'PRIMARY KEY AUTOINCREMENT '),
+                'login': Column('login', 'TEXT', 'UNIQUE'),
+                'password': Column('password', 'TEXT', ''),
+                'user_id': Column('user_id', 'INT', ''),
+                'user_type': Column('user_type', 'INT', ''),
+                'uid': Column('uid', 'TEXT', 'UNIQUE'),
+                'card_id': Column('card_id', 'TEXT', ''),
+            }),
+            "")
+        students = Table(
+            'students',
+            AtrDict({
+                'id': {
+                    'name': 'id',
+                    'type': 'INTEGER',
+                    'spec': 'PRIMARY KEY AUTOINCREMENT '
+                },
+                'last_name': {
+                    'name': 'last_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'first_name': {
+                    'name': 'first_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'middle_name': {
+                    'name': 'middle_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'card_id': {
+                    'name': 'card_id',
+                    'type': 'TEXT',
+                    'spec': ''
+                }
+            }),
+            ""
+        )
+        professors = Table(
+            'professors',
+            AtrDict({
+                'id': {
+                    'name': 'id',
+                    'type': 'INTEGER',
+                    'spec': 'PRIMARY KEY AUTOINCREMENT '
+                },
+                'last_name': {
+                    'name': 'last_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'first_name': {
+                    'name': 'first_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'middle_name': {
+                    'name': 'middle_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'card_id': {
+                    'name': 'card_id',
+                    'type': 'TEXT',
+                    'spec': ''
+                }
+            }),
+            ""
+        )
+        parents = Table(
+            'parents',
+            AtrDict({
+                'id': {
+                    'name': 'id',
+                    'type': 'INTEGER',
+                    'spec': 'AUTOINCREMENT'
+                },
+                'last_name': {
+                    'name': 'last_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'first_name': {
+                    'name': 'first_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'middle_name': {
+                    'name': 'middle_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'email': {
+                    'name': 'email',
+                    'type': 'TEXT',
+                    'spec': ''
+                }
+            }),
+            ''
+        )
+        groups = Table(
+            'groups',
+            AtrDict({
+                'id': {
+                    'name': 'id',
+                    'type': 'INTEGER',
+                    'spec': 'PRIMARY KEY AUTOINCREMENT'
+                },
+                'name': {
+                    'name': 'name',
+                    'type': 'TEXT',
+                    'spec': ''
+                }
+            }),
+            ''
+        )
+        lessons = Table(
+            'lessons',
+            AtrDict({
+                'id': {
+                    'name': 'id',
+                    'type': 'INTEGER',
+                    'spec': 'PRIMARY KEY AUTOINCREMENT'
+                },
+                'professor_id': {
+                    'name': 'professor_id',
+                    'type': 'INT',
+                    'spec': ''
+                },
+                'group_id': {
+                    'name': 'group_id',
+                    'type': 'INT',
+                    'spec': ''
+                },
+                'discipline_id': {
+                    'name': 'discipline_id',
+                    'type': 'INT',
+                    'spec': ''
+                },
+                'date': {
+                    'name': 'date',
+                    'type': 'DATE',
+                    'spec': ''
+                },
+                'room_id': {
+                    'name': 'room_id',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'type': {
+                    'name': 'type',
+                    'type': 'INT',
+                    'spec': ''
+                },
+                'completed': {
+                    'name': 'completed',
+                    'type': 'INT',
+                    'spec': ''
+                }
+            }),
+            ''
+        )
+        visitations = Table(
+            'visitations',
+            AtrDict({
+                'id': Column('id', 'INT', 'PRIMARY KEY AUTOINCREMENT'),
+                'student_id': Column('student_id', 'INT', ''),
+                'lesson_id': Column('lesson_id', 'INT', '')
+            }),
+            '')
+        students_groups = Table(
+            'students_groups',
+            AtrDict({
+                'student_id': {
+                    'name': 'student_id',
+                    'type': 'INT',
+                    'spec': ''
+                },
+                'group_id': {
+                    'name': 'group_id',
+                    'type': 'INT',
+                    'spec': ''
+                }
+            }),
+            ''
+        )
+        disciplines = Table(
+            'disciplines',
+            AtrDict({
+                'id': {
+                    'name': 'id',
+                    'type': 'INTEGER',
+                    'spec': 'PRIMARY KEY AUTOINCREMENT'
+                },
+                'name': {
+                    'name': 'name',
+                    'type': 'TEXT',
+                    'spec': ''
+                }
+            }),
+            '')
+        updates = Table(
+            'updates',
+            AtrDict({
+                'id': {
+                    'name': 'id',
+                    'type': 'INTEGER',
+                    'spec': 'PRIMARY KEY AUTOINCREMENT'
+                },
+                'table_name': {
+                    'name': 'table_name',
+                    'type': 'TEXT',
+                    'spec': ''
+                },
+                'row_id': {
+                    'name': 'row_id',
+                    'type': 'INT',
+                    'spec': ''
+                }
+            }),
+            ''
+        )
+        professors_updates = Table(
+            'professors_updates',
+            AtrDict({
+                'professor_id': {
+                    'name': 'professor_id',
+                    'type': 'INTEGER',
+                    'spec': ''
+                },
+                'update_id': {
+                    'name': 'update_id',
+                    'type': 'INT',
+                    'spec': ''
+                }
+            }),
+            ''
+        )
 
-    schema[schema['tables']['auth']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT '
-        },
-        {
-            'name': 'login',
-            'type': 'TEXT',
-            'spec': 'UNIQUE'
-        },
-        {
-            'name': 'password',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'user_id',
-            'type': 'INT',
-            'spec': ''
-        },
-        {
-            'name': 'user_type',
-            'type': 'INT',
-            'spec': ''
-        },
-        {
-            'name': 'uid',
-            'type': 'TEXT',
-            'spec': 'UNIQUE'
-        },
-        {
-            'name': 'card_id',
-            'type': 'TEXT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['students']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT '
-        },
-        {
-            'name': 'last_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'first_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'middle_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'card_id',
-            'type': 'TEXT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['professors']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT '
-        },
-        {
-            'name': 'last_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'first_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'middle_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'card_id',
-            'type': 'TEXT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['parents']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT'
-        },
-        {
-            'name': 'last_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'first_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'middle_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'email',
-            'type': 'TEXT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['groups']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT'
-        },
-        {
-            'name': 'name',
-            'type': 'TEXT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['disciplines']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT'
-        },
-        {
-            'name': 'name',
-            'type': 'TEXT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['students_groups']] = [
-        {
-            'name': 'student_id',
-            'type': 'INT',
-            'spec': ''
-        },
-        {
-            'name': 'group_id',
-            'type': 'INT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['lessons']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT'
-        },
-        {
-            'name': 'professor_id',
-            'type': 'INT',
-            'spec': ''
-        },
-        {
-            'name': 'group_id',
-            'type': 'INT',
-            'spec': ''
-        },
-        {
-            'name': 'discipline_id',
-            'type': 'INT',
-            'spec': ''
-        },
-        {
-            'name': 'date',
-            'type': 'DATE',
-            'spec': ''
-        },
-        {
-            'name': 'room_id',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'type',
-            'type': 'INT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['visitations']] = [
-        {
-            'name': 'student_id',
-            'type': 'INT',
-            'spec': ''
-        },
-        {
-            'name': 'lesson_id',
-            'type': 'INT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['updates']] = [
-        {
-            'name': 'id',
-            'type': 'INTEGER',
-            'spec': 'PRIMARY KEY AUTOINCREMENT'
-        },
-        {
-            'name': 'table_name',
-            'type': 'TEXT',
-            'spec': ''
-        },
-        {
-            'name': 'row_id',
-            'type': 'INT',
-            'spec': ''
-        }
-    ]
-    schema[schema['tables']['professors_updates']] = [
-        {
-            'name': 'professor_id',
-            'type': 'INTEGER',
-            'spec': ''
-        },
-        {
-            'name': 'update_id',
-            'type': 'INT',
-            'spec': ''
-        }
-    ]
+        @classmethod
+        def tables(cls) -> List[Table]:
+            attributes = [cls.__dict__[i] for i in cls.__dict__ if not i.startswith('__') and i!='tables']
+            print(attributes)
+            return attributes
+
+        @classmethod
+        def __getitem__(cls, item):
+            return cls.__dict__[item]
+
+    updatable_tables = [Schema.students.name, Schema.lessons.name, Schema.visitations.name]
 
     def __init__(self, config=None):
         if config is not None:
@@ -289,21 +293,32 @@ class DataBase:
 
         self._last_error = ""
 
-        self.check_tables()
+        if self.config.check_tables:
+            self.check_tables()
 
     def check_tables(self):
-        for t in DataBase.schema['tables'].keys():
+        """
+        Checks whether all tables exist
+        If table is not exist it will create table from schema
+        """
+        for table in DataBase.Schema.tables():
             try:
-                self.cursor.execute("SELECT count(*) FROM {}".format(DataBase.schema['tables'][t]))
-            except Exception as e:
-                self.create_table(t)
-                print(f'table {t}, {e}')
+                self.cursor.execute("SELECT count(*) FROM {}".format(table.name))
+            except pymysql.ProgrammingError as e:
+                print(f'table {table}, {e}')
+                self.create_table(table)
 
-    def create_table(self, name):
-        req = "CREATE TABLE {0} ({1});".format(
-            DataBase.schema['tables'][name],
-            ', '.join([f"{rule['name']} {rule['type']} {rule['spec']}"
-                       for rule in DataBase.schema[DataBase.schema['tables'][name]]])
+    def create_table(self, table: Table):
+        """
+        Creates table from schema by name
+
+        :param table: name of table that needs to de created
+        """
+        req = "CREATE TABLE {0} ({1} {2});".format(
+            table.name,
+            ', '.join([f"{rule.name} {rule.type} {rule.spec}"
+                       for rule in table.columns.values()]),
+            ', ' + table.extra
         )
         print(req)
         self.cursor.execute(req)
@@ -324,10 +339,10 @@ class DataBase:
         """
 
         def _connect():
-            if self.config.dt_type == "mysql":
+            if self.config.db_type == "mysql":
                 import pymysql
                 self.connection = pymysql.connect(**self.config.db)
-            elif self.config.dt_type == "sqlite":
+            elif self.config.db_type == "sqlite":
                 import sqlite3 as sqlite
                 self.connection = sqlite.connect(**self.config.db)
 
@@ -349,21 +364,268 @@ class DataBase:
         cursor = self.cursor
         try:
             sql = message.format(*arg)
-            # Logger.write(sql)
             if self.config.print:
                 print(sql)
             cursor.execute(sql)
             self.connection.commit()
         except IndexError:
-            # Logger.write('index out of range {0} in {1}'.format(arg, message))
             self._last_error = 'internal error @ request syntax'
-        except Exception as e:
-            self._last_error = f'internal error @ {e}'
+        except Exception as exception:
+            self._last_error = f'internal error @ {exception}'
 
         temp = cursor.fetchall()
         if self.config.print:
             print(temp)
         return temp
+
+    def field_updated(self, table, row_id, professor_id):
+        """
+
+        Function logs updates.
+
+        :param table: table updated
+        :param row_id: id of row that have been updated
+        :param professor_id: ID of professor changed data
+        """
+        updates_list = self.sql_request("""
+        SELECT id 
+        FROM updates 
+        WHERE table_name='{0}' AND row_id={1};""",
+                                        table,
+                                        row_id)
+        updates_count = len(updates_list)
+        if updates_count == 0:
+            req = """
+            INSERT INTO {0} (table_name, row_id) 
+            VALUES ('{1}',{2});""".format(self.config.updates, table, row_id)
+            self.sql_request(req)
+            update_id = self.cursor.lastrowid
+        else:
+            update_id = updates_list[0][0]
+
+        print(update_id)
+
+        professors_list = self._get_professors_for_update(table, row_id, professor_id=professor_id)
+
+        self._insert_professors_updates(update_id, professors_list)
+
+    def _get_professors_for_update(self, table, row_id, professor_id=None):
+        professors_list = []
+
+        if table == DataBase.Schema.students.name:
+            professors_list = [i[0]
+                               for i in self.sql_request("""
+                    SELECT DISTINCT professor_id 
+                    FROM {0} 
+                    JOIN {1} ON {0}.group_id={1}.group_id 
+                    WHERE {1}.student_id={2}""",
+                                                         DataBase.Schema.lessons.name,
+                                                         DataBase.Schema.students_groups.name,
+                                                         row_id)]
+
+        elif table == DataBase.Schema.visitations.name:
+            professors_list = [i[0] for i in self.sql_request("""
+                    SELECT professor_id 
+                    FROM {0} 
+                    JOIN {1} ON {0}.id={1}.lesson_id 
+                    WHERE {1}.lesson_id={2}""",
+                                                              DataBase.Schema.lessons.name,
+                                                              DataBase.Schema.visitations.name,
+                                                              row_id)]
+
+        if professor_id is not None:
+            print(professors_list, professor_id, professor_id in professors_list)
+            professors_list.remove(professor_id)
+
+        return professors_list
+
+    def _insert_professors_updates(self, update_id, professors):
+        def __values__():
+            return ','.join(
+                ["({}, {})".format(update_id, professor_id) for professor_id in professors])
+
+        if professors:
+            req = """
+            insert into {0}(update_id, professor_id) 
+            Values {1}""".format(DataBase.Schema.professors_updates.name, __values__())
+
+            self.sql_request(req)
+
+    def get_updates_list(self, professor_id):
+        """
+
+        :param professor_id: ID of professor that needs to synchronize changes
+        :return: list of update's ID
+        """
+        r = self.sql_request("""
+        SELECT DISTINCT table_name, row_id 
+        FROM {0} 
+        JOIN {1} ON {0}.id={1}.update_id 
+        WHERE {1}.professor_id = {2}""",
+                             self.config.updates,
+                             self.config.professors_updates,
+                             professor_id)
+        return r
+
+    def to_dict(self, list_of_tuple, table) -> List[Dict[str, str or int]]:
+        if self.config.db_type == "sqlite":
+            rule = self.sql_request("PRAGMA table_info({})", table)
+            col = 1
+        elif self.config.db_type == "mysql":
+            rule = self.sql_request("SHOW COLUMNS FROM {}", table)
+            col = 0
+        else:
+            raise Exception('no such db')
+
+        list_of_dict = []
+        for case in list_of_tuple:
+            list_of_dict.append({rule[i][col]: case[i] for i in range(len(rule))})
+
+        return list_of_dict
+
+    def get_updates(self, professor_id) -> Dict[str, List[Dict[str, Any]]]:
+        """
+
+        :param professor_id: ID of professors that request updates
+        :return: dictionary of (table, list of new data)
+        """
+
+        def sort_by_table(updates_list) -> Dict[str, List[Dict[str, Any]]]:
+            sorted_updates = {}
+            for update in updates_list:
+                if update[0] not in sorted_updates:
+                    sorted_updates[update[0]] = []
+                sorted_updates[update[0]].append(update[1])
+            return sorted_updates
+
+        updates_list = sort_by_table(self.get_updates_list(professor_id))
+
+        updates = {}
+        for table in updates_list:
+            updates[table] = self.to_dict(
+                self.sql_request("SELECT * FROM {0} WHERE id IN ({1})",
+                                 table,
+                                 ', '.join([str(i) for i in updates_list[table]])),
+                table)
+        return updates
+
+    def remove_updates(self, professor_id: int) -> int:
+        """
+        removes updates that are no longer needed
+
+        :param professor_id: ID of professor that gets updates
+        """
+
+        def _list_of_id_(updates_id: Iterable) -> str:
+            return ', '.join([i[0] for i in updates_id])
+
+        # find all updates
+        ids = self.sql_request("""
+        SELECT id 
+        FROM {0} 
+        JOIN {1} ON {0}.id={1}.update_id 
+        WHERE {1}.professor_id={2}""",
+                               self.config.updates,
+                               self.config.professors_updates,
+                               professor_id)
+
+        count_updates = len(ids)
+
+        # delete updates
+        self.sql_request("""
+        DELETE FROM {0} 
+        WHERE {1} IN ({2})""".format(
+            DataBase.Schema.updates.name,
+            DataBase.Schema.updates.columns.id,
+            _list_of_id_(set(ids))))
+
+        # delete professors_updates
+        self.sql_request("""
+        DELETE FROM {0} 
+        WHERE {1}={2}""",
+                         DataBase.Schema.professors_updates.name,
+                         DataBase.Schema.professors_updates.columns.professor_id.name,
+                         professor_id)
+
+        return count_updates
+
+    def set_updates(self, data: Dict[str, List[Dict[str, str or int]]], professor_id=None, fix=True):
+        """
+
+        :param data:
+        :param professor_id:
+        :param fix:
+        """
+        for table in data.keys():
+            if table in DataBase.updatable_tables:
+                for case in data[table]:
+
+                    if table == self.config.visitation:
+                        row_id = self.add_visitation(**case)
+                    else:
+                        row_id = case['id']
+                        self.update(table, row_id, case)
+
+                    # if it primary update
+                    if fix:
+                        self.field_updated(table=table,
+                                           row_id=row_id,
+                                           professor_id=professor_id)
+
+    def add_visitation(self, student_id, lesson_id, id):
+        """
+        Insert new visitation
+
+        :param student_id: ID of student
+        :param lesson_id: ID of lesson
+        :return: ID of row
+        """
+        self.sql_request("""
+        INSERT INTO {0}(student_id, lesson_id) 
+        VALUES({1}, {2});""",
+                         self.config.visitation,
+                         student_id,
+                         lesson_id)
+        res = self.sql_request("""
+        SELECT id 
+        FROM {0} 
+        WHERE student_id={1} AND lesson_id={2}""",
+                               self.config.visitation,
+                               student_id,
+                               lesson_id)
+
+        return res[0][0]
+
+    def loads(self, table, data: List[Dict[str, Any]]):
+        """
+        Inserts data into table
+        :param table: table name (Not None)
+        :param data: list of data to insert
+        """
+
+        if data:
+            keys = data[0].keys()
+            req = "INSERT INTO {0}({1}) VALUES {2};".format(
+                table,
+                ', '.join(keys),
+                ','.join(['(' + ','.join([f"'{str(d[key])}'" for key in keys]) + ')' for d in data]))
+            self.sql_request(req)
+
+    def update(self, table, row_id, data):
+        """
+        update data in table
+
+        :param table: table name
+        :param row_id: ID of row
+        :param data: new data
+        """
+        req = "UPDATE {0} SET {1} WHERE id={2}".format(
+            table,
+            ', '.join(["{name}='{value}'".format(**{'name': key, 'value': data[key]}) for key in data]),
+            row_id
+        )
+        print(req)
+        self.sql_request(req)
 
 
 class DataBaseWorker(DataBase):
@@ -383,9 +645,8 @@ class DataBaseWorker(DataBase):
                                self.config.auth,
                                login_name)
 
-        if len(res) == 0:
-            return False
-        return True
+        results_count = len(res)
+        return results_count > 0
 
     def create_account(self, login, password, account_type=None, user_id=None):
         # TODO: hash function to password
@@ -445,10 +706,13 @@ class DataBaseWorker(DataBase):
             res = self.sql_request("SELECT user_type, user_id, id FROM {0} WHERE uid='{1}';",
                                    self.config.auth,
                                    uid)
-            if len(res) > 0:
-                return {"type": res[0][0],
-                        "user_id": res[0][1],
-                        "id": res[0][2]}
+
+            if res:
+                return {
+                    "type": res[0][0],
+                    "user_id": res[0][1],
+                    "id": res[0][2]
+                }
             else:
                 return False
 
@@ -471,7 +735,7 @@ class DataBaseWorker(DataBase):
         else:
             return None
 
-    def get_auth_info(self, professor_id: int or str) -> object:
+    def get_auth_info(self, professor_id: int or str) -> List[Dict[str, Any]]:
         req = "SELECT login, password, card_id, user_id, user_type FROM {0} WHERE user_type=1 AND user_id={1}"
         params = [self.config.auth, professor_id]
         res = [{"login": i[0],
@@ -521,7 +785,6 @@ class DataBaseWorker(DataBase):
         :param uid: free session ID
         :param account_id: account ID
         """
-        # Logger.write("before: " + str(self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
         self.sql_request("""
             UPDATE {0}
             SET uid='{1}'
@@ -530,54 +793,6 @@ class DataBaseWorker(DataBase):
                          self.config.auth,
                          uid,
                          account_id)
-        # Logger.write("update uid, row count=" + str(t) + " || " + str(
-        #     self.sql_request("SELECT * FROM auth5 WHERE id={};", int(account_id))[0]))
-
-    def synchronize(self, data: list) -> tuple:
-        """
-
-        :param data: data of visitations
-        :return: status of synchronisation
-        """
-        lessons = []
-        print(data)
-        try:
-            if self.config.dt_type == "sqlite":
-                req = "INSERT OR IGNORE {0} (id, student_id) Values ('{1}', '{2}');"
-            elif self.config.dt_type == "mysql":
-                req = "INSERT IGNORE {0} (id, student_id) VALUES ('{1}', '{2}');"
-            for visit in data:
-                self.sql_request(req,
-                                 self.config.visitation,
-                                 visit["id"],
-                                 visit["student_id"])
-                if visit["id"] not in lessons:
-                    lessons.append(visit["id"])
-                    self.sql_request("UPDATE {0} SET complete=True WHERE id={1}",
-                                     self.config.lessons,
-                                     visit["id"])
-            return True, "OK"
-        except Exception as e:
-            return False, e
-
-    def get_telegram_temp(self, code=None, account_id=None):
-        request = "SELECT code, account_id FROM {0} "
-        params = [self.config.telegram_temp]
-        if code is not None:
-            request += and_or_where(params, 1) + "code={" + str(len(params)) + "} "
-            params.append(code)
-        if account_id is not None:
-            request += and_or_where(params, 1) + "account_id={" + str(len(params)) + "} "
-            params.append(account_id)
-        return [{
-            "code": i[0],
-            "accout_id": i[1]
-        } for i in self.sql_request(request, *tuple(params))]
-
-    def set_telegram_temp(self, account_id, code):
-        request = "INSERT INTO {0} (account_id, code) VALUES ({1}, {2})"
-        params = [self.config.telegram_temp, account_id, code]
-        return self.sql_request(request, *tuple(params))
 
     def get_parent(self, student_id=None) -> dict:
         """
@@ -597,7 +812,16 @@ class DataBaseWorker(DataBase):
         return {"email": res[0][0],
                 "name": "{} {} {}".format(res[0][1], res[0][2], res[0][3])}
 
-    def setParam(self, request: str, params: list, param, string: str, size: int):
+    def set_request_params(self, request: str, params: list, param, string: str, size: int):
+        """
+
+        :param request: request string
+        :param params: list of format params of request
+        :param param: new parameter
+        :param string: name of parameter
+        :param size: maximum count of params that allows not to set 'AND' keyword
+        :return: new request and new params
+        """
         if param is not None:
             request += and_or_where(params, size)
             request += string
@@ -626,11 +850,14 @@ class DataBaseWorker(DataBase):
                 params.append(self.config.students_groups)
                 request += and_or_where(params, 3)
                 request += "{2}.student_id={" + str(len(params)) + "} "
-            request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 2)
-            request, params = self.setParam(request, params, discipline_id,
-                                            "{1}.discipline_id={" + str(len(params)) + "} ", 2)
-        request, params = self.setParam(request, params, professor_id, "{0}.id={" + str(len(params)) + "} ", 1)
-        request, params = self.setParam(request, params, card_id, "{0}.card_id={" + str(len(params)) + "} ", 1)
+            request, params = self.set_request_params(request, params, group_id,
+                                                      "{1}.group_id={" + str(len(params)) + "} ", 2)
+            request, params = self.set_request_params(request, params, discipline_id,
+                                                      "{1}.discipline_id={" + str(len(params)) + "} ", 2)
+        request, params = self.set_request_params(request, params, professor_id, "{0}.id={" + str(len(params)) + "} ",
+                                                  1)
+        request, params = self.set_request_params(request, params, card_id, "{0}.card_id={" + str(len(params)) + "} ",
+                                                  1)
 
         return [
             {
@@ -701,11 +928,11 @@ class DataBaseWorker(DataBase):
                 request += and_or_where(params, 2)
                 request += "{2}.student_id={" + str(len(params)) + "} "
                 params.append(student_id)
-            request, params = self.setParam(request, params, professor_id,
-                                            "{1}.professor_id={" + str(len(params)) + "} ", 2)
-            request, params = self.setParam(request, params, discipline_id,
-                                            "{1}.discipline_id={" + str(len(params)) + "} ", 2)
-        request, params = self.setParam(request, params, group_id, "{0}.id={" + str(len(params)) + "}", 2)
+            request, params = self.set_request_params(request, params, professor_id,
+                                                      "{1}.professor_id={" + str(len(params)) + "} ", 2)
+            request, params = self.set_request_params(request, params, discipline_id,
+                                                      "{1}.discipline_id={" + str(len(params)) + "} ", 2)
+        request, params = self.set_request_params(request, params, group_id, "{0}.id={" + str(len(params)) + "}", 2)
 
         return [
             {
@@ -732,10 +959,13 @@ class DataBaseWorker(DataBase):
             request += "JOIN {2} ON {1}.group_id={2}.group_id " \
                        "WHERE {2}.student_id={3}"
             params.extend([self.config.students_groups, student_id])
-        request, params = self.setParam(request, params, professor_id, "{1}.professor_id={" + str(len(params)) + "} ",
-                                        2)
-        request, params = self.setParam(request, params, discipline_id, "{0}.id={" + str(len(params)) + "} ", 2)
-        request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 2)
+        request, params = self.set_request_params(request, params, professor_id,
+                                                  "{1}.professor_id={" + str(len(params)) + "} ",
+                                                  2)
+        request, params = self.set_request_params(request, params, discipline_id, "{0}.id={" + str(len(params)) + "} ",
+                                                  2)
+        request, params = self.set_request_params(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ",
+                                                  2)
 
         return [
             {
@@ -762,19 +992,25 @@ class DataBaseWorker(DataBase):
             request += "JOIN {1} ON {1}.student_id={0}.id " \
                        "JOIN {2} ON {2}.group_id={1}.group_id "
             params.extend([self.config.students_groups, self.config.lessons])
-            request, params = self.setParam(request, params, professor_id,
-                                            "{2}.professor_id={" + str(len(params)) + "} ", 3)
-            request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 3)
-        request, params = self.setParam(request, params, student_list, "{0}.id IN {" + str(len(params)) + "} ", 1)
-        request, params = self.setParam(request, params, student_id, "{0}.id={" + str(len(params)) + "} ", 1)
-        request, params = self.setParam(request, params, card_id, "{0}.card_id={" + str(len(params)) + "} ", 1)
+            request, params = self.set_request_params(request, params, professor_id,
+                                                      "{2}.professor_id={" + str(len(params)) + "} ", 3)
+            request, params = self.set_request_params(request, params, group_id,
+                                                      "{1}.group_id={" + str(len(params)) + "} ", 3)
+        request, params = self.set_request_params(request, params, student_list,
+                                                  "{0}.id IN {" + str(len(params)) + "} ", 1)
+        request, params = self.set_request_params(request, params, student_id, "{0}.id={" + str(len(params)) + "} ", 1)
+        request, params = self.set_request_params(request, params, card_id, "{0}.card_id={" + str(len(params)) + "} ",
+                                                  1)
 
-        return [{"id": str(res[0]),
-                 "last_name": res[2],
-                 "first_name": res[1],
-                 "middle_name": res[3],
-                 "card_id": str(res[4])
-                 } for res in self.sql_request(request, *tuple(params))]
+        return [
+            {
+                "id": str(res[0]),
+                "last_name": res[2],
+                "first_name": res[1],
+                "middle_name": res[3],
+                "card_id": str(res[4])
+            }
+            for res in self.sql_request(request, *tuple(params))]
 
     def get_lessons(self, group_id=None, professor_id=None, discipline_id=None, student_id=None,
                     lesson_id=None) -> list:
@@ -796,27 +1032,32 @@ class DataBaseWorker(DataBase):
             request += and_or_where(params, 2)
             request += "{1}.student_id={" + str(len(params)) + "} "
             params.append(student_id)
-        request, params = self.setParam(request, params, group_id, "{0}.group_id={" + str(len(params)) + "} ", 1)
-        request, params = self.setParam(request, params, professor_id, "{0}.professor_id={" + str(len(params)) + "} ",
-                                        1)
-        request, params = self.setParam(request, params, discipline_id, "{0}.discipline_id={" + str(len(params)) + "} ",
-                                        1)
-        request, params = self.setParam(request, params, lesson_id, "{0}.id={" + str(len(params)) + "} ", 1)
+        request, params = self.set_request_params(request, params, group_id, "{0}.group_id={" + str(len(params)) + "} ",
+                                                  1)
+        request, params = self.set_request_params(request, params, professor_id,
+                                                  "{0}.professor_id={" + str(len(params)) + "} ",
+                                                  1)
+        request, params = self.set_request_params(request, params, discipline_id,
+                                                  "{0}.discipline_id={" + str(len(params)) + "} ",
+                                                  1)
+        request, params = self.set_request_params(request, params, lesson_id, "{0}.id={" + str(len(params)) + "} ", 1)
 
         request += "ORDER BY {0}.date "
 
-        return [{'id': str(res[0]),
-                 'date': str(res[1]),
-                 'room_id': str(res[2]),
-                 'group_id': str(res[3]),
-                 'discipline_id': str(res[4]),
-                 'professor_id': str(res[5]),
-                 'type': str(res[7]),
-                 'completed': res[6]
-                 } for res in self.sql_request(request, *tuple(params))]
+        return [
+            {
+                'id': str(res[0]),
+                'date': str(res[1]),
+                'room_id': str(res[2]),
+                'group_id': str(res[3]),
+                'discipline_id': str(res[4]),
+                'professor_id': str(res[5]),
+                'type': str(res[7]),
+                'completed': res[6]
+            } for res in self.sql_request(request, *tuple(params))]
 
-    def get_visitations(self, group_id=None, professor_id=None, discipline_id=None, student_list=None,
-                        student_id=None, synch=None) -> list:
+    def get_visitations(self, group_id=None, professor_id=None, discipline_id=None,
+                        student_list=None, student_id=None, synch=None) -> list:
         """
 
         :param synch: you can select visitation by synch status
@@ -838,20 +1079,24 @@ class DataBaseWorker(DataBase):
             else:
                 request += "WHERE {0}.student_id={" + str(len(params)) + "} "
                 params.append(student_id)
-        request, params = self.setParam(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ", 2)
-        request, params = self.setParam(request, params, professor_id, "{1}.professor_id={" + str(len(params)) + "} ",
-                                        2)
-        request, params = self.setParam(request, params, discipline_id, "{1}.discipline_id={" + str(len(params)) + "} ",
-                                        2)
-        request, params = self.setParam(request, params, synch, "{0}.synch={" + str(len(params)) + "}", 2)
+        request, params = self.set_request_params(request, params, group_id, "{1}.group_id={" + str(len(params)) + "} ",
+                                                  2)
+        request, params = self.set_request_params(request, params, professor_id,
+                                                  "{1}.professor_id={" + str(len(params)) + "} ",
+                                                  2)
+        request, params = self.set_request_params(request, params, discipline_id,
+                                                  "{1}.discipline_id={" + str(len(params)) + "} ",
+                                                  2)
+        request, params = self.set_request_params(request, params, synch, "{0}.synch={" + str(len(params)) + "}", 2)
 
-        return [{
-            "student_id": str(res[0]),
-            "id": str(res[1])
-        }
-            for res in self.sql_request(request, *tuple(params))]
+        return [
+            {
+                "student_id": str(res[0]),
+                "lesson_id": str(res[1])
+            } for res in self.sql_request(request, *tuple(params))]
 
-    def get_table(self, student_id=None, professor_id=None, discipline_id=None, group_id=None, user_type=None):
+    def get_table(self, student_id=None, professor_id=None,
+                  discipline_id=None, group_id=None, user_type=None) -> List or Dict:
         if user_type is None:
             request = """
             SELECT
@@ -1146,95 +1391,6 @@ class DataBaseWorker(DataBase):
                 }
         return data
 
-    def get_table2(self, owner, student_id=None, professor_id=None, group_id=None, discipline_id=None):
-        if owner == "student":
-            request = "SELECT DISTINCT {0}.date, {2}.name FROM {0} " \
-                      "JOIN {1} ON {1}.id={0}.id " \
-                      "JOIN {2} ON {0}.discipline_id={2}.id " \
-                      "JOIN {3} ON {3}.group_id={0}.group_id " \
-                      "WHERE {0}.discipline_id IN {4} AND {3}.student_id={5} " \
-                      "ORDER  BY {0}.date"
-            params = [self.config.lessons,
-                      self.config.visitation,
-                      self.config.disciplines,
-                      self.config.students_groups,
-                      discipline_id if discipline_id is tuple else "({})".format(discipline_id),
-                      student_id]
-            lessons = self.sql_request(request, *tuple(params))
-            data = {}
-            for v in lessons:
-                if v[1] not in data:
-                    data[v[1]] = {}
-                data[v[1]][v[0]] = False
-            request = "SELECT DISTINCT {0}.date, {2}.name FROM {0} " \
-                      "JOIN {1} ON {1}.id={0}.id " \
-                      "JOIN {2} ON {0}.discipline_id={2}.id " \
-                      "WHERE {0}.discipline_id IN {3} AND {1}.student_id={4} "
-            params = [self.config.lessons,
-                      self.config.visitation,
-                      self.config.disciplines,
-                      discipline_id if discipline_id is tuple else "({})".format(discipline_id),
-                      student_id]
-            visit = self.sql_request(request, *tuple(params))
-            print(visit)
-            for v in visit:
-                data[v[1]][v[0]] = True
-        return data
-
-    def update_student_card_id(self, student_id, card_id):
-        req = "UPDATE {} SET card_id={} WHERE id={}"
-        params = [self.config.students, card_id, student_id]
-
-        res = self.sql_request(req, *tuple(params))
-
-        self.field_updated(table=self.config.students, id=student_id)
-
-    def field_updated(self, table, id):
-        updates_list = self.sql_request("SELECT id FROM updates WHERE table_name='{0}' AND row_id={1};", table, id)
-        if len(updates_list) == 0:
-            req = "INSERT INTO {0} (table_name, row_id) VALUES ('{1}',{2});".format(self.config.updates, table, id)
-            res = self.sql_request(req)
-            update_id = self.cursor.lastrowid[0]
-        else:
-            update_id = updates_list[0][0]
-
-        if table == self.config.students:
-            professors_list = self.sql_request("""
-            SELECT DISTINCT professor_id 
-            FROM {0} 
-            JOIN {1} ON {0}.group_id={1}.group_id 
-            WHERE {1}.student_id={2}""",
-                                               self.config.lessons,
-                                               self.config.students_groups,
-                                               id)
-            self.sql_request("insert into {0}(update_id, professor_id) Values {1}", self.config.professors_updates,
-                             ','.join(
-                                 ["({}, {})".format(update_id, professor_id[0]) for professor_id in professors_list]))
-
-    def get_updates_list(self, professor_id):
-
-        return self.sql_request("""
-        SELECT DISTINCT table_name, row_id 
-        FROM {0} 
-        JOIN {1} ON {0}.id={1}.update_id 
-        WHERE {1}.professor_id = {2}""",
-                                self.config.updates,
-                                self.config.professors_updates,
-                                professor_id)
-
-    def get_updates(self, professor_id):
-        updates_list = self.get_updates_list(professor_id)
-        sorted_updates = {}
-        for update in updates_list:
-            if update[0] not in sorted_updates:
-                sorted_updates[update[0]] = []
-            sorted_updates[update[0]].append(update[1])
-        updates = {}
-        for table in sorted_updates:
-            updates[table] = self.sql_request("SELECT * FROM {0} WHERE id IN ({1})", table,
-                                              ",".join([str(i) for i in sorted_updates[table]]))
-        return updates
-
 
 def and_or_where(params, size):
     """
@@ -1284,13 +1440,15 @@ def valid(*args) -> tuple:
 
 class ClientDataBase(DataBaseWorker):
     def add_visit(self, student_id: int, lesson_id: int):
-        r = self.sql_request("INSERT INTO {0}(student_id, id, synch) VALUES ({1}, {2}, {3})",
-                             self.config.visitation,
-                             student_id,
-                             lesson_id,
-                             0)
-        print("new visit", student_id, lesson_id, r)
-        return r
+        new_visit = {
+            DataBase.Schema.visitations.name: [
+                {
+                    DataBase.Schema.visitations.columns.student_id.name: student_id,
+                    DataBase.Schema.visitations.columns.lesson_id.name: lesson_id
+                }
+            ]
+        }
+        self.set_updates(data=new_visit)
 
     def complete_lesson(self, lesson_id: int):
         r = self.sql_request("UPDATE {0} SET completed=1 WHERE id={1}",
@@ -1324,14 +1482,16 @@ class ClientDataBase(DataBaseWorker):
 
         return res
 
-    def add_card_id_to(self, card_id: int, student_id=None):
-        req = "UPDATE {} SET card_id={} WHERE id={}"
-        params = [self.config.students,
-                  card_id,
-                  student_id]
-
-        res = self.sql_request(req, *tuple(params))
-        return res
+    def add_card_id_to(self, card_id: int, student_id: int) -> None:
+        update_card_id = {
+            DataBase.Schema.students.name: [
+                {
+                    DataBase.Schema.students.columns.card_id.name: card_id,
+                    'id': student_id
+                }
+            ]
+        }
+        self.set_updates(update_card_id)
 
     def update_student(self, **kwargs):
         keys = ["id", "last_name", "middle_name", "first_name", "card_id"]
@@ -1346,13 +1506,3 @@ class ClientDataBase(DataBaseWorker):
                                 table,
                                 ','.join(kwargs.keys()),
                                 ','.join([kwargs[i] for i in kwargs.keys()]))
-
-    def loads(self, table, data):
-        print(data)
-        if len(data) > 0:
-            keys = data[0].keys()
-            req = "INSERT INTO {0}({1}) VALUES {2};".format(
-                             table,
-                             ', '.join(keys),
-                             ','.join(['(' + ','.join([f"'{str(d[key])}'" for key in keys]) + ')' for d in data]))
-            self.sql_request(req)

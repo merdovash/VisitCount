@@ -3,16 +3,15 @@ from datetime import datetime
 
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor, QFont
-from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget, QCalendarWidget, QDialog
+from PyQt5.QtWidgets import QTableWidgetItem, QMenu, QTableWidget
 
 from Client.MyQt.Program import MyProgram
-from Client.test import safe
-from DataBase.sql_handler import ClientDataBase
-from DataBase.Types import name
 from Client.MyQt.QtMyCalendar import LessonDateChanger
 from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Time import from_time_to_index
-from Client.SerialsReader import RFIDReader, nothing
+from Client.test import safe
+from DataBase.Types import format_name
+from DataBase.sql_handler import ClientDataBase
 
 
 class AbstractContextItem:
@@ -41,7 +40,7 @@ class MyTableItem(QTableWidgetItem):
 
     def update(self):
         """
-        abstract method
+        abstract _method
         """
         pass
 
@@ -113,7 +112,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
     def show_context_menu(self, pos):
         # TODO: insert new visits in DB
         """
-        overrides base method
+        overrides base _method
         show context menu on this item
         :param pos: mouse position
         """
@@ -140,7 +139,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
                                                       "" if self.status == VisitItem.Status.Visited else "не ",
                                                       self.lesson["date"])
         QStatusMessage.instance().setText(msg)
-        # RFIDReader.instance().method = nothing
+        # RFIDReader.instance()._method = nothing
 
     @safe
     def _set_visited_by_professor(self):
@@ -153,11 +152,14 @@ class VisitItem(MyTableItem, AbstractContextItem):
     def _set_visited_by_professor_onReadCard(self, card_id):
         if int(card_id) == int(self.program['professor']["card_id"]):
             QStatusMessage.instance().setText("Подтвеждено")
-            self.db.add_visit(student_id=self.student["id"], lesson_id=self.lesson["id"])
+            self.db.add_visit(
+                student_id=self.student["id"],
+                lesson_id=self.lesson["id"]
+            )
             self.set_visit_status(VisitItem.Status.Visited)
         else:
             QStatusMessage.instance().setText("Ошибка")
-            # RFIDReader.instance().method = nothing
+            # RFIDReader.instance()._method = nothing
 
 
 class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
@@ -183,7 +185,7 @@ class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
     def show_context_menu(self, pos):
         # TODO: make start and end function
         """
-        override method
+        override _method
         :param pos:
         """
         if not self.program['marking_visits']:
@@ -234,7 +236,7 @@ class LessonDateItem(QTableWidgetItem, AbstractContextItem):
     @safe
     def show_context_menu(self, pos):
         """
-        override base method
+        override base _method
 
         show context menu:
             1) change date of lesson
@@ -367,7 +369,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
     @safe
     def show_context_menu(self, pos):
         """
-        override base method
+        override base _method
 
         show context menu:
             1) register card / stop register card
@@ -382,7 +384,8 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
             menu.addAction("Зарегистрировать карту", self._register_student_card)
         else:
             menu.addAction("Отменить регистрацию карты", self.stop_card_register_process)
-        menu.addAction("Показать номер карты", lambda: QStatusMessage.instance().setText(f'{name(self.student)} - "{self.student["card_id"]}"'))
+        menu.addAction("Показать номер карты", lambda: QStatusMessage.instance().setText(
+            f'{format_name(self.student)} - "{self.student["card_id"]}"'))
         menu.exec_()
 
     @safe
@@ -403,6 +406,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
     @safe
     def _register_student_card_onRead(self, card_id):
         self.stop_card_register_process()
+        print(card_id)
 
         self.program.db.add_card_id_to(card_id=card_id, student_id=self.student["id"])
 

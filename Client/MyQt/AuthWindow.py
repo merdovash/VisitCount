@@ -110,8 +110,9 @@ class QMyAuthWidget(QWidget):
         auth = Authentication(self.db, login=self.login_input.login(),
                               password=self.password_input.text(), card_id=self.login_input.card_id())
         if auth.status:
-            from Client.MyQt.Window.QtMyMainWindow import MainWindow
-            self.program.set_new_window(MainWindow(auth, self.program, self.program.win_config))
+            self.program.auth_success(auth=auth)
+            # from Client.MyQt.Window.QtMyMainWindow import MainWindow
+            # self.program.set_new_window(MainWindow(auth, self.program, self.program.win_config))
 
         else:
             self._first_load(auth)

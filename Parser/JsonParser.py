@@ -1,44 +1,54 @@
+"""
+This module contains static class methods to read and load json.
+
+TODO:
+    * decoding
+    * encoding
+"""
 import json
 
 
-class jsonParser:
+class JsonParser:
+    """
+    custom class to read and dumps json
+    """
     @staticmethod
-    def read(val: str):
+    def read(text: str):
         """
 
-        :param val: json encoded string
+        :param text: json encoded string
         :return: json object
         """
 
-        def decode(v) -> str:
-            # TODO: сделать
+        def decode(val) -> str:
             """
 
-            :param v: encoded string
+            :param val: encoded string
             :return: decoded string
             """
-            return v
+            return val
 
-        if val is not None and val != "":
-            return json.loads(decode(val))
-        else:
-            return None
+        res = None
+
+        if text is not None and text != "":
+            res = json.loads(decode(text))
+
+        return res
 
     @staticmethod
-    def dump(val):
+    def dump(obj):
         """
 
-        :param val: object
+        :param obj: object
         :return: encoded json string
         """
 
-        def encode(v) -> str:
-            # TODO: сделать кодировку
+        def encode(val) -> str:
             """
 
-            :param v: string
+            :param val: string
             :return: encoded string
             """
-            return v
+            return val
 
-        return json.dumps(encode(val)).encode("utf-8")
+        return json.dumps(encode(obj)).encode("utf-8")

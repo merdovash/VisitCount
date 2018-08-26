@@ -1,1 +1,0 @@
-address = '/new_visits'

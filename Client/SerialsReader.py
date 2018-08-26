@@ -21,7 +21,6 @@ class RFIDReader(threading.Thread):
     @staticmethod
     def instance() -> 'RFIDReader':
         if RFIDReader.inst is None:
-            print("create new instance")
             RFIDReader.inst = RFIDReader(lambda x: 0)
             if RFIDReader.inst.status == RFIDReader.Found:
                 RFIDReader.inst.start()
@@ -34,7 +33,7 @@ class RFIDReader(threading.Thread):
 
     def __init__(self, method=nothing):
         self.state = True
-        self.method = method
+        self._method = method
         self.connection = None
         super().__init__()
         self.status = RFIDReader.NotFound
@@ -42,11 +41,10 @@ class RFIDReader(threading.Thread):
         for i in range(12):
             try:
                 self.connection = serial.Serial('COM' + str(i))
-                print("Connected to COM" + str(i))
                 self.status = RFIDReader.Found
                 break
             except serial.serialutil.SerialException as e:
-                print(e)
+                pass
 
     def run(self):
         while self.state:
@@ -54,24 +52,24 @@ class RFIDReader(threading.Thread):
                 a = self.connection.readline().decode('UTF-8')
                 if (len(a)) > 10:
                     number = a.split(",")[1].replace("\r\n", "")
-                    self.method(number)
+                    self._method(number)
 
     def onRead(self, method):
-        self.method = method
+        self._method = method
 
     def stopRead(self):
-        self.method = nothing
+        self._method = nothing
 
     def onReadOnce(self, method):
-        self.temp = self.onRead
+        self.temp = self._method
         print(self.temp)
 
         def f(card_id):
             method(card_id)
-            self.onRead = self.temp
+            self._method = self.temp
 
-        self.onRead = f
+        self._method = f
         print(self.temp)
 
     def remove_temporary_function(self):
-        self.onRead = self.temp
+        self._method = self.temp

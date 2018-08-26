@@ -1,1 +1,0 @@
-address = '/updare_student_card_id'

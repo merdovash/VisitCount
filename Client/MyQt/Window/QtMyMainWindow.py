@@ -1,3 +1,9 @@
+"""
+This module contains main Window with tables
+
+TODO:
+    * fix error on relogin after changing user
+"""
 import datetime
 
 from PyQt5.QtCore import Qt, pyqtSlot
@@ -19,7 +25,6 @@ from Client.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
 from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import safe
 from DataBase.Authentication import Authentication
-from Modules.NewVisits.ClientSide import SendNewVisitation
 from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -37,15 +42,18 @@ def getLessonIndex(lessons: list, lesson_id: int) -> int:
             return i
 
 
-def closest_lesson(lessons: list):
+def closest_lesson(lessons: list, date_format="%d-%m-%Y %I:%M%p"):
     """
 
+    :param date_format:
     :param lessons: list of lessons
     :return: closest lesson in list to current datetime
     """
+    if len(lessons) == 0:
+        return None
     closest = min(
         lessons,
-        key=lambda x: abs(datetime.datetime.now() - datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p")))
+        key=lambda x: abs(datetime.datetime.now() - datetime.datetime.strptime(x["date"], date_format)))
     return closest
 
 
@@ -110,7 +118,7 @@ class MainWindow(AbstractWindow):
         lessons_current.triggered.connect(self.centralWidget()._setup_data)
 
         lessons_current_for_group = QAction("Выбрать текущее для группы", self)
-        lessons_current_for_group.triggered.connect(self.centralWidget()._set_current_group_lesson)
+        lessons_current_for_group.triggered.connect(self.centralWidget().set_current_lesson_of_current_group)
 
         lessons.addAction(lessons_current)
         lessons.addAction(lessons_current_for_group)
@@ -150,7 +158,7 @@ class MainWindow(AbstractWindow):
         updates = self.bar.addMenu("Синхронизация")
 
         updates_action = QAction("Обновить локальную базу данных", self)
-        updates_action.triggered.connect(Synchronize(self.program, self.db, self.auth).run)
+        updates_action.triggered.connect(Synchronize(self.program, self.auth).start)
 
         updates.addAction(updates_action)
 
@@ -161,7 +169,7 @@ class MainWindowWidget(QWidget):
     """
 
     @safe
-    def __init__(self, auth: Authentication, program: 'MyProgram',
+    def __init__(self, auth: Authentication, program: MyProgram,
                  window_config: WindowConfig.Config):
         super().__init__()
         self.program = program
@@ -253,20 +261,26 @@ class MainWindowWidget(QWidget):
 
         self.setLayout(self.main_layout)
 
-    def _set_current_lesson(self):
+    def set_current_lesson(self):
+        """
+        Select a lesson close to the current time.
+        """
         lessons = self.db.get_lessons(professor_id=self.program['professor']["id"])
-        closest = closest_lesson(lessons)
+        closest = closest_lesson(lessons, self.program['date_format'])
         self.program['lesson'] = closest
 
-    def _set_current_group_lesson(self):
+    def set_current_lesson_of_current_group(self):
+        """
+        Select a lesson close to the current time for the currently selected group.
+        """
         lessons = self.db.get_lessons(professor_id=self.program['professor']["id"],
                                       group_id=self.program['group']['id'])
-        closest = closest_lesson(lessons)
+        closest = closest_lesson(lessons, self.program['date_format'])
         self.lesson_selector.setCurrentId(closest['id'])
 
     @safe
     def _setup_data(self, *args):
-        self._set_current_lesson()
+        self.set_current_lesson()
 
         disciplines = self.db.get_disciplines(professor_id=self.program['professor']["id"])
         self.discipline_selector.disconnect()
@@ -327,7 +341,7 @@ class MainWindowWidget(QWidget):
         self.lesson_selector.clear()
         self.lesson_selector.addItems(lessons)
         self.lesson_selector.currentIndexChanged.connect(self._lesson_changed)
-        closest = closest_lesson(lessons)
+        closest = closest_lesson(lessons, self.program['date_format'])
         print("closest", closest, closest in self.lesson_selector.get_data())
         # self.lesson_selector.setCurrentId(closest_lesson(lessons)["id"])
 
@@ -350,7 +364,7 @@ class MainWindowWidget(QWidget):
             group_id=group,
             discipline_id=self.discipline_selector.currentId())
         print(self.program["professor"], lessons)
-        lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p"))
+        lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], self.program['date_format']))
 
         self.table.set_horizontal_header(lessons)
 
@@ -359,7 +373,7 @@ class MainWindowWidget(QWidget):
         self.lesson_selector.addItems(lessons)
         self.lesson_selector.currentIndexChanged.connect(self._lesson_changed)
 
-        self.lesson_selector.setCurrentId(self.program['lesson']['id'])
+        # self.lesson_selector.setCurrentId(self.program['lesson']['id'])
 
         self.fill_table()
         self._lesson_changed()
@@ -407,7 +421,7 @@ class MainWindowWidget(QWidget):
             professor_id=self.program['professor']["id"],
             group_id=self.group_selector.currentId(),
             discipline_id=self.discipline_selector.currentId())
-        lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p"))
+        lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], self.program['date_format']))
 
         # self.table.set_horizontal_header(lessons)
 
@@ -437,7 +451,8 @@ class MainWindowWidget(QWidget):
             self.db.start_lesson(lesson_id=self.lesson_selector.currentId())
 
             if self.last_lesson is None:
-                self.last_lessons = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data()))
+                self.last_lessons = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data(),
+                                                                            self.program['date_format']))
 
             self.start_button.disconnect()
             self.start_button.setText("Завершить занятие")
@@ -461,23 +476,24 @@ class MainWindowWidget(QWidget):
             lesson_id = self.lesson_selector.currentId()
             student = students[0]
             if ID in [i["card_id"] for i in self.table.students]:
-                r = self.db.add_visit(student_id=student["id"], lesson_id=lesson_id)
+                r = self.db.add_visit(
+                    student_id=student["id"],
+                    lesson_id=lesson_id)
                 print(r)
 
-                self.table._new_visit(student["id"], lesson_id)
+                self.table.new_visit(student["id"], lesson_id)
             else:
-                self.info_label.setText(
-                    "Студент не из группы "
-                    + self.db.get_groups(group_id=self.group_selector.currentId())[0]["name"]
+                self.info_label.setText("Студент не из группы {}".format(
+                    self.db.get_groups(group_id=self.group_selector.currentId())[0]["name"])
                 )
 
     @pyqtSlot()
     @safe
     def _end_lesson(self):
         self.program['marking_visits'] = False
-        SendNewVisitation(self.db, self.auth).run()
+        Synchronize(program=self.program, auth=self.auth).start()
 
-        RFIDReader.instance().stopRead()
+        self.program.reader().stopRead()
 
         self.lesson_selector.setEnabled(True)
         self.group_selector.setEnabled(True)

@@ -1,7 +1,5 @@
-import json
-
 import io
-import traceback
+import json
 
 from Client.Configuartion.Configurable import Configurable
 
@@ -18,6 +16,9 @@ class Config:
 
     def set_professor_id(self, professor_id):
         self.professor_id = str(professor_id)
+
+    def log_out(self):
+        self.professor_id = None
 
     def check(self, a: Configurable):
         if self.professor_id is not None:

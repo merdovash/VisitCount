@@ -1,16 +1,15 @@
 import datetime
 import traceback
 
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
-from DataBase.sql_handler import ClientDataBase
-from Client.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData, LessonAccumulator
+from Client.MyQt.Program import MyProgram
+from Client.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
 
 
 class WeekDayChart(QAnalysisDialog):
-    def __init__(self, program: 'MyProgram', parent=None):
+    def __init__(self, program: MyProgram, parent=None):
         try:
             self.data_type = QAnalysisDialog.DataType.WEEK_DAY
             super().__init__(program, parent)
@@ -44,6 +43,6 @@ class WeekDayChart(QAnalysisDialog):
             LessonData(
                 self.db,
                 i["id"],
-                datetime.datetime.strptime(i["date"], '%d-%m-%Y %I:%M%p').weekday() - 1
+                datetime.datetime.strptime(i["date"], self.program['date_format']).weekday() - 1
             ) for i in self.db.get_lessons(professor_id=self.program['professor']["id"])
         ]

@@ -3,10 +3,10 @@ import traceback
 import sys
 
 
-def safe(function):
+def safe(func):
     def wrapper(*args, **kwargs):
         try:
-            return function(*args, **kwargs)
+            return func(*args, **kwargs)
         except:
             exc_info = sys.exc_info()
             stack = traceback.extract_stack()

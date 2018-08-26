@@ -9,10 +9,9 @@ from DataBase.config2 import DataBaseConfig
 from DataBase.sql_handler import DataBaseWorker
 from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
 from Modules.FirstLoad.ServerSide import FirstLoadModule
-from Modules.NewVisits.ServerSide import NewVisitsModule
 from Modules.Synchronize.ServerSide import SynchronizeModule
-from Modules.UpdateStudentCard.ServerSide import UpdateStudentCardModule
 from Modules.Cabinet.ServerSide import CabinetModule
+from Modules.Synchronize2.ServerSide import Synchronize2Module
 from Server.Response import Response
 
 path, file = os.path.split(os.path.abspath(__file__))
@@ -20,16 +19,13 @@ templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static")
 
-config = DataBaseConfig()
-
-db = DataBaseWorker(config)
+db = DataBaseWorker()
 
 # load modules
 CabinetModule(app, request, db)
 FirstLoadModule(app, request, db)
 SynchronizeModule(app, request, db)
-NewVisitsModule(app, request, db)
-UpdateStudentCardModule(app, request, db)
+Synchronize2Module(app, request, db)
 CabinetLogInModule(app, request, db)
 
 print(path)
@@ -44,13 +40,13 @@ def related(a):
     return os.path.join(path, a)
 
 
-def page(p):
+def page(path):
     """
 
-    :param p:
+    :param path:
     :return: complete html page
     """
-    return open(p, encoding='utf-8').read()
+    return open(path, encoding='utf-8').read()
 
 
 @app.route("/super_secret")
@@ -63,11 +59,11 @@ def super_secret():
     pass
 
 
-@app.route('/file/<path:p>')
-def get_resource(p):  # pragma: no cover
+@app.route('/file/<path:file_name>')
+def get_resource(file_name):  # pragma: no cover
     """
 
-    :param p: path to file in '/templates' for js,htm, html and in '/static' for css
+    :param file_name: path to file in '/templates' for js,htm, html and in '/static' for css
     :return: file
     """
     mimetypes = {
@@ -79,18 +75,18 @@ def get_resource(p):  # pragma: no cover
         ".png": "image/gif",
         ".gif": "image/gif",
     }
-    filename, file_extension = os.path.splitext(p)
+    filename, file_extension = os.path.splitext(file_name)
 
     file_type = file_extension[1:]
     content = ""
     if file_type in ["js"]:
-        content = page(path + "/javascript/" + p)
+        content = page(path + "/javascript/" + file_name)
     elif file_type in ["css"]:
-        content = page(path + "/css/" + p)
+        content = page(path + "/css/" + file_name)
     elif file_type in ["html", "htm"]:
-        content = page(path + "/templates/" + p)
+        content = page(path + "/templates/" + file_name)
     elif file_type in ["gif", "png", "img"]:
-        content = page(path + "/resources/" + p)
+        content = page(path + "/resources/" + file_name)
 
     response = make_response(content)
     response.headers['Content-Type'] = mimetypes.get(file_extension)
@@ -183,9 +179,14 @@ def get_field():
     3)аутентификация по uid;
     4)uid присваивает значение user_id в своответсвующее поле запроса автоматически,
     так что невохможно запросить данные для другого пользователя;
-    5)Запрос может содержать дополнительные параметры, необходимые для запроса такие как student_id, professor_id и т.д.
+    5)Запрос может содержать дополнительные параметры, необходимые для запроса такие как
+     student_id, professor_id и т.д.
 
-    :return: json string {"type": "get", "status":"OK/ERROR", "message": None if status="OK", "data": get_{$data}}
+    :return: json string {
+        "type": "get",
+        "status":"OK/ERROR",
+        "message": None if status="OK", "data": get_{$data}
+    }
     """
     if request.method == "GET":
         res = Response("get")
@@ -219,13 +220,15 @@ def get_field():
                     params = tuple(params[key] for key in keys)
                     print(params)
 
-                    return res.set_data(get_func(*params))()
+                    res.set_data(get_func(*params))
                 else:
-                    return res.set_error("field data '{}' is not found".format(request.args["data"]))()
+                    res.set_error("field data '{}' is not found".format(request.args["data"]))
             else:
-                return res.set_error("auth failed")()
+                res.set_error("auth failed")
         else:
-            return res.set_error("missing 'uid' argument")()
+            res.set_error("missing 'uid' argument")
+
+        return res()
 
 
 def run():

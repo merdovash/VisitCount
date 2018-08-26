@@ -1,6 +1,8 @@
 from DataBase.sql_handler import DataBaseWorker as dbw
 import datetime
 
+f = "%d-%m-%Y %h:%i%p"
+
 db = dbw()
 c=db.connection.cursor()
 
