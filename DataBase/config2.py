@@ -7,12 +7,11 @@ class DataBaseConfig:
         self.check_tables = True
         self.print = False
         if self.db_type == "mysql":
-            import pymysql
             self.db = {
                 "host": "localhost",
                 "user": "pythonserver",
                 "password": "bisitor123456",
-                "db": "pythonserver",
+                "database": "pythonserver",
                 "use_unicode": True,
                 "charset": 'utf8',
                 # 'cursorclass': pymysql.cursors.DictCursor

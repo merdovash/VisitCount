@@ -1,18 +1,15 @@
 import traceback
 from abc import abstractmethod
-
-import numpy as np
 from math import ceil
 
-import sys
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox
 import matplotlib.pyplot as plt
-
+import numpy as np
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 # from Main.DataBase.GlobalStatistic import Statistic
-from Client.MyQt.Window.Chart.Tools import get_visit_count, get_student_count
-from DataBase.sql_handler import ClientDataBase
+from Client.MyQt.Chart.Tools import get_visit_count, get_student_count
+from DataBase.ClentDataBase import ClientDataBase
 
 
 def show(c, program: 'MyProgram'):
@@ -169,7 +166,7 @@ class QAnalysisDialog(QDialog):
     def _hist(self):
         if self.global_acc.is_ready():
             self.ax().hist([self.acc.get_hist_data(), self.global_acc.get_hist_data()],
-                           bins=range(0, self.count), align='right', rwidth=0.7, histtype='bar',
+                           bins=range(0, self.count), align='right', rwidth=0.7, histtype='menu_bar',
                            label=["Процент посещений ваших занятий",
                                   "Процент посещений по университету"])
 

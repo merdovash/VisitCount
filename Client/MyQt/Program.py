@@ -1,41 +1,61 @@
+"""
+This module contains class wrapper of all global variables
+"""
+
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.WindowConfig import Config
-from Client.MyQt.AbstractWindow import AbstractWindow
-from Client.SerialsReader import RFIDReaderNotFoundException, RFIDReader
+from Client.MyQt.Window import AbstractWindow
+from Client.Reader import RFIDReaderNotFoundException, RFIDReader
 from Client.test import safe
 from DataBase.Authentication import Authentication
-from DataBase.config2 import DataBaseConfig
-from DataBase.sql_handler import ClientDataBase
+from DataBase.ClentDataBase import ClientDataBase
 
 
 class MyProgram:
-    def __init__(self, widget: AbstractWindow = None, win_config: Config = WindowConfig.load()):
-        self.state = {'marking_visits': False,
-                      'host': 'http://bisitor.itut.ru',
-                      'date_format': '%Y-%m-%d %H:%M:%f'}
+    # __slots__ = ('db', 'window', 'win_config', 'auth', '_state', '_reader', 'change_user')
+    """
+    Wrapper of all global variables
+    """
+
+    def __init__(self, widget: AbstractWindow = None,
+                 win_config: Config = WindowConfig.load('Client/window_config.json')):
+        self._state = {'marking_visits': False,
+                       'host': 'http://bisitor.itut.ru',
+                       'date_format': '%Y-%m-%d %H:%M:%f'}
 
         self.db = ClientDataBase()
 
         self._reader = None
 
         if widget is None:
-            from Client.MyQt.AuthWindow import AuthWindow
-            self.window: AbstractWindow = AuthWindow(self)
+            from Client.MyQt.Window.Auth import AuthWindow
+            self.window = AuthWindow(self)
         else:
             self.window: AbstractWindow = widget
 
-        self.win_config = win_config
+        self.win_config: WindowConfig = win_config
 
         self.window.show()
 
+        self.auth = None
+
     @safe
-    def set_new_window(self, widget):
+    def set_window(self, widget: AbstractWindow):
+        """
+        Sets new window as main and only window of program
+        :param widget: new window
+        """
         self.window.close()
-        self.window = widget
+        self.window: AbstractWindow = widget
         self.window.show()
 
     @safe
-    def reader(self):
+    def reader(self) -> RFIDReader:
+        """
+        Returns RFIDReader if its connected.
+        Saves RFIDReader instance in private variable.
+        :return:
+        """
         if self._reader is None:
             try:
                 self._reader = RFIDReader.instance()
@@ -45,19 +65,29 @@ class MyProgram:
 
     @safe
     def auth_success(self, auth: Authentication):
-        from Client.MyQt.Window.QtMyMainWindow import MainWindow
-        self.state['professor_id'] = auth.user_id
-        self.set_new_window(MainWindow(auth=auth, program=self, window_config=self.win_config))
-
+        """
+        Switch to MainWindow
+        :param auth: you have to pass Authentication to switch to MainWindow
+        """
+        from Client.MyQt.Window.Main import MainWindow
+        self.auth = auth
+        self._state['professor_id'] = auth.user_id
+        self.win_config.set_professor_id(auth.user_id)
+        self.set_window(MainWindow(program=self))
 
     @safe
     def change_user(self, *args):
-        from Client.MyQt.AuthWindow import AuthWindow
+        """
+        Log out from MainWindow and shows AuthenticationWindow
+        """
+        from Client.MyQt.Window.Auth import AuthWindow
         self.win_config.log_out()
-        self.set_new_window(AuthWindow(self))
+        self.set_window(AuthWindow(self))
 
+    @safe
     def __setitem__(self, key, value):
-        self.state[key] = value
+        self._state[key] = value
 
+    @safe
     def __getitem__(self, item):
-        return self.state[item]
+        return self._state[item]

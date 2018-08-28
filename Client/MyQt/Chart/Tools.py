@@ -1,4 +1,4 @@
-from DataBase.sql_handler import ClientDataBase
+from DataBase.ClentDataBase import ClientDataBase
 
 
 def get_visit_count(db:ClientDataBase, lesson_id):

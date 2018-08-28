@@ -1,14 +1,10 @@
 import datetime
-import sys
 
-import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import QApplication
-
-from Client.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
+from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
 
 
 class WeekChart(QAnalysisDialog):
-    def __init__(self, program: 'MyProgram', parent=None):
+    def __init__(self, program, parent=None):
         super().__init__(program, parent)
 
         self.count = 18
@@ -46,13 +42,3 @@ class WeekChart(QAnalysisDialog):
             lesson.param -= start
 
         return lessons
-
-
-if __name__ == "__main__":
-    print(plt.style.available)
-    app = QApplication(sys.argv)
-
-    main = WeekChart()
-    main.show()
-
-    sys.exit(app.exec_())

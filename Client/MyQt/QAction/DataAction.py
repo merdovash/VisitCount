@@ -1,12 +1,17 @@
-import traceback
+"""
+This Module contains class working on hiding/showing horizontal header in tables
+"""
 
 from PyQt5.QtWidgets import QAction
 
-from Client.MyQt.Program import MyProgram
 from Client.test import safe
 
 
 class DataAction(QAction):
+    """
+    show/hide rows on action in QContextMenu
+    """
+
     def __init__(self, name: list, row: int, window: 'MyMainWindow'):
         """
         :type name: list[str]
@@ -18,12 +23,12 @@ class DataAction(QAction):
         self.program = window.program
         super().__init__(name[0] if self.table.visit_table.isRowHidden(row) else name[1], window)
         self.row = row
-        self.triggered.connect(self.action)
+        self.triggered.connect(self._action)
         # self.setCheckable(True)
         # self.setChecked(True)
 
-    def action(self):
-        print("action", not self.table.visit_table.isRowHidden(self.row))
+    def _action(self):
+
         row_visible = not self.table.visit_table.isRowHidden(self.row)
         if row_visible:
             self.setText(self.name[0])
@@ -42,4 +47,3 @@ class DataAction(QAction):
         self.program.win_config["table_header"]["lesson_info"][str(self.row)] = not row_visible
         self.program.win_config.sync()
         print(self.program.win_config)
-

@@ -2,6 +2,7 @@ import io
 import json
 
 from Client.Configuartion.Configurable import Configurable
+from Client.test import safe
 
 
 class Config:
@@ -11,10 +12,16 @@ class Config:
         try:
             with io.open(path, "r", encoding='utf-8') as file:
                 self.obj = json.load(file)
+                print('open config:', self.obj)
         except FileNotFoundError as e:
+            print('file not found')
             self.obj = {}
 
     def set_professor_id(self, professor_id):
+        if self.professor_id is None and professor_id in self.obj:
+            pass
+        else:
+            self.obj[professor_id] = {}
         self.professor_id = str(professor_id)
 
     def log_out(self):
@@ -35,10 +42,12 @@ class Config:
 
     def __getitem__(self, item):
         if self.professor_id is None:
-            if type(item) is int:
+            if isinstance(item, int):
                 return self.obj[str(item)]
-            elif type(item) is str:
-                return self.obj[item]
+            elif isinstance(item, str):
+                if item in self.obj.keys():
+                    return self.obj[item]
+                return None
         else:
             return self.obj[self.professor_id][item]
 
@@ -48,7 +57,9 @@ class Config:
         else:
             self.obj[self.professor_id][key] = value
 
+    @safe
     def sync(self):
+        print(self.obj)
         with open(self.path, 'w+') as outfile:
             json.dump(self.obj, outfile, ensure_ascii=False)
 

@@ -1,22 +1,26 @@
 import datetime
+from typing import List
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout, QHeaderView
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout
 
-from Client.Configuartion import WindowConfig
 from Client.Configuartion.Configurable import Configurable
 from Client.Configuartion.WindowConfig import Config
-from Client.MyQt.Program import MyProgram
-from Client.MyQt.QtMyStatusBar import QStatusMessage
-from Client.MyQt.QtMyWidgetItem import VisitItem, LessonTypeItem, MonthTableItem, \
-    StudentHeaderItem, \
-    PercentItem, PercentHeaderItem, LessonDateItem, LessonNumberItem, WeekDayItem
-from Client.MyQt.Section.QtMyHomeworkSection import HomeworkSection
-from Client.MyQt.Section.QtMyPercentSection import PercentSection
-from Client.MyQt.Section.QtMyVisitSection import VisitSection
+from Client.MyQt.Table.Items.LessonHeader import LessonDateItem, LessonNumberItem, LessonTypeItem, LessonHeaderFactory
+from Client.MyQt.Table.Items.PercentHeader import PercentHeaderItem
+from Client.MyQt.Table.Items.PercentItem import PercentItem
+from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
+from Client.MyQt.Table.Items.VisitItem import VisitItem
+from Client.MyQt.Table.Section.QtMyHomeworkSection import HomeworkSection
+from Client.MyQt.Table.Section.QtMyPercentSection import PercentSection
+from Client.MyQt.Table.Section.QtMyVisitSection import VisitSection
 from Client.test import safe
+from DataBase.Types import format_name
 
 
 class VisitTable(QWidget, Configurable):
+    show_visitation_msg = pyqtSignal(str)
+
     class Header(int):
         MONTH = 0
         DAY = 1
@@ -24,6 +28,7 @@ class VisitTable(QWidget, Configurable):
         LESSON = 3
         LESSONTYPE = 4
 
+    @safe
     def __default__(self):
         return {
             "table_header": {
@@ -38,13 +43,15 @@ class VisitTable(QWidget, Configurable):
         }
 
     @safe
-    def __init__(self, parent: QVBoxLayout, program: MyProgram, window_config: WindowConfig.Config):
+    def __init__(self, parent: QVBoxLayout, program):
         super().__init__()
         self.program = program
         self.db = program.db
-        self._setup_config(window_config)
+        self._setup_config(program.win_config)
         self.inner_layout = QHBoxLayout()
         self.inner_layout.setSpacing(0)
+
+        self.lesson_header_factory = LessonHeaderFactory(program)
 
         self.header_height = 0
         self.first = True
@@ -54,7 +61,7 @@ class VisitTable(QWidget, Configurable):
         self.percent_table = PercentSection()
         self.home_work_table = HomeworkSection()
 
-        # share scroll bar between sections
+        # share scroll menu_bar between sections
         scroll_bar = self.visit_table.verticalScrollBar()
         scroll_bar.valueChanged.connect(self.percent_table.verticalScrollBar().setValue)
         scroll_bar.valueChanged.connect(self.home_work_table.verticalScrollBar().setValue)
@@ -73,8 +80,7 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def _setup_config(self, window_config: Config):
-        self.window_config = window_config
-        self.window_config.check(self)
+        window_config.check(self)
 
     @safe
     def rowCount(self):
@@ -108,6 +114,16 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def set_horizontal_header(self, lessons: list):
+
+        def apply_configuration():
+            lesson_info = self.program.win_config["table_header"]['lesson_info']
+            for key in lesson_info:
+                row = str(key)
+                visible = lesson_info[key]
+
+                self.visit_table.setRowHidden(int(row), not visible)
+                self.percent_table.setRowHidden(int(row), not visible)
+
         self.lessons = lessons
         self.visit_table.setColumnCount(len(lessons))
 
@@ -143,37 +159,19 @@ class VisitTable(QWidget, Configurable):
 
         self.header_height = 0
 
-        lesson_info = self.window_config["table_header"]['lesson_info']
-        print("lesson_info", lesson_info)
-        for key in lesson_info:
-            row = str(key)
-            visible = lesson_info[key]
-
-            self.visit_table.setRowHidden(int(row), not visible)
-            self.percent_table.setRowHidden(int(row), not visible)
-
-            self.visit_table.setRowHeight(int(row), 5)
-            self.percent_table.setRowHeight(int(row), 5)
-
-            if visible:
-                self.header_height += 1
-
         # months = get_months(lessons)
         for column in range(len(lessons)):
             dt = datetime.datetime.strptime(lessons[column]["date"], self.program['date_format'])
 
-            self.visit_table.setColumnWidth(column, 5)
+            # self.visit_table.setColumnWidth(column, 15)
 
-            self.visit_table.setItem(VisitTable.Header.MONTH, column,
-                                     MonthTableItem(dt.month))
-            self.visit_table.setItem(VisitTable.Header.DAY, column,
-                                     LessonDateItem(dt, lessons[column]["id"], self.program))
-            self.visit_table.setItem(VisitTable.Header.WEEKDAY, column,
-                                     WeekDayItem(dt))
-            self.visit_table.setItem(VisitTable.Header.LESSON, column,
-                                     LessonNumberItem(dt))
-            self.visit_table.setItem(VisitTable.Header.LESSONTYPE, column,
-                                     LessonTypeItem(lessons[column]["type"], self.program))
+            header = self.lesson_header_factory.create(lessons[column])
+
+            self.visit_table.setItem(VisitTable.Header.MONTH, column, header.month)
+            self.visit_table.setItem(VisitTable.Header.DAY, column, header.month_day)
+            self.visit_table.setItem(VisitTable.Header.WEEKDAY, column, header.weekday)
+            self.visit_table.setItem(VisitTable.Header.LESSON, column, header.number)
+            self.visit_table.setItem(VisitTable.Header.LESSONTYPE, column, header.type)
 
         start = 0
         for column in range(len(lessons)):
@@ -181,9 +179,11 @@ class VisitTable(QWidget, Configurable):
                 self.visit_table.setSpan(0, start, 1, column - start)
                 start = column
                 self.visit_table.setSpan(0, start, 1, len(lessons) - start)
-            self.visit_table.setColumnWidth(column, 5)
+            self.visit_table.setColumnWidth(column, 20)
 
         # self.visit_table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+
+        apply_configuration()
 
     @safe
     def add_student(self, student: dict, visitations: list):
@@ -212,11 +212,7 @@ class VisitTable(QWidget, Configurable):
             item.lesson = self.lessons[j]
             self.visit_table.setItem(row, j, item)
 
-        items_list = []
-        for col in range(self.columnCount()):
-            items_list.append(self.visit_table.item(row, col))
-
-        percent_item = PercentItem(items_list, PercentItem.Orientation.ByStudents)
+        percent_item = PercentItem(self.get_row(row), PercentItem.Orientation.ByStudents)
         self.percent_table.setItem(row, 0, percent_item)
 
         header = self.percent_table.item(0, 0)
@@ -233,9 +229,7 @@ class VisitTable(QWidget, Configurable):
         vertical_percents = []
 
         for col in range(self.visit_table.columnCount()):
-            item = PercentItem(
-                [self.visit_table.item(row, col) for row in range(self.rowCount())],
-                PercentItem.Orientation.ByLessons)
+            item = PercentItem(self.get_column(col), PercentItem.Orientation.ByLessons)
             self.visit_table.setItem(current_row, col, item)
             vertical_percents.append(item)
 
@@ -262,12 +256,24 @@ class VisitTable(QWidget, Configurable):
                     return row
         return -1
 
+    def get_row(self, index) -> List[VisitItem]:
+        for col in range(self.colorCount()):
+            item = self.visit_table.item(index, col)
+            if isinstance(item, VisitItem):
+                yield item
+
     @safe
     def col(self, lesson_id) -> int:
         for col in range(self.columnCount()):
             if self.lessons[col]["id"] == lesson_id:
                 return col
         return -1
+
+    def get_column(self, index) -> List[VisitItem]:
+        for i in range(self.rowCount()):
+            item = self.visit_table.item(i, index)
+            if isinstance(item, VisitItem):
+                yield item
 
     @safe
     def new_visit(self, student_id, lesson_id):
@@ -276,23 +282,11 @@ class VisitTable(QWidget, Configurable):
 
         item = self.visit_table.item(row, col)
         if item.status == VisitItem.Status.Visited:
-            QStatusMessage.instance().setText("Студент уже в отмечен")
+            self.show_visitation_msg.emit("Студент уже отмечен")
         else:
             student = self.visit_table.verticalHeaderItem(row).student
-            QStatusMessage.instance().setText(
-                "Студент {} {} отмечен".format(student["last_name"], student["first_name"]))
+            self.show_visitation_msg.emit(f"Студент {format_name(student)} отмечен")
             item.set_visit_status(VisitItem.Status.Visited)
 
             self.percent_table.item(row, 0).refresh()
             self.visit_table.item(self.rowCount() - 1, col).refresh()
-
-    @safe
-    def ForEachRow(self, col_index, func):
-        for i in range(self.visit_table.rowCount()):
-            func(self.visit_table.item(i, col_index))
-
-    @safe
-    def ForEachColumn(self, row_index, func):
-        for i in range(self.visit_table.colorCount()):
-            func(self.visit_table.item(row_index, i))
-

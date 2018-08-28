@@ -5,27 +5,12 @@ from PyQt5.QtWidgets import QLabel
 
 class QStatusMessage(QLabel):
     """
-    SINGLETON
 
     contains label to display massages from program to user
     """
-    inst = None
-
-    @staticmethod
-    def instance():
-        try:
-            if QStatusMessage.inst is None:
-                QStatusMessage.inst = QStatusMessage()
-            return QStatusMessage.inst
-        except RuntimeError:
-            QStatusMessage.inst = None
-            return QStatusMessage.instance()
 
     def __init__(self, *__args):
-        if QStatusMessage.inst is None:
-            super().__init__(*__args)
-            self.setToolTip("Текущий статус программы")
-            self.setAlignment(Qt.AlignRight)
-            self.setFont(QFont("", 16))
-        else:
-            raise Exception("too much instances")
+        super().__init__(*__args)
+        self.setToolTip("Текущий статус программы")
+        self.setAlignment(Qt.AlignRight)
+        self.setFont(QFont("", 16))

@@ -11,7 +11,6 @@ QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
 
 print(os.path.dirname(__file__))
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Material"

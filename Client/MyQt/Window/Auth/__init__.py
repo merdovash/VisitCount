@@ -3,10 +3,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
     QErrorMessage
 
-from Client.MyQt.AbstractWindow import AbstractWindow
-from Client.MyQt.Program import MyProgram
 from Client.MyQt.QtMyLoginInput import QLoginInput
-from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
+from Client.MyQt.Window import AbstractWindow
+from Client.Reader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import safe
 from DataBase.Authentication import Authentication
 from Modules.FirstLoad.ClientSide import FirstLoad
@@ -14,7 +13,7 @@ from Modules.FirstLoad.ClientSide import FirstLoad
 
 class AuthWindow(AbstractWindow):
 
-    def __init__(self, program: MyProgram, flags=None, *args, **kwargs):
+    def __init__(self, program, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
         self.resize(300, 200)
         self.setCentralWidget(QMyAuthWidget(program))
@@ -22,9 +21,9 @@ class AuthWindow(AbstractWindow):
 
 
 class QMyAuthWidget(QWidget):
-    def __init__(self, program: 'MyProgram', *args, **kwargs):
+    def __init__(self, program, *args, **kwargs):
         super(QMyAuthWidget, self).__init__(*args, **kwargs)
-        self.program: 'MyProgram' = program
+        self.program = program
         self.db = program.db
 
         self.setup_geometry()
@@ -96,8 +95,8 @@ class QMyAuthWidget(QWidget):
             pass
 
     @safe
-    def _first_load(self, auth:Authentication):
-        FirstLoad(db=self.db,
+    def _first_load(self, auth: Authentication):
+        FirstLoad(database=self.db,
                   auth=auth,
                   card_id=self.login_input.card_id(),
                   login=self.login_input.login(),

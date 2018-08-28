@@ -4,12 +4,11 @@ import traceback
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
-from Client.MyQt.Program import MyProgram
-from Client.MyQt.Window.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
+from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
 
 
 class WeekDayChart(QAnalysisDialog):
-    def __init__(self, program: MyProgram, parent=None):
+    def __init__(self, program, parent=None):
         try:
             self.data_type = QAnalysisDialog.DataType.WEEK_DAY
             super().__init__(program, parent)

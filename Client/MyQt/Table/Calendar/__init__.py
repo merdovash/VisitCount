@@ -3,17 +3,15 @@ from datetime import datetime
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, QHBoxLayout, QLabel, QPushButton
 
-from Client.MyQt.Program import MyProgram
-from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Time import from_index_to_time
 from Client.test import safe
-from DataBase.sql_handler import ClientDataBase
+from DataBase.ClentDataBase import ClientDataBase
 
 
 class LessonDateChanger(QWidget):
-    def __init__(self, db: ClientDataBase, date: datetime, lesson_id: int, program: MyProgram = None):
+    def __init__(self, db: ClientDataBase, date: datetime, lesson_id: int, program=None):
         super().__init__(flags=QtCore.Qt.WindowStaysOnTopHint)
-        self.program: MyProgram = program
+        self.program = program
         self.lesson_id = lesson_id
         self.db: ClientDataBase = db
         self.l = QVBoxLayout()
@@ -44,10 +42,9 @@ class LessonDateChanger(QWidget):
 
         dd = datetime(d.year(), d.month(), d.day())
         dd += from_index_to_time(self.lesson_selector.currentIndex())
-        QStatusMessage.instance().setText("Занятие перенесено на {}".format(dd))
+        self.program.window.message.emit("Занятие перенесено на {}".format(dd))
 
         self.db.update_lesson_date(lesson_id=self.lesson_id, new_date=dd)
 
         self.program.window.centralWidget().refresh_table()
         self.close()
-

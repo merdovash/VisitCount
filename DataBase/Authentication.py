@@ -2,9 +2,17 @@ from DataBase.sql_handler import DataBaseWorker
 
 
 class Authentication:
+    __slots__ = ('db', 'status', 'user_id', 'user_type', 'account_id', '_info', 'error')
+
     class Status(int):
         Complete = 1
         Fail = 0
+
+    class UserType(int):
+        Professor = 1
+        Student = 0
+        Parent = 3
+        Administration = 2
 
     def __init__(self, db: DataBaseWorker, login=None, password=None, card_id=None, uid=None, **kwargs):
         self._info = None
@@ -38,7 +46,7 @@ class Authentication:
             if len(t) > 0:
                 self.status = Authentication.Status.Complete
                 self.user_id = t[0][0]
-                self.user_type = t[0][1]
+                self.user_type = Authentication.UserType(t[0][1])
                 self.account_id = t[0][2]
             else:
                 self.error = db.last_error()

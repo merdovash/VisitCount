@@ -7,6 +7,29 @@ def nothing(card_id):
     pass
 
 
+class RFIDReaderFunction:
+    __slots__ = ('func', 'name', 'on_read', 'on_start', 'on_finish')
+
+    def __init__(self, func, name=None, msg_on_start=None, msg_on_read=None, msg_on_finish=None):
+        self.func = func
+        self.name = name if name is not None else func.__name__
+        self.on_start = msg_on_start
+        self.on_read = msg_on_read
+        self.on_finish = msg_on_finish
+
+    def start(self):
+        self.on_start()
+        RFIDReader.instance().onRead(self)
+
+    def finish(self):
+        self.on_finish()
+        RFIDReader.instance().stopRead()
+
+    def __call__(self, *args, **kwargs):
+        self.func(*args, **kwargs)
+        self.on_read(*args, **kwargs)
+
+
 class RFIDReaderNotFoundException(Exception):
     def __init__(self):
         self.args = ["RFID Reader not found"]
@@ -62,14 +85,12 @@ class RFIDReader(threading.Thread):
 
     def onReadOnce(self, method):
         self.temp = self._method
-        print(self.temp)
 
         def f(card_id):
             method(card_id)
             self._method = self.temp
 
         self._method = f
-        print(self.temp)
 
     def remove_temporary_function(self):
         self._method = self.temp

@@ -1,7 +1,7 @@
 """
     sql_handler.py
 """
-from datetime import datetime
+import sqlite3
 from typing import Dict, List, Any, Iterable
 
 import pymysql
@@ -29,7 +29,7 @@ class DataBase:
         auth = Table(
             'auth5',
             AtrDict({
-                'id': Column('id', 'INTEGER', 'PRIMARY KEY AUTOINCREMENT '),
+                'id': Column('id', 'INT', 'PRIMARY KEY AUTOINCREMENT'),
                 'login': Column('login', 'TEXT', 'UNIQUE'),
                 'password': Column('password', 'TEXT', ''),
                 'user_id': Column('user_id', 'INT', ''),
@@ -304,7 +304,7 @@ class DataBase:
         for table in DataBase.Schema.tables():
             try:
                 self.cursor.execute("SELECT count(*) FROM {}".format(table.name))
-            except pymysql.ProgrammingError as e:
+            except pymysql.ProgrammingError and sqlite3.OperationalError as e:
                 print(f'table {table}, {e}')
                 self.create_table(table)
 
@@ -318,7 +318,7 @@ class DataBase:
             table.name,
             ', '.join([f"{rule.name} {rule.type} {rule.spec}"
                        for rule in table.columns.values()]),
-            ', ' + table.extra
+            ', ' + table.extra if table.extra != '' else ''
         )
         print(req)
         self.cursor.execute(req)
@@ -433,7 +433,7 @@ class DataBase:
                                                               DataBase.Schema.visitations.name,
                                                               row_id)]
 
-        if professor_id is not None:
+        if professor_id is not None and professor_id in professors_list:
             print(professors_list, professor_id, professor_id in professors_list)
             professors_list.remove(professor_id)
 
@@ -475,7 +475,7 @@ class DataBase:
             rule = self.sql_request("SHOW COLUMNS FROM {}", table)
             col = 0
         else:
-            raise Exception('no such db')
+            raise Exception('no such database')
 
         list_of_dict = []
         for case in list_of_tuple:
@@ -572,7 +572,7 @@ class DataBase:
                                            row_id=row_id,
                                            professor_id=professor_id)
 
-    def add_visitation(self, student_id, lesson_id, id):
+    def add_visitation(self, student_id, lesson_id, id=None):
         """
         Insert new visitation
 
@@ -1436,73 +1436,3 @@ def valid(*args) -> tuple:
             valid_list.append(val)
 
     return tuple(valid_list)
-
-
-class ClientDataBase(DataBaseWorker):
-    def add_visit(self, student_id: int, lesson_id: int):
-        new_visit = {
-            DataBase.Schema.visitations.name: [
-                {
-                    DataBase.Schema.visitations.columns.student_id.name: student_id,
-                    DataBase.Schema.visitations.columns.lesson_id.name: lesson_id
-                }
-            ]
-        }
-        self.set_updates(data=new_visit)
-
-    def complete_lesson(self, lesson_id: int):
-        r = self.sql_request("UPDATE {0} SET completed=1 WHERE id={1}",
-                             self.config.lessons,
-                             lesson_id)
-        return r
-
-    def update_lesson_date(self, lesson_id: int, new_date: datetime):
-        # TODO send update on server
-        r = self.sql_request("UPDATE {0} SET date='{1}' WHERE id={2}",
-                             self.config.lessons,
-                             new_date.strftime("%d-%m-%Y %I:%M%p"),
-                             lesson_id)
-
-    def get_auth(self, professor_id) -> list:
-        req = "SELECT card_id, password FROM {0} WHERE user_id={1}"
-        params = [self.config.auth, professor_id]
-
-        res = self.sql_request(req, *tuple(params))
-
-        return [{
-            "card_id": i[0],
-            "password": i[1]
-        } for i in res]
-
-    def start_lesson(self, lesson_id=None):
-        req = "UPDATE {} SET completed=1 WHERE id={}"
-        params = [self.config.lessons, lesson_id]
-
-        res = self.sql_request(req, *tuple(params))
-
-        return res
-
-    def add_card_id_to(self, card_id: int, student_id: int) -> None:
-        update_card_id = {
-            DataBase.Schema.students.name: [
-                {
-                    DataBase.Schema.students.columns.card_id.name: card_id,
-                    'id': student_id
-                }
-            ]
-        }
-        self.set_updates(update_card_id)
-
-    def update_student(self, **kwargs):
-        keys = ["id", "last_name", "middle_name", "first_name", "card_id"]
-        c = {}
-        for key in keys:
-            c[key] = kwargs.get(key, None)
-
-        self.insert_into(self.config.students, **c)
-
-    def insert_into(self, table, **kwargs):
-        return self.sql_request("""INSERT OR UPDATE INTO {} ({}) VALUES ({});""",
-                                table,
-                                ','.join(kwargs.keys()),
-                                ','.join([kwargs[i] for i in kwargs.keys()]))

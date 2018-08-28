@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView
 
-from Client.MyQt.QtMyWidgetItem import StudentHeaderItem, PercentHeaderItem, VisitItem, LessonDateItem
+from Client.MyQt.Table.Items import AbstractContextItem
 from Client.test import safe
 
 
@@ -23,22 +23,30 @@ class VisitSection(QTableWidget):
         headers.customContextMenuRequested.connect(self.vertical_header_click)
 
     def vertical_header_click(self, event: QPoint):
+        """
+        Slot
+        Shows context menu on vertical header item under mouse pointer
+        :param event: point on screen
+        """
         print("Event on header")
         index = self.indexAt(event)
         row = index.row()
         item = self.verticalHeaderItem(row)
-        if type(item) == StudentHeaderItem or type(item) == PercentHeaderItem:
+        if isinstance(item, AbstractContextItem):
             real_pos = event.__pos__() + self.pos()
             item.show_context_menu(real_pos)
 
     def table_right_click(self, event: QPoint):
+        """
+        Slot
+        Shows context menu of item under mouse pointer if item is AbstractContextItem
+        :param event:
+        """
         index = self.indexAt(event)
         row, col = index.row(), index.column()
         print(row, col)
         item = self.item(row, col)
-        if type(item) == VisitItem:
-            real_pos = event.__pos__() + self.pos()
-            item.show_context_menu(real_pos)
-        if type(item) == LessonDateItem:
+
+        if isinstance(item, AbstractContextItem):
             real_pos = event.__pos__() + self.pos()
             item.show_context_menu(real_pos)

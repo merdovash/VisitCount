@@ -1,6 +1,6 @@
 from Client.Requests.ClientConnection import ServerConnection
 from DataBase.Authentication import Authentication
-from DataBase.sql_handler import ClientDataBase
+from DataBase.ClentDataBase import ClientDataBase
 from Modules.FirstLoad import address
 
 
@@ -9,9 +9,9 @@ class FirstLoad(ServerConnection):
         ByLogin = 0
         ByCard = 1
 
-    def __init__(self, program: 'MyProgram', db: ClientDataBase, auth: Authentication,
+    def __init__(self, program: 'MyProgram', database: ClientDataBase, auth: Authentication,
                  login=None, card_id=None, password=None, on_finish: callable = lambda *args: None):
-        super().__init__(db=db, auth=auth, url=program['host']+address)
+        super().__init__(database=database, auth=auth, url=program['host'] + address)
 
         self.program = program
 
@@ -44,10 +44,10 @@ class FirstLoad(ServerConnection):
                     }
 
     def _run(self):
-        self.send(self.get_request_body())
+        self._send(self.get_request_body())
 
     def on_response(self, data):
-        config = self.db.config
+        config = self.database.config
         for table in [config.professors,
                       config.students,
                       config.groups,
@@ -57,7 +57,7 @@ class FirstLoad(ServerConnection):
                       config.visitation,
                       config.auth]:
             print(f"loading table {table}: {data[table]}")
-            self.db.loads(table, data[table])
+            self.database.loads(table, data[table])
         self.on_finish()
 
     def on_error(self, msg):

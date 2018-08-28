@@ -26,7 +26,7 @@ class Module:
                         if authentication.status:
                             self.post(data=data.get('data'), response=response, auth=authentication, **kwargs)
                         else:
-                            response.set_error('auth failed')
+                            response.set_error(db.last_error())
                     else:
                         return response.set_error("you send no data: {}".format(request.data))
 

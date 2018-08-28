@@ -11,6 +11,7 @@ class Configurable:
             a2 = self.__default__()
         for key in a2:
             if key not in a1:
+                print(f'key {key} not in {a1} ')
                 a1[key] = a2[key]
-            elif type(a2[key]) is dict:
+            elif isinstance(a2[key], dict):
                 self.check(a1[key], a2[key])

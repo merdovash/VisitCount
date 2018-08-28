@@ -6,25 +6,22 @@ TODO:
 """
 import datetime
 
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QPushButton, QAction
 
-import Client.Configuartion.WindowConfig as WindowConfig
-from Client.MyQt.AbstractWindow import AbstractWindow
-from Client.MyQt.Program import MyProgram
+from Client.MyQt.Chart.QAnalysisDialog import show
+from Client.MyQt.Chart.WeekAnalysis import WeekChart
+from Client.MyQt.Chart.WeekDayAnalysis import WeekDayChart
 from Client.MyQt.QAction.DataAction import DataAction
 from Client.MyQt.QtMyComboBox import QMyComboBox
 from Client.MyQt.QtMyStatusBar import QStatusMessage
-from Client.MyQt.QtMyTableWidget import VisitTable
-from Client.MyQt.QtMyWidgetItem import VisitItem
-from Client.MyQt.Window.Chart.QAnalysisDialog import show
-from Client.MyQt.Window.Chart.WeekAnalysis import WeekChart
-from Client.MyQt.Window.Chart.WeekDayAnalysis import WeekDayChart
-from Client.SerialsReader import RFIDReader, RFIDReaderNotFoundException
+from Client.MyQt.Table import VisitTable
+from Client.MyQt.Table.Items import VisitItem
+from Client.MyQt.Window import AbstractWindow
+from Client.Reader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import safe
-from DataBase.Authentication import Authentication
 from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -63,32 +60,35 @@ class MainWindow(AbstractWindow):
     """
 
     @safe
-    def __init__(self, auth: Authentication, program: MyProgram,
-                 window_config: WindowConfig.Config):
+    def __init__(self, program):
         super().__init__()
         self.program = program
         self.db = program.db
-        self.auth = auth
 
-        self.win_config = window_config
-        professor_id = auth.get_user_info()['id']
-        if str(professor_id) not in window_config:
-            window_config.new_user(professor_id)
-        window_config.set_professor_id(professor_id)
+        professor_id = program.auth.get_user_info()['id']
+        if str(professor_id) not in program.win_config:
+            program.win_config.new_user(professor_id)
+            program.win_config.set_professor_id(professor_id)
 
-        self.c_w = MainWindowWidget(self.auth, program=program, window_config=self.win_config)
+        self.c_w = MainWindowWidget(program=program)
         self.setCentralWidget(self.c_w)
 
         self.__init_menu__()
-        self.dialog = None
 
         self.showMaximized()
 
+    # signals
+
+    # slots
+    @pyqtSlot()
+    def change_user(self):
+        self.program.change_user()
+
     @safe
     def __init_menu__(self):
-        bar = self.menuBar()
+        menu_bar = self.menuBar()
 
-        self.bar = bar
+        self.menu_bar = menu_bar
 
         self._init_menu_file()
         self._init_menu_analysis()
@@ -98,7 +98,7 @@ class MainWindow(AbstractWindow):
 
     @safe
     def _init_menu_analysis(self):
-        analysis = self.bar.addMenu("Анализ")
+        analysis = self.menu_bar.addMenu("Анализ")
 
         analysis_weeks = QAction("По неделям", self)
         analysis_weeks.triggered.connect(show(WeekChart, self.program))
@@ -112,7 +112,7 @@ class MainWindow(AbstractWindow):
 
     @safe
     def _init_menu_lessons(self):
-        lessons = self.bar.addMenu("Занятия")
+        lessons = self.menu_bar.addMenu("Занятия")
 
         lessons_current = QAction("Выбрать текущее", self)
         lessons_current.triggered.connect(self.centralWidget()._setup_data)
@@ -125,10 +125,10 @@ class MainWindow(AbstractWindow):
 
     @safe
     def _init_menu_file(self):
-        file = self.bar.addMenu("Файл")
+        file = self.menu_bar.addMenu("Файл")
 
         file_change_user = QAction("Сменить пользоватлея", self)
-        file_change_user.triggered.connect(self.program.change_user)
+        file_change_user.triggered.connect(self.change_user)
 
         file.addAction(file_change_user)
 
@@ -139,26 +139,50 @@ class MainWindow(AbstractWindow):
 
     @safe
     def _init_menu_data(self):
-        data = self.bar.addMenu("Данные")
+        data = self.menu_bar.addMenu("Данные")
 
-        d1 = DataAction(["Отображать день", "Не отображать день"], VisitTable.Header.DAY, self)
-        data.addAction(d1)
+        data_show_month_day = DataAction(
+            ["Отображать день", "Не отображать день"],
+            VisitTable.Header.DAY,
+            self
+        )
+        data.addAction(data_show_month_day)
 
         data.addAction(
-            DataAction(["Отображать день недели", "Не отображать день недели"], VisitTable.Header.WEEKDAY, self))
+            DataAction(
+                ["Отображать день недели", "Не отображать день недели"],
+                VisitTable.Header.WEEKDAY,
+                self
+            )
+        )
         data.addAction(
-            DataAction(["Отображать месяц", "Не отображать месяц"], VisitTable.Header.MONTH, self))
+            DataAction(
+                ["Отображать месяц", "Не отображать месяц"],
+                VisitTable.Header.MONTH,
+                self
+            )
+        )
         data.addAction(
-            DataAction(["Отображать номер занятия", "Не отображать номер занятия"], VisitTable.Header.LESSON, self))
+            DataAction(
+                ["Отображать номер занятия", "Не отображать номер занятия"],
+                VisitTable.Header.LESSON,
+                self
+            )
+        )
         data.addAction(
-            DataAction(["Отображать тип занятия", "Не отображать тип занятия"], VisitTable.Header.LESSONTYPE, self))
+            DataAction(
+                ["Отображать тип занятия", "Не отображать тип занятия"],
+                VisitTable.Header.LESSONTYPE,
+                self
+            )
+        )
 
     @safe
     def _init_menu_updates(self):
-        updates = self.bar.addMenu("Синхронизация")
+        updates = self.menu_bar.addMenu("Синхронизация")
 
         updates_action = QAction("Обновить локальную базу данных", self)
-        updates_action.triggered.connect(Synchronize(self.program, self.auth).start)
+        updates_action.triggered.connect(Synchronize(self.program).start)
 
         updates.addAction(updates_action)
 
@@ -169,24 +193,31 @@ class MainWindowWidget(QWidget):
     """
 
     @safe
-    def __init__(self, auth: Authentication, program: MyProgram,
-                 window_config: WindowConfig.Config):
+    def __init__(self, program):
         super().__init__()
+
         self.program = program
         self.table = None
-        self.auth = auth
-        self.db = program.db
-        self.window_config = window_config
 
         self.last_lesson = None
-        self.dialog = None
 
-        self.program['professor'] = auth.get_user_info()
+        self.program['professor'] = program.auth.get_user_info()
 
         self._setup_select_lesson()
         self._setup_geometry()
 
         self._setup_data()
+
+        self.synchronize = Synchronize(self.program)
+        self.start_sync.connect(self.run_synchonization)
+
+    # signals
+    start_sync = pyqtSignal()
+
+    # slots
+    @pyqtSlot()
+    def run_synchonization(self):
+        self.synchronize._run()
 
     @safe
     def _setup_geometry(self):
@@ -194,26 +225,26 @@ class MainWindowWidget(QWidget):
 
     @safe
     def _setup_select_lesson(self):
-        self.main_layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
 
         # INFO BLOCK
-        self.info_layout = QHBoxLayout()
+        info_layout = QHBoxLayout()
 
-        professor = self.auth.get_user_info()
-        self.professor_label = QLabel(
+        professor = self.program.auth.get_user_info()
+        professor_label = QLabel(
             professor["last_name"] + " " + professor["first_name"] + " " + professor["middle_name"]
         )
-        self.professor_label.setFont(QFont("", 20))
+        professor_label.setFont(QFont("", 20))
 
-        self.info_label = QStatusMessage.instance()
+        self.info_label = QStatusMessage()
 
-        self.info_layout.addWidget(self.professor_label)
-        self.info_layout.addWidget(self.info_label)
+        info_layout.addWidget(professor_label, alignment=Qt.AlignLeft)
+        info_layout.addWidget(self.info_label, alignment=Qt.AlignRight)
 
-        self.main_layout.addLayout(self.info_layout)
+        main_layout.addLayout(info_layout)
 
         # SELECTOR BLOCK
-        self.selector_layout = QHBoxLayout()
+        selector_layout = QHBoxLayout()
 
         # discipline
         self.discipline_selector = QMyComboBox()
@@ -221,8 +252,8 @@ class MainWindowWidget(QWidget):
         disc_label = QLabel("Дисциплина")
         disc_label.setAlignment(Qt.AlignRight)
 
-        self.selector_layout.addWidget(disc_label, alignment=Qt.AlignCenter)
-        self.selector_layout.addWidget(self.discipline_selector, alignment=Qt.AlignCenter)
+        selector_layout.addWidget(disc_label, alignment=Qt.AlignCenter)
+        selector_layout.addWidget(self.discipline_selector, alignment=Qt.AlignCenter)
 
         # group
         self.group_selector = QMyComboBox()
@@ -230,8 +261,8 @@ class MainWindowWidget(QWidget):
         group_label = QLabel("Группа")
         group_label.setAlignment(Qt.AlignRight)
 
-        self.selector_layout.addWidget(group_label)
-        self.selector_layout.addWidget(self.group_selector)
+        selector_layout.addWidget(group_label)
+        selector_layout.addWidget(self.group_selector)
 
         # lesson
         self.lesson_selector = QMyComboBox("lessons")
@@ -239,50 +270,51 @@ class MainWindowWidget(QWidget):
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
 
-        self.selector_layout.addWidget(lesson_label)
-        self.selector_layout.addWidget(self.lesson_selector)
+        selector_layout.addWidget(lesson_label)
+        selector_layout.addWidget(self.lesson_selector)
 
-        self.main_layout.addLayout(self.selector_layout)
+        main_layout.addLayout(selector_layout)
 
         # start button
         self.start_button = QPushButton()
-        self.start_button.setStyleSheet(self.db.config.main_button_css)
+        self.start_button.setStyleSheet(self.program.db.config.main_button_css)
         self.start_button.setText("Начать занятие")
         self.start_button.clicked.connect(self._start_lesson)
 
-        self.selector_layout.addWidget(self.start_button)
+        selector_layout.addWidget(self.start_button)
 
         # DATA BLOCK
-        print("#####", self.window_config)
-        self.table = VisitTable(self.main_layout, self.program, self.window_config)
-        # self.setCentralWidget(self.table)
+        self.table = VisitTable(main_layout, self.program)
+        self.table.show_visitation_msg.connect(self.show_message)
 
-        # self.inner_layout.addWidget(self.table)
-
-        self.setLayout(self.main_layout)
+        self.setLayout(main_layout)
 
     def set_current_lesson(self):
         """
         Select a lesson close to the current time.
         """
-        lessons = self.db.get_lessons(professor_id=self.program['professor']["id"])
+        lessons = self.program.db.get_lessons(professor_id=self.program['professor']["id"])
         closest = closest_lesson(lessons, self.program['date_format'])
+        # self.lesson_selector.setCurrentId(getLessonIndex(self.lesson_selector.items, closest))
         self.program['lesson'] = closest
 
     def set_current_lesson_of_current_group(self):
         """
         Select a lesson close to the current time for the currently selected group.
         """
-        lessons = self.db.get_lessons(professor_id=self.program['professor']["id"],
-                                      group_id=self.program['group']['id'])
+        lessons = self.program.db.get_lessons(professor_id=self.program['professor']["id"],
+                                              group_id=self.program['group']['id'])
         closest = closest_lesson(lessons, self.program['date_format'])
         self.lesson_selector.setCurrentId(closest['id'])
+
+    def show_message(self, text):
+        self.info_label.setText(text)
 
     @safe
     def _setup_data(self, *args):
         self.set_current_lesson()
 
-        disciplines = self.db.get_disciplines(professor_id=self.program['professor']["id"])
+        disciplines = self.program.db.get_disciplines(professor_id=self.program['professor']["id"])
         self.discipline_selector.disconnect()
         self.discipline_selector.clear()
         self.discipline_selector.addItems(disciplines)
@@ -302,15 +334,15 @@ class MainWindowWidget(QWidget):
 
     # @pyqtSlot(int)
     @safe
-    def discipline_changed(self, index=None):
+    def discipline_changed(self, qt_index=None):
         """
         update groups ComboBox
         :return: None
         """
         discipline_id = self.discipline_selector.currentId()
-        self.program['discipline'] = self.db.get_disciplines(discipline_id=discipline_id)[0]
+        self.program['discipline'] = self.program.db.get_disciplines(discipline_id=discipline_id)[0]
 
-        groups = self.db.get_groups(
+        groups = self.program.db.get_groups(
             professor_id=self.program['professor']["id"],
             discipline_id=discipline_id)
 
@@ -327,7 +359,7 @@ class MainWindowWidget(QWidget):
         refill table
         """
         self.table.clear()
-        lessons = self.db.get_lessons(
+        lessons = self.program.db.get_lessons(
             professor_id=self.program['professor']["id"],
             group_id=self.program['group']["id"],
             discipline_id=self.program['discipline']["id"])
@@ -349,17 +381,17 @@ class MainWindowWidget(QWidget):
 
     # @pyqtSlot(int)
     @safe
-    def _group_changed(self, index=None):
+    def _group_changed(self, qt_index=None):
         self.table.clear()
         self.last_lesson = None
         group = self.group_selector.currentId()
 
-        self.program['group'] = self.db.get_groups(group_id=group)[0]
+        self.program['group'] = self.program.db.get_groups(group_id=group)[0]
 
         if group is None:
             return
 
-        lessons = self.db.get_lessons(
+        lessons = self.program.db.get_lessons(
             professor_id=self.program['professor']["id"],
             group_id=group,
             discipline_id=self.discipline_selector.currentId())
@@ -382,21 +414,24 @@ class MainWindowWidget(QWidget):
             RFIDReader.instance().stopRead()
         except RFIDReaderNotFoundException:
             pass
-        QStatusMessage.instance().setText("Выбрана группа {}".format(self.group_selector.currentText()))
+        self.info_label.setText("Выбрана группа {}".format(self.group_selector.currentText()))
 
     # @pyqtSlot(int)
     @safe
-    def _lesson_changed(self, index=None):
+    def _lesson_changed(self, qt_index=None):
 
+        @safe
         def select_current_col(col):
-            if self.last_lesson is not None:
-                self.table.ForEachRow(
-                    self.last_lesson,
-                    lambda x: x.set_current_lesson(False) if type(x) is VisitItem else 0)
+            print(f'colorfull {col}')
 
-            self.table.ForEachRow(
-                current_col,
-                lambda x: x.set_current_lesson(True) if type(x) is VisitItem else 0)
+            table: VisitTable = self.table
+
+            if self.last_lesson is not None:
+                for item in table.get_column(self.last_lesson):
+                    item.set_current_lesson(False)
+
+            for item in table.get_column(col):
+                item.set_current_lesson(True)
 
         current_col = getLessonIndex(self.table.lessons, self.lesson_selector.currentId())
         select_current_col(current_col)
@@ -404,7 +439,7 @@ class MainWindowWidget(QWidget):
         self.last_lesson = current_col
         self.table.visit_table.scrollTo(self.table.visit_table.model().index(1, self.last_lesson))
 
-        self.program['lesson'] = self.db.get_lessons(
+        self.program['lesson'] = self.program.db.get_lessons(
             lesson_id=self.lesson_selector.currentId())[0]
 
     @safe
@@ -413,11 +448,11 @@ class MainWindowWidget(QWidget):
         fill table with current group students and lessons
         :return: None
         """
-        students = self.db.get_students(
+        students = self.program.db.get_students(
             group_id=self.group_selector.currentId())
         students.sort(key=lambda x: x["last_name"])
 
-        lessons = self.db.get_lessons(
+        lessons = self.program.db.get_lessons(
             professor_id=self.program['professor']["id"],
             group_id=self.group_selector.currentId(),
             discipline_id=self.discipline_selector.currentId())
@@ -427,9 +462,9 @@ class MainWindowWidget(QWidget):
 
         print(students)
 
-        for st in students:
-            self.table.add_student(st, self.db.get_visitations(
-                student_id=st["id"],
+        for student in students:
+            self.table.add_student(student, self.program.db.get_visitations(
+                student_id=student["id"],
                 professor_id=self.program['professor']["id"],
                 discipline_id=self.discipline_selector.currentId()))
 
@@ -437,9 +472,9 @@ class MainWindowWidget(QWidget):
 
         return
 
-    @pyqtSlot(bool)
+    # @pyqtSlot(bool)
     @safe
-    def _start_lesson(self, b):
+    def _start_lesson(self, qt_bool):
         if self.program.reader() is not None:
             self.program.reader().onRead(self._new_visit)
 
@@ -448,7 +483,7 @@ class MainWindowWidget(QWidget):
             self.group_selector.setEnabled(False)
             self.discipline_selector.setEnabled(False)
 
-            self.db.start_lesson(lesson_id=self.lesson_selector.currentId())
+            self.program.db.start_lesson(lesson_id=self.lesson_selector.currentId())
 
             if self.last_lesson is None:
                 self.last_lessons = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data(),
@@ -459,39 +494,39 @@ class MainWindowWidget(QWidget):
             self.start_button.clicked.connect(self._end_lesson)
             for i in range(3, self.table.rowCount()):
                 item = self.table.visit_table.item(i, self.last_lesson)
-                if type(item) == VisitItem:
-                    if item.status == VisitItem.Status.NoInfo:
-                        item.set_visit_status(VisitItem.Status.NotVisited)
+                if isinstance(item, VisitItem.VisitItem):
+                    if item.status == VisitItem.VisitItem.Status.NoInfo:
+                        item.set_visit_status(VisitItem.VisitItem.Status.NotVisited)
 
-            QStatusMessage.instance().setText("Учет начался. Приложите карту студента к считывателю.")
+            self.program.window.message.emit("Учет начался. Приложите карту студента к считывателю.")
         else:
             self.program.window.error.emit("Для учета посещений необходимо подключение считывателя.")
 
     @safe
-    def _new_visit(self, ID):
-        students = self.db.get_students(card_id=ID, group_id=self.group_selector.currentId())
+    def _new_visit(self, card_id):
+        students = self.program.db.get_students(card_id=card_id, group_id=self.group_selector.currentId())
         if len(students) == 0:
             self.info_label.setText("Студента нет в списках.")
         else:
             lesson_id = self.lesson_selector.currentId()
             student = students[0]
-            if ID in [i["card_id"] for i in self.table.students]:
-                r = self.db.add_visit(
+            if card_id in [i["card_id"] for i in self.table.students]:
+                self.program.db.add_visit(
                     student_id=student["id"],
                     lesson_id=lesson_id)
-                print(r)
 
                 self.table.new_visit(student["id"], lesson_id)
             else:
                 self.info_label.setText("Студент не из группы {}".format(
-                    self.db.get_groups(group_id=self.group_selector.currentId())[0]["name"])
+                    self.program.db.get_groups(group_id=self.group_selector.currentId())[0]["name"])
                 )
 
     @pyqtSlot()
     @safe
-    def _end_lesson(self):
+    def _end_lesson(self, *qt_args):
         self.program['marking_visits'] = False
-        Synchronize(program=self.program, auth=self.auth).start()
+
+        self.start_sync.emit()
 
         self.program.reader().stopRead()
 
@@ -503,6 +538,5 @@ class MainWindowWidget(QWidget):
         self.start_button.setText("Начать занятие")
         self.start_button.clicked.connect(self._start_lesson)
         if self.last_lesson is not None:
-            r = self.db.complete_lesson(self.last_lesson)
+            self.program.db.complete_lesson(self.last_lesson)
             self.info_label.setText("Учет посещений завершен.")
-            print(r)
