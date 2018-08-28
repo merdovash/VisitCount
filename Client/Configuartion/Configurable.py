@@ -1,10 +1,8 @@
-from abc import abstractmethod
 
 
 class Configurable:
-    @abstractmethod
     def __default__(self) -> dict:
-        pass
+        raise NotImplementedError()
 
     def check(self, a1, a2=None):
         if a2 is None:

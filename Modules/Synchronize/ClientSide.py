@@ -1,6 +1,5 @@
 from typing import Dict, List
 
-from Client.MyQt.Program import MyProgram
 from Client.Requests.ClientConnection import ServerConnection
 from Client.test import safe
 from Modules.Synchronize import address
@@ -10,7 +9,7 @@ from Modules.Synchronize2.ClientSide import Synchronize2
 
 class Synchronize(ServerConnection):
     @safe
-    def __init__(self, program: MyProgram):
+    def __init__(self, program):
         super().__init__(program.db, program.auth, program['host'] + address)
         self.professor = self._get_professor(program.auth.user_id)
         self.program = program

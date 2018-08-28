@@ -1,5 +1,4 @@
 import traceback
-from abc import abstractmethod
 from math import ceil
 
 import matplotlib.pyplot as plt
@@ -183,6 +182,5 @@ class QAnalysisDialog(QDialog):
     def _boxplot(self):
         self.ax().boxplot(self.acc.get_box_data(), '*-', sym="")
 
-    @abstractmethod
     def get_lessons(self):
-        pass
+        raise NotImplementedError()

@@ -29,7 +29,7 @@ class DataBase:
         auth = Table(
             'auth5',
             AtrDict({
-                'id': Column('id', 'INT', 'PRIMARY KEY AUTOINCREMENT'),
+                'id': Column('id', 'INTEGER', 'PRIMARY KEY AUTOINCREMENT'),
                 'login': Column('login', 'TEXT', 'UNIQUE'),
                 'password': Column('password', 'TEXT', ''),
                 'user_id': Column('user_id', 'INT', ''),
@@ -106,7 +106,7 @@ class DataBase:
                 'id': {
                     'name': 'id',
                     'type': 'INTEGER',
-                    'spec': 'AUTOINCREMENT'
+                    'spec': 'PRIMARY KEY AUTOINCREMENT'
                 },
                 'last_name': {
                     'name': 'last_name',
@@ -196,7 +196,7 @@ class DataBase:
         visitations = Table(
             'visitations',
             AtrDict({
-                'id': Column('id', 'INT', 'PRIMARY KEY AUTOINCREMENT'),
+                'id': Column('id', 'INTEGER', 'PRIMARY KEY AUTOINCREMENT'),
                 'student_id': Column('student_id', 'INT', ''),
                 'lesson_id': Column('lesson_id', 'INT', '')
             }),

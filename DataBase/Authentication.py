@@ -1,6 +1,10 @@
 from DataBase.sql_handler import DataBaseWorker
 
 
+class SecurityException(Exception):
+    def __init__(self):
+        super().__init__('Trying to access secure data')
+
 class Authentication:
     __slots__ = ('db', 'status', 'user_id', 'user_type', 'account_id', '_info', 'error')
 
