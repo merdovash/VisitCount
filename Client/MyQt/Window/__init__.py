@@ -17,6 +17,8 @@ class AbstractWindow(QMainWindow):
         self.error.connect(self.on_error)
         self.message.connect(self.on_show_message)
 
+        self.dialog = None
+
     @safe
     def setDialog(self, dialog: QAnalysisDialog):
         """

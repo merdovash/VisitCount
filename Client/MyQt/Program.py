@@ -70,6 +70,7 @@ class MyProgram:
         :param auth: you have to pass Authentication to switch to MainWindow
         """
         from Client.MyQt.Window.Main import MainWindow
+        print('loading MainWindow')
         self.auth = auth
         self._state['professor_id'] = auth.user_id
         self.win_config.set_professor_id(auth.user_id)

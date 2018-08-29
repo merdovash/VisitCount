@@ -22,7 +22,13 @@ def format_name(user: Dict[str, str]):
 
 
 Table = namedtuple('Table', 'name columns extra')
-Column = namedtuple('Column', 'name type spec')
+column = namedtuple('Column', 'name type primary_key unique')
+
+
+def Column(name, field_type, primary_key=False, unique=False) -> column:
+    if primary_key == '':
+        primary_key = False
+    return column(name=name, type=field_type, primary_key=primary_key, unique=unique)
 
 
 class AtrDict(dict):
@@ -37,7 +43,7 @@ class AtrDict(dict):
             if isinstance(d[key], dict):
                 self[key] = AtrDict(d[key])
 
-    def __getattr__(self, name) -> Column:
+    def __getattr__(self, name) -> column:
         if name in self:
             return self[name]
         else:
@@ -57,8 +63,8 @@ def cached(func):
     cache = {}
 
     def __wrapper__(*args, **kwargs):
-        args_hash = hash((args, tuple(sorted(kwargs.items()))))
-        print('cache: ', args_hash in cache.keys())
+        args_hash = hash((args[1:], tuple(sorted(kwargs.items()))))
+        print('cache: ', (args[1:], tuple(sorted(kwargs.items()))), args_hash in cache.keys())
         if args_hash not in cache.keys():
             res = func(*args, **kwargs)
             cache[args_hash] = res

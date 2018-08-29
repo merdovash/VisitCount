@@ -1,6 +1,7 @@
 import datetime
 
 from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
+from DataBase.sql_handler import DataBase
 
 
 class WeekChart(QAnalysisDialog):
@@ -32,7 +33,7 @@ class WeekChart(QAnalysisDialog):
                 self.db,
                 i[0],
                 datetime.datetime.strptime(i[1], self.program['date_format']).isocalendar()[1]
-            ) for i in self.db.sql_request("SELECT id, {0}.date from {0}", self.db.config.lessons)
+            ) for i in self.db.sql_request("SELECT id, {0}.date from {0}", DataBase.Schema.lessons.name)
         ]
 
         lessons.sort(key=lambda x: x.param)

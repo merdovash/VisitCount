@@ -30,10 +30,10 @@ class ServerConnection(Thread):
         self.url = url
 
     @cached
-    def _get_professor(self, professor_id):
+    def get_user(self, professor_id):
         return [{'login': i[0], 'password': i[1]} for i in self.database.sql_request(f"""
         SELECT login, password 
-        FROM {self.database.config.auth} 
+        FROM {self.database.Schema.auth.name} 
         WHERE user_id={professor_id} AND user_type=1;""")][0]
 
     @safe
@@ -51,7 +51,7 @@ class ServerConnection(Thread):
                 if res["status"] == "OK":
                     self.on_response(res["data"])
                 else:
-                    self.on_error(f"Неудачная удаленная аутентификациия: {res['message']}")
+                    self.on_error(f"Неудачная удаленная аутентификациия: {res}")
             else:
                 self.on_error(str(request.status_code) + '<br>' + str(request.text))
         except requests.exceptions.ConnectionError as connection_error:

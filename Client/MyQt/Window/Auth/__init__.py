@@ -1,5 +1,5 @@
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
     QErrorMessage
 
@@ -31,12 +31,20 @@ class AuthWidget(QWidget):
         self.setup_serial()
 
         self.dialog = None
+
+        self.auth_success.connect(self.on_auth_success)
         pass
 
     # signals
     auth_success = pyqtSignal()
 
     # slots
+    @pyqtSlot()
+    def on_auth_success(self):
+        auth = Authentication(self.db, login=self.login_input.login(),
+                              password=self.password_input.text(), card_id=self.login_input.card_id())
+
+        self.program.auth_success(auth)
 
     def showDialog(self, d: QDialog):
         self.dialog = d
@@ -107,7 +115,7 @@ class AuthWidget(QWidget):
                   login=self.login_input.login(),
                   password=self.password_input.text(),
                   program=self.program,
-                  on_finish=self.auth).start()
+                  on_finish=self.auth_success.emit).start()
 
     @safe
     def auth(self, *args):
@@ -115,7 +123,7 @@ class AuthWidget(QWidget):
                               password=self.password_input.text(), card_id=self.login_input.card_id())
         if auth.status:
             # self.auth_success.emit()
-            self.program.auth_success(auth=auth)
+            self.auth_success.emit()
             # from Client.MyQt.Window.QtMyMainWindow import MainWindow
             # self.program.set_new_window(MainWindow(auth, self.program, self.program.win_config))
 

@@ -7,8 +7,8 @@ from collections import namedtuple
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import List
-from DataBase.sql_handler import DataBaseWorker
 
+from DataBase.ServerDataBase import DataBaseWorker
 
 SkipLesson = namedtuple('SkipLesson', 'discipline_id skip_count')
 

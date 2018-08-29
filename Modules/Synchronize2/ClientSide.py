@@ -16,7 +16,7 @@ class Synchronize2(ServerConnection):
     @safe
     def _run(self):
         request = {
-            'user': self._get_professor(self.auth.user_id),
+            'user': self.get_user(self.auth.user_id),
             'data': {
                 'row_affected': self.row_affected
             }
@@ -29,6 +29,7 @@ class Synchronize2(ServerConnection):
             self.database.remove_updates(self.auth.user_id)
         else:
             self.program.window.error.emit("Во время синхронизации произошла ошибка. <br>"
+                                           f"{data['updates_send']}!={self.updates_send}"
                                            "Синхронизация будет произведена при следующем завершении занятия.")
 
     @safe

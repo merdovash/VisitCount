@@ -31,10 +31,11 @@ class QMyComboBox(QComboBox):
         self.items = {}
 
     @safe
-    def setCurrentId(self, ID: int):
+    def setCurrentMyId(self, ID: int):
         print(self.items)
         for key in self.items:
             if self.items[key]["id"] == ID:
                 super().setCurrentText(key)
                 return
         raise IndexError("no such id {} in {}".format(ID, self.items))
+

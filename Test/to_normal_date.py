@@ -1,5 +1,6 @@
-from DataBase.sql_handler import DataBaseWorker as dbw
 import datetime
+
+from DataBase.ServerDataBase import DataBaseWorker as dbw
 
 f = "%d-%m-%Y %h:%i%p"
 

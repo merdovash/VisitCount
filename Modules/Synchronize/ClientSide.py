@@ -11,14 +11,13 @@ class Synchronize(ServerConnection):
     @safe
     def __init__(self, program):
         super().__init__(program.db, program.auth, program['host'] + address)
-        self.professor = self._get_professor(program.auth.user_id)
+        self.professor = self.get_user(program.auth.user_id)
         self.program = program
 
     @safe
     def _run(self):
-        updates = self.database.get_updates(self.auth.user_id)
-        self.send_updates = updates_len(updates)
-        self._send({"user": self._get_professor(self.auth.user_id),
+        updates, self.send_updates = self.database.get_updates(self.auth.user_id)
+        self._send({"user": self.get_user(self.auth.user_id),
                    "data": updates})
 
     @safe

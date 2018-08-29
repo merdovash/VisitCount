@@ -1,8 +1,8 @@
 import sched
 import time
 
+from DataBase.ServerDataBase import DataBaseWorker
 from DataBase.config2 import DataBaseConfig
-from DataBase.sql_handler import DataBaseWorker
 from Server.notification import run
 
 

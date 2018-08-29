@@ -5,12 +5,11 @@ import os
 
 from flask import Flask, make_response, request
 
-from DataBase.config2 import DataBaseConfig
-from DataBase.sql_handler import DataBaseWorker
+from DataBase.ServerDataBase import DataBaseWorker
+from Modules.Cabinet.ServerSide import CabinetModule
 from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.Synchronize.ServerSide import SynchronizeModule
-from Modules.Cabinet.ServerSide import CabinetModule
 from Modules.Synchronize2.ServerSide import Synchronize2Module
 from Server.Response import Response
 

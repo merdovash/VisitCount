@@ -1,6 +1,6 @@
 import datetime
 
-from DataBase.sql_handler import DataBaseWorker
+from DataBase.ServerDataBase import DataBaseWorker
 
 
 def convert_date(week, day, lesson):

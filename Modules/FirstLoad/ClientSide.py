@@ -1,6 +1,7 @@
 from Client.Requests.ClientConnection import ServerConnection
 from DataBase.Authentication import Authentication
 from DataBase.ClentDataBase import ClientDataBase
+from DataBase.sql_handler import DataBase
 from Modules.FirstLoad import address
 
 
@@ -44,18 +45,19 @@ class FirstLoad(ServerConnection):
                     }
 
     def _run(self):
-        self._send(self.get_request_body())
+        request = self.get_request_body()
+        print(request)
+        self._send(request)
 
     def on_response(self, data):
-        config = self.database.config
-        for table in [config.professors,
-                      config.students,
-                      config.groups,
-                      config.students_groups,
-                      config.disciplines,
-                      config.lessons,
-                      config.visitation,
-                      config.auth]:
+        for table in [DataBase.Schema.professors.name,
+                      DataBase.Schema.students.name,
+                      DataBase.Schema.groups.name,
+                      DataBase.Schema.students_groups.name,
+                      DataBase.Schema.disciplines.name,
+                      DataBase.Schema.lessons.name,
+                      DataBase.Schema.visitations.name,
+                      DataBase.Schema.auth.name]:
             print(f"loading table {table}: {data[table]}")
             self.database.loads(table, data[table])
         self.on_finish()

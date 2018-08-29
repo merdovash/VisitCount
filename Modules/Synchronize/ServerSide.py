@@ -1,4 +1,5 @@
 from DataBase.sql_handler import DataBase
+from Logger import Logger
 from Modules import Module
 from Modules.Synchronize import address
 
@@ -18,6 +19,7 @@ class SynchronizeModule(Module):
             response.set_error("no such privileges")
 
     def accept_new_data(self, data, professor_id):
+        Logger.write(str(data))
         self.db.set_updates(data, professor_id)
 
     def prepare_updates(self, professor_id)->dict:

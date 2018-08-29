@@ -2,6 +2,7 @@ import os
 import sys
 
 import PyQt5
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 
 from Client.MyQt.Program import MyProgram
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     check_modules()
 
     app = QApplication(sys.argv)
-    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Material"
+    app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
     program = MyProgram()

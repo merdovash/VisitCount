@@ -1,3 +1,4 @@
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMenu, QTableWidgetItem
 
 from Client.MyQt.Table.Items import AbstractContextItem
@@ -13,6 +14,9 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         self.student_name = format_name(student)
         self.setText(self.student_name)
         self.student = student
+
+        if student['card_id'] is None or student['card_id'] == 'None':
+            self.setBackground(QColor(220, 180, 0))
 
         self.register_process = False
 
@@ -55,7 +59,8 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         self.stop_card_register_process()
         print(card_id)
 
-        self.program.db.add_card_id_to(card_id=card_id, student_id=self.student["id"])
+        self.program.db.add_card_id_to(card_id=card_id, student_id=self.student["id"],
+                                       professor_id=self.program['professor']['id'])
 
         if self.student["card_id"] is not None:
             self.program.window.message.emit("Студенту {} перезаписали номер карты".format(self.student_name))
