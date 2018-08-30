@@ -5,7 +5,8 @@ This module contains class wrapper of all global variables
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.WindowConfig import Config
 from Client.MyQt.Window import AbstractWindow
-from Client.Reader import RFIDReaderNotFoundException, RFIDReader
+from Client.Reader import IReader
+from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import safe
 from DataBase.Authentication import Authentication
 from DataBase.ClentDataBase import ClientDataBase
@@ -18,14 +19,14 @@ class MyProgram:
     """
 
     def __init__(self, widget: AbstractWindow = None,
-                 win_config: Config = WindowConfig.load('Client/window_config.json')):
+                 win_config: Config = WindowConfig.load()):
         self._state = {'marking_visits': False,
                        'host': 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
 
         self.db = ClientDataBase()
 
-        self._reader = None
+        self._reader: IReader = None
 
         if widget is None:
             from Client.MyQt.Window.Auth import AuthWindow
@@ -50,7 +51,7 @@ class MyProgram:
         self.window.show()
 
     @safe
-    def reader(self) -> RFIDReader:
+    def reader(self) -> IReader:
         """
         Returns RFIDReader if its connected.
         Saves RFIDReader instance in private variable.

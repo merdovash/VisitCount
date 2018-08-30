@@ -103,7 +103,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
     def _set_visited_by_professor(self):
         if self.program.reader() is not None:
             self.program.window.message.emit("Приложите карточку преподавателя для подтверждения")
-            self.program.reader().onReadOnce(self._set_visited_by_professor_onReadCard)
+            self.program.reader().on_read_once(self._set_visited_by_professor_onReadCard)
         else:
             self.program.window.emit("Подключите считыватель для подвтерждения внесения изменений.")
 

@@ -45,7 +45,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
     @safe
     def _register_student_card(self):
         if self.program.reader() is not None:
-            self.program.reader().onReadOnce(self._register_student_card_onRead)
+            self.program.reader().on_read_once(self._register_student_card_onRead)
 
             self.program.window.message.emit("Приложите карту {} для регистрации".format(self.student_name))
 

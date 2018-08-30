@@ -1,12 +1,13 @@
 import io
 import json
+import os
 
 from Client.Configuartion.Configurable import Configurable
 from Client.test import safe
 
 
 class Config:
-    def __init__(self, path="window_config.json"):
+    def __init__(self, path=os.path.abspath("window_config.json")):
         self.path = path
         self.professor_id = None
         try:
@@ -18,11 +19,12 @@ class Config:
             self.obj = {}
 
     def set_professor_id(self, professor_id):
-        if self.professor_id is None and professor_id in self.obj:
+        professor_id = str(professor_id)
+        if professor_id in self.obj.keys():
             pass
         else:
             self.obj[professor_id] = {}
-        self.professor_id = str(professor_id)
+        self.professor_id = professor_id
 
     def log_out(self):
         self.professor_id = None
@@ -32,7 +34,8 @@ class Config:
             a.check(self.obj[self.professor_id])
 
     def new_user(self, professor_id):
-        self.obj[str(professor_id)] = {}
+        if str(professor_id) not in self.obj:
+            self.obj[str(professor_id)] = {}
 
     def __contains__(self, item):
         if self.professor_id is None:
@@ -59,8 +62,8 @@ class Config:
 
     @safe
     def sync(self):
-        print(self.obj)
-        with open(self.path, 'w+') as outfile:
+        print('synching', self.obj)
+        with io.open(self.path, 'w+', encoding='utf-8') as outfile:
             json.dump(self.obj, outfile, ensure_ascii=False)
 
     def __repr__(self):

@@ -197,7 +197,7 @@ class Selector(QWidget):
     def _end_lesson(self, lesson_index):
         print('hello')
         if self.program.reader() is not None:
-            self.program.reader().stopRead()
+            self.program.reader().stop_read()
         else:
             self.program.window.error.emit('Во время учета было потеряно соединение со считывателем. Учет завершен.')
 

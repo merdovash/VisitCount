@@ -24,9 +24,12 @@ class VisitTable(QWidget, Configurable):
     class Header(int):
         MONTH = 0
         DAY = 1
-        WEEKDAY = 2
-        LESSON = 3
-        LESSONTYPE = 4
+        WEEK_NUMBER = 2
+        WEEKDAY = 3
+        LESSON = 4
+        LESSONTYPE = 5
+
+        COUNT = 6
 
     @safe
     def __default__(self):
@@ -35,6 +38,7 @@ class VisitTable(QWidget, Configurable):
                 "lesson_info": {
                     str(VisitTable.Header.MONTH): True,
                     str(VisitTable.Header.LESSON): True,
+                    str(VisitTable.Header.WEEK_NUMBER): True,
                     str(VisitTable.Header.WEEKDAY): False,
                     str(VisitTable.Header.DAY): True,
                     str(VisitTable.Header.LESSONTYPE): True
@@ -80,6 +84,7 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def _setup_config(self, window_config: Config):
+        print(window_config)
         window_config.check(self)
 
     @safe
@@ -127,8 +132,7 @@ class VisitTable(QWidget, Configurable):
         self.lessons = lessons
         self.visit_table.setColumnCount(len(lessons))
 
-        self.header_height = 5
-        self.visit_table.setRowCount(self.header_height)
+        self.visit_table.setRowCount(self.Header.COUNT)
 
         item1 = QTableWidgetItem()
         item1.setText("Месяц")
@@ -137,6 +141,10 @@ class VisitTable(QWidget, Configurable):
         item2 = QTableWidgetItem()
         item2.setText("День")
         self.visit_table.setVerticalHeaderItem(VisitTable.Header.DAY, item2)
+
+        week_item = QTableWidgetItem()
+        week_item.setText('Номер недели')
+        self.visit_table.setVerticalHeaderItem(VisitTable.Header.WEEK_NUMBER, week_item)
 
         item3 = QTableWidgetItem()
         item3.setText("День недели")
@@ -153,7 +161,7 @@ class VisitTable(QWidget, Configurable):
         # percent table header
         self.percent_table.setColumnCount(1)
         # self.percent_table.resizeColumnsToContents()
-        self.percent_table.setRowCount(5)
+        self.percent_table.setRowCount(self.Header.COUNT)
         self.percent_table.setItem(0, 0, PercentHeaderItem([], PercentItem.Orientation.ByStudents))
         self.percent_table.setSpan(0, 0, 5, 1)
 
@@ -169,17 +177,29 @@ class VisitTable(QWidget, Configurable):
 
             self.visit_table.setItem(VisitTable.Header.MONTH, column, header.month)
             self.visit_table.setItem(VisitTable.Header.DAY, column, header.month_day)
+            self.visit_table.setItem(VisitTable.Header.WEEK_NUMBER, column, header.week_number)
             self.visit_table.setItem(VisitTable.Header.WEEKDAY, column, header.weekday)
             self.visit_table.setItem(VisitTable.Header.LESSON, column, header.number)
             self.visit_table.setItem(VisitTable.Header.LESSONTYPE, column, header.type)
 
+        # week number span
+        start = 0
+        for column in range(len(self.lessons)):
+            if self.visit_table.item(VisitTable.Header.WEEK_NUMBER, column).text() != self.visit_table.item(
+                    VisitTable.Header.WEEK_NUMBER, start).text():
+                self.visit_table.setSpan(VisitTable.Header.WEEK_NUMBER, start, 1, column - start)
+                start = column
+        self.visit_table.setSpan(VisitTable.Header.WEEK_NUMBER, start, 1, len(lessons) - start)
+
+        # month Span
         start = 0
         for column in range(len(lessons)):
-            if self.visit_table.item(0, column).text() != self.visit_table.item(0, start).text():
-                self.visit_table.setSpan(0, start, 1, column - start)
+            if self.visit_table.item(VisitTable.Header.MONTH, column).text() != self.visit_table.item(
+                    VisitTable.Header.MONTH, start).text():
+                self.visit_table.setSpan(VisitTable.Header.MONTH, start, 1, column - start)
                 start = column
-                self.visit_table.setSpan(0, start, 1, len(lessons) - start)
             self.visit_table.setColumnWidth(column, 20)
+        self.visit_table.setSpan(VisitTable.Header.MONTH, start, 1, len(lessons) - start)
 
         # self.visit_table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
 

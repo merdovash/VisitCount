@@ -1,11 +1,10 @@
+from Client.MyQt.QtMyLoginInput import QLoginInput
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
     QErrorMessage
 
-from Client.MyQt.QtMyLoginInput import QLoginInput
 from Client.MyQt.Window import AbstractWindow
-from Client.Reader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import safe
 from DataBase.Authentication import Authentication
 from Modules.FirstLoad.ClientSide import FirstLoad
@@ -102,10 +101,8 @@ class AuthWidget(QWidget):
                 name = prof[0]['last_name'] + ' ' + prof[0]['first_name'] + ' ' + prof[0]['middle_name']
                 self.login_input.set_image_text(prof_card_id, name)
 
-        try:
-            RFIDReader.instance().onRead(imaged_value)
-        except RFIDReaderNotFoundException:
-            pass
+        if self.program.reader() is not None:
+            self.program.reader().on_read(imaged_value)
 
     @safe
     def _first_load(self, auth: Authentication):

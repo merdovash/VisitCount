@@ -1,5 +1,6 @@
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMenu, QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidgetItem
 
 from Client.MyQt.Table.Items import AbstractContextItem
 
@@ -18,11 +19,13 @@ class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
             self.setText("Л")
             self.setToolTip("Лекция")
         elif lesson_type == 1:
-            self.setText("л")
+            self.setText("лр")
             self.setToolTip("Лабораторная работа")
         else:
             self.setText("П")
             self.setToolTip("Практика")
+
+        self.setFont(QtGui.QFont("Times", weight=QtGui.QFont.Bold))
 
     def show_context_menu(self, pos):
         # TODO: make start and end function
@@ -30,9 +33,10 @@ class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
         override _method
         :param pos:
         """
-        if not self.program['marking_visits']:
-            menu = QMenu()
-            print(pos)
-            menu.move(pos)
-            menu.addAction("Начать учет")
-            menu.exec_()
+        pass
+        # if not self.program['marking_visits']:
+        #     menu = QMenu()
+        #     print(pos)
+        #     menu.move(pos)
+        #     action = QAction("Начать учет", self)
+        #     menu.exec_()

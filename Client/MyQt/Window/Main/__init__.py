@@ -176,6 +176,14 @@ class MainWindow(AbstractWindow):
             )
         )
 
+        data.addAction(
+            DataAction(
+                ["Отображать номер недели", "Не отображать номер недели"],
+                VisitTable.Header.WEEK_NUMBER,
+                self
+            )
+        )
+
     @safe
     def _init_menu_updates(self):
         updates = self.menu_bar.addMenu("Синхронизация")
@@ -372,7 +380,7 @@ class MainWindowWidget(QWidget):
                         group_id=group_id)
 
         if self.program.reader() is not None:
-            self.program.reader().stopRead()
+            self.program.reader().stop_read()
 
         self.info_label.setText(f"Выбрана группа {group['name']}")
 
@@ -446,7 +454,7 @@ class MainWindowWidget(QWidget):
                 if item.status == VisitItem.VisitItem.Status.NoInfo:
                     item.set_visit_status(VisitItem.VisitItem.Status.NotVisited)
 
-        self.program.reader().onRead(self._new_visit)
+        self.program.reader().on_read(self._new_visit)
 
     @safe
     def _new_visit(self, card_id):

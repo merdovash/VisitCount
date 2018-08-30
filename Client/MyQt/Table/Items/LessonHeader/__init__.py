@@ -6,8 +6,9 @@ from Client.MyQt.Table.Items.LessonHeader.LessonMonthItem import MonthTableItem
 from Client.MyQt.Table.Items.LessonHeader.LessonNumberItem import LessonNumberItem
 from Client.MyQt.Table.Items.LessonHeader.LessonTypeItem import LessonTypeItem
 from Client.MyQt.Table.Items.LessonHeader.LessonWeekDayItem import WeekDayItem
+from Client.MyQt.Table.Items.LessonHeader.LessonWeekNumberItem import WeekNumber
 
-LessonHeaderTuple = namedtuple('LessonHeaderTuple', 'month month_day weekday number type')
+LessonHeaderTuple = namedtuple('LessonHeaderTuple', 'month month_day week_number weekday number type')
 
 
 class LessonHeaderFactory:
@@ -19,8 +20,9 @@ class LessonHeaderFactory:
 
         month_i = MonthTableItem(dt.month)
         date_i = LessonDateItem(dt, lesson["id"], self.program)
+        week_number = WeekNumber(dt)
         week_i = WeekDayItem(dt)
         number_i = LessonNumberItem(dt)
         type_i = LessonTypeItem(lesson["type"], self.program)
 
-        return LessonHeaderTuple(month_i, date_i, week_i, number_i, type_i)
+        return LessonHeaderTuple(month_i, date_i, week_number, week_i, number_i, type_i)
