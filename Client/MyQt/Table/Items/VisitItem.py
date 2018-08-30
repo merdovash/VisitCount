@@ -108,13 +108,18 @@ class VisitItem(MyTableItem, AbstractContextItem):
             self.program.window.emit("Подключите считыватель для подвтерждения внесения изменений.")
 
     def _set_visited_by_professor_onReadCard(self, card_id):
-        if int(card_id) == int(self.program['professor']["card_id"]):
-            self.program.window.message.emit("Подтвеждено")
-            self.db.add_visit(
-                student_id=self.student["id"],
-                lesson_id=self.lesson["id"]
-            )
-            self.set_visit_status(VisitItem.Status.Visited)
+        professor_card_id = self.program['professors']['card_id']
+        if professor_card_id is not None and professor_card_id != 'None':
+            if int(card_id) == int(professor_card_id):
+                self.program.window.message.emit("Подтвеждено")
+                self.db.add_visit(
+                    student_id=self.student["id"],
+                    lesson_id=self.lesson["id"]
+                )
+                self.set_visit_status(VisitItem.Status.Visited)
+            else:
+                self.program.window.error.emit("Считанная карта не совпадает с картой преподавателя")
+                # RFIDReader.instance()._method = nothing
         else:
-            self.program.window.message.emit("Ошибка")
-            # RFIDReader.instance()._method = nothing
+            self.program.window.error.emit('У вас не зарегистрирована карта.<br>'
+                                           'Пожалуйста зрегистрируйте карту в меню "Файл"->"Зарегистрирвоать карту"')

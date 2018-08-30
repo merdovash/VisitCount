@@ -146,7 +146,10 @@ class DataBase:
         def __getitem__(cls, item):
             return cls.__dict__[item]
 
-    updatable_tables = [Schema.students.name, Schema.lessons.name, Schema.visitations.name]
+    updatable_tables = [Schema.students.name,
+                        Schema.lessons.name,
+                        Schema.visitations.name,
+                        Schema.professors.name]
 
     def __init__(self, config=None):
         if config is not None:

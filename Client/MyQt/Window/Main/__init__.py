@@ -15,11 +15,13 @@ from Client.MyQt.Chart.QAnalysisDialog import show
 from Client.MyQt.Chart.WeekAnalysis import WeekChart
 from Client.MyQt.Chart.WeekDayAnalysis import WeekDayChart
 from Client.MyQt.QAction.DataAction import DataAction
+from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
 from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Table import VisitTable
 from Client.MyQt.Table.Items import VisitItem
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
+from Client.Types import valid_card
 from Client.test import safe
 from Modules.Synchronize.ClientSide import Synchronize
 
@@ -130,6 +132,10 @@ class MainWindow(AbstractWindow):
         file_change_user.triggered.connect(self.change_user)
 
         file.addAction(file_change_user)
+
+        if self.program['professor'] is not None:
+            if not valid_card(self.program['professor']['card_id']):
+                file.addAction(RegisterProfessorCard(self.program, self))
 
         file_exit = QAction("Выход", self)
         file_exit.triggered.connect(self.close)

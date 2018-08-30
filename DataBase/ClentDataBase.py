@@ -24,7 +24,6 @@ class ClientDataBase(DataBaseWorker):
             lesson = self.get_lessons(lesson_id=lesson_id, completed=1)
             return len(lesson) == 0
 
-        t = lesson_not_completed()
         if lesson_not_completed():
             data = {
                 DataBase.Schema.lessons.name: [
@@ -35,6 +34,17 @@ class ClientDataBase(DataBaseWorker):
                 ]
             }
             self.set_updates(data, professor_id)
+
+    def register_professor_card(self, professor_id, card_id):
+        data = {
+            self.Schema.professors.name: [
+                {
+                    self.Schema.professors.columns.id.name: professor_id,
+                    self.Schema.professors.columns.card_id.name: card_id
+                }
+            ]
+        }
+        self.set_updates(data, professor_id)
 
     @safe
     def update_lesson_date(self, lesson_id: int, new_date: datetime, professor_id: int):
