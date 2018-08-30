@@ -23,8 +23,6 @@ class PercentHeaderItem(QTableWidgetItem, AbstractContextItem):
     def change(self, b):
         def f():
             self.setText(self.mask.format("" if b else ", %"))
-            PercentItem.absolute = b
-            for i in self.percents:
-                i.updateText()
+            PercentItem.change_orientation()
 
         return f

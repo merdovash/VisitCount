@@ -1,3 +1,5 @@
+import datetime
+
 from PyQt5.QtWidgets import QComboBox
 
 from Client.test import safe
@@ -16,7 +18,7 @@ class QMyComboBox(QComboBox):
         for pair in texts:
             self.items[pair[self.image_name]] = pair
         pass
-        super().addItems([i[self.image_name] for i in texts])
+        super().addItems([self._format_name(i[self.image_name]) for i in texts])
 
     def currentId(self) -> int:
         if self.currentText() == '' or self.currentText() is None or self.currentText() not in self.items.keys():
@@ -25,6 +27,13 @@ class QMyComboBox(QComboBox):
 
     def get_data(self):
         return [self.items[key] for key in self.items]
+
+    def _format_name(self, value):
+        if self.image_name == 'date':
+            val = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%f')
+            return val.strftime('%d.%m.%Y %H:%M')
+        else:
+            return value
 
     def clear(self):
         super().clear()
@@ -38,4 +47,3 @@ class QMyComboBox(QComboBox):
                 super().setCurrentText(key)
                 return
         raise IndexError("no such id {} in {}".format(ID, self.items))
-

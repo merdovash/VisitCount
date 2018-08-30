@@ -4,7 +4,7 @@ from collections import namedtuple
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
-from Client.MyQt.QtMyComboBox import QMyComboBox
+from Client.MyQt.Window.Main.QtMyComboBox import QMyComboBox
 from Client.test import safe
 
 
