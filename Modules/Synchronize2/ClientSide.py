@@ -1,4 +1,4 @@
-from Client.MyQt.Program import MyProgram
+from Client.Program import MyProgram
 from Client.Requests.ClientConnection import ServerConnection
 from Client.test import safe
 from DataBase.Authentication import Authentication

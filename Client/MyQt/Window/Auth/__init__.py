@@ -1,10 +1,10 @@
-from Client.MyQt.QtMyLoginInput import QLoginInput
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
     QErrorMessage
 
 from Client.MyQt.Window import AbstractWindow
+from Client.MyQt.Window.Auth.QtMyLoginInput import QLoginInput
 from Client.test import safe
 from DataBase.Authentication import Authentication
 from Modules.FirstLoad.ClientSide import FirstLoad

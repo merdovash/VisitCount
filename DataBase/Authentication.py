@@ -23,7 +23,6 @@ class Authentication:
     def __init__(self, db: DataBaseWorker, login=None, password=None, card_id=None, uid=None, **kwargs):
         self._info = None
         self.db = db
-        print(login, password, card_id)
         if (password and (card_id or login)) or uid is not None:
             users = []
             if password is not None:
@@ -50,18 +49,21 @@ class Authentication:
                                        DataBase.Schema.auth.name,
                                        uid)
 
-            print(db.sql_request("SELECT * FROM {}", DataBase.Schema.auth.name))
-            have_users = len(users) > 0
-            if have_users:
-                self.status = Authentication.Status.Complete
-                self.user_id = users[0][0]
-                self.user_type = Authentication.UserType(users[0][1])
-                self.account_id = users[0][2]
+            if users is not None:
+                have_users = len(users) > 0
+                if have_users:
+                    self.status = Authentication.Status.Complete
+                    self.user_id = users[0][0]
+                    self.user_type = Authentication.UserType(users[0][1])
+                    self.account_id = users[0][2]
+                else:
+                    self.error = db.last_error()
+                    self.status = Authentication.Status.Fail
             else:
-                self.error = db.last_error()
                 self.status = Authentication.Status.Fail
+                self.error = db.last_error()
         else:
-            self.error = db.last_error()
+            self.error = 'not enough data'
             self.status = Authentication.Status.Fail
 
     def get_user_info(self):

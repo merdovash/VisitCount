@@ -46,7 +46,7 @@ class Selector(QWidget):
         disc_label = QLabel("Дисциплина")
         disc_label.setAlignment(Qt.AlignRight)
 
-        selector_layout.addWidget(disc_label, 1, alignment=Qt.AlignCenter)
+        selector_layout.addWidget(disc_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
         selector_layout.addWidget(self.discipline_selector, 2)
 
         # group
@@ -55,7 +55,7 @@ class Selector(QWidget):
         group_label = QLabel("Группа")
         group_label.setAlignment(Qt.AlignRight)
 
-        selector_layout.addWidget(group_label, 1, alignment=Qt.AlignCenter)
+        selector_layout.addWidget(group_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
         selector_layout.addWidget(self.group_selector, 2)
 
         # lesson
@@ -64,7 +64,7 @@ class Selector(QWidget):
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
 
-        selector_layout.addWidget(lesson_label, 1, alignment=Qt.AlignCenter)
+        selector_layout.addWidget(lesson_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
         selector_layout.addWidget(self.lesson_selector, 2)
 
         self.start_button = QPushButton()
@@ -176,6 +176,9 @@ class Selector(QWidget):
         if self.program.reader() is not None:
             self.lesson_started.emit(self.lesson_selector.currentIndex())
 
+            self.program.db.complete_lesson(lesson_id=self.lesson_selector.currentId(),
+                                            professor_id=self.program['professor']['id'])
+
             self.program['marking_visits'] = True
             self.lesson_selector.setEnabled(False)
             self.group_selector.setEnabled(False)
@@ -212,8 +215,6 @@ class Selector(QWidget):
         self.start_button.clicked.connect(self._start_lesson)
 
         # if self.last_lesson is not None:
-        self.program.db.complete_lesson(lesson_id=self.lesson_selector.currentId(),
-                                        professor_id=self.program['professor']['id'])
         self.program.window.message.emit("Учет посещений завершен.")
         self.lesson_finished.emit(self.lesson_selector.currentIndex())
 
