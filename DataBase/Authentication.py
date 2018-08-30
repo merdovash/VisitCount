@@ -36,7 +36,7 @@ class Authentication:
                                            password)
                 else:
                     users = db.sql_request("""
-                    SELECT user_id, user_type, id 
+                    SELECT user_id, user_type, {0}.id 
                     FROM {0} 
                     JOIN {1} ON {0}.user_id={1}.id AND {0}.user_type=1 
                     WHERE {1}.card_id='{2}' AND password='{3}'""",
