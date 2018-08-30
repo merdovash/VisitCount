@@ -5,6 +5,7 @@ import PyQt5
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 
+from Client.Configuartion import WindowConfig
 from Client.Program import MyProgram
 
 pyqt = os.path.dirname(PyQt5.__file__)
@@ -14,7 +15,12 @@ print(os.path.dirname(__file__))
 
 
 def check_modules():
-    from pip._internal import main as _main
+    try:
+        from pip import main as _main
+
+    except:
+        from pip._internal import main as _main
+
     try:
         import PyQt5
     except:
@@ -57,12 +63,17 @@ def check_modules():
 
 
 if __name__ == "__main__":
-    check_modules()
+    window_config = WindowConfig.load()
+    if window_config['modules'] != True:
+        check_modules()
+        window_config['modules'] = True
+        window_config.sync()
+
 
     app = QApplication(sys.argv)
     app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
-    program = MyProgram()
+    program = MyProgram(win_config=window_config)
 
     sys.exit(app.exec_())
