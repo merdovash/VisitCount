@@ -8,7 +8,7 @@ from Modules.Synchronize2 import address, Key
 class Synchronize2(ServerConnection):
     @safe
     def __init__(self, program: IProgram, auth: Authentication, row_affected: int, updates_send: int):
-        super().__init__(program.database, auth, program['host'] + address)
+        super().__init__(program.database(), auth, program['host'] + address)
         self.row_affected = row_affected
         self.updates_send = updates_send
         self.program: IProgram = program
