@@ -1,7 +1,7 @@
 from DataBase.sql_handler import DataBase
 from Logger import Logger
 from Modules import Module
-from Modules.Synchronize import address
+from Modules.Synchronize import address, Key, updates_len
 
 
 class SynchronizeModule(Module):
@@ -14,7 +14,10 @@ class SynchronizeModule(Module):
 
             updates = self.prepare_updates(auth.user_id)
 
-            response.set_data(updates)
+            response.set_data({
+                Key.UPDATES: updates,
+                Key.SERVER_ACCEPT_UPDATES_COUNT: updates_len(data)
+            })
         else:
             response.set_error("no such privileges")
 

@@ -1,13 +1,18 @@
 from DataBase.Authentication import Authentication
+from DataBase.ServerDataBase import DataBaseWorker
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
 default_methods = ['POST']
 
 
+class Keys(str):
+    pass
+
+
 class Module:
     def __init__(self, app, request, db, address, func=None, methods=default_methods, form=False):
-        self.db = db
+        self.db: DataBaseWorker = db
         self._is_form = form
         request_type = address[1:]
 

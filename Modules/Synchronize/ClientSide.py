@@ -1,9 +1,8 @@
-from typing import Dict, List
+from typing import Dict, Any
 
 from Client.Requests.ClientConnection import ServerConnection
 from Client.test import safe
-from Modules.Synchronize import address
-from Modules.Synchronize2 import updates_len
+from Modules.Synchronize import address, updates_len, Key
 from Modules.Synchronize2.ClientSide import Synchronize2
 
 
@@ -21,13 +20,25 @@ class Synchronize(ServerConnection):
                    "data": updates})
 
     @safe
-    def on_response(self, data: Dict[str, List[Dict[str, str or int]]]):
-        self.database.set_updates(data, self.auth.user_id, False)
+    def on_response(self, data: Dict[str, Any]):
+        if self._check(data[Key.SERVER_ACCEPT_UPDATES_COUNT]):
 
-        row_affected = updates_len(data)
+            self.database.remove_updates(self.auth.user_id)
 
-        Synchronize2(self.program, self.auth, row_affected=row_affected, updates_send=self.send_updates).start()
+            self.database.set_updates(data[Key.UPDATES], self.auth.user_id, False)
+
+            accepted_updates_count = updates_len(data)
+
+            Synchronize2(self.program,
+                         self.auth,
+                         row_affected=accepted_updates_count,
+                         updates_send=self.send_updates).start()
+        else:
+            self.on_error('Сервер неверно принял отправленные данные. Попробуйте снова.')
 
     @safe
     def on_error(self, msg):
         self.program.window.error.emit(f'В ходе процедуры синхронизации произошла ошибка <br>{msg}')
+
+    def _check(self, server_accept_updates_count):
+        return self.send_updates == server_accept_updates_count

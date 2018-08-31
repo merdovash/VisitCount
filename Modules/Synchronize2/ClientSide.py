@@ -2,7 +2,7 @@ from Client.Program import MyProgram
 from Client.Requests.ClientConnection import ServerConnection
 from Client.test import safe
 from DataBase.Authentication import Authentication
-from Modules.Synchronize2 import address
+from Modules.Synchronize2 import address, Key
 
 
 class Synchronize2(ServerConnection):
@@ -18,19 +18,14 @@ class Synchronize2(ServerConnection):
         request = {
             'user': self.get_user(self.auth.user_id),
             'data': {
-                'row_affected': self.row_affected
+                Key.CLIENT_ACCEPT_UPDATES_COUNT: self.row_affected
             }
         }
         self._send(request)
 
     @safe
     def on_response(self, data):
-        if data['updates_send'] == self.updates_send:
-            self.database.remove_updates(self.auth.user_id)
-        else:
-            self.program.window.error.emit("Во время синхронизации произошла ошибка. <br>"
-                                           f"{data['updates_send']}!={self.updates_send}"
-                                           "Синхронизация будет произведена при следующем завершении занятия.")
+        self.program.window.msg.emit('Синхронизация прошла успешно')
 
     @safe
     def on_error(self, msg):

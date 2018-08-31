@@ -1,9 +1,8 @@
+from Modules import Keys
+
 address = "/synchronize2"
 
 
-def updates_len(d:dict):
-    row_affected = 0
-    for table in d.keys():
-        row_affected += len(d[table])
-
-    return row_affected
+class Key(Keys):
+    CLIENT_ACCEPT_UPDATES_COUNT = Keys('rows_affected')
+    updates_removed = Keys('updates_removed')
