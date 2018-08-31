@@ -15,15 +15,14 @@ class QMyComboBox(QComboBox):
         self.items = {}
 
     def addItems(self, texts: list) -> None:
-        for pair in texts:
-            self.items[pair[self.image_name]] = pair
+        for i, value in enumerate(texts):
+            print(i, value)
+            self.items[i] = value
         pass
         super().addItems([self._format_name(i[self.image_name]) for i in texts])
 
     def currentId(self) -> int:
-        if self.currentText() == '' or self.currentText() is None or self.currentText() not in self.items.keys():
-            raise IndexError()
-        return self.items[self.currentText()]["id"]
+        return self.items[self.currentIndex()]["id"]
 
     def get_data(self):
         return [self.items[key] for key in self.items]
@@ -42,8 +41,8 @@ class QMyComboBox(QComboBox):
     @safe
     def setCurrentMyId(self, ID: int):
         print(self.items)
-        for key in self.items:
-            if self.items[key]["id"] == ID:
-                super().setCurrentText(key)
+        for i, value in enumerate(self.items):
+            if self.items[i]["id"] == ID:
+                super().setCurrentIndex(i)
                 return
         raise IndexError("no such id {} in {}".format(ID, self.items))
