@@ -1,5 +1,6 @@
 from typing import Dict, Any
 
+from Client.IProgram import IProgram
 from Client.Requests.ClientConnection import ServerConnection
 from Client.test import safe
 from Modules.Synchronize import address, updates_len, Key
@@ -8,10 +9,10 @@ from Modules.Synchronize2.ClientSide import Synchronize2
 
 class Synchronize(ServerConnection):
     @safe
-    def __init__(self, program):
-        super().__init__(program.db, program.auth, program['host'] + address)
+    def __init__(self, program: IProgram):
+        super().__init__(program.database(), program.auth, program['host'] + address)
         self.professor = self.get_user(program.auth.user_id)
-        self.program = program
+        self.program: IProgram = program
 
     @safe
     def _run(self):

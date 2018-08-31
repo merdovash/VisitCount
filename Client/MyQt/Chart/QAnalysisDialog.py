@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 # from Main.DataBase.GlobalStatistic import Statistic
+from Client.IProgram import IProgram
 from Client.MyQt.Chart.Tools import get_visit_count, get_student_count
 from DataBase.ClentDataBase import ClientDataBase
 
@@ -98,10 +99,10 @@ class QAnalysisDialog(QDialog):
         WEEK_DAY = 2
 
     # TODO destroy on exit (memory leak)
-    def __init__(self, program: 'MyProgram', parent=None):
+    def __init__(self, program: IProgram, parent=None):
         super().__init__(parent)
-        self.program = program
-        self.db = program.db
+        self.program: IProgram = program
+        self.db = program.database()
         # load data
         self.acc = LessonAccumulator(lessons=self.get_lessons())
 

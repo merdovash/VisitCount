@@ -4,6 +4,7 @@ This module contains class wrapper of all global variables
 
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.WindowConfig import Config
+from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.Reader import IReader
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
@@ -12,8 +13,8 @@ from DataBase.Authentication import Authentication
 from DataBase.ClentDataBase import ClientDataBase
 
 
-class MyProgram:
-    # __slots__ = ('db', 'window', 'win_config', 'auth', '_state', '_reader', 'change_user')
+class MyProgram(IProgram):
+    __slots__ = ()
     """
     Wrapper of all global variables
     """
@@ -24,9 +25,10 @@ class MyProgram:
                        'host': 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
 
-        self.db = ClientDataBase()
-
+        self._database: ClientDataBase = None
         self._reader: IReader = None
+
+        self.auth = None
 
         if widget is None:
             from Client.MyQt.Window.Auth import AuthWindow
@@ -38,7 +40,10 @@ class MyProgram:
 
         self.window.show()
 
-        self.auth = None
+    def database(self):
+        if self._database is None:
+            self._database = ClientDataBase()
+        return self._database
 
     @safe
     def set_window(self, widget: AbstractWindow):

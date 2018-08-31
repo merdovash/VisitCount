@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QTableWidgetItem, QVBoxLayout
 
 from Client.Configuartion.Configurable import Configurable
 from Client.Configuartion.WindowConfig import Config
+from Client.IProgram import IProgram
 from Client.MyQt.Table.Items.LessonHeader import LessonDateItem, LessonNumberItem, LessonTypeItem, LessonHeaderFactory
 from Client.MyQt.Table.Items.PercentHeader import PercentHeaderItem
 from Client.MyQt.Table.Items.PercentItem import PercentItem
@@ -47,10 +48,10 @@ class VisitTable(QWidget, Configurable):
         }
 
     @safe
-    def __init__(self, parent: QVBoxLayout, program):
+    def __init__(self, parent: QVBoxLayout, program: IProgram):
         super().__init__()
-        self.program = program
-        self.db = program.db
+        self.program: IProgram = program
+        self.db = program.database
         self._setup_config(program.win_config)
         self.inner_layout = QHBoxLayout()
         self.inner_layout.setSpacing(0)

@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 
 from Client.Configuartion import WindowConfig
+from Client.IProgram import IProgram
 from Client.Program import MyProgram
 
 pyqt = os.path.dirname(PyQt5.__file__)
@@ -74,6 +75,6 @@ if __name__ == "__main__":
     app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
-    program = MyProgram(win_config=window_config)
+    program: IProgram = MyProgram(win_config=window_config)
 
     sys.exit(app.exec_())

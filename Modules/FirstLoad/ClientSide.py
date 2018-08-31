@@ -1,3 +1,4 @@
+from Client.IProgram import IProgram
 from Client.Requests.ClientConnection import ServerConnection
 from DataBase.Authentication import Authentication
 from DataBase.ClentDataBase import ClientDataBase
@@ -10,11 +11,11 @@ class FirstLoad(ServerConnection):
         ByLogin = 0
         ByCard = 1
 
-    def __init__(self, program: 'MyProgram', database: ClientDataBase, auth: Authentication,
+    def __init__(self, program: IProgram, database: ClientDataBase, auth: Authentication,
                  login=None, card_id=None, password=None, on_finish: callable = lambda *args: None):
         super().__init__(database=database, auth=auth, url=program['host'] + address)
 
-        self.program = program
+        self.program: IProgram = program
 
         self.password = password
         if card_id is not None:

@@ -4,6 +4,7 @@ from collections import namedtuple
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
+from Client.IProgram import IProgram
 from Client.MyQt.Window.Main.QtMyComboBox import QMyComboBox
 from Client.test import safe
 
@@ -33,10 +34,10 @@ class Selector(QWidget):
     lesson_started = pyqtSignal(int)
     lesson_finished = pyqtSignal(int)
 
-    def __init__(self, program):
+    def __init__(self, program: IProgram):
         super().__init__()
 
-        self.program = program
+        self.program: IProgram = program
 
         selector_layout = QHBoxLayout()
 
@@ -68,7 +69,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.lesson_selector, 2)
 
         self.start_button = QPushButton()
-        self.start_button.setStyleSheet(self.program.db.config.main_button_css)
+        self.start_button.setStyleSheet(self.program.database().config.main_button_css)
         self.start_button.setText("Начать занятие")
         self.start_button.clicked.connect(self._start_lesson)
 
@@ -84,7 +85,7 @@ class Selector(QWidget):
 
     def load_data(self):
         self.discipline_selector.addItems(
-            self.program.db.get_disciplines(self.program['professor']['id'])
+            self.program.database().get_disciplines(self.program['professor']['id'])
         )
 
     @pyqtSlot()
@@ -101,11 +102,11 @@ class Selector(QWidget):
 
         professor_id = self.program['professor']['id']
 
-        groups = self.program.db.get_groups(professor_id=professor_id,
-                                            discipline_id=discipline_id)
+        groups = self.program.database().get_groups(professor_id=professor_id,
+                                                    discipline_id=discipline_id)
 
-        lesson = closest_lesson(self.program.db.get_lessons(professor_id=professor_id,
-                                                            discipline_id=discipline_id),
+        lesson = closest_lesson(self.program.database().get_lessons(professor_id=professor_id,
+                                                                    discipline_id=discipline_id),
                                 self.program['date_format'])
 
         group_id = lesson['group_id']
@@ -125,9 +126,9 @@ class Selector(QWidget):
 
         self.group_changed.emit(discipline_id, group_id)
 
-        lessons = self.program.db.get_lessons(professor_id=professor_id,
-                                              group_id=group_id,
-                                              discipline_id=discipline_id)
+        lessons = self.program.database().get_lessons(professor_id=professor_id,
+                                                      group_id=group_id,
+                                                      discipline_id=discipline_id)
         lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], self.program['date_format']))
 
         lesson = closest_lesson(lessons, self.program['date_format'])
@@ -152,7 +153,7 @@ class Selector(QWidget):
     @safe
     def select_current_lesson(self):
         lesson = closest_lesson(
-            self.program.db.get_lessons(professor_id=self.program['professor']['id']),
+            self.program.database().get_lessons(professor_id=self.program['professor']['id']),
             self.program['date_format']
         )
 
@@ -166,8 +167,8 @@ class Selector(QWidget):
 
     @pyqtSlot()
     def select_current_group_current_lesson(self):
-        lessons = self.program.db.get_lessons(professor_id=self.program['professor']["id"],
-                                              group_id=self.group_selector.currentId())
+        lessons = self.program.database().get_lessons(professor_id=self.program['professor']["id"],
+                                                      group_id=self.group_selector.currentId())
         closest = closest_lesson(lessons, self.program['date_format'])
         self.lesson_selector.setCurrentMyId(closest['id'])
 
@@ -176,8 +177,8 @@ class Selector(QWidget):
         if self.program.reader() is not None:
             self.lesson_started.emit(self.lesson_selector.currentIndex())
 
-            self.program.db.complete_lesson(lesson_id=self.lesson_selector.currentId(),
-                                            professor_id=self.program['professor']['id'])
+            self.program.database().complete_lesson(lesson_id=self.lesson_selector.currentId(),
+                                                    professor_id=self.program['professor']['id'])
 
             self.program['marking_visits'] = True
             self.lesson_selector.setEnabled(False)

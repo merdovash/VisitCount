@@ -3,6 +3,7 @@ from datetime import datetime
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMenu, QTableWidgetItem
 
+from Client.IProgram import IProgram
 from Client.MyQt.Table.Calendar import LessonDateChanger
 from Client.MyQt.Table.Items import AbstractContextItem
 from Client.test import safe
@@ -13,9 +14,9 @@ class LessonDateItem(QTableWidgetItem, AbstractContextItem):
     item represent day of month of lesson
     """
 
-    def __init__(self, date: datetime, lesson_id: int, program):
+    def __init__(self, date: datetime, lesson_id: int, program: IProgram):
         super().__init__()
-        self.program = program
+        self.program: IProgram = program
         self.table_widget = self.program.window.centralWidget()
         self.date = date
         self.lesson_id = lesson_id
@@ -39,5 +40,5 @@ class LessonDateItem(QTableWidgetItem, AbstractContextItem):
 
     @safe
     def _move_lesson(self):
-        self.calendar = LessonDateChanger(self.program.db, self.date, self.lesson_id, self.program)
+        self.calendar = LessonDateChanger(self.program, self.date, self.lesson_id)
         self.calendar.show()

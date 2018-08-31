@@ -1,6 +1,7 @@
 import datetime
 from collections import namedtuple
 
+from Client.IProgram import IProgram
 from Client.MyQt.Table.Items.LessonHeader.LessonDateItem import LessonDateItem
 from Client.MyQt.Table.Items.LessonHeader.LessonMonthItem import MonthTableItem
 from Client.MyQt.Table.Items.LessonHeader.LessonNumberItem import LessonNumberItem
@@ -12,8 +13,8 @@ LessonHeaderTuple = namedtuple('LessonHeaderTuple', 'month month_day week_number
 
 
 class LessonHeaderFactory:
-    def __init__(self, program):
-        self.program = program
+    def __init__(self, program: IProgram):
+        self.program: IProgram = program
 
     def create(self, lesson) -> LessonHeaderTuple:
         dt = datetime.datetime.strptime(lesson["date"], self.program['date_format'])

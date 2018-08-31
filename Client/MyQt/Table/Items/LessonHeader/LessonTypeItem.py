@@ -2,6 +2,7 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidgetItem
 
+from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import AbstractContextItem
 
 
@@ -10,9 +11,9 @@ class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
     item represents type of lesson
     """
 
-    def __init__(self, lesson_type: int, program):
+    def __init__(self, lesson_type: int, program: IProgram):
         super().__init__()
-        self.program = program
+        self.program: IProgram = program
         self.setTextAlignment(Qt.AlignCenter)
         lesson_type = int(lesson_type)
         if lesson_type == 0:

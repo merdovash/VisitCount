@@ -3,10 +3,12 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
     QErrorMessage
 
+from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.QtMyLoginInput import QLoginInput
 from Client.test import safe
 from DataBase.Authentication import Authentication
+from DataBase.ClentDataBase import ClientDataBase
 from Modules.FirstLoad.ClientSide import FirstLoad
 
 
@@ -20,10 +22,10 @@ class AuthWindow(AbstractWindow):
 
 
 class AuthWidget(QWidget):
-    def __init__(self, program, *args, **kwargs):
+    def __init__(self, program: IProgram, *args, **kwargs):
         super(AuthWidget, self).__init__(*args, **kwargs)
-        self.program = program
-        self.db = program.db
+        self.program: IProgram = program
+        self.db: ClientDataBase = program.database()
 
         self.setup_geometry()
         self.setupUI()

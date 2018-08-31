@@ -2,6 +2,7 @@ from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMenu, QTableWidget
 
+from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
 from Client.test import safe
 
@@ -21,12 +22,12 @@ class VisitItem(MyTableItem, AbstractContextItem):
         NotVisited = QColor("#ffffff")
         NoInfo = QColor("#ffffff")
 
-    def __init__(self, table: QTableWidget, program,
+    def __init__(self, table: QTableWidget, program: IProgram,
                  status: Status = Status.NoInfo, student: dict = None,
                  lesson: dict = None):
         super().__init__()
-        self.db = program.db
-        self.program = program
+        self.db = program.database
+        self.program: IProgram = program
         self.table: QTableWidget = table
         self.setTextAlignment(Qt.AlignCenter)
         self.status = status

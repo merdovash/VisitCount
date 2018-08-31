@@ -3,17 +3,18 @@ from datetime import datetime
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, QHBoxLayout, QLabel, QPushButton
 
+from Client.IProgram import IProgram
 from Client.MyQt.Time import from_index_to_time
 from Client.test import safe
 from DataBase.ClentDataBase import ClientDataBase
 
 
 class LessonDateChanger(QWidget):
-    def __init__(self, db: ClientDataBase, date: datetime, lesson_id: int, program=None):
+    def __init__(self, program: IProgram, date: datetime, lesson_id: int):
         super().__init__(flags=QtCore.Qt.WindowStaysOnTopHint)
-        self.program = program
+        self.program: IProgram = program
         self.lesson_id = lesson_id
-        self.db: ClientDataBase = db
+        self.db: ClientDataBase = program.database
         self.l = QVBoxLayout()
 
         self.calendar = QCalendarWidget()
