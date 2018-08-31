@@ -25,7 +25,8 @@ class Synchronize2(ServerConnection):
 
     @safe
     def on_response(self, data):
-        self.program.window.msg.emit('Синхронизация прошла успешно')
+        self.program.window.message.emit('Синхронизация прошла успешно.'
+                                         f'{self.updates_send} строк отправлено, {self.row_affected} строк принято')
 
     @safe
     def on_error(self, msg):

@@ -21,13 +21,14 @@ class Synchronize(ServerConnection):
 
     @safe
     def on_response(self, data: Dict[str, Any]):
+        print(data)
         if self._check(data[Key.SERVER_ACCEPT_UPDATES_COUNT]):
 
             self.database.remove_updates(self.auth.user_id)
 
             self.database.set_updates(data[Key.UPDATES], self.auth.user_id, False)
 
-            accepted_updates_count = updates_len(data)
+            accepted_updates_count = updates_len(data[Key.UPDATES])
 
             Synchronize2(self.program,
                          self.auth,
