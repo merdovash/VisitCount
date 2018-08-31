@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 class Logger:
-    name = os.path.abspath(f'log_from_{datetime.now()}.log')
+    name = os.path.abspath(f'log_from_{datetime.now().isocalendar()}.log')
 
     @classmethod
     def write(cls, text):
