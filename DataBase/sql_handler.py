@@ -439,19 +439,24 @@ class DataBase:
                 professor_id
             ))
 
+            # remove from professor_updates
             cursor.execute('DELETE FROM {0} WHERE {1}={2}'.format(
                 DataBase.Schema.professors_updates.name,
                 DataBase.Schema.professors_updates.columns.professor_id.name,
                 professor_id
             ))
 
-            cursor.execute("""
-            DELETE FROM {0} 
-            WHERE {0}.{1} IN ({2})""".format(
-                DataBase.Schema.updates.name,
-                DataBase.Schema.updates.columns.id.name,
-                ids_to_remove()
-            ))
+            # remove from updates
+            ids = ids_to_remove()
+            if len(ids) > 0:
+                req = """
+                DELETE FROM {0} 
+                WHERE {0}.{1} IN ({2})""".format(
+                    DataBase.Schema.updates.name,
+                    DataBase.Schema.updates.columns.id.name,
+                    ids
+                )
+                cursor.execute(req)
 
         return count
 
