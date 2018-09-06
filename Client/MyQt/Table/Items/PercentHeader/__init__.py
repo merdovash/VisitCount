@@ -1,28 +1,10 @@
-from PyQt5.QtWidgets import QMenu, QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidgetItem
 
-from Client.MyQt.Table.Items import AbstractContextItem
 from Client.MyQt.Table.Items.PercentItem import PercentItem
 
 
-class PercentHeaderItem(QTableWidgetItem, AbstractContextItem):
-    def __init__(self, percents: list, orientation=None, *__args):
+class PercentHeaderItem(QTableWidgetItem):
+    def __init__(self, student_count, orientation=None, absolute=False, *__args):
         super().__init__(*__args)
-        self.percents = percents
         self.mask = "Итого на занятии{}" if orientation != PercentItem.Orientation.ByStudents else "Итого{}"
-        self.setText(self.mask.format("" if PercentItem.absolute else ", %"))
-
-    def show_context_menu(self, pos):
-        menu = QMenu()
-        print(pos)
-        menu.move(pos)
-        menu.addAction(
-            "Отобразить в виде процентов" if PercentItem.absolute else "Отобразить в виде количества",
-            self.change(not PercentItem.absolute))
-        menu.exec_()
-
-    def change(self, b):
-        def f():
-            self.setText(self.mask.format("" if b else ", %"))
-            PercentItem.change_orientation()
-
-        return f
+        self.setText(self.mask.format(f" из {student_count}" if absolute else ", %"))

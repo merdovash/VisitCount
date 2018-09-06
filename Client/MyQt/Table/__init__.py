@@ -163,7 +163,7 @@ class VisitTable(QWidget, Configurable):
         self.percent_table.setColumnCount(1)
         # self.percent_table.resizeColumnsToContents()
         self.percent_table.setRowCount(self.Header.COUNT)
-        self.percent_table.setItem(0, 0, PercentHeaderItem([], PercentItem.Orientation.ByStudents))
+        self.percent_table.setItem(0, 0, PercentHeaderItem(PercentItem.Orientation.ByStudents))
         self.percent_table.setSpan(0, 0, 5, 1)
 
         self.header_height = 0
@@ -236,25 +236,33 @@ class VisitTable(QWidget, Configurable):
         percent_item = PercentItem(self.get_row(row), PercentItem.Orientation.ByStudents)
         self.percent_table.setItem(row, 0, percent_item)
 
-        header = self.percent_table.item(0, 0)
-        header.percents.append(percent_item)
-
         self.visit_table.resizeRowsToContents()
         self.percent_table.resizeRowsToContents()
 
     @safe
     def fill_percents_byStudent(self):
-        current_row = self.rowCount()
-        self.insertRow(current_row)
+        student_count = self.rowCount() - self.Header.COUNT
+
+        absolute_percent_row_index = self.rowCount()
+        self.insertRow(absolute_percent_row_index)
+
+        rel_percent_row_index = self.rowCount()
+        self.insertRow(rel_percent_row_index)
 
         vertical_percents = []
 
         for col in range(self.visit_table.columnCount()):
-            item = PercentItem(self.get_column(col), PercentItem.Orientation.ByLessons)
-            self.visit_table.setItem(current_row, col, item)
+            item = PercentItem(self.get_column(col), PercentItem.Orientation.ByLessons, True)
+            self.visit_table.setItem(absolute_percent_row_index, col, item)
             vertical_percents.append(item)
 
-        self.visit_table.setVerticalHeaderItem(current_row, PercentHeaderItem(vertical_percents))
+            item = PercentItem(self.get_column(col), PercentItem.Orientation.ByLessons)
+            self.visit_table.setItem(rel_percent_row_index, col, item)
+            vertical_percents.append(item)
+
+        self.visit_table.setVerticalHeaderItem(absolute_percent_row_index,
+                                               PercentHeaderItem(student_count, absolute=True))
+        self.visit_table.setVerticalHeaderItem(rel_percent_row_index, PercentHeaderItem(student_count))
 
     @safe
     def insertRow(self, index: int):

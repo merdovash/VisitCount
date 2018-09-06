@@ -9,7 +9,7 @@ def semester_start():
 
 def start_week():
     # TODO make it right
-    return 36
+    return 35
 
 
 def week():

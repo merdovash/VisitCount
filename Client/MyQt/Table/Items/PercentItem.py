@@ -14,7 +14,6 @@ class PercentItem(IPercentItem, QTableWidgetItem):
     """
     represents items containing total amount of visitations related to total count of lessons by lesson or student
     """
-    absolute = False
     __items__: List[IPercentItem] = []
 
     class Font(int):
@@ -25,19 +24,15 @@ class PercentItem(IPercentItem, QTableWidgetItem):
         ByLessons = 0
         ByStudents = 1
 
-    @classmethod
-    def change_orientation(cls):
-        cls.absolute = not cls.absolute
-        for item in cls.__items__:
-            item.refresh()
-
-    def __init__(self, items: list, orientation: 'PercentItem.Orientation', *__args):
+    def __init__(self, items: list, orientation: 'PercentItem.Orientation', absolute=False, *__args):
         super().__init__(*__args)
+        self.absolute = absolute
         self.items = items
         self.visit = 0
         self.total = 0
         self.orientation = orientation
         self.refresh()
+
         if self.orientation == PercentItem.Orientation.ByLessons:
             self.setTextAlignment(Qt.AlignCenter)
         else:
@@ -54,12 +49,9 @@ class PercentItem(IPercentItem, QTableWidgetItem):
         self.updateText()
 
     def updateText(self):
-        if PercentItem.absolute:
-            self.setText(
-                "{}{}{}".format(self.visit,
-                                '\n' if self.orientation == PercentItem.Orientation.ByLessons else "/",
-                                self.total) if self.total != 0 else "0")
-            self.setFont(PercentItem.Font.Absolute)
+        if self.absolute:
+            self.setText(str(self.visit))
+            # self.setFont(PercentItem.Font.Absolute)
         else:
             self.setText("{}".format(round(self.visit * 100 / self.total) if self.total != 0 else 0))
-            self.setFont(PercentItem.Font.Percent)
+            #self.setFont(PercentItem.Font.Percent)

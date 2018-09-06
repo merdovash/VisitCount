@@ -536,7 +536,7 @@ class DataBase:
         """
         req = "UPDATE {0} SET {1} WHERE id={2}".format(
             table,
-            ', '.join(["{name}='{value}'".format(**{'name': key, 'value': data[key]}) for key in data]),
+            ', '.join("{name}='{value}'".format(**{'name': key, 'value': data[key]}) for key in data),
             row_id
         )
         print(table, req)
