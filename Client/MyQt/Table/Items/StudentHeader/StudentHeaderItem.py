@@ -67,6 +67,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
             self.program.window.message.emit("Студенту {} перезаписали номер карты".format(self.student_name), True)
         else:
             self.program.window.message.emit("Студенту {} записали номер карты".format(self.student_name), True)
+            self.setBackground(QColor(255, 255, 255))
 
         self.student = self.program.database().get_students(student_id=self.student["id"])[0]
 
