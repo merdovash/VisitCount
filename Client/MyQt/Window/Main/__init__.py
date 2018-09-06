@@ -293,8 +293,9 @@ class MainWindowWidget(QWidget):
         closest = closest_lesson(lessons, self.program['date_format'])
         self.lesson_selector.setCurrentMyId(closest['id'])
 
-    def show_message(self, text):
+    def show_message(self, text, is_red):
         self.info_label.setText(text)
+        self.info_label.setStyleSheet(f'color: {"red" if is_red else "black"}')
 
     @safe
     def _setup_data(self, *args):
@@ -468,7 +469,7 @@ class MainWindowWidget(QWidget):
         current_data = self.selector.get_current_data()
         students = self.program.database().get_students(card_id=card_id, group_id=current_data.group_id)
         if len(students) == 0:
-            self.program.window.message.emit("Студента нет в списках.")
+            self.program.window.message.emit("Студента нет в списках.", False)
         else:
             lesson_id = current_data.lesson_id
             student = students[0]
@@ -480,7 +481,7 @@ class MainWindowWidget(QWidget):
                 self.table.new_visit(student["id"], lesson_id)
             else:
                 self.program.window.message.emit("Студент не из группы {}".format(
-                    self.program.database().get_groups(group_id=self.group_selector.currentId())[0]["name"])
+                    self.program.database().get_groups(group_id=self.group_selector.currentId())[0]["name"], False)
                 )
 
     @pyqtSlot(int, name='end_lesson')

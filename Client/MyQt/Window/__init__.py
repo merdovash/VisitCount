@@ -9,7 +9,7 @@ from Client.test import safe
 
 class AbstractWindow(QMainWindow):
     error = pyqtSignal(str)
-    message = pyqtSignal(str)
+    message = pyqtSignal(str, bool)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,9 +40,9 @@ class AbstractWindow(QMainWindow):
         self.dialog = QErrorMessage(self)
         self.dialog.showMessage(msg)
 
-    @pyqtSlot(str)
-    def on_show_message(self, text):
-        self.centralWidget().show_message(text)
+    @pyqtSlot(str, bool)
+    def on_show_message(self, text, is_red):
+        self.centralWidget().show_message(text, is_red)
 
     def change_widget(self, widget):
         self.setCentralWidget(widget)

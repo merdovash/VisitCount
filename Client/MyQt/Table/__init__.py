@@ -20,7 +20,7 @@ from DataBase.Types import format_name
 
 
 class VisitTable(QWidget, Configurable):
-    show_visitation_msg = pyqtSignal(str)
+    show_visitation_msg = pyqtSignal(str, bool)
 
     class Header(int):
         MONTH = 0

@@ -14,11 +14,11 @@ class RegisterProfessorCard(QAction):
     def _run_register(self):
         reader: IReader = self.program.reader()
         if reader is not None:
-            self.program.window.message.emit('Приложите вашу карту для регистрации')
+            self.program.window.message.emit('Приложите вашу карту для регистрации', False)
             reader.on_read_once(self._register)
 
     def _register(self, card_id):
         professor_id = self.program['professor']['id']
         self.program.database().register_professor_card(professor_id=professor_id, card_id=card_id)
-        self.program.window.message.emit('Карта успешно зарегистрирована за вами')
+        self.program.window.message.emit('Карта успешно зарегистрирована за вами', False)
         self.setDisabled(True)

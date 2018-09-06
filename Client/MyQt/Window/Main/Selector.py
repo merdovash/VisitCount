@@ -193,7 +193,7 @@ class Selector(QWidget):
             self.start_button.setText("Завершить занятие")
             self.start_button.clicked.connect(self._end_lesson)
 
-            self.program.window.message.emit("Учет начался. Приложите карту студента к считывателю.")
+            self.program.window.message.emit("Учет начался. Приложите карту студента к считывателю.", True)
         else:
             self.program.window.error.emit("Для учета посещений необходимо подключение считывателя.")
 
@@ -216,7 +216,7 @@ class Selector(QWidget):
         self.start_button.clicked.connect(self._start_lesson)
 
         # if self.last_lesson is not None:
-        self.program.window.message.emit("Учет посещений завершен.")
+        self.program.window.message.emit("Учет посещений завершен.", False)
         self.lesson_finished.emit(self.lesson_selector.currentIndex())
 
     @pyqtSlot()

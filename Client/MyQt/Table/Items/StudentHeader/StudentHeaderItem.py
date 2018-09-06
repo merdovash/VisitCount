@@ -40,7 +40,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         else:
             menu.addAction("Отменить регистрацию карты", self.stop_card_register_process)
         menu.addAction("Показать номер карты", lambda: self.program.window.message.emit(
-            f'{self.student_name} - "{self.student["card_id"]}"'))
+            f'{self.student_name} - "{self.student["card_id"]}"', False))
         menu.exec_()
 
     @safe
@@ -48,7 +48,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         if self.program.reader() is not None:
             self.program.reader().on_read_once(self._register_student_card_onRead)
 
-            self.program.window.message.emit("Приложите карту {} для регистрации".format(self.student_name))
+            self.program.window.message.emit("Приложите карту {} для регистрации".format(self.student_name), True)
 
             self.register_process = True
 
@@ -64,13 +64,13 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
                                                professor_id=self.program['professor']['id'])
 
         if self.student["card_id"] is not None:
-            self.program.window.message.emit("Студенту {} перезаписали номер карты".format(self.student_name))
+            self.program.window.message.emit("Студенту {} перезаписали номер карты".format(self.student_name), True)
         else:
-            self.program.window.message.emit("Студенту {} записали номер карты".format(self.student_name))
+            self.program.window.message.emit("Студенту {} записали номер карты".format(self.student_name), True)
 
         self.student = self.program.database().get_students(student_id=self.student["id"])[0]
 
     def stop_card_register_process(self):
-        self.program.window.message.emit("Регистрация карты остановлена")
+        self.program.window.message.emit("Регистрация карты остановлена", False)
         self.register_process = False
         self.program.reader().remove_temporary_function()

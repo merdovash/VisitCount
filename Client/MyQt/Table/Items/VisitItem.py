@@ -97,13 +97,13 @@ class VisitItem(MyTableItem, AbstractContextItem):
                                                       self.student["middle_name"][0],
                                                       "" if self.status == VisitItem.Status.Visited else "не ",
                                                       self.lesson["date"])
-        self.program.window.message.emit(msg)
+        self.program.window.message.emit(msg, False)
         # RFIDReader.instance()._method = nothing
 
     @safe
     def _set_visited_by_professor(self):
         if self.program.reader() is not None:
-            self.program.window.message.emit("Приложите карточку преподавателя для подтверждения")
+            self.program.window.message.emit("Приложите карточку преподавателя для подтверждения", False)
             self.program.reader().on_read_once(self._set_visited_by_professor_onReadCard)
         else:
             self.program.window.emit("Подключите считыватель для подвтерждения внесения изменений.")
