@@ -94,7 +94,7 @@ class MainWindow(AbstractWindow):
 
         self._init_menu_file()
         self._init_menu_analysis()
-        self._init_menu_data()
+        self._init_menu_view()
         self._init_menu_lessons()
         self._init_menu_updates()
 
@@ -116,10 +116,10 @@ class MainWindow(AbstractWindow):
     def _init_menu_lessons(self):
         lessons = self.menu_bar.addMenu("Занятия")
 
-        lessons_current = QAction("Выбрать текущее", self)
+        lessons_current = QAction("Выбрать ближайщее занятие", self)
         lessons_current.triggered.connect(self.centralWidget().selector.select_current_lesson)
 
-        lessons_current_for_group = QAction("Выбрать текущее для группы", self)
+        lessons_current_for_group = QAction("Выбрать ближайщее занятие для выбранной группы", self)
         lessons_current_for_group.triggered.connect(self.centralWidget().selector.select_current_group_current_lesson)
 
         lessons.addAction(lessons_current)
@@ -144,8 +144,8 @@ class MainWindow(AbstractWindow):
         file.addAction(file_exit)
 
     @safe
-    def _init_menu_data(self):
-        data = self.menu_bar.addMenu("Данные")
+    def _init_menu_view(self):
+        data = self.menu_bar.addMenu("Вид")
 
         data_show_month_day = DataAction(
             ["Отображать день", "Не отображать день"],
