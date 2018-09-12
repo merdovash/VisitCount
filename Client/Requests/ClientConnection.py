@@ -9,6 +9,7 @@ from threading import Thread
 import requests
 from requests import post
 
+from Client.Domain import host
 from Client.Types import Status, Response
 from Client.test import safe
 from DataBase.Authentication import Authentication
@@ -27,7 +28,7 @@ class ServerConnection(Thread):
         super().__init__(target=self._run)
         self.database: ClientDataBase = database
         self.auth = auth
-        self.url = url
+        self.url = host() + url
 
     @cached
     def get_user(self, professor_id):

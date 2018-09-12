@@ -1,7 +1,5 @@
 from Client.IProgram import IProgram
 from Client.Requests.ClientConnection import ServerConnection
-from DataBase.Authentication import Authentication
-from DataBase.ClentDataBase import ClientDataBase
 from DataBase.sql_handler import DataBase
 from Modules.FirstLoad import address
 
@@ -11,9 +9,8 @@ class FirstLoad(ServerConnection):
         ByLogin = 0
         ByCard = 1
 
-    def __init__(self, program: IProgram, database: ClientDataBase, auth: Authentication,
-                 login=None, card_id=None, password=None, on_finish: callable = lambda *args: None):
-        super().__init__(database=database, auth=auth, url=program['host'] + address)
+    def __init__(self, login=None, card_id=None, password=None, on_finish: callable = lambda *args: None):
+        super().__init__(url=address)
 
         self.program: IProgram = program
 

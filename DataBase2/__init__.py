@@ -4,11 +4,12 @@ import sqlalchemy
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy import create_engine, Table
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, backref
 
+from DataBase.config2 import DataBaseConfig
 from DataBase2.Exception import VisitationAlreadyExist
 
-engine = create_engine('sqlite:///db.db', echo=False)
+engine = create_engine('sqlite:///{}'.format(DataBaseConfig().db['database']), echo=False)
 
 Base = declarative_base()
 
@@ -19,6 +20,10 @@ students_groups = Table('students_groups', Base.metadata,
 professors_updates = Table('professors_updates', Base.metadata,
                            Column('professor_id', Integer, ForeignKey('professors.id')),
                            Column('update_id', Integer, ForeignKey('updates.id')))
+
+lessons_groups = Table('lessons_groups', Base.metadata,
+                       Column('lesson_id', Integer, ForeignKey('lessons.id')),
+                       Column('group_id', Integer, ForeignKey('groups.id')))
 
 
 class Auth(Base):
@@ -71,10 +76,9 @@ class Lesson(Base):
     id = Column(Integer, unique=True, autoincrement=True)
 
     professor_id = Column(Integer, ForeignKey('professors.id'), primary_key=True)
-    professor = relationship("Professor")
+    # professor = relationship("Professor")
 
-    group_id = Column(Integer, ForeignKey('groups.id'), primary_key=True)
-    group = relationship("Group", lazy='joined')
+    groups = relationship("Group", secondary=lessons_groups)
 
     discipline_id = Column(Integer, ForeignKey('disciplines.id'), primary_key=True)
     discipline = relationship("Discipline", lazy='joined')
@@ -147,7 +151,12 @@ class Group(Base):
     name = Column(String, primary_key=True)
 
     students = relationship("Student", secondary=students_groups, lazy='select')
-    lessons = relationship("Lesson", lazy='select')
+    lessons = relationship("Lesson", secondary=lessons_groups, lazy='select')
+
+    @staticmethod
+    def load(professor, discipline):
+        return session.query(Group).join(Lesson).filter(Lesson.professor == professor).filter(
+            Lesson.discipline == discipline).all()
 
     def __repr__(self):
         return f"<Group(id={self.id}, name={self.name})>"
@@ -162,7 +171,7 @@ class Professor(Base):
     middle_name = Column(String, primary_key=True)
     _card_id = Column('card_id', String, unique=True)
 
-    lessons: List[Lesson] = relationship("Lesson", back_populates="professor")
+    lessons: List[Lesson] = relationship("Lesson", backref=backref("professor", order_by="Lesson._date"))
 
     # disciplines
     _disciplines = None
@@ -287,23 +296,35 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 if __name__ == '__main__':
-    updates = session.query(Professor).filter(Professor.id == 1).first().updates
-    print(updates)
-    try:
-        student = session.query(Student).first()
-        lesson = session.query(Lesson).filter(Lesson.id == 8).first()
-        print(session.query(Visitation).
-              filter(Visitation.student_id == student.id).
-              filter(Visitation.lesson_id == lesson.id).first())
+    auth = session.query(Auth).filter(Auth.login == 'VAE').filter(Auth.password == '123456').first()
 
-        Visitation.new(student, lesson)
-        lesson = session.query(Lesson).filter(Lesson.id == 8).first()
-        print(session.query(Visitation).
-              filter(Visitation.student_id == student.id).
-              filter(Visitation.lesson_id == lesson.id).first())
+    professor = auth.user
 
-        print(lesson)
-    except VisitationAlreadyExist:
-        print('visit exist')
-    updates = session.query(Professor).filter(Professor.id == 1).first().updates
-    print(updates)
+    disciplines = professor.disciplines
+
+    # for discipline in disciplines:
+    #     print(discipline)
+    #
+    #     for group in set(map(lambda y: y.group, list(filter(lambda x: x.discipline == discipline, professor.lessons)))):
+    #         print('\t', group)
+    #
+    #         for lesson in list(filter(lambda x: x.discipline == discipline and x.group == group, professor.lessons)):
+    #             print('\t\t', lesson)
+
+    for discipline in disciplines:
+        print(discipline)
+
+        lessons = set(filter(lambda x: x.type == 0, professor.lessons))
+        lessons_s = {l.date: frozenset(map(
+            lambda x: x.group,
+            set(filter(
+                lambda x: x.date == l.date and x.room_id == l.room_id,
+                lessons))))
+            for l in lessons}
+        print(lessons_s)
+        groups_l = set(map(lambda x: lessons_s[x], lessons_s.keys()))
+        for group in groups_l:
+            print('\t', group)
+
+            for lesson in set(filter(lambda x: lessons_s[x] == group, lessons_s.keys())):
+                print('\t\t', lessons)

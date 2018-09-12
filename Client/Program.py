@@ -9,8 +9,7 @@ from Client.MyQt.Window import AbstractWindow
 from Client.Reader import IReader
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
 from Client.test import safe
-from DataBase.Authentication import Authentication
-from DataBase.ClentDataBase import ClientDataBase
+from DataBase2 import Auth
 
 
 class MyProgram(IProgram):
@@ -25,7 +24,6 @@ class MyProgram(IProgram):
                        'host': 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
 
-        self._database: ClientDataBase = None
         self._reader: IReader = None
 
         self.auth = None
@@ -39,11 +37,6 @@ class MyProgram(IProgram):
         self.win_config: WindowConfig = win_config
 
         self.window.show()
-
-    def database(self):
-        if self._database is None:
-            self._database = ClientDataBase()
-        return self._database
 
     @safe
     def set_window(self, widget: AbstractWindow):
@@ -70,7 +63,7 @@ class MyProgram(IProgram):
         return self._reader
 
     @safe
-    def auth_success(self, auth: Authentication):
+    def auth_success(self, auth: Auth):
         """
         Switch to MainWindow
         :param auth: you have to pass Authentication to switch to MainWindow
@@ -78,9 +71,8 @@ class MyProgram(IProgram):
         from Client.MyQt.Window.Main import MainWindow
         print('loading MainWindow')
         self.auth = auth
-        self._state['professor_id'] = auth.user_id
-        self.win_config.set_professor_id(auth.user_id)
-        self.set_window(MainWindow(program=self))
+        self.win_config.set_professor_id(auth.user.id)
+        self.set_window(MainWindow(program=self, professor=auth.user))
 
     @safe
     def change_user(self, *args):

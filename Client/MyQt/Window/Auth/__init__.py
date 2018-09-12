@@ -3,13 +3,17 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
     QErrorMessage
 
+from Client.Domain import Authentication, NoSuchUserException
+from Client.Domain.ServerRequest.FirstLoad import FirstLoad
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.QtMyLoginInput import QLoginInput
 from Client.test import safe
-from DataBase.Authentication import Authentication
-from DataBase.ClentDataBase import ClientDataBase
-from Modules.FirstLoad.ClientSide import FirstLoad
+
+
+# from DataBase.Authentication import Authentication
+# from DataBase.ClentDataBase import ClientDataBase
+# from Modules.FirstLoad.ClientSide import FirstLoad
 
 
 class AuthWindow(AbstractWindow):
@@ -25,7 +29,6 @@ class AuthWidget(QWidget):
     def __init__(self, program: IProgram, *args, **kwargs):
         super(AuthWidget, self).__init__(*args, **kwargs)
         self.program: IProgram = program
-        self.db: ClientDataBase = program.database()
 
         self.setup_geometry()
         self.setupUI()
@@ -42,8 +45,7 @@ class AuthWidget(QWidget):
     # slots
     @pyqtSlot()
     def on_auth_success(self):
-        auth = Authentication(self.db, login=self.login_input.login(),
-                              password=self.password_input.text(), card_id=self.login_input.card_id())
+        auth = Authentication(login=self.login_input.login(), password=self.password_input.text())
 
         self.program.auth_success(auth)
 
@@ -107,27 +109,19 @@ class AuthWidget(QWidget):
             self.program.reader().on_read(imaged_value)
 
     @safe
-    def _first_load(self, auth: Authentication):
-        FirstLoad(database=self.db,
-                  auth=auth,
-                  card_id=self.login_input.card_id(),
-                  login=self.login_input.login(),
+    def _first_load(self):
+        FirstLoad(login=self.login_input.login(),
                   password=self.password_input.text(),
-                  program=self.program,
-                  on_finish=self.auth_success.emit).start()
+                  on_finish=self.auth_success.emit)
 
     @safe
     def auth(self, *args):
-        auth = Authentication(self.db, login=self.login_input.login(),
-                              password=self.password_input.text(), card_id=self.login_input.card_id())
-        if auth.status:
-            # self.auth_success.emit()
-            self.auth_success.emit()
-            # from Client.MyQt.Window.QtMyMainWindow import MainWindow
-            # self.program.set_new_window(MainWindow(auth, self.program, self.program.win_config))
+        try:
+            a = Authentication(login=self.login_input.login(), password=self.password_input.text())
 
-        else:
-            self._first_load(auth)
+            self.auth_success.emit()
+        except NoSuchUserException:
+            self._first_load(login=self.login_input.login(), password=self.password_input.text())
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         print("keypressEvent", a0.key(), QtCore.Qt.Key_Enter)

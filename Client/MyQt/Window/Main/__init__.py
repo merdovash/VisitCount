@@ -5,6 +5,7 @@ TODO:
     * fix error on relogin after changing user
 """
 import datetime
+from typing import List
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QFont
@@ -24,6 +25,8 @@ from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.Types import valid_card
 from Client.test import safe
+from DataBase.Types import format_name
+from DataBase2 import Professor, Lesson
 from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -41,18 +44,19 @@ def getLessonIndex(lessons: list, lesson_id: int) -> int:
             return i
 
 
-def closest_lesson(lessons: list, date_format="%d-%m-%Y %I:%M%p"):
+def closest_lesson(lessons: List[Lesson]):
     """
 
     :param date_format:
     :param lessons: list of lessons
     :return: closest lesson in list to current datetime
     """
+
     if len(lessons) == 0:
         return None
     closest = min(
         lessons,
-        key=lambda x: abs(datetime.datetime.now() - datetime.datetime.strptime(x["date"], date_format)))
+        key=lambda x: abs(datetime.datetime.now() - x.date))
     return closest
 
 
@@ -62,17 +66,16 @@ class MainWindow(AbstractWindow):
     """
 
     @safe
-    def __init__(self, program: IProgram):
+    def __init__(self, program: IProgram, professor: Professor):
         super().__init__()
         self.program: IProgram = program
-        self.db = program.database
 
-        professor_id = program.auth.get_user_info()['id']
-        if str(professor_id) not in program.win_config:
-            program.win_config.new_user(professor_id)
-            program.win_config.set_professor_id(professor_id)
+        self.professor = professor
+        if str(professor.id) not in program.win_config:
+            program.win_config.new_user(professor.id)
+            program.win_config.set_professor_id(professor.id)
 
-        self.c_w = MainWindowWidget(program=program)
+        self.c_w = MainWindowWidget(program=program, professor=professor)
         self.setCentralWidget(self.c_w)
 
         self.__init_menu__()
@@ -208,15 +211,14 @@ class MainWindowWidget(QWidget):
     ready_draw_table = pyqtSignal()
 
     @safe
-    def __init__(self, program: IProgram):
+    def __init__(self, program: IProgram, professor):
         super().__init__()
 
         self.program: IProgram = program
+        self.professor = professor
         self.table = None
 
         self.last_lesson = None
-
-        self.program['professor'] = program.auth.get_user_info()
 
         self._setup_select_lesson()
         self._setup_geometry()
@@ -244,9 +246,8 @@ class MainWindowWidget(QWidget):
         # INFO BLOCK
         info_layout = QHBoxLayout()
 
-        professor = self.program.auth.get_user_info()
         professor_label = QLabel(
-            professor["last_name"] + " " + professor["first_name"] + " " + professor["middle_name"]
+            format_name(self.professor)
         )
         professor_label.setFont(QFont("", 20))
 
@@ -279,7 +280,7 @@ class MainWindowWidget(QWidget):
         """
         Select a lesson close to the current time.
         """
-        lessons = self.program.database().get_lessons(professor_id=self.program['professor']["id"])
+        lessons = self.professor.lessons
         closest = closest_lesson(lessons, self.program['date_format'])
         # self.lesson_selector.setCurrentId(getLessonIndex(self.lesson_selector.items, closest))
         self.program['lesson'] = closest

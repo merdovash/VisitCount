@@ -4,19 +4,23 @@ This module contains all Structures, Classes and Functions needed in DataBase.
 from collections import namedtuple
 from typing import Dict
 
+from DataBase2 import Professor, Student
 
-def format_name(user: Dict[str, str]):
+
+def format_name(user: Dict[str, str] or Professor or Student):
     """
     Do format user data to readable string
     :param user: dictionary that contains keys: [last_name, first_name, middle_name]
     :return: string like 'Mark A.F.'
     """
-
-    middle_name_len = len(user['middle_name'])
-    if middle_name_len > 0:
-        result = f'{user["last_name"]} {user["first_name"][0]}.{user["middle_name"][0]}.'
+    if isinstance(user, dict):
+        middle_name_len = len(user['middle_name'])
+        if middle_name_len > 0:
+            result = f'{user["last_name"]} {user["first_name"][0]}.{user["middle_name"][0]}.'
+        else:
+            result = f'{user["last_name"]} {user["first_name"][0]}.'
     else:
-        result = f'{user["last_name"]} {user["first_name"][0]}.'
+        result = f'{user.last_name} {user.first_name} {user.middle_name}'
 
     return result
 
