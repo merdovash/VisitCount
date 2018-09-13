@@ -5,36 +5,26 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel
 
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
-from Client.MyQt.Window.Auth.QtMyLoginInput import QLoginInput
+from Client.MyQt.Window.Auth.QtMyLoginInput import LoginInput
+from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
 from Client.test import safe
 from DataBase.Authentication import Authentication
 from DataBase.ClentDataBase import ClientDataBase
 from Modules.FirstLoad.ClientSide import FirstLoad
 
 
-class AuthWindow(AbstractWindow):
+class AuthWindow(AbstractWindow, Ui_AuthWindow):
 
     def __init__(self, program, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
-        self.resize(300, 200)
-        self.setCentralWidget(AuthWidget(program))
-        self.dialog = None
+        self.setupUi(self)
+        self.retranslateUi(self)
 
-
-class AuthWidget(QWidget):
-    def __init__(self, program: IProgram, *args, **kwargs):
-        super(AuthWidget, self).__init__(*args, **kwargs)
         self.program: IProgram = program
-        self.db: ClientDataBase = program.database()
 
-        self.setup_geometry()
-        self.setupUI()
-        self.setup_serial()
-
-        self.dialog = None
-
+        self.auth_btn.clicked.connect(self.auth)
         self.auth_success.connect(self.on_auth_success)
-        pass
+        self.dialog = None
 
     # signals
     auth_success = pyqtSignal()
@@ -42,7 +32,7 @@ class AuthWidget(QWidget):
     # slots
     @pyqtSlot()
     def on_auth_success(self):
-        auth = Authentication(self.db, login=self.login_input.login(),
+        auth = Authentication(self.program.database(), login=self.login_input.login(),
                               password=self.password_input.text(), card_id=self.login_input.card_id())
 
         self.program.auth_success(auth)
@@ -54,44 +44,6 @@ class AuthWidget(QWidget):
     def showError(self, msg):
         self.dialog = QErrorMessage()
         self.dialog.showMessage(msg)
-
-    def setupUI(self):
-        self.inner_layout = QVBoxLayout()
-
-        # login input field
-        self.login_input = QLoginInput()
-        self.login_input.setPlaceholderText("Или приложите карточку к считывателю")
-
-        # password input field
-        self.password_input = QLineEdit()
-        self.password_input.setEchoMode(QLineEdit.Password)
-
-        form_layout = QFormLayout()
-
-        # header
-        header = QLabel("Вход в систему")
-        header.setAlignment(Qt.AlignCenter)
-
-        self.auth_btn = QPushButton()
-        self.auth_btn.setText("Аутентификация")
-        self.auth_btn.setStyleSheet(self.db.config.main_button_css)
-        self.auth_btn.clicked.connect(self.auth)
-
-        # add to layouts
-        self.inner_layout.addWidget(header, Qt.AlignCenter)
-        self.inner_layout.addLayout(form_layout)
-        form_layout.addRow(QLabel("Введите Логин"), self.login_input)
-        form_layout.addRow(QLabel("Введите Пароль"), self.password_input)
-        self.inner_layout.addWidget(self.auth_btn, 2, Qt.AlignBottom)
-
-        self.loading_info = QLabel()
-        self.inner_layout.addWidget(self.loading_info, 4, Qt.AlignBottom)
-
-        self.setLayout(self.inner_layout)
-
-    def setup_geometry(self):
-        self.resize(350, 200)
-        self.setWindowTitle("Аутентификация")
 
     def setup_serial(self):
         def imaged_value(prof_card_id):
@@ -108,7 +60,7 @@ class AuthWidget(QWidget):
 
     @safe
     def _first_load(self, auth: Authentication):
-        FirstLoad(database=self.db,
+        FirstLoad(database=self.program.database(),
                   auth=auth,
                   card_id=self.login_input.card_id(),
                   login=self.login_input.login(),
@@ -118,7 +70,7 @@ class AuthWidget(QWidget):
 
     @safe
     def auth(self, *args):
-        auth = Authentication(self.db, login=self.login_input.login(),
+        auth = Authentication(self.program.database(), login=self.login_input.login(),
                               password=self.password_input.text(), card_id=self.login_input.card_id())
         if auth.status:
             # self.auth_success.emit()
