@@ -1,7 +1,10 @@
+"""
+safsdf
+"""
 from typing import List
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, func
 from sqlalchemy import create_engine, Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
@@ -27,6 +30,9 @@ lessons_groups = Table('lessons_groups', Base.metadata,
 
 
 class Auth(Base):
+    """
+    Authentication table
+    """
     __tablename__ = 'auth5'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -39,6 +45,10 @@ class Auth(Base):
 
     @property
     def user(self):
+        """
+
+        :return: Professor or Student
+        """
         if self._user is None:
             if self.user_type == 0:
                 self._user = session.query(Student).filter(Student.id == self.user_id).first()
@@ -51,6 +61,9 @@ class Auth(Base):
 
 
 class Discipline(Base):
+    """
+    Discipline
+    """
     __tablename__ = 'disciplines'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -62,6 +75,10 @@ class Discipline(Base):
 
     @property
     def group(self):
+        """
+
+        :return: group of discipline
+        """
         if self._groups is None:
             self._groups = set(map(lambda x: x.group, self.lessons))
         return self._groups
@@ -70,7 +87,51 @@ class Discipline(Base):
         return f"<Discipline(id={self.id}, name={self.name})>"
 
 
+class NotificationParam(Base):
+    """
+    Notification
+    """
+    __tablename__ = 'notifications'
+
+    id = Column(Integer, primary_key=True)
+    professor_id = Column(Integer, ForeignKey('professors.id'))
+    admin_id = Column(Integer, ForeignKey('administrations.id'))
+    _active = Column('active', Boolean)
+
+    professors = relationship('Professor')
+
+    @property
+    def active(self):
+        """
+
+        :return: active status
+        """
+        return self._active
+
+    @active.setter
+    def active(self, val: bool):
+        self._active = val
+        Update.new(self, Update.ActionType.UPDATE)
+        session.commit()
+
+
+class Administration(Base):
+    """
+    Administration user
+    """
+    __tablename__ = 'administrations'
+
+    id = Column(Integer, unique=True, autiincrement=True)
+    first_name = Column(String, primary_key=True)
+    last_name = Column(String, primary_key=True)
+    middle_name = Column(String, primary_key=True)
+    email = Column(String)
+
+
 class Lesson(Base):
+    """
+    Lesson
+    """
     __tablename__ = 'lessons'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -90,8 +151,14 @@ class Lesson(Base):
 
     visitations = relationship('Visitation')
 
+    professors = relationship('Professor')
+
     @property
     def completed(self):
+        """
+
+        :return: completed status of lesson
+        """
         return self._completed
 
     @completed.setter
@@ -102,6 +169,10 @@ class Lesson(Base):
 
     @property
     def date(self):
+        """
+
+        :return: date of lesson
+        """
         return self._date
 
     @date.setter
@@ -117,6 +188,9 @@ class Lesson(Base):
 
 
 class Student(Base):
+    """
+    Student
+    """
     __tablename__ = 'students'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -125,8 +199,27 @@ class Student(Base):
     middle_name = Column(String, primary_key=True)
     _card_id = Column('card_id', String, unique=True)
 
+    _professors = None
+
+    def professors(self):
+        """
+
+        :return: professors of student
+        """
+        if self._professors is None:
+            self._professors = session.query(Professor) \
+                .join(Lesson) \
+                .join(Group) \
+                .filter(Group.id.in_(list(map(lambda x: x.id, self.groups)))) \
+                .all()
+        return self._professors
+
     @property
     def card_id(self):
+        """
+
+        :return: card ID of student
+        """
         return self._card_id
 
     @card_id.setter
@@ -145,6 +238,9 @@ class Student(Base):
 
 
 class Group(Base):
+    """
+    Group
+    """
     __tablename__ = 'groups'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -153,16 +249,14 @@ class Group(Base):
     students = relationship("Student", secondary=students_groups, lazy='select')
     lessons = relationship("Lesson", secondary=lessons_groups, lazy='select')
 
-    @staticmethod
-    def load(professor, discipline):
-        return session.query(Group).join(Lesson).filter(Lesson.professor == professor).filter(
-            Lesson.discipline == discipline).all()
-
     def __repr__(self):
         return f"<Group(id={self.id}, name={self.name})>"
 
 
 class Professor(Base):
+    """
+    Professor
+    """
     __tablename__ = 'professors'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -173,11 +267,24 @@ class Professor(Base):
 
     lessons: List[Lesson] = relationship("Lesson", backref=backref("professor", order_by="Lesson._date"))
 
+    admins = relationship()
+
+    def professors(self):
+        """
+        Need to update function
+        :return: self
+        """
+        return [self]
+
     # disciplines
     _disciplines = None
 
     @property
     def disciplines(self):
+        """
+
+        :return: list of disciplines
+        """
         if self._disciplines is None:
             self._disciplines = list(set(map(lambda x: x.discipline, self.lessons)))
         return self._disciplines
@@ -187,12 +294,20 @@ class Professor(Base):
 
     @property
     def groups(self):
+        """
+
+        :return: list of groups
+        """
         if self._groups is None:
             self._groups = list(set(map(lambda x: x.group, self.lessons)))
         return self._groups
 
     @property
     def card_id(self):
+        """
+        Need to update card ID
+        :return: card ID of student
+        """
         return self._card_id
 
     @card_id.setter
@@ -209,7 +324,15 @@ class Professor(Base):
 
 
 class Update(Base):
+    """
+    Update
+    """
+
     class ActionType(int):
+        """
+        Update type
+        """
+        NEW = 2
         UPDATE = 0
         DELETE = 1
 
@@ -227,7 +350,17 @@ class Update(Base):
 
     @staticmethod
     def new(updated_object, action_type=ActionType.UPDATE):
+        """
+        Creates new update and connects to professors
+        :param updated_object:
+        :param action_type:
+        :return:
+        """
         def index():
+            """
+
+            :return: ID of new row
+            """
             max_index = session.query(func.max(Update.id)).first()[0]
             return max_index + 1 if max_index else 0
 
@@ -236,12 +369,16 @@ class Update(Base):
                         row_id=updated_object.id,
                         action_type=action_type)
 
+        update.professors.extends(updated_object.professors())
         session.add(update)
 
         return update
 
 
 class Visitation(Base):
+    """
+    Visitation
+    """
     __tablename__ = 'visitations'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -251,20 +388,40 @@ class Visitation(Base):
     lesson = relationship("Lesson", lazy='joined')
     student = relationship("Student", lazy='select')
 
-    def _create_update(self, action_type=Update.ActionType.UPDATE):
-        update = Update.new(self, action_type)
+    _professor = None
 
-        professors = session.query(Professor). \
+    def professors(self):
+        """
+
+        :return: all professors of this visitation
+        """
+        if self._professor is None:
+            self._professor = session.query(Professor) \
+                .join(Lesson) \
+                .join(Visitation) \
+                .filter(Visitation.id == self.id) \
+                .all()
+        return self._professor
+
+    def _find_my_professors(self):
+        return session.query(Professor). \
             join(Lesson). \
             join(Visitation). \
             filter(Visitation.id == self.id).all()
 
-        update.professors.extend(professors)
-        pass
-
     @staticmethod
     def new(student: Student, lesson: Lesson):
+        """
+        Creates new visitation and update.
+        :param student:
+        :param lesson:
+        :return:
+        """
         def calculate_id():
+            """
+
+            :return: ID of visitation in special format
+            """
             import time
             value = (lesson.id * pow(10, 6) + student.id) * pow(10, 8) + int(time.time() % (3.154 * pow(10, 7)))
             return value
@@ -276,7 +433,7 @@ class Visitation(Base):
         try:
             session.add(visit)
 
-            visit._create_update()
+            Update.new(visit, Update.ActionType.NEW)
 
             session.commit()
         except sqlalchemy.orm.exc.FlushError:
@@ -284,6 +441,9 @@ class Visitation(Base):
             raise VisitationAlreadyExist()
 
     def delete(self):
+        """
+        deletes this visitation
+        """
         self._create_update(Update.ActionType.DELETE)
         session.delete(self)
         session.commit()
