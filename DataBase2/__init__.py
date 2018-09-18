@@ -56,6 +56,10 @@ class Auth(Base):
                 self._user = session.query(Professor).filter(Professor.id == self.user_id).first()
         return self._user
 
+    @staticmethod
+    def log_in(login, password):
+        return session.query(Auth).filter(Auth.login == login).filter(Auth.password == password).first()
+
     def __repr__(self):
         return f"<Auth(id={self.id}, user_type={self.user_type}, user_id={self.user_id})>"
 
@@ -85,47 +89,6 @@ class Discipline(Base):
 
     def __repr__(self):
         return f"<Discipline(id={self.id}, name={self.name})>"
-
-
-class NotificationParam(Base):
-    """
-    Notification
-    """
-    __tablename__ = 'notifications'
-
-    id = Column(Integer, primary_key=True)
-    professor_id = Column(Integer, ForeignKey('professors.id'))
-    admin_id = Column(Integer, ForeignKey('administrations.id'))
-    _active = Column('active', Boolean)
-
-    professors = relationship('Professor')
-
-    @property
-    def active(self):
-        """
-
-        :return: active status
-        """
-        return self._active
-
-    @active.setter
-    def active(self, val: bool):
-        self._active = val
-        Update.new(self, Update.ActionType.UPDATE)
-        session.commit()
-
-
-class Administration(Base):
-    """
-    Administration user
-    """
-    __tablename__ = 'administrations'
-
-    id = Column(Integer, unique=True, autiincrement=True)
-    first_name = Column(String, primary_key=True)
-    last_name = Column(String, primary_key=True)
-    middle_name = Column(String, primary_key=True)
-    email = Column(String)
 
 
 class Lesson(Base):
@@ -181,10 +144,170 @@ class Lesson(Base):
         Update.new(self)
         session.commit()
 
+    @staticmethod
+    def filter(professor: 'Professor', discipline: Discipline, group: 'Group'):
+        """
+
+        :param professor:
+        :param discipline:
+        :param group:
+        :return: lessons of current discipline
+        """
+        return sorted(list(filter(lambda x: (set(group) == set(x.groups) or (len(group) == 1 and group[0] in x.groups))
+                                            and x.discipline == discipline, professor.lessons)), key=lambda x: x.date)
+
     def __repr__(self):
         return f"<Lesson(id={self.id}, professor_id={self.professor_id}," \
-               f" group_id={self.group_id}, discipline_id={self.discipline_id}, " \
+               f" discipline_id={self.discipline_id}, " \
                f"date={self.date}, type={self.type}, completed={self.completed})>"
+
+
+class Administration(Base):
+    """
+    Administration user
+    """
+
+    def __init__(self, last_name, first_name, middle_name, email):
+        super().__init__(last_name=last_name,
+                         first_name=first_name,
+                         middle_name=middle_name,
+                         email=email)
+        Update.new(self, Update.ActionType.NEW)
+
+    __tablename__ = 'administrations'
+
+    id = Column(Integer, unique=True, autoincrement=True)
+    first_name = Column(String, primary_key=True)
+    last_name = Column(String, primary_key=True)
+    middle_name = Column(String, primary_key=True)
+    email = Column(String)
+
+    _professors = None
+
+    def professors(self):
+        """
+
+        :return: all professors contacts of administration
+        """
+        if self._professors is None:
+            self._professors = session \
+                .query(Professor) \
+                .join(NotificationParam) \
+                .filter(NotificationParam.admin_id == self.id) \
+                .all()
+        return self._professors
+
+
+class Professor(Base):
+    """
+    Professor
+    """
+    __tablename__ = 'professors'
+
+    id = Column(Integer, unique=True, autoincrement=True)
+    first_name = Column(String, primary_key=True)
+    last_name = Column(String, primary_key=True)
+    middle_name = Column(String, primary_key=True)
+    _card_id = Column('card_id', String, unique=True)
+
+    lessons: List[Lesson] = relationship("Lesson", backref=backref("professor", order_by="Lesson._date"))
+
+    admins = relationship('NotificationParam')
+
+    def professors(self):
+        """
+        Need to update function
+        :return: self
+        """
+        return [self]
+
+    # disciplines
+    _disciplines = None
+
+    @property
+    def disciplines(self):
+        """
+
+        :return: list of disciplines
+        """
+        if self._disciplines is None:
+            self._disciplines = list(set(map(lambda x: x.discipline, self.lessons)))
+        return self._disciplines
+
+    # groups
+    _groups = None
+
+    @property
+    def groups(self):
+        """
+
+        :return: list of groups
+        """
+        if self._groups is None:
+            self._groups = list(map(lambda y: list(y), list(set(map(lambda x: frozenset(x.groups), self.lessons)))))
+        return self._groups
+
+    @property
+    def card_id(self):
+        """
+        Need to update card ID
+        :return: card ID of student
+        """
+        return self._card_id
+
+    @card_id.setter
+    def card_id(self, value):
+        self._card_id = value
+        Update.new(self)
+        session.commit()
+
+    updates = relationship('Update', secondary=professors_updates)
+
+    def __repr__(self):
+        return f"<Professor(id={self.id}, card_id={self.card_id}, last_name={self.last_name}, " \
+               f"first_name={self.first_name}, middle_name={self.middle_name})>"
+
+
+class NotificationParam(Base):
+    """
+    Notification
+    """
+
+    @staticmethod
+    def new(professor: Professor, admin: Administration):
+        """
+        creates new contact from professor and admin
+        add new update
+        :param professor:
+        :param admin:
+        :return:
+        """
+        np = NotificationParam(professor.id, admin.id)
+        Update.new(np, Update.ActionType.NEW)
+        return np
+
+    __tablename__ = 'notifications'
+
+    id = Column(Integer, primary_key=True)
+    professor_id = Column(Integer, ForeignKey('professors.id'))
+    admin_id = Column(Integer, ForeignKey('administrations.id'))
+    _active = Column('active', Boolean)
+
+    professors = relationship('Professor')
+
+    @property
+    def active(self):
+        """
+
+        :return: active status
+        """
+        return self._active
+
+    @active.setter
+    def active(self, val: bool):
+        self._active = val
+        Update.new(self, Update.ActionType.UPDATE)
+        session.commit()
 
 
 class Student(Base):
@@ -253,76 +376,6 @@ class Group(Base):
         return f"<Group(id={self.id}, name={self.name})>"
 
 
-class Professor(Base):
-    """
-    Professor
-    """
-    __tablename__ = 'professors'
-
-    id = Column(Integer, unique=True, autoincrement=True)
-    first_name = Column(String, primary_key=True)
-    last_name = Column(String, primary_key=True)
-    middle_name = Column(String, primary_key=True)
-    _card_id = Column('card_id', String, unique=True)
-
-    lessons: List[Lesson] = relationship("Lesson", backref=backref("professor", order_by="Lesson._date"))
-
-    admins = relationship()
-
-    def professors(self):
-        """
-        Need to update function
-        :return: self
-        """
-        return [self]
-
-    # disciplines
-    _disciplines = None
-
-    @property
-    def disciplines(self):
-        """
-
-        :return: list of disciplines
-        """
-        if self._disciplines is None:
-            self._disciplines = list(set(map(lambda x: x.discipline, self.lessons)))
-        return self._disciplines
-
-    # groups
-    _groups = None
-
-    @property
-    def groups(self):
-        """
-
-        :return: list of groups
-        """
-        if self._groups is None:
-            self._groups = list(set(map(lambda x: x.group, self.lessons)))
-        return self._groups
-
-    @property
-    def card_id(self):
-        """
-        Need to update card ID
-        :return: card ID of student
-        """
-        return self._card_id
-
-    @card_id.setter
-    def card_id(self, value):
-        self._card_id = value
-        Update.new(self)
-        session.commit()
-
-    updates = relationship('Update', secondary=professors_updates)
-
-    def __repr__(self):
-        return f"<Professor(id={self.id}, card_id={self.card_id}, last_name={self.last_name}, " \
-               f"first_name={self.first_name}, middle_name={self.middle_name})>"
-
-
 class Update(Base):
     """
     Update
@@ -356,6 +409,7 @@ class Update(Base):
         :param action_type:
         :return:
         """
+
         def index():
             """
 
@@ -403,12 +457,6 @@ class Visitation(Base):
                 .all()
         return self._professor
 
-    def _find_my_professors(self):
-        return session.query(Professor). \
-            join(Lesson). \
-            join(Visitation). \
-            filter(Visitation.id == self.id).all()
-
     @staticmethod
     def new(student: Student, lesson: Lesson):
         """
@@ -417,6 +465,7 @@ class Visitation(Base):
         :param lesson:
         :return:
         """
+
         def calculate_id():
             """
 
@@ -462,6 +511,15 @@ if __name__ == '__main__':
 
     disciplines = professor.disciplines
 
+    for discipline in disciplines:
+        print(discipline)
+
+        for group in professor.groups:
+            print('\t', group)
+
+            for lesson in Lesson.filter(professor, discipline, group):
+                print('\t\t', lesson, lesson.groups)
+
     # for discipline in disciplines:
     #     print(discipline)
     #
@@ -471,20 +529,21 @@ if __name__ == '__main__':
     #         for lesson in list(filter(lambda x: x.discipline == discipline and x.group == group, professor.lessons)):
     #             print('\t\t', lesson)
 
-    for discipline in disciplines:
-        print(discipline)
-
-        lessons = set(filter(lambda x: x.type == 0, professor.lessons))
-        lessons_s = {l.date: frozenset(map(
-            lambda x: x.group,
-            set(filter(
-                lambda x: x.date == l.date and x.room_id == l.room_id,
-                lessons))))
-            for l in lessons}
-        print(lessons_s)
-        groups_l = set(map(lambda x: lessons_s[x], lessons_s.keys()))
-        for group in groups_l:
-            print('\t', group)
-
-            for lesson in set(filter(lambda x: lessons_s[x] == group, lessons_s.keys())):
-                print('\t\t', lessons)
+    # for discipline in disciplines:
+    #    print(discipline)
+    #
+    #    lessons = set(filter(lambda x: x.type == 0, professor.lessons))
+    #    lessons_s = {l.date: frozenset(map(
+    #        lambda x: x.group,
+    #        set(filter(
+    #            lambda x: x.date == l.date and x.room_id == l.room_id,
+    #            lessons))))
+    #        for l in lessons}
+    #    print(lessons_s)
+    #    groups_l = set(map(lambda x: lessons_s[x], lessons_s.keys()))
+    #    for group in groups_l:
+    #        print('\t', group)
+    #
+    #        for lesson in set(filter(lambda x: lessons_s[x] == group, lessons_s.keys())):
+    #            print('\t\t', lessons)
+    #

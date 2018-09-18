@@ -16,24 +16,25 @@
     <session id="-1692725436">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="7" />
+          <entry key="project.closed" value="9" />
           <entry key="project.open.time.10" value="1" />
           <entry key="project.open.time.2" value="1" />
+          <entry key="project.open.time.30" value="1" />
           <entry key="project.open.time.31" value="1" />
           <entry key="project.open.time.32" value="1" />
           <entry key="project.open.time.36" value="1" />
           <entry key="project.open.time.37" value="2" />
-          <entry key="project.open.time.38" value="1" />
+          <entry key="project.open.time.38" value="2" />
           <entry key="project.open.time.41" value="1" />
           <entry key="project.open.time.43" value="1" />
-          <entry key="project.opened" value="10" />
+          <entry key="project.opened" value="12" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="db" value="4" />
           <entry key="json" value="1" />
-          <entry key="py" value="478" />
+          <entry key="py" value="479" />
           <entry key="pyi" value="3" />
           <entry key="pylintrc" value="2" />
         </counts>
@@ -42,14 +43,14 @@
         <counts>
           <entry key="JSON" value="1" />
           <entry key="PLAIN_TEXT" value="6" />
-          <entry key="Python" value="478" />
+          <entry key="Python" value="479" />
           <entry key="PythonStub" value="3" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="85" />
-          <entry key="py" value="38289" />
+          <entry key="py" value="40204" />
           <entry key="pylintrc" value="50" />
           <entry key="txt" value="1781" />
         </counts>
@@ -57,7 +58,7 @@
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="1916" />
-          <entry key="Python" value="38289" />
+          <entry key="Python" value="40204" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages">
@@ -75,39 +76,35 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/Domain/ServerRequest/SynchronizationProcess.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="68">
-              <caret line="4" column="21" selection-start-line="4" selection-start-column="21" selection-end-line="4" selection-end-column="21" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/Domain/Lecture.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="51">
-              <caret line="3" selection-start-line="3" selection-end-line="3" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="783">
-              <caret line="479" column="23" lean-forward="true" selection-start-line="479" selection-start-column="23" selection-end-line="479" selection-end-column="23" />
+            <state relative-caret-position="270">
+              <caret line="520" column="52" lean-forward="true" selection-start-line="520" selection-start-column="52" selection-end-line="520" selection-end-column="52" />
               <folding>
-                <element signature="e#0#23#0" expanded="true" />
-                <marker date="1537198826779" expanded="true" signature="2699:3271" ph="..." />
-                <marker date="1537198826779" expanded="true" signature="3339:3615" ph="..." />
-                <marker date="1537198826779" expanded="true" signature="4332:4338" ph="..." />
-                <marker date="1537198826779" expanded="true" signature="5648:5878" ph="..." />
-                <marker date="1537198826779" expanded="true" signature="7408:7514" ph="..." />
-                <marker date="1537198826779" expanded="true" signature="10796:10802" ph="..." />
-                <marker date="1537198826779" expanded="true" signature="10832:10992" ph="..." />
+                <element signature="e#2096#2633#0" />
+                <element signature="e#4174#5194#0" />
+                <element signature="e#5224#6996#0" />
+                <element signature="e#7034#7994#0" />
+                <element signature="e#8022#9347#0" />
+                <element signature="e#9373#9769#0" />
+                <element signature="e#9796#11135#0" />
+                <element signature="e#11166#13080#0" />
+                <marker date="1537284987938" expanded="true" signature="2001:2112" ph="..." />
+                <marker date="1537284987938" expanded="true" signature="4124:4499" ph="..." />
+                <marker date="1537284987938" expanded="true" signature="4873:5109" ph="..." />
+                <marker date="1537284987938" expanded="true" signature="7659:7664" ph="..." />
+                <marker date="1537284987938" expanded="true" signature="7735:8025" ph="..." />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/sql/schema.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="21658">
+              <caret line="1288" selection-start-line="1288" selection-end-line="1288" />
             </state>
           </provider>
         </entry>
@@ -121,14 +118,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/Domain/Notification/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret column="22" lean-forward="true" selection-start-column="22" selection-end-column="29" />
-              <folding>
-                <marker date="1537195677580" expanded="true" signature="70:71" ph="..." />
-              </folding>
+            <state relative-caret-position="119">
+              <caret line="7" column="17" selection-start-line="7" selection-start-column="17" selection-end-line="7" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -330,6 +324,27 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope">
+        <subPane subId="Project Files">
+          <expand>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
+              <item name="DataBase" type="cbb8eebc:String" user="DataBase" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
+              <item name="Modules" type="cbb8eebc:String" user="Modules" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -347,20 +362,6 @@
               <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
               <item name="Client" type="462c0819:PsiDirectoryNode" />
               <item name="Domain" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Client" type="462c0819:PsiDirectoryNode" />
-              <item name="Domain" type="462c0819:PsiDirectoryNode" />
-              <item name="Exception" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Client" type="462c0819:PsiDirectoryNode" />
-              <item name="Domain" type="462c0819:PsiDirectoryNode" />
-              <item name="Notification" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
@@ -396,27 +397,6 @@
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
               <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
               <item name="&lt; Python 3.6.3 virtualenv at C:\Users\MERDovashkinar\BisitorProject &gt;" type="70bed36:NamedLibraryElementNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
-      <pane id="Scope">
-        <subPane subId="Project Files">
-          <expand>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
-              <item name="DataBase" type="cbb8eebc:String" user="DataBase" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
-              <item name="Modules" type="cbb8eebc:String" user="Modules" />
             </path>
           </expand>
           <select />
@@ -466,7 +446,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.auth">
+  <component name="RunManager" selected="Python.__init__">
     <configuration name="Lecture" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="VisitCount" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -581,8 +561,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.auth" />
         <item itemvalue="Python.__init__" />
+        <item itemvalue="Python.auth" />
         <item itemvalue="Python.test" />
         <item itemvalue="Python.Lecture" />
         <item itemvalue="Python.run_client" />
@@ -599,13 +579,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529582063510</updated>
-    </task>
-    <task id="LOCAL-00017" summary="Изменен дизайн письма">
-      <created>1533488424200</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1533488424200</updated>
     </task>
     <task id="LOCAL-00018" summary="Исправлена таблица в письме">
       <created>1533488991252</created>
@@ -943,7 +916,14 @@
       <option name="project" value="LOCAL" />
       <updated>1536582699900</updated>
     </task>
-    <option name="localTasksCounter" value="66" />
+    <task id="LOCAL-00066" summary="complete ORM database">
+      <created>1537199995012</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1537199995012</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -991,13 +971,13 @@
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18601191" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18601191" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Messages" order="0" />
       <window_info anchor="bottom" id="Message" order="1" />
       <window_info anchor="bottom" id="Find" order="2" sideWeight="0.484375" weight="0.32786885" />
-      <window_info anchor="bottom" id="Run" order="3" sideWeight="0.4747024" weight="0.36557376" />
+      <window_info active="true" anchor="bottom" id="Run" order="3" sideWeight="0.4747024" visible="true" weight="0.36557376" />
       <window_info anchor="bottom" id="Debug" order="4" sideWeight="0.6376702" weight="0.4442623" />
       <window_info anchor="bottom" id="Cvs" order="5" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="6" weight="0.4" />
@@ -1413,13 +1393,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/sql/schema.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15402">
-          <caret line="920" column="8" selection-start-line="920" selection-start-column="8" selection-end-line="920" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/engine/default.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="8500">
@@ -1532,9 +1505,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="187">
           <caret line="12" selection-start-line="12" selection-end-line="12" />
-          <folding>
-            <element signature="e#0#55#0" expanded="true" />
-          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/Domain/Lecture.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="51">
+          <caret line="3" selection-start-line="3" selection-end-line="3" />
         </state>
       </provider>
     </entry>
@@ -1545,10 +1522,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/Domain/Lecture.py">
+    <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/sql/schema.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" selection-start-line="3" selection-end-line="3" />
+        <state relative-caret-position="21658">
+          <caret line="1288" selection-start-line="1288" selection-end-line="1288" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DataBase2/auth.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" column="15" selection-start-line="5" selection-start-column="15" selection-end-line="5" selection-end-column="15" />
         </state>
       </provider>
     </entry>
@@ -1589,36 +1573,31 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/DataBase2/auth.py">
+    <entry file="file://$PROJECT_DIR$/Client/Domain/Notification/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="15" selection-start-line="5" selection-start-column="15" selection-end-line="5" selection-end-column="15" />
+        <state relative-caret-position="119">
+          <caret line="7" column="17" selection-start-line="7" selection-start-column="17" selection-end-line="7" selection-end-column="17" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="783">
-          <caret line="479" column="23" lean-forward="true" selection-start-line="479" selection-start-column="23" selection-end-line="479" selection-end-column="23" />
+        <state relative-caret-position="270">
+          <caret line="520" column="52" lean-forward="true" selection-start-line="520" selection-start-column="52" selection-end-line="520" selection-end-column="52" />
           <folding>
-            <element signature="e#0#23#0" expanded="true" />
-            <marker date="1537198826779" expanded="true" signature="2699:3271" ph="..." />
-            <marker date="1537198826779" expanded="true" signature="3339:3615" ph="..." />
-            <marker date="1537198826779" expanded="true" signature="4332:4338" ph="..." />
-            <marker date="1537198826779" expanded="true" signature="5648:5878" ph="..." />
-            <marker date="1537198826779" expanded="true" signature="7408:7514" ph="..." />
-            <marker date="1537198826779" expanded="true" signature="10796:10802" ph="..." />
-            <marker date="1537198826779" expanded="true" signature="10832:10992" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/Domain/Notification/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="22" lean-forward="true" selection-start-column="22" selection-end-column="29" />
-          <folding>
-            <marker date="1537195677580" expanded="true" signature="70:71" ph="..." />
+            <element signature="e#2096#2633#0" />
+            <element signature="e#4174#5194#0" />
+            <element signature="e#5224#6996#0" />
+            <element signature="e#7034#7994#0" />
+            <element signature="e#8022#9347#0" />
+            <element signature="e#9373#9769#0" />
+            <element signature="e#9796#11135#0" />
+            <element signature="e#11166#13080#0" />
+            <marker date="1537284987938" expanded="true" signature="2001:2112" ph="..." />
+            <marker date="1537284987938" expanded="true" signature="4124:4499" ph="..." />
+            <marker date="1537284987938" expanded="true" signature="4873:5109" ph="..." />
+            <marker date="1537284987938" expanded="true" signature="7659:7664" ph="..." />
+            <marker date="1537284987938" expanded="true" signature="7735:8025" ph="..." />
           </folding>
         </state>
       </provider>
