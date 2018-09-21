@@ -1,9 +1,9 @@
 from PyQt5 import QtWidgets
 
 
-class QLoginInput(QtWidgets.QLineEdit):
-    def __init__(self):
-        super().__init__()
+class LoginInput(QtWidgets.QLineEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.innerText = ""
         self.image = False
 

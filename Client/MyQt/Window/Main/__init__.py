@@ -24,6 +24,7 @@ from Client.MyQt.Table import VisitTable
 from Client.MyQt.Table.Items.VisitItem import VisitItem
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
+from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Types import valid_card
 from Client.test import safe
 from DataBase.Types import format_name
@@ -93,6 +94,7 @@ class MainWindow(AbstractWindow):
         self._init_menu_view()
         self._init_menu_lessons()
         self._init_menu_updates()
+        self._init_notification()
 
     @safe
     def _init_menu_analysis(self):
@@ -195,6 +197,14 @@ class MainWindow(AbstractWindow):
         updates_action.triggered.connect(Synchronize(self.program).start)
 
         updates.addAction(updates_action)
+
+    def _init_notification(self):
+        note = self.menu_bar.addMenu('Оповещения')
+
+        note_run = QAction('Настройка оповещения', self)
+        note_run.triggered.connect(NotificationWindow(self).exec)
+
+        note.addAction(note_run)
 
 
 class MainWindowWidget(QWidget):
