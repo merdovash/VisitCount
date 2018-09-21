@@ -6,15 +6,14 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, QH
 from Client.IProgram import IProgram
 from Client.MyQt.Time import from_index_to_time
 from Client.test import safe
-from DataBase.ClentDataBase import ClientDataBase
+from DataBase2 import Lesson
 
 
 class LessonDateChanger(QWidget):
-    def __init__(self, program: IProgram, date: datetime, lesson_id: int):
+    def __init__(self, program: IProgram, date: datetime, lesson: Lesson):
         super().__init__(flags=QtCore.Qt.WindowStaysOnTopHint)
         self.program: IProgram = program
-        self.lesson_id = lesson_id
-        self.db: ClientDataBase = program.database
+        self.lesson = lesson
         self.l = QVBoxLayout()
 
         self.calendar = QCalendarWidget()
@@ -32,7 +31,7 @@ class LessonDateChanger(QWidget):
 
         self.button = QPushButton("Подтвердить")
         self.button.clicked.connect(self.accept)
-        self.button.setStyleSheet(self.db.config.main_button_css)
+        self.button.setStyleSheet("background-color: #ff8000; color: #ffffff; font-weight: bold;")
         self.l.addWidget(self.button)
 
         self.setLayout(self.l)
@@ -45,7 +44,7 @@ class LessonDateChanger(QWidget):
         dd += from_index_to_time(self.lesson_selector.currentIndex())
         self.program.window.message.emit("Занятие перенесено на {}".format(dd), False)
 
-        self.db.update_lesson_date(lesson_id=self.lesson_id, new_date=dd, professor_id=self.program['professor']['id'])
+        self.lesson.date = dd
 
         self.program.window.centralWidget().refresh_table()
         self.close()

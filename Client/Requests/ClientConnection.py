@@ -12,9 +12,7 @@ from requests import post
 from Client.Domain import host
 from Client.Types import Status, Response
 from Client.test import safe
-from DataBase.Authentication import Authentication
-from DataBase.ClentDataBase import ClientDataBase
-from DataBase.Types import cached
+from DataBase2 import Auth
 from Parser.JsonParser import JsonParser
 
 
@@ -24,18 +22,14 @@ class ServerConnection(Thread):
     """
 
     @safe
-    def __init__(self, database: ClientDataBase, auth: Authentication, url: str):
+    def __init__(self, auth: Auth, url: str):
         super().__init__(target=self._run)
-        self.database: ClientDataBase = database
         self.auth = auth
         self.url = host() + url
 
-    @cached
-    def get_user(self, professor_id):
-        return [{'login': i[0], 'password': i[1]} for i in self.database.sql_request(f"""
-        SELECT login, password 
-        FROM {self.database.Schema.auth.name} 
-        WHERE user_id={professor_id} AND user_type=1;""")][0]
+    # cached
+    def get_user(self):
+        return self.auth.user
 
     @safe
     def _send(self, data: dict):

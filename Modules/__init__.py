@@ -1,5 +1,4 @@
-from DataBase.Authentication import Authentication
-from DataBase.ServerDataBase import DataBaseWorker
+from DataBase2 import Auth
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
@@ -11,8 +10,7 @@ class Keys(str):
 
 
 class Module:
-    def __init__(self, app, request, db, address, func=None, methods=default_methods, form=False):
-        self.db: DataBaseWorker = db
+    def __init__(self, app, request, address, func=None, methods=default_methods, form=False):
         self._is_form = form
         request_type = address[1:]
 
@@ -26,12 +24,12 @@ class Module:
                     response = Response(request_type)
                     data = self._read(request)
                     if data is not None:
-                        authentication = Authentication(self.db, **data['user'])
+                        authentication = Auth(**data['user'])
 
                         if authentication.status:
                             self.post(data=data.get('data'), response=response, auth=authentication, **kwargs)
                         else:
-                            response.set_error(db.last_error())
+                            response.set_error('WOW! SUCH EMPTY')
                     else:
                         return response.set_error("you send no data: {}".format(request.data))
 
@@ -50,5 +48,5 @@ class Module:
         else:
             return JsonParser.read(request.data.decode('utf8').replace("'", '"'))
 
-    def post(self, data: dict, response: Response, auth: Authentication, **kwargs):
+    def post(self, data: dict, response: Response, auth: Auth, **kwargs):
         pass

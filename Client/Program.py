@@ -21,7 +21,7 @@ class MyProgram(IProgram):
     def __init__(self, widget: AbstractWindow = None,
                  win_config: Config = WindowConfig.load()):
         self._state = {'marking_visits': False,
-                       'host': 'http://bisitor.itut.ru',
+                       'host': 'http://bisitor.itut.ru2323',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
 
         self._reader: IReader = None
@@ -71,6 +71,7 @@ class MyProgram(IProgram):
         from Client.MyQt.Window.Main import MainWindow
         print('loading MainWindow')
         self.auth = auth
+        self.professor = auth.user
         self.win_config.set_professor_id(auth.user.id)
         self.set_window(MainWindow(program=self, professor=auth.user))
 
@@ -89,4 +90,4 @@ class MyProgram(IProgram):
 
     @safe
     def __getitem__(self, item):
-        return self._state[item]
+        return self._state.get(item, None)

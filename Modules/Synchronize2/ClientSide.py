@@ -1,13 +1,13 @@
 from Client.IProgram import IProgram
 from Client.Requests.ClientConnection import ServerConnection
 from Client.test import safe
-from DataBase.Authentication import Authentication
+from DataBase2 import Auth
 from Modules.Synchronize2 import address, Key
 
 
 class Synchronize2(ServerConnection):
     @safe
-    def __init__(self, program: IProgram, auth: Authentication, row_affected: int, updates_send: int):
+    def __init__(self, program: IProgram, auth: Auth, row_affected: int, updates_send: int):
         super().__init__(program.database(), auth, program['host'] + address)
         self.row_affected = row_affected
         self.updates_send = updates_send

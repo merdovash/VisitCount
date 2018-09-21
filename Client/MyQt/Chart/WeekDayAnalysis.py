@@ -1,4 +1,3 @@
-import datetime
 import traceback
 
 import numpy as np
@@ -12,6 +11,8 @@ class WeekDayChart(QAnalysisDialog):
         try:
             self.data_type = QAnalysisDialog.DataType.WEEK_DAY
             super().__init__(program, parent)
+
+            self.info_label.setText('На данном графике представлено распредление посещений занятий по дням недели')
 
             self.global_acc.data = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
             self.count = 7
@@ -38,10 +39,4 @@ class WeekDayChart(QAnalysisDialog):
         self.ax().set_ylabel("Процент посещений")
 
     def get_lessons(self):
-        return [
-            LessonData(
-                self.db,
-                i["id"],
-                datetime.datetime.strptime(i["date"], self.program['date_format']).weekday() - 1
-            ) for i in self.db.get_lessons(professor_id=self.program['professor']["id"])
-        ]
+        return [LessonData(lesson, lesson.date.weekday() - 1) for lesson in self.program.professor.lessons]

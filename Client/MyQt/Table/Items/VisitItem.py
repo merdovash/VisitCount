@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QMenu, QTableWidget
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
 from Client.test import safe
+from DataBase2 import Visitation, Student, Lesson
 
 
 class VisitItem(MyTableItem, AbstractContextItem):
@@ -23,10 +24,9 @@ class VisitItem(MyTableItem, AbstractContextItem):
         NoInfo = QColor("#ffffff")
 
     def __init__(self, table: QTableWidget, program: IProgram,
-                 status: Status = Status.NoInfo, student: dict = None,
-                 lesson: dict = None):
+                 status: Status = Status.NoInfo, student: Student = None,
+                 lesson: Lesson = None):
         super().__init__()
-        self.db = program.database
         self.program: IProgram = program
         self.table: QTableWidget = table
         self.setTextAlignment(Qt.AlignCenter)
@@ -92,11 +92,11 @@ class VisitItem(MyTableItem, AbstractContextItem):
 
     @safe
     def _show_info(self):
-        msg = "{} {}.{}. {}посетил занятие {}".format(self.student["last_name"],
-                                                      self.student["first_name"][0],
-                                                      self.student["middle_name"][0],
+        msg = "{} {}.{}. {}посетил занятие {}".format(self.student.last_name,
+                                                      self.student.first_name[0],
+                                                      self.student.middle_name[0],
                                                       "" if self.status == VisitItem.Status.Visited else "не ",
-                                                      self.lesson["date"])
+                                                      self.lesson.date)
         self.program.window.message.emit(msg, False)
         # RFIDReader.instance()._method = nothing
 
@@ -109,14 +109,11 @@ class VisitItem(MyTableItem, AbstractContextItem):
             self.program.window.emit("Подключите считыватель для подвтерждения внесения изменений.")
 
     def _set_visited_by_professor_onReadCard(self, card_id):
-        professor_card_id = self.program['professors']['card_id']
+        professor_card_id = self.program.professor.card_id
         if professor_card_id is not None and professor_card_id != 'None':
             if int(card_id) == int(professor_card_id):
                 self.program.window.message.emit("Подтвеждено")
-                self.db.add_visit(
-                    student_id=self.student["id"],
-                    lesson_id=self.lesson["id"]
-                )
+                Visitation.new(self.student, self.lesson)
                 self.set_visit_status(VisitItem.Status.Visited)
             else:
                 self.program.window.error.emit("Считанная карта не совпадает с картой преподавателя")

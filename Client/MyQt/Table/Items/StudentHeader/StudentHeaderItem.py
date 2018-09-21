@@ -5,10 +5,11 @@ from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import AbstractContextItem
 from Client.test import safe
 from DataBase.Types import format_name
+from DataBase2 import Student
 
 
 class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
-    def __init__(self, program: IProgram, student: dict, *__args):
+    def __init__(self, program: IProgram, student: Student, *__args):
         super().__init__(*__args)
         self.program: IProgram = program
 
@@ -16,7 +17,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         self.setText(self.student_name)
         self.student = student
 
-        if student['card_id'] is None or student['card_id'] == 'None':
+        if student.card_id is None or student.card_id == 'None':
             self.setBackground(QColor(220, 180, 0))
 
         self.register_process = False
@@ -40,7 +41,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         else:
             menu.addAction("Отменить регистрацию карты", self.stop_card_register_process)
         menu.addAction("Показать номер карты", lambda: self.program.window.message.emit(
-            f'{self.student_name} - "{self.student["card_id"]}"', False))
+            f'{self.student_name} - "{self.student.card_id}"', False))
         menu.exec_()
 
     @safe
@@ -60,16 +61,13 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         self.stop_card_register_process()
         print(card_id)
 
-        self.program.database().add_card_id_to(card_id=card_id, student_id=self.student["id"],
-                                               professor_id=self.program['professor']['id'])
+        self.student.card_id = card_id
 
         if self.student["card_id"] is not None:
             self.program.window.message.emit("Студенту {} перезаписали номер карты".format(self.student_name), True)
         else:
             self.program.window.message.emit("Студенту {} записали номер карты".format(self.student_name), True)
             self.setBackground(QColor(255, 255, 255))
-
-        self.student = self.program.database().get_students(student_id=self.student["id"])[0]
 
     def stop_card_register_process(self):
         self.program.window.message.emit("Регистрация карты остановлена", False)

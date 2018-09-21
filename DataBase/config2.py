@@ -24,7 +24,7 @@ class DataBaseConfig:
             }
         elif self.db_type == DataBaseType.SQLITE:
             self.db = {
-                "database": os.path.abspath("db.db"),
+                "database": os.path.abspath("DataBase2\\db.db"),
                 "check_same_thread": False
             }
             print('database path:', self.db['database'])

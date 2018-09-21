@@ -1,4 +1,3 @@
-import datetime
 from typing import List
 
 from PyQt5.QtCore import pyqtSignal
@@ -17,6 +16,7 @@ from Client.MyQt.Table.Section.QtMyPercentSection import PercentSection
 from Client.MyQt.Table.Section.QtMyVisitSection import VisitSection
 from Client.test import safe
 from DataBase.Types import format_name
+from DataBase2 import Visitation, Student, Lesson
 
 
 class VisitTable(QWidget, Configurable):
@@ -51,7 +51,6 @@ class VisitTable(QWidget, Configurable):
     def __init__(self, parent: QVBoxLayout, program: IProgram):
         super().__init__()
         self.program: IProgram = program
-        self.db = program.database
         self._setup_config(program.win_config)
         self.inner_layout = QHBoxLayout()
         self.inner_layout.setSpacing(0)
@@ -90,14 +89,25 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def rowCount(self):
+        """
+        Returns count of rows
+        :return: Int
+        """
         return self.visit_table.rowCount()
 
     @safe
-    def columnCount(self):
+    def column_count(self):
+        """
+        Returns count of columns of visit table
+        :return: Int
+        """
         return self.visit_table.columnCount()
 
     @safe
     def clear(self):
+        """
+        Clears table
+        """
         self.visit_table.clear()
         self.visit_table.setRowCount(0)
         self.visit_table.setColumnCount(0)
@@ -115,13 +125,24 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def show_header(self, i):
+        """
+        switch header row status
+        :param i:
+        """
         if i == 1:
             self._show_day = not self._show_day
 
     @safe
-    def set_horizontal_header(self, lessons: list):
+    def set_horizontal_header(self, lessons: List[Lesson]):
+        """
+        Fill horizontal header with given Lessons
 
+        :param lessons: List of Lesson
+        """
         def apply_configuration():
+            """
+            Configure header
+            """
             lesson_info = self.program.win_config["table_header"]['lesson_info']
             for key in lesson_info:
                 row = str(key)
@@ -129,6 +150,8 @@ class VisitTable(QWidget, Configurable):
 
                 self.visit_table.setRowHidden(int(row), not visible)
                 self.percent_table.setRowHidden(int(row), not visible)
+
+        print('TABLE')
 
         self.lessons = lessons
         self.visit_table.setColumnCount(len(lessons))
@@ -163,15 +186,16 @@ class VisitTable(QWidget, Configurable):
         self.percent_table.setColumnCount(1)
         # self.percent_table.resizeColumnsToContents()
         self.percent_table.setRowCount(self.Header.COUNT)
-        self.percent_table.setItem(0, 0, PercentHeaderItem(PercentItem.Orientation.ByStudents))
+        for i in range(VisitTable.Header.COUNT):
+            self.visit_table.resizeRowToContents(i)
+            self.percent_table.setRowHeight(i, self.visit_table.rowHeight(i))
         self.percent_table.setSpan(0, 0, 5, 1)
+        self.percent_table.setItem(0, 0, PercentHeaderItem(PercentItem.Orientation.ByStudents))
 
         self.header_height = 0
 
         # months = get_months(lessons)
         for column in range(len(lessons)):
-            dt = datetime.datetime.strptime(lessons[column]["date"], self.program['date_format'])
-
             # self.visit_table.setColumnWidth(column, 15)
 
             header = self.lesson_header_factory.create(lessons[column])
@@ -207,7 +231,12 @@ class VisitTable(QWidget, Configurable):
         apply_configuration()
 
     @safe
-    def add_student(self, student: dict, visitations: list):
+    def add_student(self, student: Student, visitations: List[Visitation]):
+        """
+        add student and his visitations
+        :param student: Student
+        :param visitations: List of Visitation
+        """
         self.students.append(student)
         row = self.visit_table.rowCount()
         self.insertRow(row)
@@ -216,14 +245,14 @@ class VisitTable(QWidget, Configurable):
         header_item = StudentHeaderItem(self.program, student)
         self.visit_table.setVerticalHeaderItem(row, header_item)
 
-        completed_lessons = list(filter(lambda x: x["completed"] == 1, self.lessons))
+        completed_lessons = list(filter(lambda x: x.completed == 1, self.lessons))
         # print(completed_lessons)
         # fill row and find percents
         # print(student["last_name"], "visits", len(visitations))
-        visitations_id = [i["lesson_id"] for i in visitations]
+        visitations_id = [i.lesson_id for i in visitations]
         for j in range(len(self.lessons)):
             if self.lessons[j] in completed_lessons:
-                if self.lessons[j]["id"] in visitations_id:
+                if self.lessons[j].id in visitations_id:
                     item = VisitItem(self.visit_table, self.program, VisitItem.Status.Visited)
                 else:
                     item = VisitItem(self.visit_table, self.program, VisitItem.Status.NotVisited)
@@ -241,6 +270,9 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def fill_percents_byStudent(self):
+        """
+        fill percents
+        """
         student_count = self.rowCount() - self.Header.COUNT
 
         absolute_percent_row_index = self.rowCount()
@@ -266,48 +298,82 @@ class VisitTable(QWidget, Configurable):
 
     @safe
     def insertRow(self, index: int):
+        """
+        inserts row on given index
+        :param index:
+        """
         self.visit_table.insertRow(index)
         self.percent_table.insertRow(index)
         # self.home_work_table.insertRow(index)
 
     @safe
     def removeRow(self, index: int):
+        """
+        removes row with given index
+        :param index:
+        """
         self.visit_table.removeRow(index)
         self.percent_table.removeRow(index)
         # self.home_work_table.removeRow(index)
 
     @safe
-    def row(self, student_id: int) -> int:
+    def row(self, student: Student) -> int:
+        """
+        row index of Student
+
+        :param student: Student
+        :return: int
+        """
         for row in range(self.rowCount()):
             item = self.visit_table.verticalHeaderItem(row)
             if type(item) == StudentHeaderItem:
-                if item.student["id"] == student_id:
+                if item.student == student:
                     return row
         return -1
 
     def get_row(self, index) -> List[VisitItem]:
+        """
+        returns all VisitItem from row
+        :param index: index of row
+        """
         for col in range(self.colorCount()):
             item = self.visit_table.item(index, col)
             if isinstance(item, VisitItem):
                 yield item
 
     @safe
-    def col(self, lesson_id) -> int:
-        for col in range(self.columnCount()):
-            if self.lessons[col]["id"] == lesson_id:
+    def col(self, lesson: Lesson) -> int:
+        """
+        Returns table column index of Lesson
+
+        :param lesson: Lesson
+        :return: column index
+        """
+        for col in range(self.column_count()):
+            if self.lessons[col] == lesson:
                 return col
         return -1
 
     def get_column(self, index) -> List[VisitItem]:
+        """
+        returns all VisitItem of column
+        :param index: index of column
+        """
         for i in range(self.rowCount()):
             item = self.visit_table.item(i, index)
             if isinstance(item, VisitItem):
                 yield item
 
     @safe
-    def new_visit(self, student_id, lesson_id):
-        col = self.col(lesson_id)
-        row = self.row(student_id)
+    def new_visit(self, student: Student, lesson: Lesson):
+        """
+        Update VisitItem for Student-Lesson
+
+        :param student: Student
+        :param lesson: Lesson
+        """
+        col = self.col(lesson)
+        row = self.row(student)
 
         item = self.visit_table.item(row, col)
         if item.status == VisitItem.Status.Visited:

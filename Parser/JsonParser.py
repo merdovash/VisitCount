@@ -8,6 +8,11 @@ TODO:
 import json
 
 
+class IJSON:
+    def to_json(self):
+        raise NotImplementedError()
+
+
 class JsonParser:
     """
     custom class to read and dumps json

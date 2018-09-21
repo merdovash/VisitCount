@@ -1,11 +1,10 @@
 # TODO
 from Client.Reader.SerialReader import RFIDReader
-from DataBase.Authentication import Authentication
-from DataBase.ClentDataBase import ClientDataBase
+from DataBase2 import Auth as Authentication
 
 
 class IProgram:
-    __slots__ = ('window', 'win_config', '_reader', '_state', '_database', 'auth')
+    __slots__ = ('window', 'win_config', '_reader', '_state', 'auth', 'professor')
 
     def __getitem__(self, item):
         raise NotImplementedError()
@@ -15,9 +14,6 @@ class IProgram:
 
     def reader(self) -> RFIDReader:
         raise NotImplementedError()
-
-    def database(self) -> ClientDataBase:
-        raise NotImplementedError
 
     def change_user(self):
         raise NotImplementedError()

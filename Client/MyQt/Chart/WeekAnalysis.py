@@ -1,12 +1,11 @@
-import datetime
-
 from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
-from DataBase.sql_handler import DataBase
 
 
 class WeekChart(QAnalysisDialog):
     def __init__(self, program, parent=None):
         super().__init__(program, parent)
+
+        self.info_label.setText('На данном графике представлено распредление посещений по неделям')
 
         self.count = 18
         self.global_acc.data = {1: [100, 43], 2: [100, 49], 3: [100, 57], 4: [100, 68], 5: [100, 67], 6: [100, 75],
@@ -28,13 +27,7 @@ class WeekChart(QAnalysisDialog):
         self.ax().set_ylabel("Процент посещений")
 
     def get_lessons(self):
-        lessons = [
-            LessonData(
-                self.db,
-                i[0],
-                datetime.datetime.strptime(i[1], self.program['date_format']).isocalendar()[1]
-            ) for i in self.db.sql_request("SELECT id, {0}.date from {0}", DataBase.Schema.lessons.name)
-        ]
+        lessons = [LessonData(lesson, lesson.date.isocalendar()[1]) for lesson in self.program.professor.lessons]
 
         lessons.sort(key=lambda x: x.param)
         start = lessons[0].param - 1

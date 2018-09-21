@@ -3,16 +3,17 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QLabel, QHBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 # from Main.DataBase.GlobalStatistic import Statistic
+from Client.Domain.Data import students_of_groups
 from Client.IProgram import IProgram
-from Client.MyQt.Chart.Tools import get_visit_count, get_student_count
-from DataBase.ClentDataBase import ClientDataBase
+from DataBase2 import Lesson
 
 
-def show(c, program: 'MyProgram'):
+def show(c, program: IProgram):
     def x():
         window = program.window
         try:
@@ -27,14 +28,14 @@ def show(c, program: 'MyProgram'):
 
 
 class LessonData:
-    def __init__(self, db: ClientDataBase, lesson_id, param):
-        self.id = lesson_id
+    def __init__(self, lesson: Lesson, param):
+        self.lesson = lesson
         self.param = param
-        self.visit = get_visit_count(db, self.id)
-        self.total = get_student_count(db, self.id)
+        self.visit = len(self.lesson.visitations)
+        self.total = len(students_of_groups(self.lesson.groups))
 
     def __repr__(self):
-        return "(id: {}, param: {}, visit: {}/{})".format(self.id, self.param, self.visit, self.total)
+        return "(lesson: {}, param: {}, visit: {}/{})".format(self.lesson, self.param, self.visit, self.total)
 
 
 class LessonAccumulator:
@@ -102,7 +103,6 @@ class QAnalysisDialog(QDialog):
     def __init__(self, program: IProgram, parent=None):
         super().__init__(parent)
         self.program: IProgram = program
-        self.db = program.database()
         # load data
         self.acc = LessonAccumulator(lessons=self.get_lessons())
 
@@ -121,14 +121,26 @@ class QAnalysisDialog(QDialog):
             self.figure = plt.figure()
             self.canvas = FigureCanvas(self.figure)
 
+            self.info_label = QLabel()
+            self.info_label.setFont(QFont('Sans', 22))
+
             # init plot type selector
+            combobox_layout = QHBoxLayout()
+
+            self.plot_type_label = QLabel('Тип графика')
+
             self.combo_box = QComboBox()
             self.combo_box.addItems("Ломаная,Гистограма,Диаграма размаха".split(','))
             self.combo_box.currentIndexChanged.connect(self.draw)
 
+            combobox_layout.addWidget(self.plot_type_label)
+            combobox_layout.addWidget(self.combo_box)
+
             layout = QVBoxLayout()
+            layout.addWidget(self.info_label)
             layout.addWidget(self.canvas)
-            layout.addWidget(self.combo_box)
+
+            layout.addLayout(combobox_layout)
             self.setLayout(layout)
         except Exception as e:
             print(e)

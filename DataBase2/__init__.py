@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
 
+from Client.Domain.Data import students_of_groups
 from DataBase.config2 import DataBaseConfig
 from DataBase2.Exception import VisitationAlreadyExist
 
@@ -78,13 +79,13 @@ class Discipline(Base):
     _groups = None
 
     @property
-    def group(self):
+    def groups(self):
         """
 
         :return: group of discipline
         """
         if self._groups is None:
-            self._groups = set(map(lambda x: x.group, self.lessons))
+            self._groups = set(map(lambda x: x.groups, self.lessons))
         return self._groups
 
     def __repr__(self):
@@ -145,7 +146,7 @@ class Lesson(Base):
         session.commit()
 
     @staticmethod
-    def filter(professor: 'Professor', discipline: Discipline, group: 'Group'):
+    def filter(professor: 'Professor', discipline: Discipline, group: 'Group' or List['Group']):
         """
 
         :param professor:
@@ -154,7 +155,8 @@ class Lesson(Base):
         :return: lessons of current discipline
         """
         return sorted(list(filter(lambda x: (set(group) == set(x.groups) or (len(group) == 1 and group[0] in x.groups))
-                                            and x.discipline == discipline, professor.lessons)), key=lambda x: x.date)
+                                            and x.discipline == discipline, professor.lessons)),
+                      key=lambda x: x.date)
 
     def __repr__(self):
         return f"<Lesson(id={self.id}, professor_id={self.professor_id}," \
@@ -314,6 +316,11 @@ class Student(Base):
     """
     Student
     """
+
+    @staticmethod
+    def find(card_id):
+        return session.query(Student).filter(Student.card_id == card_id).first()
+
     __tablename__ = 'students'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -389,22 +396,11 @@ class Update(Base):
         UPDATE = 0
         DELETE = 1
 
-    __tablename__ = 'updates'
-
-    id = Column(Integer, unique=True, autoincrement=True)
-    table_name = Column(String, primary_key=True)
-    row_id = Column(Integer, primary_key=True)
-    action_type = Column(Integer, nullable=False)
-
-    professors = relationship("Professor", secondary=professors_updates)
-
-    def __repr__(self):
-        return f"<Update(id={self.id}, table_name={self.table_name}, row_id={self.row_id})>"
-
     @staticmethod
-    def new(updated_object, action_type=ActionType.UPDATE):
+    def new(updated_object, action_type=ActionType.UPDATE, performer=None):
         """
         Creates new update and connects to professors
+        :param performer:
         :param updated_object:
         :param action_type:
         :return:
@@ -421,12 +417,61 @@ class Update(Base):
         update = Update(id=index(),
                         table_name=updated_object.__tablename__,
                         row_id=updated_object.id,
-                        action_type=action_type)
+                        action_type=action_type,
+                        performer=performer)
 
-        update.professors.extends(updated_object.professors())
+        professors_affected = updated_object.professors()
+        if performer in professors_affected:
+            professors_affected.remove(performer)
+
+        update.professors.extends(professors_affected)
         session.add(update)
 
         return update
+
+    @staticmethod
+    def all(professor=None):
+        if professor is not None:
+            return session.query(Update).join(Professor).filter(Professor.id == professor.id).all()
+        return session.query(Update).all()
+
+    @staticmethod
+    def delete(professor=None):
+        if professor is not None:
+            session.query(Update).join(Professor).filter(Professor.id == professor.id).delete()
+        else:
+            session.query(Update).delete()
+
+    @staticmethod
+    def loads(updates: List[dict]):
+        for i in updates:
+            update = Update(**i)
+
+            session.commit()
+
+    __tablename__ = 'updates'
+
+    id = Column(Integer, unique=True, autoincrement=True)
+    table_name = Column(String, primary_key=True)
+    row_id = Column(Integer, primary_key=True)
+    action_type = Column(Integer, nullable=False)
+    performer = Column(Integer)
+
+    professors = relationship("Professor", secondary=professors_updates)
+
+    def __repr__(self):
+        return f"<Update(id={self.id}, table_name={self.table_name}, row_id={self.row_id})>"
+
+    def to_json(self):
+        return str(
+            {
+                'id': self.id,
+                'table_name': self.table_name,
+                'row_id': self.row_id,
+                'action_type': self.action_type,
+                'performer': self.performer
+            }
+        )
 
 
 class Visitation(Base):
@@ -514,11 +559,16 @@ if __name__ == '__main__':
     for discipline in disciplines:
         print(discipline)
 
-        for group in professor.groups:
-            print('\t', group)
+        for groups in professor.groups:
+            print('\t', groups)
 
-            for lesson in Lesson.filter(professor, discipline, group):
-                print('\t\t', lesson, lesson.groups)
+            print('\t\t', 'lessons')
+            for lesson in Lesson.filter(professor, discipline, groups):
+                print('\t\t\t', lesson, lesson.groups)
+
+            print('\t\t students')
+            for student in students_of_groups(groups):
+                print('\t\t\t', student)
 
     # for discipline in disciplines:
     #     print(discipline)

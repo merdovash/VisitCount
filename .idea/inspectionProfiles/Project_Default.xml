@@ -16,6 +16,9 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="PyQt5.Orientation" />
+          <option value="PyQt5.QtWidgets.triggered.*" />
+          <option value="PyQt5.QtWidgets.currentIndexChanged.connect" />
+          <option value="PyQt5.QtWidgets.clicked.connect" />
         </list>
       </option>
     </inspection_tool>

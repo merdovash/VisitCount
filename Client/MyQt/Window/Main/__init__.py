@@ -12,6 +12,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QAction
 
+from Client.Domain.Data import students_of_groups
 from Client.IProgram import IProgram
 from Client.MyQt.Chart.QAnalysisDialog import show
 from Client.MyQt.Chart.WeekAnalysis import WeekChart
@@ -26,7 +27,7 @@ from Client.MyQt.Window.Main.Selector import Selector
 from Client.Types import valid_card
 from Client.test import safe
 from DataBase.Types import format_name
-from DataBase2 import Professor, Lesson
+from DataBase2 import Professor, Lesson, Student, Visitation
 from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -47,7 +48,6 @@ def getLessonIndex(lessons: list, lesson_id: int) -> int:
 def closest_lesson(lessons: List[Lesson]):
     """
 
-    :param date_format:
     :param lessons: list of lessons
     :return: closest lesson in list to current datetime
     """
@@ -81,13 +81,6 @@ class MainWindow(AbstractWindow):
         self.__init_menu__()
 
         self.showMaximized()
-
-    # signals
-
-    # slots
-    @pyqtSlot()
-    def change_user(self):
-        self.program.change_user()
 
     @safe
     def __init_menu__(self):
@@ -133,12 +126,12 @@ class MainWindow(AbstractWindow):
         file = self.menu_bar.addMenu("Файл")
 
         file_change_user = QAction("Сменить пользоватлея", self)
-        file_change_user.triggered.connect(self.change_user)
+        file_change_user.triggered.connect(lambda: self.program.change_user())
 
         file.addAction(file_change_user)
 
-        if self.program['professor'] is not None:
-            if not valid_card(self.program['professor']['card_id']):
+        if self.program.professor is not None:
+            if not valid_card(self.program.professor.card_id):
                 file.addAction(RegisterProfessorCard(self.program, self))
 
         file_exit = QAction("Выход", self)
@@ -211,7 +204,7 @@ class MainWindowWidget(QWidget):
     ready_draw_table = pyqtSignal()
 
     @safe
-    def __init__(self, program: IProgram, professor):
+    def __init__(self, program: IProgram, professor: Professor):
         super().__init__()
 
         self.program: IProgram = program
@@ -225,14 +218,18 @@ class MainWindowWidget(QWidget):
 
         # self._setup_data()
 
-        self.start_sync.connect(self.run_synchonization)
+        self.start_sync.connect(self.run_synchronization)
 
     # signals
     start_sync = pyqtSignal()
 
     # slots
-    @pyqtSlot()
-    def run_synchonization(self):
+    @pyqtSlot(name='run_synchronization')
+    def run_synchronization(self):
+        """
+        Slot!
+        Runs synchronization process
+        """
         Synchronize(self.program).start()
 
     @safe
@@ -281,7 +278,7 @@ class MainWindowWidget(QWidget):
         Select a lesson close to the current time.
         """
         lessons = self.professor.lessons
-        closest = closest_lesson(lessons, self.program['date_format'])
+        closest = closest_lesson(lessons)
         # self.lesson_selector.setCurrentId(getLessonIndex(self.lesson_selector.items, closest))
         self.program['lesson'] = closest
 
@@ -289,57 +286,15 @@ class MainWindowWidget(QWidget):
         """
         Select a lesson close to the current time for the currently selected group.
         """
-        lessons = self.program.database().get_lessons(professor_id=self.program['professor']["id"],
-                                                      group_id=self.program['group']['id'])
-        closest = closest_lesson(lessons, self.program['date_format'])
-        self.lesson_selector.setCurrentMyId(closest['id'])
+        lessons = Lesson.filter(professor=self.professor,
+                                discipline=self.selector.discipline.current(),
+                                group=self.selector.group.current())
+        closest = closest_lesson(lessons)
+        self.lesson_selector.setCurrent(closest['id'])
 
     def show_message(self, text, is_red):
         self.info_label.setText(text)
         self.info_label.setStyleSheet(f'color: {"red" if is_red else "black"}')
-
-    @safe
-    def _setup_data(self, *args):
-        self.set_current_lesson()
-
-        disciplines = self.program.database().get_disciplines(professor_id=self.program['professor']["id"])
-        self.discipline_selector.disconnect()
-        self.discipline_selector.clear()
-        self.discipline_selector.addItems(disciplines)
-        self.discipline_selector.currentIndexChanged.connect(self.discipline_changed)
-
-        if len(disciplines) <= 2:
-            self.discipline_changed()
-        else:
-            self.discipline_selector.setCurrentMyId(self.program['lesson']["discipline_id"])
-
-        if self.group_selector.currentId() == self.program['lesson']['group_id']:
-            self.group_selector.currentIndexChanged.emit(0)
-        else:
-            self.group_selector.setCurrentMyId(self.program['lesson']["group_id"])
-
-        self.lesson_selector.setCurrentMyId(self.program['lesson']["id"])
-
-    # @pyqtSlot(int)
-    @safe
-    def discipline_changed(self, qt_index=None):
-        """
-        update groups ComboBox
-        :return: None
-        """
-        discipline_id = self.discipline_selector.currentId()
-        self.program['discipline'] = self.program.database().get_disciplines(discipline_id=discipline_id)[0]
-
-        groups = self.program.database().get_groups(
-            professor_id=self.program['professor']["id"],
-            discipline_id=discipline_id)
-
-        self.group_selector.disconnect()
-        self.group_selector.clear()
-        self.group_selector.addItems(groups)
-        self.group_selector.currentIndexChanged.connect(self.on_group_change)
-
-        pass
 
     @safe
     def refresh_table(self):
@@ -347,11 +302,9 @@ class MainWindowWidget(QWidget):
         refill table
         """
         self.table.clear()
-        lessons = self.program.database().get_lessons(
-            professor_id=self.program['professor']["id"],
-            group_id=self.program['group']["id"],
-            discipline_id=self.program['discipline']["id"])
-        lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], "%d-%m-%Y %I:%M%p"))
+        lessons = Lesson.filter(professor=self.professor,
+                                discipline=self.selector.discipline.current(),
+                                group=self.selector.group.current())
 
         self.table.set_horizontal_header(lessons)
 
@@ -361,7 +314,7 @@ class MainWindowWidget(QWidget):
         self.lesson_selector.clear()
         self.lesson_selector.addItems(lessons)
         self.lesson_selector.currentIndexChanged.connect(self._lesson_changed)
-        closest = closest_lesson(lessons, self.program['date_format'])
+        closest = closest_lesson(lessons)
         print("closest", closest, closest in self.lesson_selector.get_data())
         # self.lesson_selector.setCurrentId(closest_lesson(lessons)["id"])
 
@@ -369,29 +322,23 @@ class MainWindowWidget(QWidget):
 
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject')  # actual signature (int, int)
     @safe
-    def on_group_change(self, discipline_id, group_id):
-        professor_id = self.program['professor']['id']
+    def on_group_change(self, discipline, groups):
+        professor = self.program.professor
 
         self.table.clear()
         self.last_lesson = None
 
-        print(professor_id, discipline_id, group_id)
-        group = self.program.database().get_groups(
-            professor_id=professor_id,
-            discipline_id=discipline_id,
-            group_id=group_id)[0]
+        print(professor, discipline, groups)
 
-        if group is None:
-            raise ValueError('group not found')
-
-        self.fill_table(professor_id=professor_id,
-                        discipline_id=discipline_id,
-                        group_id=group_id)
+        self.fill_table(professor=professor,
+                        discipline=discipline,
+                        groups=groups)
 
         if self.program.reader() is not None:
             self.program.reader().stop_read()
 
-        self.info_label.setText(f"Выбрана группа {group['name']}")
+        self.info_label.setText(f"Выбрана группа {groups[0].name}" if len(groups) == 1
+                                else f'Выбраны группы {",".join([x.name for x in groups])}')
 
     # @pyqtSlot(int)
 
@@ -421,32 +368,20 @@ class MainWindowWidget(QWidget):
         self.last_lesson = current_col
         self.table.visit_table.scrollTo(self.table.visit_table.model().index(1, self.last_lesson))
 
-        self.program['lesson'] = self.program.database().get_lessons(
-            lesson_id=self.lesson_selector.currentId())[0]
-
     @safe
-    def fill_table(self, professor_id, discipline_id, group_id):
+    def fill_table(self, professor, discipline, groups):
         """
         fill table with current group students and lessons
         :return: None
         """
-        students = self.program.database().get_students(
-            group_id=group_id)
-        students.sort(key=lambda x: x["last_name"])
+        students = students_of_groups(groups)
 
-        lessons = self.program.database().get_lessons(
-            professor_id=professor_id,
-            group_id=group_id,
-            discipline_id=discipline_id)
-        lessons.sort(key=lambda x: datetime.datetime.strptime(x["date"], self.program['date_format']))
+        lessons = Lesson.filter(professor, discipline, groups)
 
         self.table.set_horizontal_header(lessons)
 
         for student in students:
-            student_visitation = self.program.database().get_visitations(
-                student_id=student["id"],
-                professor_id=professor_id,
-                discipline_id=discipline_id)
+            student_visitation = student.visitations
 
             self.table.add_student(student, student_visitation)
 
@@ -468,21 +403,19 @@ class MainWindowWidget(QWidget):
     @safe
     def _new_visit(self, card_id):
         current_data = self.selector.get_current_data()
-        students = self.program.database().get_students(card_id=card_id, group_id=current_data.group_id)
+        students = Student.find(card_id=card_id)
         if len(students) == 0:
             self.program.window.message.emit("Студента нет в списках.", False)
         else:
-            lesson_id = current_data.lesson_id
+            lesson = current_data.lesson
             student = students[0]
-            if card_id in [i["card_id"] for i in self.table.students]:
-                self.program.database().add_visit(
-                    student_id=student["id"],
-                    lesson_id=lesson_id)
+            if card_id in [i.card_id for i in self.table.students]:
+                Visitation.new(student, lesson)
 
-                self.table.new_visit(student["id"], lesson_id)
+                self.table.new_visit(student, lesson)
             else:
                 self.program.window.message.emit("Студент не из группы {}".format(
-                    self.program.database().get_groups(group_id=self.group_selector.currentId())[0]["name"], False)
+                    self.group_selector.current(), False)
                 )
 
     @pyqtSlot(int, name='end_lesson')
