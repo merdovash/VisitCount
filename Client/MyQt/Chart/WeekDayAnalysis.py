@@ -14,7 +14,7 @@ class WeekDayChart(QAnalysisDialog):
 
             self.info_label.setText('На данном графике представлено распредление посещений занятий по дням недели')
 
-            self.global_acc.data = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
+            self.global_acc.value = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
             self.count = 7
 
             self.draw()

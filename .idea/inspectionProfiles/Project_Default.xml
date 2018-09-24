@@ -19,6 +19,8 @@
           <option value="PyQt5.QtWidgets.triggered.*" />
           <option value="PyQt5.QtWidgets.currentIndexChanged.connect" />
           <option value="PyQt5.QtWidgets.clicked.connect" />
+          <option value="PyQt5.QtWidgets.itemChanged.connect" />
+          <option value="PyQt5.QtWidgets.activated.connect" />
         </list>
       </option>
     </inspection_tool>

@@ -24,7 +24,7 @@ jobs=1
 # usually to register additional checkers.
 load-plugins=
 
-# Pickle collected data for later comparisons.
+# Pickle collected value for later comparisons.
 persistent=yes
 
 # Specify a configuration file.

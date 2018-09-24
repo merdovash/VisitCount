@@ -202,7 +202,7 @@ class MainWindow(AbstractWindow):
         note = self.menu_bar.addMenu('Оповещения')
 
         note_run = QAction('Настройка оповещения', self)
-        note_run.triggered.connect(NotificationWindow(self).exec)
+        note_run.triggered.connect(NotificationWindow(self.professor, self).exec)
 
         note.addAction(note_run)
 

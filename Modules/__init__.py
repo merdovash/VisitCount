@@ -31,7 +31,7 @@ class Module:
                         else:
                             response.set_error('WOW! SUCH EMPTY')
                     else:
-                        return response.set_error("you send no data: {}".format(request.data))
+                        return response.set_error("you send no data: {}".format(request.value))
 
                     return response()
             if 'GET' in methods:
@@ -46,7 +46,7 @@ class Module:
                 'data': {}
             }
         else:
-            return JsonParser.read(request.data.decode('utf8').replace("'", '"'))
+            return JsonParser.read(request.value.decode('utf8').replace("'", '"'))
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
         pass
