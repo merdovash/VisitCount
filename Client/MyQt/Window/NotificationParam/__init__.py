@@ -66,7 +66,7 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
     def show_admin_table(self):
         self.tableWidget.clear()
 
-        admins: List[Administration] = list(map(lambda x: x.admin, self.professor.admins))
+        admins: List[Administration] = self.professor.admins
 
         for admin in admins:
             self.tableWidget.add_row(admin)

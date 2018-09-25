@@ -2,9 +2,11 @@ from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMenu, QTableWidget
 
+from Client.Domain.Data import find
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
 from Client.test import safe
+from DataBase.Types import format_name
 from DataBase2 import Visitation, Student, Lesson
 
 
@@ -24,32 +26,32 @@ class VisitItem(MyTableItem, AbstractContextItem):
         NoInfo = QColor("#ffffff")
 
     def __init__(self, table: QTableWidget, program: IProgram,
-                 status: Status = Status.NoInfo, student: Student = None,
-                 lesson: Lesson = None):
+                 student: Student, lesson: Lesson):
+        self.student = student
+        self.lesson = lesson
+        self.visitation = find(lambda x: x.student == self.student, lesson.visitations)
+
         super().__init__()
         self.program: IProgram = program
         self.table: QTableWidget = table
         self.setTextAlignment(Qt.AlignCenter)
-        self.status = status
         self.visit_data = [0, 0]
         self.update()
 
-        self.student = student
-        self.lesson = lesson
+    @property
+    def status(self):
+        if self.lesson.completed:
+            if self.visitation is not None:
+                return VisitItem.Status.Visited
+            else:
+                return VisitItem.Status.NotVisited
+        else:
+            return VisitItem.Status.NoInfo
 
-    def set_visit_status(self, status: 'VisitItem.Status' or int):
-        """
-        sets status of item to :param status:
-        :param status:
-        :return:
-        """
-        if self.status == status:
-            return
-        elif (self.status == VisitItem.Status.NotVisited and status == VisitItem.Status.Visited) \
-                or (self.status == VisitItem.Status.NoInfo and status == VisitItem.Status.NotVisited):
-            self.status = status
-            self.update()
-            self.table.viewport().update()
+    def set_visitation(self, visitation: Visitation):
+        assert visitation.student == self.student and visitation.lesson == self.lesson, "wrong visitation given"
+        self.visitation = visitation
+        self.table.viewport().update()
 
     def update(self):
         """
@@ -86,17 +88,15 @@ class VisitItem(MyTableItem, AbstractContextItem):
         if not self.program['marking_visits']:
             if self.status == VisitItem.Status.NotVisited:
                 menu.addAction("Отметить посещение", self._set_visited_by_professor)
-                # if self.student == VisitItem.Status.Visited:
-                #     menu.addAction("Отменить запись", self._del_visit_by_professor)
+                if self.student == VisitItem.Status.Visited:
+                    menu.addAction("Отменить запись", self._del_visit_by_professor)
         menu.exec_()
 
     @safe
     def _show_info(self):
-        msg = "{} {}.{}. {}посетил занятие {}".format(self.student.last_name,
-                                                      self.student.first_name[0],
-                                                      self.student.middle_name[0],
-                                                      "" if self.status == VisitItem.Status.Visited else "не ",
-                                                      self.lesson.date)
+        msg = "{} {}посетил занятие {}".format(format_name(self.student),
+                                               "" if self.status == VisitItem.Status.Visited else "не ",
+                                               self.lesson.date)
         self.program.window.message.emit(msg, False)
         # RFIDReader.instance()._method = nothing
 
@@ -106,18 +106,30 @@ class VisitItem(MyTableItem, AbstractContextItem):
             self.program.window.message.emit("Приложите карточку преподавателя для подтверждения", False)
             self.program.reader().on_read_once(self._set_visited_by_professor_onReadCard)
         else:
-            self.program.window.emit("Подключите считыватель для подвтерждения внесения изменений.")
+            self.program.window.error.emit("Подключите считыватель для подвтерждения внесения изменений.")
 
     def _set_visited_by_professor_onReadCard(self, card_id):
         professor_card_id = self.program.professor.card_id
         if professor_card_id is not None and professor_card_id != 'None':
             if int(card_id) == int(professor_card_id):
                 self.program.window.message.emit("Подтвеждено")
-                Visitation.new(self.student, self.lesson)
-                self.set_visit_status(VisitItem.Status.Visited)
+                visitation = Visitation.new(self.student, self.lesson)
+                self.set_visitation(visitation)
             else:
                 self.program.window.error.emit("Считанная карта не совпадает с картой преподавателя")
                 # RFIDReader.instance()._method = nothing
         else:
             self.program.window.error.emit('У вас не зарегистрирована карта.<br>'
                                            'Пожалуйста зрегистрируйте карту в меню "Файл"->"Зарегистрирвоать карту"')
+
+    def _del_visit_by_professor(self):
+        self.visitation.delete()
+
+
+class VisitItemFactory:
+    def __init__(self, program: IProgram, table: QTableWidget):
+        self.program = program
+        self.table = table
+
+    def create(self, student, lesson) -> VisitItem:
+        return VisitItem(self.table, self.program, student, lesson)

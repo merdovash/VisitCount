@@ -123,8 +123,7 @@ class Selector(QWidget):
 
         self.group_changed.emit(discipline, groups)
 
-        lessons = professor.lessons
-        lessons.sort(key=lambda x: x.date)
+        lessons = Lesson.filter(professor, discipline, groups)
 
         current_lesson = closest_lesson(lessons, self.program['date_format'])
 

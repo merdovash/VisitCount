@@ -10,13 +10,13 @@ from Client.MyQt.Table.Items.LessonHeader import LessonDateItem, LessonNumberIte
 from Client.MyQt.Table.Items.PercentHeader import PercentHeaderItem
 from Client.MyQt.Table.Items.PercentItem import PercentItem
 from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
-from Client.MyQt.Table.Items.VisitItem import VisitItem
+from Client.MyQt.Table.Items.VisitItem import VisitItem, VisitItemFactory
 from Client.MyQt.Table.Section.QtMyHomeworkSection import HomeworkSection
 from Client.MyQt.Table.Section.QtMyPercentSection import PercentSection
 from Client.MyQt.Table.Section.QtMyVisitSection import VisitSection
 from Client.test import safe
 from DataBase.Types import format_name
-from DataBase2 import Visitation, Student, Lesson
+from DataBase2 import Student, Lesson
 
 
 class VisitTable(QWidget, Configurable):
@@ -80,7 +80,7 @@ class VisitTable(QWidget, Configurable):
 
         parent.addLayout(self.inner_layout)
 
-        self.lessons = None
+        self.table_item_factory = VisitItemFactory(self.program, self.visit_table)
 
     @safe
     def _setup_config(self, window_config: Config):
@@ -195,10 +195,10 @@ class VisitTable(QWidget, Configurable):
         self.header_height = 0
 
         # months = get_months(lessons)
-        for column in range(len(lessons)):
+        for column, lesson in enumerate(lessons):
             # self.visit_table.setColumnWidth(column, 15)
 
-            header = self.lesson_header_factory.create(lessons[column])
+            header = self.lesson_header_factory.create(lesson)
 
             self.visit_table.setItem(VisitTable.Header.MONTH, column, header.month)
             self.visit_table.setItem(VisitTable.Header.DAY, column, header.month_day)
@@ -209,7 +209,7 @@ class VisitTable(QWidget, Configurable):
 
         # week number span
         start = 0
-        for column in range(len(self.lessons)):
+        for column, lesson in enumerate(self.lessons):
             if self.visit_table.item(VisitTable.Header.WEEK_NUMBER, column).text() != self.visit_table.item(
                     VisitTable.Header.WEEK_NUMBER, start).text():
                 self.visit_table.setSpan(VisitTable.Header.WEEK_NUMBER, start, 1, column - start)
@@ -218,7 +218,7 @@ class VisitTable(QWidget, Configurable):
 
         # month Span
         start = 0
-        for column in range(len(lessons)):
+        for column, lesson in enumerate(lessons):
             if self.visit_table.item(VisitTable.Header.MONTH, column).text() != self.visit_table.item(
                     VisitTable.Header.MONTH, start).text():
                 self.visit_table.setSpan(VisitTable.Header.MONTH, start, 1, column - start)
@@ -231,11 +231,10 @@ class VisitTable(QWidget, Configurable):
         apply_configuration()
 
     @safe
-    def add_student(self, student: Student, visitations: List[Visitation]):
+    def add_student(self, student: Student):
         """
         add student and his visitations
         :param student: Student
-        :param visitations: List of Visitation
         """
         self.students.append(student)
         row = self.visit_table.rowCount()
@@ -245,22 +244,10 @@ class VisitTable(QWidget, Configurable):
         header_item = StudentHeaderItem(self.program, student)
         self.visit_table.setVerticalHeaderItem(row, header_item)
 
-        completed_lessons = list(filter(lambda x: x.completed == 1, self.lessons))
-        # print(completed_lessons)
-        # fill row and find percents
-        # print(student["last_name"], "visits", len(visitations))
-        visitations_id = [i.lesson_id for i in visitations]
-        for j in range(len(self.lessons)):
-            if self.lessons[j] in completed_lessons:
-                if self.lessons[j].id in visitations_id:
-                    item = VisitItem(self.visit_table, self.program, VisitItem.Status.Visited)
-                else:
-                    item = VisitItem(self.visit_table, self.program, VisitItem.Status.NotVisited)
-            else:
-                item = VisitItem(self.visit_table, self.program, VisitItem.Status.NoInfo)
-            item.student = student
-            item.lesson = self.lessons[j]
-            self.visit_table.setItem(row, j, item)
+        for lesson_index, lesson in enumerate(self.lessons):
+            item = self.table_item_factory.create(student, lesson)
+
+            self.visit_table.setItem(row, lesson_index, item)
 
         percent_item = PercentItem(self.get_row(row), PercentItem.Orientation.ByStudents)
         self.percent_table.setItem(row, 0, percent_item)

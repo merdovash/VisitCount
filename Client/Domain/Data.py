@@ -14,3 +14,10 @@ def names_of_groups(groups: List[Group]) -> str:
 
 def student_info(student: Student) -> str:
     return f'{student.last_name} {student.first_name} {student.middle_name}, {names_of_groups(student.groups)}'
+
+
+def find(func, list_, default=None):
+    for item in list_:
+        if func(item):
+            return item
+    return default

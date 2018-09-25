@@ -391,9 +391,7 @@ class MainWindowWidget(QWidget):
         self.table.set_horizontal_header(lessons)
 
         for student in students:
-            student_visitation = student.visitations
-
-            self.table.add_student(student, student_visitation)
+            self.table.add_student(student)
 
         self.table.fill_percents_byStudent()
 

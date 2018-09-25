@@ -1,21 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="complete ORM database">
-      <change afterPath="$PROJECT_DIR$/Client/MyQt/LineEdit/LineSearch.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/MyQt/LineEdit/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/MyQt/Table/Contacts.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+    <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="add notification params window">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.pylintrc" beforeDir="false" afterPath="$PROJECT_DIR$/.pylintrc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/Domain/Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/Domain/Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Chart/WeekAnalysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Chart/WeekAnalysis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Chart/WeekDayAnalysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Chart/WeekDayAnalysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/UiDesign.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/UiDesign.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DataBase2/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/DataBase2/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modules/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/__init__.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -27,7 +21,7 @@
     <session id="-1692725436">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="16" />
+          <entry key="project.closed" value="17" />
           <entry key="project.open.time.10" value="1" />
           <entry key="project.open.time.2" value="1" />
           <entry key="project.open.time.30" value="2" />
@@ -40,14 +34,15 @@
           <entry key="project.open.time.42" value="1" />
           <entry key="project.open.time.43" value="2" />
           <entry key="project.open.time.7" value="1" />
-          <entry key="project.opened" value="19" />
+          <entry key="project.open.time.78" value="1" />
+          <entry key="project.opened" value="20" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="db" value="4" />
           <entry key="json" value="1" />
-          <entry key="py" value="559" />
+          <entry key="py" value="569" />
           <entry key="pyi" value="5" />
           <entry key="pylintrc" value="2" />
         </counts>
@@ -56,22 +51,22 @@
         <counts>
           <entry key="JSON" value="1" />
           <entry key="PLAIN_TEXT" value="6" />
-          <entry key="Python" value="559" />
+          <entry key="Python" value="569" />
           <entry key="PythonStub" value="5" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="94" />
-          <entry key="py" value="56733" />
+          <entry key="py" value="58602" />
           <entry key="pylintrc" value="50" />
-          <entry key="txt" value="1810" />
+          <entry key="txt" value="1843" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="PLAIN_TEXT" value="1954" />
-          <entry key="Python" value="56733" />
+          <entry key="PLAIN_TEXT" value="1987" />
+          <entry key="Python" value="58602" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages">
@@ -93,18 +88,21 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="6392">
-              <caret line="388" selection-start-line="388" selection-end-line="388" />
+            <state relative-caret-position="-927">
+              <caret line="110" lean-forward="true" selection-start-line="110" selection-end-line="110" />
               <folding>
-                <element signature="e#15#42#0" expanded="true" />
-                <marker date="1537778288814" expanded="true" signature="1357:1423" ph="..." />
-                <marker date="1537778288814" expanded="true" signature="1437:1546" ph="..." />
-                <marker date="1537778288814" expanded="true" signature="2352:2463" ph="..." />
-                <marker date="1537778288814" expanded="true" signature="4497:4911" ph="..." />
-                <marker date="1537778288814" expanded="true" signature="5303:5564" ph="..." />
-                <marker date="1537778288814" expanded="true" signature="8236:8422" ph="..." />
-                <marker date="1537778288814" expanded="true" signature="12257:13269" ph="..." />
-                <marker date="1537778288814" expanded="true" signature="13805:14162" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="1421:1487" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="1501:1610" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="2416:2527" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="4561:4975" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="5367:5628" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="8352:8538" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="12373:13385" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="13921:14278" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="14872:14878" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="15168:15728" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="17837:17840" ph="..." />
+                <marker date="1537866802754" expanded="true" signature="17894:17900" ph="..." />
               </folding>
             </state>
           </provider>
@@ -113,11 +111,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3043">
-              <caret line="204" selection-start-line="204" selection-end-line="204" />
-              <folding>
-                <element signature="e#107#122#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="78">
+              <caret line="388" column="18" lean-forward="true" selection-start-line="388" selection-start-column="18" selection-end-line="388" selection-end-column="62" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="208">
+              <caret line="49" column="34" selection-start-line="49" selection-start-column="34" selection-end-line="49" selection-end-column="34" />
             </state>
           </provider>
         </entry>
@@ -134,75 +138,53 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/Domain/Data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
-              <caret line="11" column="57" selection-start-line="11" selection-start-column="57" selection-end-line="11" selection-end-column="57" />
+            <state relative-caret-position="225">
+              <caret line="21" column="23" lean-forward="true" selection-start-line="21" selection-start-column="23" selection-end-line="21" selection-end-column="23" />
               <folding>
-                <element signature="e#0#27#0" expanded="true" />
-                <marker date="1537773767990" expanded="true" signature="308:369" ph="..." />
+                <marker date="1537868152798" expanded="true" signature="312:373" ph="..." />
+                <marker date="1537868152798" expanded="true" signature="566:656" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1207">
-              <caret line="80" column="116" selection-start-line="80" selection-start-column="116" selection-end-line="80" selection-end-column="116" />
+            <state relative-caret-position="-217">
+              <caret line="11" column="13" selection-start-line="11" selection-start-column="13" selection-end-line="11" selection-end-column="13" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="222">
+              <caret line="114" column="63" selection-start-line="114" selection-start-column="63" selection-end-line="114" selection-end-column="63" />
               <folding>
-                <element signature="e#0#27#0" expanded="true" />
-                <marker date="1537778531633" expanded="true" signature="471:547" ph="..." />
-                <marker date="1537778531633" expanded="true" signature="2955:2960" ph="..." />
-                <marker date="1537778531633" expanded="true" signature="3220:3481" ph="..." />
+                <marker date="1537868409406" expanded="true" signature="376:378" ph="..." />
+                <marker date="1537868409406" expanded="true" signature="1516:1525" ph="..." />
+                <marker date="1537868409406" expanded="true" signature="1705:1711" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Contacts.py">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="256">
-              <caret line="197" column="43" lean-forward="true" selection-start-line="197" selection-start-column="43" selection-end-line="197" selection-end-column="43" />
-              <folding>
-                <element signature="e#0#24#0" expanded="true" />
-                <marker date="1537779229388" expanded="true" signature="508:528" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="703:1064" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="1103:2020" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="1861:2020" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="2018:2020" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="2470:2992" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="2808:2817" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="3025:3031" ph="..." />
-                <marker date="1537779229388" expanded="true" signature="3865:3906" ph="..." />
-              </folding>
+            <state relative-caret-position="1106">
+              <caret line="288" column="31" lean-forward="true" selection-start-line="288" selection-start-column="31" selection-end-line="288" selection-end-column="31" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/UiDesign.py">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2091">
-              <caret line="127" column="45" selection-start-line="127" selection-start-column="45" selection-end-line="127" selection-end-column="45" />
-              <folding>
-                <element signature="e#0#35#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/LineEdit/LineSearch.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="561">
-              <caret line="37" column="26" selection-start-line="37" selection-start-column="26" selection-end-line="37" selection-end-column="26" />
-              <folding>
-                <element signature="e#0#50#0" expanded="true" />
-                <marker date="1537777192685" expanded="true" signature="402:405" ph="..." />
-                <marker date="1537777192685" expanded="true" signature="1169:1427" ph="..." />
-                <marker date="1537777192685" expanded="true" signature="1453:1462" ph="..." />
-              </folding>
+            <state relative-caret-position="276">
+              <caret line="125" column="33" lean-forward="true" selection-start-line="125" selection-start-column="33" selection-end-line="125" selection-end-column="33" />
             </state>
           </provider>
         </entry>
@@ -219,9 +201,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>remove_u</find>
-      <find>program</find>
-      <find>program =</find>
       <find>program=</find>
       <find>database.</find>
       <find>VisitItem</find>
@@ -249,6 +228,9 @@
       <find>fore</find>
       <find>colum</find>
       <find>Sex</find>
+      <find>proxy</find>
+      <find>range(len</find>
+      <find>class Le</find>
     </findStrings>
     <replaceStrings>
       <replace>self.config</replace>
@@ -274,7 +256,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonDateItem.py" />
         <option value="$PROJECT_DIR$/UnitTest/CompleteTest.py" />
         <option value="$PROJECT_DIR$/DataBase/sql_handler.py" />
         <option value="$PROJECT_DIR$/Test/test_speed.py" />
@@ -302,7 +283,6 @@
         <option value="$PROJECT_DIR$/DataBase/config2.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/QtMyComboBox.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderItem.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/WeekDayAnalysis.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/WeekAnalysis.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/QAnalysisDialog.py" />
@@ -315,16 +295,18 @@
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py" />
         <option value="$PROJECT_DIR$/Modules/Synchronize2/ClientSide.py" />
         <option value="$PROJECT_DIR$/Client/Domain/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/Domain/Data.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/LineEdit/LineSearch.py" />
-        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/UiDesign.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Contacts.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py" />
+        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/Domain/Data.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/__init__.py" />
       </list>
     </option>
   </component>
@@ -357,27 +339,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope">
-        <subPane subId="Project Files">
-          <expand>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
-              <item name="DataBase" type="cbb8eebc:String" user="DataBase" />
-            </path>
-            <path>
-              <item name="Root" type="cbb8eebc:String" user="Root" />
-              <item name="VisitCount" type="cbb8eebc:String" user="VisitCount" />
-              <item name="Modules" type="cbb8eebc:String" user="Modules" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -394,21 +356,13 @@
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
               <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
               <item name="Client" type="462c0819:PsiDirectoryNode" />
-              <item name="MyQt" type="462c0819:PsiDirectoryNode" />
+              <item name="Domain" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
               <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
               <item name="Client" type="462c0819:PsiDirectoryNode" />
               <item name="MyQt" type="462c0819:PsiDirectoryNode" />
-              <item name="LineEdit" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Client" type="462c0819:PsiDirectoryNode" />
-              <item name="MyQt" type="462c0819:PsiDirectoryNode" />
-              <item name="Window" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
@@ -416,52 +370,14 @@
               <item name="Client" type="462c0819:PsiDirectoryNode" />
               <item name="MyQt" type="462c0819:PsiDirectoryNode" />
               <item name="Window" type="462c0819:PsiDirectoryNode" />
-              <item name="NotificationParam" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
               <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="DataBase" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="DataBase2" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Modules" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Modules" type="462c0819:PsiDirectoryNode" />
-              <item name="Synchronize" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Parser" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Test" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="UnitTest" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-              <item name="&lt; Python 3.6.3 virtualenv at C:\Users\MERDovashkinar\BisitorProject &gt;" type="70bed36:NamedLibraryElementNode" />
+              <item name="Client" type="462c0819:PsiDirectoryNode" />
+              <item name="MyQt" type="462c0819:PsiDirectoryNode" />
+              <item name="Window" type="462c0819:PsiDirectoryNode" />
+              <item name="Main" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -644,13 +560,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529582063510</updated>
-    </task>
-    <task id="LOCAL-00020" summary="Исправлена ошибка с расположением тега &lt;html&gt; в письме">
-      <created>1533490056480</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1533490056480</updated>
     </task>
     <task id="LOCAL-00021" summary="Исправлена ошибка c параметром align, исправлена ошибка MIME">
       <created>1533491105180</created>
@@ -988,7 +897,14 @@
       <option name="project" value="LOCAL" />
       <updated>1537519228313</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="add notification params window">
+      <created>1537804334789</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1537804334792</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -1036,7 +952,7 @@
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" weight="0.18601191" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18601191" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Messages" order="0" />
@@ -1074,7 +990,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="rework try_except into 'safe' and make full traceback" />
     <MESSAGE value="fix all error messages&#10;fix all RFIDReader errors&#10;add Action 'Выбрать текущее занятие для группы'" />
     <MESSAGE value="Synchronization now works&#10;changed DB schema" />
     <MESSAGE value="Исправлена ошибка вызываемая второй попыткой синхронизации.&#10;Исправлена ошибка вызываемая сменой пользователя.&#10;Изменена структура проекта:&#10;* теперь запуск клиента производится из корневой диреткории проекта;&#10;* классы клиента упорядочены по окнам&#10;Исправления кода:&#10;* 'type is' заменен на 'isinstance'&#10;* убраны все циклические зависимости" />
@@ -1099,7 +1014,8 @@
     <MESSAGE value="complete ORM database" />
     <MESSAGE value="orm" />
     <MESSAGE value="integrate orm into Client" />
-    <option name="LAST_COMMIT_MESSAGE" value="integrate orm into Client" />
+    <MESSAGE value="add notification params window" />
+    <option name="LAST_COMMIT_MESSAGE" value="add notification params window" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
@@ -1318,20 +1234,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/Client/Domain/Load.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="8" column="19" selection-start-line="8" selection-start-column="19" selection-end-line="8" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Parser/JsonParser.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="12" column="35" selection-start-line="12" selection-start-column="35" selection-end-line="12" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/Domain/Authentication.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="136">
@@ -1374,24 +1276,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/QtMyComboBox.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="54" column="15" lean-forward="true" selection-start-line="54" selection-start-column="15" selection-end-line="54" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderItem.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="123">
           <caret line="64" lean-forward="true" selection-start-line="64" selection-end-line="64" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1530">
-          <caret line="96" column="78" selection-start-line="96" selection-start-column="67" selection-end-line="96" selection-end-column="78" />
         </state>
       </provider>
     </entry>
@@ -1504,13 +1392,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2958">
-          <caret line="192" column="47" selection-start-line="192" selection-start-column="47" selection-end-line="192" selection-end-column="47" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/__init__.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -1531,13 +1412,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
           <caret line="13" column="6" selection-start-line="13" selection-start-column="6" selection-end-line="13" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="20" column="14" selection-start-line="20" selection-start-column="14" selection-end-line="20" selection-end-column="14" />
         </state>
       </provider>
     </entry>
@@ -1579,76 +1453,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2006">
-          <caret line="127" selection-start-line="127" selection-end-line="127" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/orm/persistence.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5287">
           <caret line="318" selection-start-line="318" selection-end-line="318" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6392">
-          <caret line="388" selection-start-line="388" selection-end-line="388" />
-          <folding>
-            <element signature="e#15#42#0" expanded="true" />
-            <marker date="1537778288814" expanded="true" signature="1357:1423" ph="..." />
-            <marker date="1537778288814" expanded="true" signature="1437:1546" ph="..." />
-            <marker date="1537778288814" expanded="true" signature="2352:2463" ph="..." />
-            <marker date="1537778288814" expanded="true" signature="4497:4911" ph="..." />
-            <marker date="1537778288814" expanded="true" signature="5303:5564" ph="..." />
-            <marker date="1537778288814" expanded="true" signature="8236:8422" ph="..." />
-            <marker date="1537778288814" expanded="true" signature="12257:13269" ph="..." />
-            <marker date="1537778288814" expanded="true" signature="13805:14162" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3043">
-          <caret line="204" selection-start-line="204" selection-end-line="204" />
-          <folding>
-            <element signature="e#107#122#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/Domain/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" selection-start-line="3" selection-end-line="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/Domain/Data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="11" column="57" selection-start-line="11" selection-start-column="57" selection-end-line="11" selection-end-column="57" />
-          <folding>
-            <element signature="e#0#27#0" expanded="true" />
-            <marker date="1537773767990" expanded="true" signature="308:369" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1207">
-          <caret line="80" column="116" selection-start-line="80" selection-start-column="116" selection-end-line="80" selection-end-column="116" />
-          <folding>
-            <element signature="e#0#27#0" expanded="true" />
-            <marker date="1537778531633" expanded="true" signature="471:547" ph="..." />
-            <marker date="1537778531633" expanded="true" signature="2955:2960" ph="..." />
-            <marker date="1537778531633" expanded="true" signature="3220:3481" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1659,13 +1467,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/orm/strategies.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="783" column="17" lean-forward="true" selection-start-line="783" selection-start-column="17" selection-end-line="783" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/UiDesign.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2091">
           <caret line="127" column="45" selection-start-line="127" selection-start-column="45" selection-end-line="127" selection-end-column="45" />
-          <folding>
-            <element signature="e#0#35#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1674,7 +1486,6 @@
         <state relative-caret-position="561">
           <caret line="37" column="26" selection-start-line="37" selection-start-column="26" selection-end-line="37" selection-end-column="26" />
           <folding>
-            <element signature="e#0#50#0" expanded="true" />
             <marker date="1537777192685" expanded="true" signature="402:405" ph="..." />
             <marker date="1537777192685" expanded="true" signature="1169:1427" ph="..." />
             <marker date="1537777192685" expanded="true" signature="1453:1462" ph="..." />
@@ -1682,17 +1493,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/orm/strategies.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="783" column="17" lean-forward="true" selection-start-line="783" selection-start-column="17" selection-end-line="783" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Contacts.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="256">
-          <caret line="197" column="43" lean-forward="true" selection-start-line="197" selection-start-column="43" selection-end-line="197" selection-end-column="43" />
+        <state relative-caret-position="1378">
+          <caret line="197" column="43" selection-start-line="197" selection-start-column="43" selection-end-line="197" selection-end-column="43" />
           <folding>
             <element signature="e#0#24#0" expanded="true" />
             <marker date="1537779229388" expanded="true" signature="508:528" ph="..." />
@@ -1705,6 +1509,118 @@
             <marker date="1537779229388" expanded="true" signature="3025:3031" ph="..." />
             <marker date="1537779229388" expanded="true" signature="3865:3906" ph="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/sqlalchemy/sql/schema.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-9766">
+          <caret line="920" column="8" selection-start-line="920" selection-start-column="8" selection-end-line="920" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="73" column="32" lean-forward="true" selection-start-line="73" selection-start-column="32" selection-end-line="73" selection-end-column="32" />
+          <folding>
+            <marker date="1537864373167" expanded="true" signature="288:364" ph="..." />
+            <marker date="1537864373167" expanded="true" signature="2772:2777" ph="..." />
+            <marker date="1537864373167" expanded="true" signature="3007:3268" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="78">
+          <caret line="388" column="18" lean-forward="true" selection-start-line="388" selection-start-column="18" selection-end-line="388" selection-end-column="62" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-927">
+          <caret line="110" lean-forward="true" selection-start-line="110" selection-end-line="110" />
+          <folding>
+            <marker date="1537866802754" expanded="true" signature="1421:1487" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="1501:1610" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="2416:2527" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="4561:4975" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="5367:5628" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="8352:8538" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="12373:13385" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="13921:14278" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="14872:14878" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="15168:15728" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="17837:17840" ph="..." />
+            <marker date="1537866802754" expanded="true" signature="17894:17900" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="276">
+          <caret line="125" column="33" lean-forward="true" selection-start-line="125" selection-start-column="33" selection-end-line="125" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/Domain/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="51">
+          <caret line="3" selection-start-line="3" selection-end-line="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/Domain/Data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="21" column="23" lean-forward="true" selection-start-line="21" selection-start-column="23" selection-end-line="21" selection-end-column="23" />
+          <folding>
+            <marker date="1537868152798" expanded="true" signature="312:373" ph="..." />
+            <marker date="1537868152798" expanded="true" signature="566:656" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="208">
+          <caret line="49" column="34" selection-start-line="49" selection-start-column="34" selection-end-line="49" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-217">
+          <caret line="11" column="13" selection-start-line="11" selection-start-column="13" selection-end-line="11" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="222">
+          <caret line="114" column="63" selection-start-line="114" selection-start-column="63" selection-end-line="114" selection-end-column="63" />
+          <folding>
+            <marker date="1537868409406" expanded="true" signature="376:378" ph="..." />
+            <marker date="1537868409406" expanded="true" signature="1516:1525" ph="..." />
+            <marker date="1537868409406" expanded="true" signature="1705:1711" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/QtMyComboBox.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="22" lean-forward="true" selection-start-line="22" selection-end-line="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1106">
+          <caret line="288" column="31" lean-forward="true" selection-start-line="288" selection-start-column="31" selection-end-line="288" selection-end-column="31" />
         </state>
       </provider>
     </entry>

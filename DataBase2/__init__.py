@@ -19,6 +19,9 @@ engine = create_engine('sqlite:///{}'.format(DataBaseConfig().db['database']), e
 
 Base = declarative_base()
 
+Session = sessionmaker(bind=engine)
+session = Session()
+
 students_groups = Table('students_groups', Base.metadata,
                         Column('student_id', Integer, ForeignKey('students.id')),
                         Column('group_id', Integer, ForeignKey('groups.id')))
@@ -247,7 +250,8 @@ class Professor(Base):
 
     lessons: List[Lesson] = relationship("Lesson", backref=backref("professor", order_by="Lesson._date"))
 
-    admins = relationship('NotificationParam')
+    _admins = relationship('NotificationParam')
+    admins = association_proxy('_admins', 'admin')
 
     @property
     def professors(self):
@@ -521,11 +525,7 @@ class Update(Base):
         :return:
         """
 
-        old_update = session \
-            .query(Update) \
-            .filter(Update.table_name == updated_object.__tablename__).filter(Update.row_id == updated_object.id).all()
-
-        if len(old_update) == 0:
+        def make():
             update = Update(id=ID(Update),
                             table_name=updated_object.__tablename__,
                             row_id=updated_object.id,
@@ -540,6 +540,26 @@ class Update(Base):
             session.add(update)
 
             return update
+
+        if action_type == Update.ActionType.DELETE:
+            old_create = session.query(Update) \
+                .filter(Update.table_name == updated_object.__tablename__) \
+                .filter(Update.row_id == updated_object.id) \
+                .filter(Update.action_type == Update.ActionType.NEW) \
+                .first()
+
+            if old_create is not None:
+                session.delete(old_create)
+            else:
+                return make()
+        else:
+            old_update = session \
+                .query(Update) \
+                .filter(Update.table_name == updated_object.__tablename__).filter(
+                Update.row_id == updated_object.id).all()
+
+            if len(old_update) == 0:
+                return make()
 
     @staticmethod
     def all(professor=None):
@@ -590,6 +610,7 @@ class Visitation(Base):
     """
     Visitation
     """
+
     __tablename__ = 'visitations'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -658,9 +679,6 @@ class Visitation(Base):
     def __repr__(self):
         return f'<Visitation(student_id={self.student_id}, lesson_id={self.lesson_id})>'
 
-
-Session = sessionmaker(bind=engine)
-session = Session()
 
 if __name__ == '__main__':
     pass
