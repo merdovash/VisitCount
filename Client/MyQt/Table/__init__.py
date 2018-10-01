@@ -55,7 +55,7 @@ class VisitTable(QWidget, Configurable):
         self.inner_layout = QHBoxLayout()
         self.inner_layout.setSpacing(0)
 
-        self.lesson_header_factory = LessonHeaderFactory(program)
+        self.lesson_header_factory = LessonHeaderFactory(self, program)
 
         self.header_height = 0
         self.first = True
@@ -108,6 +108,11 @@ class VisitTable(QWidget, Configurable):
         """
         Clears table
         """
+        try:
+            self.visit_table.cellChanged.disconnect()
+        except TypeError:
+            pass
+
         self.visit_table.clear()
         self.visit_table.setRowCount(0)
         self.visit_table.setColumnCount(0)
@@ -139,6 +144,7 @@ class VisitTable(QWidget, Configurable):
 
         :param lessons: List of Lesson
         """
+
         def apply_configuration():
             """
             Configure header
@@ -198,7 +204,7 @@ class VisitTable(QWidget, Configurable):
         for column, lesson in enumerate(lessons):
             # self.visit_table.setColumnWidth(column, 15)
 
-            header = self.lesson_header_factory.create(lesson)
+            header = self.lesson_header_factory.create(column, lesson)
 
             self.visit_table.setItem(VisitTable.Header.MONTH, column, header.month)
             self.visit_table.setItem(VisitTable.Header.DAY, column, header.month_day)
@@ -255,6 +261,21 @@ class VisitTable(QWidget, Configurable):
         self.visit_table.resizeRowsToContents()
         self.percent_table.resizeRowsToContents()
 
+    def on_cellChanged(self, row, col):
+        item = self.visit_table.item(row, col)
+
+        if isinstance(item, VisitItem):
+            if item.ready:
+                percent_row = VisitTable.Header.COUNT + len(self.students)
+                percents = [self.visit_table.item(percent_row, col),
+                            self.visit_table.item(percent_row + 1, col),
+                            self.percent_table.item(row, 0)]
+
+                for percent in percents:
+                    assert isinstance(percent, PercentItem), f"row:{row}, col:{col} is not PercentItem"
+
+                    percent.refresh()
+
     @safe
     def fill_percents_byStudent(self):
         """
@@ -282,6 +303,8 @@ class VisitTable(QWidget, Configurable):
         self.visit_table.setVerticalHeaderItem(absolute_percent_row_index,
                                                PercentHeaderItem(student_count, absolute=True))
         self.visit_table.setVerticalHeaderItem(rel_percent_row_index, PercentHeaderItem(student_count))
+
+        self.visit_table.cellChanged.connect(self.on_cellChanged)
 
     @safe
     def insertRow(self, index: int):
@@ -323,10 +346,14 @@ class VisitTable(QWidget, Configurable):
         returns all VisitItem from row
         :param index: index of row
         """
-        for col in range(self.colorCount()):
-            item = self.visit_table.item(index, col)
-            if isinstance(item, VisitItem):
-                yield item
+
+        def generator_():
+            for col in range(self.colorCount()):
+                item = self.visit_table.item(index, col)
+                if isinstance(item, VisitItem):
+                    yield item
+
+        return list(generator_())
 
     @safe
     def col(self, lesson: Lesson) -> int:
@@ -346,10 +373,15 @@ class VisitTable(QWidget, Configurable):
         returns all VisitItem of column
         :param index: index of column
         """
-        for i in range(self.rowCount()):
-            item = self.visit_table.item(i, index)
-            if isinstance(item, VisitItem):
-                yield item
+        assert 0 <= index < self.visit_table.columnCount(), f"index={index} is out range"
+
+        def _generator():
+            for i in range(self.rowCount()):
+                item = self.visit_table.item(i, index)
+                if isinstance(item, VisitItem):
+                    yield item
+
+        return list(_generator())
 
     @safe
     def new_visit(self, student: Student, lesson: Lesson):
@@ -366,9 +398,7 @@ class VisitTable(QWidget, Configurable):
         if item.status == VisitItem.Status.Visited:
             self.show_visitation_msg.emit("Студент уже отмечен")
         else:
-            student = self.visit_table.verticalHeaderItem(row).student
             self.show_visitation_msg.emit(f"Студент {format_name(student)} отмечен")
-            item.set_visit_status(VisitItem.Status.Visited)
 
             self.percent_table.item(row, 0).refresh()
             self.visit_table.item(self.rowCount() - 1, col).refresh()

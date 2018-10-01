@@ -21,6 +21,8 @@
           <option value="PyQt5.QtWidgets.clicked.connect" />
           <option value="PyQt5.QtWidgets.itemChanged.connect" />
           <option value="PyQt5.QtWidgets.activated.connect" />
+          <option value="PyQt5.QtWidgets.customContextMenuRequested.connect" />
+          <option value="PyQt5.QtWidgets.cellChanged.connect" />
         </list>
       </option>
     </inspection_tool>

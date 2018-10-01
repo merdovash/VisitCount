@@ -4,6 +4,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QTableWidgetItem
 
+from Client.MyQt.Table.Items.VisitItem import VisitItem
+
 
 class IPercentItem():
     def refresh(self):
@@ -14,7 +16,6 @@ class PercentItem(IPercentItem, QTableWidgetItem):
     """
     represents items containing total amount of visitations related to total count of lessons by lesson or student
     """
-    __items__: List[IPercentItem] = []
 
     class Font(int):
         Absolute = QFont("SansSerif", 7)
@@ -24,10 +25,11 @@ class PercentItem(IPercentItem, QTableWidgetItem):
         ByLessons = 0
         ByStudents = 1
 
-    def __init__(self, items: list, orientation: 'PercentItem.Orientation', absolute=False, *__args):
+    def __init__(self, items: List[VisitItem], orientation: 'PercentItem.Orientation', absolute=False, *__args):
+        assert all(map(lambda x: isinstance(x, VisitItem), items)), "items is not a List[VisitItem]"
         super().__init__(*__args)
         self.absolute = absolute
-        self.items = items
+        self.items: List[VisitItem] = items
         self.visit = 0
         self.total = 0
         self.orientation = orientation
@@ -37,15 +39,19 @@ class PercentItem(IPercentItem, QTableWidgetItem):
             self.setTextAlignment(Qt.AlignCenter)
         else:
             self.setTextAlignment(Qt.AlignLeft)
-        PercentItem.__items__.append(self)
 
     def calc(self):
+        self.visit = 0
+        self.total = 0
         for item in self.items:
             self.total += item.visit_data[1]
             self.visit += item.visit_data[0]
 
+        print(len(self.items))
+
     def refresh(self):
         self.calc()
+
         self.updateText()
 
     def updateText(self):
@@ -54,4 +60,4 @@ class PercentItem(IPercentItem, QTableWidgetItem):
             # self.setFont(PercentItem.Font.Absolute)
         else:
             self.setText("{}".format(round(self.visit * 100 / self.total) if self.total != 0 else 0))
-            #self.setFont(PercentItem.Font.Percent)
+            # self.setFont(PercentItem.Font.Percent)

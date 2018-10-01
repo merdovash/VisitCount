@@ -12,7 +12,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QAction
 
-from Client.Domain.Data import students_of_groups
+from Client.Domain.Data import students_of_groups, find
 from Client.IProgram import IProgram
 from Client.MyQt.Chart.QAnalysisDialog import show
 from Client.MyQt.Chart.WeekAnalysis import WeekChart
@@ -21,14 +21,13 @@ from Client.MyQt.QAction.DataAction import DataAction
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
 from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Table import VisitTable
-from Client.MyQt.Table.Items.VisitItem import VisitItem
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Types import valid_card
 from Client.test import safe
 from DataBase.Types import format_name
-from DataBase2 import Professor, Lesson, Student, Visitation
+from DataBase2 import Professor, Lesson, Visitation
 from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')
@@ -330,19 +329,20 @@ class MainWindowWidget(QWidget):
 
         self._lesson_changed()
 
-    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject')  # actual signature (int, int)
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name="on_group_change")  # actual signature (int, int)
     @safe
     def on_group_change(self, discipline, groups):
         professor = self.program.professor
 
         self.table.clear()
+        self.students = students_of_groups(groups)
+        self.lessons = Lesson.filter(self.professor, self.selector.discipline.current(), groups)
+
         self.last_lesson = None
 
         print(professor, discipline, groups)
 
-        self.fill_table(professor=professor,
-                        discipline=discipline,
-                        groups=groups)
+        self.fill_table()
 
         if self.program.reader() is not None:
             self.program.reader().stop_read()
@@ -352,8 +352,10 @@ class MainWindowWidget(QWidget):
 
     # @pyqtSlot(int)
 
-    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject')
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name="mark_current_lesson")
+    @safe
     def mark_current_lesson(self, column, last_lesson):
+        assert 0 < column, f'wrong columns number: columns={column}'
         self.table.visit_table.scrollTo(self.table.visit_table.model().index(1, column))
 
         table: VisitTable = self.table
@@ -379,18 +381,15 @@ class MainWindowWidget(QWidget):
         self.table.visit_table.scrollTo(self.table.visit_table.model().index(1, self.last_lesson))
 
     @safe
-    def fill_table(self, professor, discipline, groups):
+    def fill_table(self):
         """
         fill table with current group students and lessons
         :return: None
         """
-        students = students_of_groups(groups)
 
-        lessons = Lesson.filter(professor, discipline, groups)
+        self.table.set_horizontal_header(self.lessons)
 
-        self.table.set_horizontal_header(lessons)
-
-        for student in students:
+        for student in self.students:
             self.table.add_student(student)
 
         self.table.fill_percents_byStudent()
@@ -400,31 +399,29 @@ class MainWindowWidget(QWidget):
     @pyqtSlot(int, name='start_lesson')
     @safe
     def _start_lesson(self, lesson_index):
-        for i in range(3, self.table.rowCount()):
-            item = self.table.visit_table.item(i, lesson_index)
-            if isinstance(item, VisitItem):
-                if item.status == VisitItem.Status.NoInfo:
-                    item.set_visit_status(VisitItem.Status.NotVisited)
+        lesson = self.table.lessons[lesson_index]
+        lesson.completed = True
+
+        column = self.table.get_column(lesson_index)
+        for item in column:
+            item.update()
 
         self.program.reader().on_read(self._new_visit)
 
     @safe
     def _new_visit(self, card_id):
         current_data = self.selector.get_current_data()
-        students = Student.find(card_id=card_id)
-        if len(students) == 0:
-            self.program.window.message.emit("Студента нет в списках.", False)
+
+        student = find(lambda student: student.card_id == card_id, self.students)
+
+        if student is None:
+            self.program.window.message.emit("Студента нет в списке.", False)
         else:
             lesson = current_data.lesson
-            student = students[0]
-            if card_id in [i.card_id for i in self.table.students]:
-                Visitation.new(student, lesson)
 
-                self.table.new_visit(student, lesson)
-            else:
-                self.program.window.message.emit("Студент не из группы {}".format(
-                    self.group_selector.current(), False)
-                )
+            Visitation.new(student, lesson)
+
+            self.table.new_visit(student, lesson)
 
     @pyqtSlot(int, name='end_lesson')
     def _end_lesson(self, lesson_index):

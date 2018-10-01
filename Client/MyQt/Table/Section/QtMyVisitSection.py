@@ -33,7 +33,7 @@ class VisitSection(QTableWidget):
         row = index.row()
         item = self.verticalHeaderItem(row)
         if isinstance(item, AbstractContextItem):
-            real_pos = event.__pos__() + self.pos()
+            real_pos = self.mapToGlobal(event.__pos__())
             item.show_context_menu(real_pos)
 
     def table_right_click(self, event: QPoint):
@@ -48,5 +48,5 @@ class VisitSection(QTableWidget):
         item = self.item(row, col)
 
         if isinstance(item, AbstractContextItem):
-            real_pos = event.__pos__() + self.pos()
+            real_pos = self.mapToGlobal(event.__pos__())
             item.show_context_menu(real_pos)

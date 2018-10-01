@@ -5,11 +5,11 @@ from itertools import chain
 from typing import List
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, func
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, func, event
 from sqlalchemy import create_engine, Table
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, backref
+from sqlalchemy.orm import sessionmaker, relationship, backref, scoped_session
 
 # from Client.Domain.Data import students_of_groups
 from DataBase.config2 import DataBaseConfig
@@ -19,7 +19,7 @@ engine = create_engine('sqlite:///{}'.format(DataBaseConfig().db['database']), e
 
 Base = declarative_base()
 
-Session = sessionmaker(bind=engine)
+Session = scoped_session(sessionmaker(bind=engine))
 session = Session()
 
 students_groups = Table('students_groups', Base.metadata,
@@ -115,20 +115,17 @@ class Lesson(Base):
     """
     __tablename__ = 'lessons'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-
-    professor_id = Column(Integer, ForeignKey('professors.id'), primary_key=True)
-    # professor = relationship("Professor")
+    id = Column(Integer, primary_key=True)
+    professor_id = Column(Integer, ForeignKey('professors.id'))
+    discipline_id = Column(Integer, ForeignKey('disciplines.id'))
+    type = Column(Integer)
+    _date = Column('date', DateTime)
+    _completed = Column('completed', Integer)
+    room_id = Column(String)
 
     groups = relationship("Group", secondary=lessons_groups)
 
-    discipline_id = Column(Integer, ForeignKey('disciplines.id'), primary_key=True)
     discipline = relationship("Discipline", lazy='joined')
-
-    type = Column(Integer)
-    _date = Column('date', DateTime, primary_key=True)
-    _completed = Column('completed', Integer)
-    room_id = Column(String)
 
     visitations = relationship('Visitation')
 
@@ -391,6 +388,10 @@ class Student(Base):
     _parents = relationship('StudentsParents', back_populates="student", foreign_keys='Student.id')
     parents = association_proxy('_parents', 'parent')
 
+    groups = relationship("Group", secondary=students_groups, lazy='select')
+
+    visitations = relationship("Visitation", backref=backref("student"))
+
     _professors = None
 
     @property
@@ -420,10 +421,6 @@ class Student(Base):
         self._card_id = value
         Update.new(self)
         session.commit()
-
-    groups = relationship("Group", secondary=students_groups, lazy='select')
-
-    visitations = relationship("Visitation", lazy='joined')
 
     def __repr__(self):
         return f"<Student(id={self.id}, card_id={self.card_id}, last_name={self.last_name}, " \
@@ -533,8 +530,15 @@ class Update(Base):
                             performer=performer)
 
             professors_affected = updated_object.professors
-            if performer in professors_affected:
-                professors_affected.remove(performer)
+            if isinstance(professors_affected, list):
+                if performer in professors_affected:
+                    professors_affected.remove(performer)
+
+            elif isinstance(professors_affected, Professor):
+                if performer == professors_affected:
+                    professors_affected = []
+                else:
+                    professors_affected = [professors_affected]
 
             update.professors.extend(professors_affected)
             session.add(update)
@@ -614,11 +618,8 @@ class Visitation(Base):
     __tablename__ = 'visitations'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
-    lesson_id = Column(Integer, ForeignKey('lessons.id'), primary_key=True)
-
-    lesson = relationship("Lesson", lazy='joined')
-    student = relationship("Student", lazy='select')
+    student_id = Column(Integer, ForeignKey('students.id', ondelete="RESTRICT"), primary_key=True)
+    lesson_id = Column(Integer, ForeignKey('lessons.id', ondelete="RESTRICT"), primary_key=True)
 
     _professor = None
 
@@ -664,20 +665,29 @@ class Visitation(Base):
             Update.new(visit, Update.ActionType.NEW)
 
             session.commit()
+
         except sqlalchemy.orm.exc.FlushError:
             session.rollback()
             raise VisitationAlreadyExist()
+
+        finally:
+            return visit
 
     def delete(self):
         """
         deletes this visitation
         """
-        self._create_update(Update.ActionType.DELETE)
+        Update.new(self, Update.ActionType.DELETE)
         session.delete(self)
         session.commit()
 
     def __repr__(self):
         return f'<Visitation(student_id={self.student_id}, lesson_id={self.lesson_id})>'
+
+
+@event.listens_for(Lesson, "before_delete")
+def before_delete(mapper, connect, target):
+    print(target, "will be deleted")
 
 
 if __name__ == '__main__':

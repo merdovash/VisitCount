@@ -127,7 +127,7 @@ class Selector(QWidget):
 
         current_lesson = closest_lesson(lessons, self.program['date_format'])
 
-        start_index = self.lesson_selector.currentIndex()
+        start_index = self.lesson_selector.currentIndex() if self.lesson_selector.currentIndex() >= 0 else 0
         self.lesson_selector.blockSignals(True)
         self.lesson_selector.clear()
         self.lesson_selector.addItems(lessons)

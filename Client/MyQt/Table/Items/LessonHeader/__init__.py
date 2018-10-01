@@ -13,14 +13,15 @@ LessonHeaderTuple = namedtuple('LessonHeaderTuple', 'month month_day week_number
 
 
 class LessonHeaderFactory:
-    def __init__(self, program: IProgram):
+    def __init__(self, table, program: IProgram):
         self.program: IProgram = program
+        self.table = table
 
-    def create(self, lesson: Lesson) -> LessonHeaderTuple:
+    def create(self, index: int, lesson: Lesson) -> LessonHeaderTuple:
         dt = lesson.date
 
         month_i = MonthTableItem(dt.month)
-        date_i = LessonDateItem(dt, lesson.id, self.program)
+        date_i = LessonDateItem(dt, lesson, index, self.program, self.table)
         week_number = WeekNumber(dt)
         week_i = WeekDayItem(dt)
         number_i = LessonNumberItem(dt)
