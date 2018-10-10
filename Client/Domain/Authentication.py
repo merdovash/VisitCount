@@ -1,5 +1,5 @@
-from Client.Domain.Exception import NoSuchUserException
 from DataBase2 import Auth
+from Exception import NoSuchUserException
 
 
 def Authentication(**kwargs) -> Auth:

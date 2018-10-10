@@ -1,20 +1,19 @@
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QFormLayout, QLabel, QPushButton, QDialog, \
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtWidgets import QDialog, \
     QErrorMessage
 
 from Client.Domain.Authentication import Authentication
-from Client.Domain.Exception import NoSuchUserException
 from Client.Domain.ServerRequest.FirstLoad import FirstLoad
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.QtMyLoginInput import LoginInput
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
-from Client.test import safe
 # from DataBase.Authentication import Authentication
 # from DataBase.ClentDataBase import ClientDataBase
 # from Modules.FirstLoad.ClientSide import FirstLoad
 from DataBase2 import Auth
+from Exception import NoSuchUserException
 
 
 class AuthWindow(AbstractWindow, Ui_AuthWindow):
@@ -59,7 +58,6 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
         if self.program.reader() is not None:
             self.program.reader().on_read(imaged_value)
 
-    @safe
     def auth(self, *args):
         try:
             a = Authentication(login=self.login_input.login(), password=self.password_input.text())

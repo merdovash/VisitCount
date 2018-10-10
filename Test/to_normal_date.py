@@ -26,7 +26,7 @@ for line in c.fetchall():
     delta = datetime.timedelta(date//100 * 7 + date%100//10)
     lesson = less[date%10]
     normal_date = (start + delta + lesson).strftime("%d-%m-%Y %I:%M%p")
-    print(str(normal_date))
+    # print(str(normal_date))
     print("Update lessons set date=date('" + str(normal_date) + "', 'yyyy-mm-dd hh:mi:ss') where id=" + str(line[0]))
     c.execute(
         "Update lessons set date='" + str(normal_date) + "' where id=" + str(line[0]))

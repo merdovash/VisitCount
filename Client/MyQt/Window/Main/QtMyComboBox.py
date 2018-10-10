@@ -2,8 +2,8 @@ import datetime
 from typing import List, Dict
 
 from PyQt5.QtWidgets import QComboBox
+from sqlalchemy.ext.associationproxy import _AssociationList
 
-from Client.test import safe
 from DataBase2 import Discipline, Group, Lesson
 
 
@@ -45,9 +45,9 @@ class QMyComboBox(QComboBox):
         super().clear()
         self.items = {}
 
-    @safe
     def setCurrent(self, item):
-        assert isinstance(item, self.type if self.type is not Group else list), f'{item} is not a {self.type}'
+        assert isinstance(item,
+                          self.type if self.type is not Group else _AssociationList), f'{item} is not a {self.type} its a {type(item)}'
         # print(self.items)
         for i, value in enumerate(self.items):
             if self.items[i] == item:

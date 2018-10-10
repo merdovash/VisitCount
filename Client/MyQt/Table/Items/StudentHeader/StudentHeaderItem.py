@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QMenu, QTableWidgetItem
 
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import AbstractContextItem
-from Client.test import safe
 from DataBase.Types import format_name
 from DataBase2 import Student
 
@@ -22,7 +21,6 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
 
         self.register_process = False
 
-    @safe
     def show_context_menu(self, pos):
         """
         override base _method
@@ -33,7 +31,6 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         :param pos:
         """
         menu = QMenu()
-        print(pos)
         menu.move(pos)
         # if not WorkingData.instance().marking_visits:
         if not self.register_process:
@@ -44,7 +41,6 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
             f'{self.student_name} - "{self.student.card_id}"', False))
         menu.exec_()
 
-    @safe
     def _register_student_card(self):
         if self.program.reader() is not None:
             self.program.reader().on_read_once(self._register_student_card_onRead)
@@ -56,10 +52,8 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         else:
             self.program.window.error.emit("Для регистрации карты необходимо подключение к считывателю")
 
-    @safe
     def _register_student_card_onRead(self, card_id):
         self.stop_card_register_process()
-        print(card_id)
 
         self.student.card_id = card_id
 

@@ -1,12 +1,13 @@
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidgetItem
 
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import AbstractContextItem
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderItem import \
+    LessonHeaderItem
 
 
-class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
+class LessonTypeItem(LessonHeaderItem, AbstractContextItem):
     """
     item represents type of lesson
     """
@@ -37,7 +38,7 @@ class LessonTypeItem(QTableWidgetItem, AbstractContextItem):
         pass
         # if not self.program['marking_visits']:
         #     menu = QMenu()
-        #     print(pos)
+        #     # print(pos)
         #     menu.move(pos)
         #     action = QAction("Начать учет", self)
         #     menu.exec_()

@@ -3,7 +3,6 @@ import json
 import os
 
 from Client.Configuartion.Configurable import Configurable
-from Client.test import safe
 
 
 class Config:
@@ -13,9 +12,9 @@ class Config:
         try:
             with io.open(path, "r", encoding='utf-8') as file:
                 self.obj = json.load(file)
-                print('open config:', self.obj)
+                # print('open config:', self.obj)
         except FileNotFoundError as e:
-            print('file not found')
+            # print('file not found')
             self.obj = {}
 
     def set_professor_id(self, professor_id):
@@ -60,9 +59,8 @@ class Config:
         else:
             self.obj[self.professor_id][key] = value
 
-    @safe
     def sync(self):
-        print('synching', self.obj)
+        # print('synching', self.obj)
         with io.open(self.path, 'w+', encoding='utf-8') as outfile:
             json.dump(self.obj, outfile, ensure_ascii=False)
 
@@ -84,5 +82,4 @@ def load(path: str = None) -> Config:
 
 if __name__ == "__main__":
     window_config = load()
-    print(window_config)
     window_config.sync()

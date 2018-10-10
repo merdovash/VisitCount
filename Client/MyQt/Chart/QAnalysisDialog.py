@@ -3,9 +3,10 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QLabel, QHBoxLayout
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QLabel, \
+    QHBoxLayout
+from matplotlib.backends.backend_qt5agg import \
+    FigureCanvasQTAgg as FigureCanvas
 
 # from Main.DataBase.GlobalStatistic import Statistic
 from Client.Domain.Data import students_of_groups
@@ -121,9 +122,6 @@ class QAnalysisDialog(QDialog):
             self.figure = plt.figure()
             self.canvas = FigureCanvas(self.figure)
 
-            self.info_label = QLabel()
-            self.info_label.setFont(QFont('Sans', 22))
-
             # init plot type selector
             combobox_layout = QHBoxLayout()
 
@@ -137,7 +135,6 @@ class QAnalysisDialog(QDialog):
             combobox_layout.addWidget(self.combo_box)
 
             layout = QVBoxLayout()
-            layout.addWidget(self.info_label)
             layout.addWidget(self.canvas)
 
             layout.addLayout(combobox_layout)

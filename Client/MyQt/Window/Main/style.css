@@ -1,0 +1,142 @@
+MainWindow {
+background-color: #ededed;
+}
+
+/* combobox */
+
+QMyComboBox {
+    height: 30px;
+    padding-left: 2px;
+    margin: 0;
+    subcontrol-origin: padding;
+
+    background-color: #ffffff;
+    border-style: solid ;
+    border-width: 5x;
+
+    color: #000000;
+    font-weight: bold;
+    font-size: 13px;
+    margin: 0px;
+}
+
+QMyComboBox:hover {
+    background-color: #b0b0b0;
+}
+
+QMyComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 15px;
+
+    border-left-width: 1px;
+    border-left-color: darkgray;
+    border-left-style: solid; /* just a single line */
+    border-top-right-radius: 3px; /* same radius as the QComboBox */
+    border-bottom-right-radius: 3px;
+
+    background-color: #ff8000;
+}
+
+QMyComboBox::down-arrow:on { /* shift the arrow when popup is open */
+    top: 1px;
+    left: 1px;
+}
+
+QMyComboBox::down-arrow{
+    image: url(Client/MyQt/Window/Main/icons/chevron-down.png);
+}
+
+QMyComboBox QAbstractItemView{
+    background-color: #ffffff;
+}
+
+
+QMyComboBox QAbstractItemView:hover {
+    background-color: #ff8000;
+}
+
+
+/* push button */
+
+QPushButton {
+    position: relative;
+
+    display: block;
+    height: 30px;
+    margin: 0;
+
+    overflow: hidden;
+
+    border-width: 0;
+    outline: none;
+    border-radius: 2px;
+
+    font-size:13px;
+    font-weight: bold;
+
+    background-color: #ff8000;
+    color: #ecf0f1;
+}
+
+QPushButton:hover {
+    background-color: #ffb143;
+}
+
+QPushButton:pressed {
+    background-color: #c55100;
+}
+
+/* table */
+
+QTableWidget {
+
+}
+
+/* menu */
+
+QMenuBar {
+    display: block;
+    min-width: 100%;
+    width: 150px;
+
+    font-size: 13px;
+    font-family: "PT Sans";
+
+    margin: 0px;
+    padding-left: auto;
+    spacing: 50%;
+
+    background-color: #bbbbbb;
+}
+
+QMenuBar::item:selected{
+    background-color: #ff8000;
+}
+
+/* label */
+
+QLabel {
+    font-size:13px;
+}
+
+QTableView {
+    border: 0.5px 0px 0.5px;
+    gridline-color: white;
+    background-color: #ededed;
+}
+
+LessonHeaderItem{
+
+}
+
+QHeaderView::section {
+    border: none;
+    background-color: #bbbbbb;
+}
+
+QHeaderView::section#not-marked {
+    background-color: #c55100;
+}
+
+

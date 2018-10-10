@@ -1,4 +1,5 @@
-from DataBase2 import Auth
+from DataBase2 import Auth, Session
+from Exception import NoSuchUserException
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
@@ -10,8 +11,11 @@ class Keys(str):
 
 
 class Module:
-    def __init__(self, app, request, address, func=None, methods=default_methods, form=False):
+    def __init__(self, app, request, db, address, func=None,
+                 methods=default_methods, form=False):
         self._is_form = form
+
+        self.db = None
         request_type = address[1:]
 
         if func is not None:
@@ -19,19 +23,23 @@ class Module:
 
         @app.route(address, methods=["POST"], endpoint=address[1:])
         def auth(**kwargs):
+            self.db = Session()
             if 'POST' in methods:
                 if request.method == 'POST':
                     response = Response(request_type)
                     data = self._read(request)
                     if data is not None:
-                        authentication = Auth(**data['user'])
+                        try:
+                            authentication = Auth.log_in(**data['user'],
+                                                         session=self.db)
+                            self.post(data=data.get('data'), response=response,
+                                      auth=authentication, **kwargs)
 
-                        if authentication.status:
-                            self.post(data=data.get('data'), response=response, auth=authentication, **kwargs)
-                        else:
-                            response.set_error('WOW! SUCH EMPTY')
+                        except NoSuchUserException as e:
+                            response.set_error('No such user')
                     else:
-                        return response.set_error("you send no data: {}".format(request.value))
+                        response.set_error(
+                            "you send no data: {}".format(request.value))
 
                     return response()
             if 'GET' in methods:
@@ -46,7 +54,8 @@ class Module:
                 'data': {}
             }
         else:
-            return JsonParser.read(request.value.decode('utf8').replace("'", '"'))
+            return JsonParser.read(
+                request.data.decode('utf8').replace("'", '"'))
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
         pass

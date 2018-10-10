@@ -1,8 +1,8 @@
-from Client.Domain import Load
 from Client.IProgram import IProgram
 from Client.Requests.ClientConnection import ServerConnection
-from DataBase2 import Auth
+from DataBase2 import Auth, Session
 from Modules.FirstLoad import address
+from Parser.JsonParser import to_db_object
 
 
 class FirstLoad(ServerConnection):
@@ -12,7 +12,7 @@ class FirstLoad(ServerConnection):
 
     def __init__(self, program, auth: Auth, login=None, card_id=None, password=None,
                  on_finish: callable = lambda *args: None):
-        super().__init__(auth, url=address)
+        super().__init__(auth, url=address, program=program)
 
         self.program: IProgram = program
 
@@ -50,17 +50,17 @@ class FirstLoad(ServerConnection):
         self._send(request)
 
     def on_response(self, data):
-        # for table in [DataBase.Schema.professors.name,
-        #               DataBase.Schema.students.name,
-        #               DataBase.Schema.groups.name,
-        #               DataBase.Schema.students_groups.name,
-        #               DataBase.Schema.disciplines.name,
-        #               DataBase.Schema.lessons.name,
-        #               DataBase.Schema.visitations.name,
-        #               DataBase.Schema.auth.name]:
-        #     print(f"loading table {table}: {data[table]}")
-        Load.loads(data)
-        self.on_finish()
+
+        session = Session()
+        for class_name in data.keys():
+            print(class_name)
+            for item in data[class_name]:
+                session.add(to_db_object(class_name, item))
+
+        session.flush()
+        session.commit()
+
+        self.on_finish(dict(login=self.login, password=self.password))
 
     def on_error(self, msg):
         self.program.window.error.emit(msg)

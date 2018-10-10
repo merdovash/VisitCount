@@ -1,11 +1,11 @@
 from datetime import datetime
 
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, QHBoxLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, \
+    QHBoxLayout, QLabel, QPushButton
 
 from Client.IProgram import IProgram
 from Client.MyQt.Time import from_index_to_time
-from Client.test import safe
 from DataBase2 import Lesson
 
 
@@ -36,7 +36,6 @@ class LessonDateChanger(QWidget):
 
         self.setLayout(self.l)
 
-    @safe
     def accept(self, b=None):
         d = self.calendar.selectedDate()
 

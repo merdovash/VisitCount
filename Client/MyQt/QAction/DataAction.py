@@ -5,7 +5,6 @@ This Module contains class working on hiding/showing horizontal header in tables
 from PyQt5.QtWidgets import QAction
 
 from Client.IProgram import IProgram
-from Client.test import safe
 
 
 class DataAction(QAction):
@@ -42,7 +41,6 @@ class DataAction(QAction):
 
         self._save_changes(row_visible)
 
-    @safe
     def _save_changes(self, row_visible):
         print(self.program.win_config)
         self.program.win_config["table_header"]["lesson_info"][str(self.row)] = not row_visible

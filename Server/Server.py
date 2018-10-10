@@ -5,7 +5,7 @@ import os
 
 from flask import Flask, make_response, request
 
-from DataBase.ServerDataBase import DataBaseWorker
+from DataBase2 import session
 from Modules.Cabinet.ServerSide import CabinetModule
 from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
 from Modules.FirstLoad.ServerSide import FirstLoadModule
@@ -18,7 +18,7 @@ templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static")
 
-db = DataBaseWorker()
+db = session
 
 # load modules
 CabinetModule(app, request, db)
@@ -234,4 +234,5 @@ def run():
     """
     run server
     """
+
     app.run(host="127.0.0.1", port=5000)

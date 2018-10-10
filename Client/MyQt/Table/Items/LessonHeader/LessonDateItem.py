@@ -2,16 +2,17 @@ from datetime import datetime
 from typing import List
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMenu, QTableWidgetItem
+from PyQt5.QtWidgets import QMenu
 
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Calendar import LessonDateChanger
 from Client.MyQt.Table.Items import AbstractContextItem
-from Client.test import safe
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderItem import \
+    LessonHeaderItem
 from DataBase2 import Lesson
 
 
-class LessonDateItem(QTableWidgetItem, AbstractContextItem):
+class LessonDateItem(LessonHeaderItem, AbstractContextItem):
     """
     item represent day of month of lesson
     """
@@ -27,7 +28,6 @@ class LessonDateItem(QTableWidgetItem, AbstractContextItem):
 
         self.visits: List['VisitItem'] = self.parent.get_column(index)
 
-    @safe
     def show_context_menu(self, pos):
         """
         override base _method
@@ -44,7 +44,6 @@ class LessonDateItem(QTableWidgetItem, AbstractContextItem):
                 menu.addAction("Отменить факт проведения занятия", self._uncomplete_lesson)
             menu.exec_(pos)
 
-    @safe
     def _move_lesson(self):
         self.calendar = LessonDateChanger(self.program, self.date, self.lesson)
         self.calendar.show()

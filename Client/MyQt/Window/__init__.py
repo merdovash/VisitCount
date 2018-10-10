@@ -2,7 +2,6 @@ from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QErrorMessage
 
 from Client.MyQt.Chart import QAnalysisDialog
-from Client.test import safe
 
 
 # TODO replace MyProgram with AbstractWindow
@@ -19,7 +18,6 @@ class AbstractWindow(QMainWindow):
 
         self.dialog = None
 
-    @safe
     def setDialog(self, dialog: QAnalysisDialog):
         """
 
@@ -33,10 +31,9 @@ class AbstractWindow(QMainWindow):
         self.dialog.showMessage(msg)
 
     @pyqtSlot(str)
-    @safe
     def on_error(self, msg):
-        # print("hello")
-        # print(threading.current_thread().name)
+        # # print("hello")
+        # # print(threading.current_thread().name)
         self.dialog = QErrorMessage(self)
         self.dialog.showMessage(msg)
 

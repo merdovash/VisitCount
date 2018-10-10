@@ -1,4 +1,5 @@
 """
+
 safsdf
 """
 import os
@@ -6,43 +7,42 @@ import sys
 from itertools import chain
 from typing import List
 
+from sqlalchemy.pool import QueuePool
+
 from DataBase.config2 import DataBaseConfig
+from Exception import NoSuchUserException
 
-root = sys.modules['__main__'].__file__
-print(sys.modules['__main__'].__file__)
+try:
+    root = sys.modules['__main__'].__file__
+    print(sys.modules['__main__'].__file__)
+except AttributeError:
+    root = "run_client.py"
 
-if root == 'run_server.py2':
-    from Server.Server import app
+_new = False
 
-    db_path = f'sqlite:////{os.path.abspath("/DataBase2/server.db")}'.replace('\\', '/')
+if root == 'run_server.py':
+    db_path = os.path.abspath('DataBase2\\server.db')
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_path
-    print(app.config['SQLALCHEMY_DATABASE_URI'])
-    from flask_sqlalchemy import SQLAlchemy
+    from sqlalchemy import create_engine
 
-    session = SQLAlchemy(app)
-    session.query = lambda x: x.query
-    Base = session.Model
+    engine = create_engine(f"sqlite:///{db_path}")
 
-    Column = session.Column
-    Integer = session.Integer
-    String = session.String
-    ForeignKey = session.ForeignKey
-    relationship = session.relationship
-    backref = session.backref
-    DateTime = session.DateTime
-    Boolean = session.Boolean
-    func = session.func
-    event = session.event
-    Table = session.Table
+    from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, \
+        Boolean, func, event
+    from sqlalchemy.ext.associationproxy import association_proxy
+    from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 
     from sqlalchemy.ext.declarative import declarative_base
 
-    metadata = declarative_base().metadata
+    # session = scoped_session(sessionmaker(bind=engine))
 
-    from sqlalchemy.ext.associationproxy import association_proxy
+    Base = declarative_base(bind=engine)
 
-elif root == 'run_client.py':
+    Session = scoped_session(sessionmaker(bind=engine))
+
+    metadata = Base.metadata
+
+else:
     import sqlalchemy
     from sqlalchemy.ext.declarative import declarative_base
 
@@ -53,35 +53,38 @@ elif root == 'run_client.py':
     from sqlalchemy.ext.associationproxy import association_proxy
     from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 
-    engine = create_engine('sqlite:///{}'.format(DataBaseConfig().db['database']), echo=False)
+    db_path = 'sqlite:///{}'.format(DataBaseConfig().db['database'])
+
+    try:
+        fh = open(db_path.split('///')[1], 'r')
+        fh.close()
+    except FileNotFoundError:
+        fh = open(db_path.split('///')[1], 'w+')
+        fh.close()
+        _new = True
+
+    engine = create_engine(db_path, echo=False, poolclass=QueuePool)
 
     Session = scoped_session(sessionmaker(bind=engine))
-    session = Session()
-
-    metadata = Base.metadata
-
-elif root == 'run_server.py':
-    db_path = os.path.abspath('DataBase2\\server.db')
-
-    from sqlalchemy import create_engine
-
-    engine = create_engine(f"sqlite:///{db_path}")
-
-    from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, func, event
-    from sqlalchemy.ext.associationproxy import association_proxy
-    from sqlalchemy.orm import sessionmaker, relationship, scoped_session
-
-    from sqlalchemy.ext.declarative import declarative_base
-
-    session = scoped_session(sessionmaker(bind=engine))
-
-    Base = declarative_base(bind=engine)
+    # session = Session()
 
     metadata = Base.metadata
 
 # from Client.Domain.Data import students_of_groups
 from DataBase2.Exception import VisitationAlreadyExist
-from Exception import NoSuchUserException
+
+
+class Connection():
+    _instance = None
+
+    @staticmethod
+    def get():
+        if Connection._instance is None:
+            Connection._instance = Session()
+        return Connection._instance
+
+
+session = Connection.get()
 
 
 class StudentsGroups(Base):
@@ -181,6 +184,8 @@ class Visitation(Base):
 
             Update.new(visit, Update.ActionType.NEW)
 
+            session.flush()
+
             session.commit()
 
         except sqlalchemy.orm.exc.FlushError:
@@ -243,8 +248,12 @@ class Auth(Base):
         return self._user
 
     @staticmethod
-    def log_in(login, password) -> 'Auth':
-        res = session.query(Auth).filter(Auth.login == login).filter(Auth.password == password).first()
+    def log_in(login, password, session=session) -> 'Auth':
+        res = session \
+            .query(Auth) \
+            .filter(Auth.login == login) \
+            .filter(Auth.password == password) \
+            .first()
 
         if res is None:
             raise NoSuchUserException()
@@ -292,8 +301,8 @@ class Lesson(Base):
     professor_id = Column(Integer, ForeignKey('professors.id'))
     discipline_id = Column(Integer, ForeignKey('disciplines.id'))
     type = Column(Integer)
-    _date = Column('date', DateTime)
-    _completed = Column('completed', Integer)
+    date = Column(DateTime)
+    completed = Column(Integer)
     room_id = Column(String)
 
     _groups = relationship('LessonsGroups')
@@ -304,34 +313,6 @@ class Lesson(Base):
     visitations = relationship('Visitation')
 
     professors = relationship('Professor')
-
-    @property
-    def completed(self):
-        """
-
-        :return: completed status of lesson
-        """
-        return self._completed
-
-    @completed.setter
-    def completed(self, status):
-        self._completed = status
-        Update.new(self)
-        session.commit()
-
-    @property
-    def date(self):
-        """
-
-        :return: date of lesson
-        """
-        return self._date
-
-    @date.setter
-    def date(self, value):
-        self._date = value
-        Update.new(self)
-        session.commit()
 
     @staticmethod
     def filter(professor: 'Professor', discipline: Discipline, group: 'Group' or List['Group']):
@@ -393,9 +374,9 @@ class Professor(Base):
     first_name = Column(String, primary_key=True)
     last_name = Column(String, primary_key=True)
     middle_name = Column(String, primary_key=True)
-    _card_id = Column('card_id', String, unique=True)
+    card_id = Column('card_id', String, unique=True)
 
-    lessons: List[Lesson] = relationship("Lesson", order_by="Lesson._date")
+    lessons: List[Lesson] = relationship("Lesson", order_by="Lesson.date")
 
     _admins = relationship('NotificationParam')
     admins = association_proxy('_admins', 'admin')
@@ -441,20 +422,6 @@ class Professor(Base):
         if self._students is None:
             self._students = set(chain.from_iterable(map(lambda x: x.students, chain.from_iterable(self.groups))))
         return self._students
-
-    @property
-    def card_id(self):
-        """
-        Need to update card ID
-        :return: card ID of student
-        """
-        return self._card_id
-
-    @card_id.setter
-    def card_id(self, value):
-        self._card_id = value
-        Update.new(self)
-        session.commit()
 
     _updates = relationship('ProfessorsUpdates')
     updates = association_proxy('_updates', 'update')
@@ -533,17 +500,13 @@ class Student(Base):
     Student
     """
 
-    @staticmethod
-    def find(card_id):
-        return session.query(Student).filter(Student.card_id == card_id).first()
-
     __tablename__ = 'students'
 
     id = Column(Integer, unique=True, autoincrement=True)
     first_name = Column(String, primary_key=True)
     last_name = Column(String, primary_key=True)
     middle_name = Column(String, primary_key=True)
-    _card_id = Column('card_id', String, unique=True)
+    card_id = Column(String)
 
     _parents = relationship('StudentsParents')
     parents = association_proxy('_parents', 'parent')
@@ -568,20 +531,6 @@ class Student(Base):
                 .filter(Group.id.in_(list(map(lambda x: x.id, self.groups)))) \
                 .all()
         return self._professors
-
-    @property
-    def card_id(self):
-        """
-
-        :return: card ID of student
-        """
-        return self._card_id
-
-    @card_id.setter
-    def card_id(self, value):
-        self._card_id = value
-        Update.new(self)
-        session.commit()
 
     def __repr__(self):
         return f"<Student(id={self.id}, card_id={self.card_id}, last_name={self.last_name}, " \
@@ -647,7 +596,8 @@ class Update(Base):
         DELETE = 1
 
     @staticmethod
-    def new(updated_object, action_type=ActionType.UPDATE, performer=None):
+    def new(updated_object, session, action_type=ActionType.UPDATE,
+            performer=None):
         """
         Creates new update and connects to professors
         :param performer:
@@ -745,9 +695,42 @@ class Update(Base):
         )
 
 
-@event.listens_for(Lesson, "before_delete")
-def before_delete(mapper, connect, target):
-    print(target, "will be deleted")
+if _new:
+    Base.metadata.create_all(engine)
+
+
+def on_update(target, initiator):
+    print(f"target: {target}, initiator: {initiator}")
+    inner_session = Session()
+    Update.new(target, action_type=Update.ActionType.UPDATE,
+               session=inner_session)
+    inner_session.flush()
+    inner_session.commit()
+
+
+event.listens_for(Student.card_id, 'modified', on_update)
+event.listens_for(Lesson.date, 'modified', on_update)
+event.listens_for(Lesson.completed, 'modified', on_update)
+event.listens_for(Professor.card_id, 'modified', on_update)
+
+
+def on_create(target, context):
+    print(f"target: {target}, initiator: {context}")
+    inner_session = Session()
+
+    inner_session.flush()
+    inner_session.commit()
+
+
+def on_add(session, instance):
+    print(f"session:{session}, instance: {instance}")
+    Update.new(instance, action_type=Update.ActionType.NEW,
+               session=session)
+
+
+event.listens_for(Session, 'after_attach', on_add)
+
+# event.listens_for(Visitation, 'load', on_create)
 
 
 if __name__ == '__main__':

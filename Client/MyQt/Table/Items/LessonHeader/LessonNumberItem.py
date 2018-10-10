@@ -1,12 +1,13 @@
 from datetime import datetime
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidgetItem
 
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderItem import \
+    LessonHeaderItem
 from Client.MyQt.Time import from_time_to_index
 
 
-class LessonNumberItem(QTableWidgetItem):
+class LessonNumberItem(LessonHeaderItem):
     """
     item represents serial number of lesson
     """

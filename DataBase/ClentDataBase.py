@@ -85,7 +85,6 @@ class ClientDataBase(DataBaseWorker):
                                         DataBase.Schema.updates.name)
 
         grouped_updates_list = sort_by_table(updates_list)
-        print(updates_list)
 
         updates = {}
         for table in grouped_updates_list:
@@ -95,5 +94,4 @@ class ClientDataBase(DataBaseWorker):
                                  ', '.join([str(i) for i in grouped_updates_list[table]])),
                 table)
 
-        print(updates)
         return updates, len(updates_list)

@@ -70,11 +70,15 @@ if __name__ == "__main__":
         window_config['modules'] = True
         window_config.sync()
 
+    kwargs = {}
+
+    if 'test' in sys.argv:
+        kwargs['test'] = True
 
     app = QApplication(sys.argv)
     app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
-    program: IProgram = MyProgram(win_config=window_config)
+    program: IProgram = MyProgram(win_config=window_config, **kwargs)
 
     sys.exit(app.exec_())

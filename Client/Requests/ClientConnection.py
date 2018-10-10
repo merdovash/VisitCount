@@ -9,7 +9,7 @@ from threading import Thread
 import requests
 from requests import post
 
-from Client.Domain import host
+from Client.IProgram import IProgram
 from Client.Types import Status, Response
 from Client.test import safe
 from DataBase2 import Auth
@@ -21,17 +21,15 @@ class ServerConnection(Thread):
     Abstract class wrapper of post request
     """
 
-    @safe
-    def __init__(self, auth: Auth, url: str):
+    def __init__(self, auth: Auth, url: str, program: IProgram):
         super().__init__(target=self._run)
         self.auth = auth
-        self.url = host() + url
+        self.url = program.host + url
 
     # cached
     def get_user(self):
         return self.auth.user
 
-    @safe
     def _send(self, data: dict):
         try:
 

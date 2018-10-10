@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import List
 
 from PyQt5.QtWidgets import QDialog
@@ -74,7 +75,10 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
     def show_parent_table(self):
         self.tableWidget_2.clear()
 
-        parents: List[Parent] = filter(lambda x: x is not None, (map(lambda x: x.parents, self.professor.students)))
+        students = self.professor.students
+        lists_of_parents = map(lambda student: student.parents, students)
+        parents: List[Parent] = chain.from_iterable(lists_of_parents)
+
         print(parents)
 
         for parent in parents:

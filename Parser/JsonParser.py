@@ -6,9 +6,12 @@ TODO:
     * encoding
 """
 import json
+from datetime import datetime, date
 
 from DataBase2 import Base
 from Exception import InvalidPOSTDataException
+
+date_format = "%Y-%m-%d %H:%M:%f"
 
 
 def to_json(obj):
@@ -25,11 +28,20 @@ def to_json(obj):
         raise NotImplementedError()
 
 
-def to_db_object(type_name, net_dict):
+def to_db_object(type_name: str, net_dict: dict):
+    """
+
+    :param type_name: название типа в orm
+    :param net_dict:
+    :return:
+    """
+    if 'date' in net_dict:
+        net_dict['date'] = datetime.strptime(net_dict['date'],
+                                             "%Y-%m-%dT%H:%M:%S")
+
     class_ = eval(f'DataBase2.{type_name}')
 
     res = class_(**net_dict)
-    print(res)
 
     return res
 
@@ -91,13 +103,15 @@ class JsonParser:
             res = "{"
             for key in obj.keys():
                 value = obj[key]
-                if any(map(lambda x: isinstance(value, x), [int, str, bool, float])) or value is None:
+                if any(map(lambda x: isinstance(value, x),
+                           [int, str, bool, float])) or value is None:
                     res += f'"{key}":"{value}",'
                 else:
                     res += f'"{key}":{JsonParser.dump(obj[key])},'
             else:
                 res = res[:-1]
             res += "}"
+
         elif isinstance(obj, list):
             res = "["
 
@@ -106,10 +120,16 @@ class JsonParser:
             else:
                 res = res[:-1]
             res += "]"
+
         elif isinstance(obj, Base):
             res = to_json(obj)
-        elif any(map(lambda x: isinstance(obj, x), [int, str, bool, float])) or obj is None:
+
+        elif isinstance(obj, (int, str, bool, float)) or obj is None:
             res = f'"{obj}"'
+
+        elif isinstance(obj, (datetime, date)):
+            res = f'"{obj.isoformat()}"'
+
         else:
             res = json.dumps(encode(obj)).encode("utf-8")
 
@@ -117,11 +137,14 @@ class JsonParser:
 
 
 def test():
-    obj = to_db_object("Student", {"last_name": "sfsdg", "first_name": "fddhgfh", "middle_name": "dsdhdhdh"})
+    obj = to_db_object("Student",
+                       {"last_name": "sfsdg", "first_name": "fddhgfh",
+                        "middle_name": "dsdhdhdh"})
     print(to_json(obj))
 
     dumped = JsonParser.dump({
-        'Student': [obj, {'fgr': [1, 2, 3, None, "13343", 1.45], 'fghn': "rftvybuhnj"}]
+        'Student': [obj, {'fgr': [1, 2, 3, None, "13343", 1.45],
+                          'fghn': "rftvybuhnj"}]
     })
     print(dumped)
 

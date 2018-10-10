@@ -3,10 +3,12 @@ from collections import namedtuple
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items.LessonHeader.LessonDateItem import LessonDateItem
 from Client.MyQt.Table.Items.LessonHeader.LessonMonthItem import MonthTableItem
-from Client.MyQt.Table.Items.LessonHeader.LessonNumberItem import LessonNumberItem
+from Client.MyQt.Table.Items.LessonHeader.LessonNumberItem import \
+    LessonNumberItem
 from Client.MyQt.Table.Items.LessonHeader.LessonTypeItem import LessonTypeItem
 from Client.MyQt.Table.Items.LessonHeader.LessonWeekDayItem import WeekDayItem
-from Client.MyQt.Table.Items.LessonHeader.LessonWeekNumberItem import WeekNumber
+from Client.MyQt.Table.Items.LessonHeader.LessonWeekNumberItem import \
+    WeekNumber
 from DataBase2 import Lesson
 
 LessonHeaderTuple = namedtuple('LessonHeaderTuple', 'month month_day week_number weekday number type')

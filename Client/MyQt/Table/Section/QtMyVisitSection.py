@@ -2,11 +2,10 @@ from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView
 
 from Client.MyQt.Table.Items import AbstractContextItem
-from Client.test import safe
 
 
 class VisitSection(QTableWidget):
-    @safe
+
     def __init__(self, *__args):
         super().__init__(*__args)
 
@@ -28,7 +27,6 @@ class VisitSection(QTableWidget):
         Shows context menu on vertical header item under mouse pointer
         :param event: point on screen
         """
-        print("Event on header")
         index = self.indexAt(event)
         row = index.row()
         item = self.verticalHeaderItem(row)
@@ -44,7 +42,6 @@ class VisitSection(QTableWidget):
         """
         index = self.indexAt(event)
         row, col = index.row(), index.column()
-        print(row, col)
         item = self.item(row, col)
 
         if isinstance(item, AbstractContextItem):

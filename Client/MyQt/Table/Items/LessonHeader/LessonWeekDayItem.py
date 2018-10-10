@@ -1,10 +1,12 @@
 from datetime import datetime
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidgetItem
+
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderItem import \
+    LessonHeaderItem
 
 
-class WeekDayItem(QTableWidgetItem):
+class WeekDayItem(LessonHeaderItem):
     """
     item represents week day of lesson
     """

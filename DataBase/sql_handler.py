@@ -139,7 +139,7 @@ class DataBase:
         @classmethod
         def tables(cls) -> List[Table]:
             attributes = [cls.__dict__[i] for i in cls.__dict__ if not i.startswith('__') and i != 'tables']
-            print(attributes)
+            # print(attributes)
             return attributes
 
         @classmethod
@@ -207,7 +207,7 @@ class DataBase:
                 for column in table.columns.values()]),
             ', ' + table.extra if table.extra != '' else ''
         )
-        print(req)
+        # print(req)
 
         cursor.execute(req)
         self.connection.commit()
@@ -254,7 +254,8 @@ class DataBase:
                 sql = message.format(*arg)
 
                 if self.config.print:
-                    print(sql)
+                    # print(sql)
+                    pass
 
                 cursor.execute(sql)
                 self.connection.commit()
@@ -266,7 +267,9 @@ class DataBase:
                 self._last_error = f'internal error @ {str(exception)}'
 
             if self.config.print:
-                print(temp)
+                # print(temp)
+                pass
+
 
         return temp
 
@@ -306,7 +309,7 @@ class DataBase:
                 FROM updates 
                 WHERE table_name='{table}' AND row_id={row_id};""")[0][0]
 
-        print(update_id)
+        # print(update_id)
 
         professors_list = self._get_professors_for_update(table, row_id, professor_id=professor_id)
 
@@ -337,7 +340,7 @@ class DataBase:
                                                               row_id)]
 
         if professor_id is not None and professor_id in professors_list:
-            print(professors_list, professor_id, professor_id in professors_list)
+            # print(professors_list, professor_id, professor_id in professors_list)
             professors_list.remove(professor_id)
 
         return professors_list
@@ -539,7 +542,7 @@ class DataBase:
             ', '.join("{name}='{value}'".format(**{'name': key, 'value': data[key]}) for key in data),
             row_id
         )
-        print(table, req)
+        # print(table, req)
         self.sql_request(req)
 
 

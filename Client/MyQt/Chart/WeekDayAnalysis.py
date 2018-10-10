@@ -12,17 +12,18 @@ class WeekDayChart(QAnalysisDialog):
             self.data_type = QAnalysisDialog.DataType.WEEK_DAY
             super().__init__(program, parent)
 
-            self.info_label.setText('На данном графике представлено распредление посещений занятий по дням недели')
-
             self.global_acc.value = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
             self.count = 7
 
             self.draw()
+
+            self.combo_box.setCurrentIndex(1)
         except Exception as e:
             print(e)
             traceback.print_exc()
 
     def format_ax(self):
+        self.ax().set_title('Распредление посещений занятий по дням недели')
         self.ax().set_ylim(0, 100)
         self.ax().set_xlim(0, 7)
 

@@ -8,8 +8,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.Reader import IReader
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
-from Client.test import safe
-from DataBase2 import Auth
+from DataBase2 import Auth, session
 
 
 class MyProgram(IProgram):
@@ -19,12 +18,16 @@ class MyProgram(IProgram):
     """
 
     def __init__(self, widget: AbstractWindow = None,
-                 win_config: Config = WindowConfig.load()):
+                 win_config: Config = WindowConfig.load(), test=False):
         self._state = {'marking_visits': False,
-                       'host': 'http://bisitor.itut.ru2323',
+                       'host': 'http://127.0.0.1' if test else 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
 
         self._reader: IReader = None
+
+        self.host = 'http://127.0.0.1:5000' if test else 'http://bisitor.itut.ru'
+
+        self.session = session
 
         self.auth = None
 
@@ -38,7 +41,6 @@ class MyProgram(IProgram):
 
         self.window.show()
 
-    @safe
     def set_window(self, widget: AbstractWindow):
         """
         Sets new window as main and only window of program
@@ -48,7 +50,6 @@ class MyProgram(IProgram):
         self.window: AbstractWindow = widget
         self.window.show()
 
-    @safe
     def reader(self) -> IReader:
         """
         Returns RFIDReader if its connected.
@@ -62,20 +63,22 @@ class MyProgram(IProgram):
                 self._reader = None
         return self._reader
 
-    @safe
-    def auth_success(self, auth: Auth):
+    def auth_success(self, auth: Auth or dict):
         """
         Switch to MainWindow
         :param auth: you have to pass Authentication to switch to MainWindow
         """
         from Client.MyQt.Window.Main import MainWindow
         print('loading MainWindow')
-        self.auth = auth
-        self.professor = auth.user
-        self.win_config.set_professor_id(auth.user.id)
-        self.set_window(MainWindow(program=self, professor=auth.user))
+        if isinstance(auth, dict):
+            self.auth = Auth.log_in(**auth)
+        else:
+            self.auth = auth
+        self.professor = self.auth.user
+        self.win_config.set_professor_id(self.auth.user.id)
+        self.set_window(MainWindow(program=self, professor=self.professor))
+        print("load completed")
 
-    @safe
     def change_user(self, *args):
         """
         Log out from MainWindow and shows AuthenticationWindow
@@ -84,10 +87,8 @@ class MyProgram(IProgram):
         self.win_config.log_out()
         self.set_window(AuthWindow(self))
 
-    @safe
     def __setitem__(self, key, value):
         self._state[key] = value
 
-    @safe
     def __getitem__(self, item):
         return self._state.get(item, None)

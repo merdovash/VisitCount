@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QMenu, QTableWidget
 from Client.Domain.Data import find
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
-from Client.test import safe
 from DataBase.Types import format_name
 from DataBase2 import Visitation, Student, Lesson
 
@@ -101,7 +100,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
                 menu.addAction("Отменить запись", self._del_visit_by_professor)
         menu.exec_()
 
-    @safe
+
     def _show_info(self):
         msg = "{} {}посетил занятие {}".format(format_name(self.student),
                                                "" if self.status == VisitItem.Status.Visited else "не ",
@@ -109,7 +108,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
         self.program.window.message.emit(msg, False)
         # RFIDReader.instance()._method = nothing
 
-    @safe
+
     def _set_visited_by_professor(self):
         if self.safe:
             if self.program.reader() is not None:
@@ -139,7 +138,14 @@ class VisitItem(MyTableItem, AbstractContextItem):
             visitation = Visitation.new(self.student, self.lesson)
             self.set_visitation(visitation)
 
+            self.program.session.add(visitation)
+
+            self.program.session.flush()
+            self.program.session.commit()
+
     def _del_visit_by_professor(self):
+        assert isinstance(self.visitation, Visitation), \
+            f"self.visitation is {type(self.visit_data)}"
         self.visitation.delete()
         self.visitation = None
         self.update()

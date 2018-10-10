@@ -1,7 +1,7 @@
 import _md5
 import random
 
-from DataBase.Authentication import Authentication
+from DataBase2 import Auth
 from Modules import Module
 from Modules.CabinetLogIn import address
 from Server import Response
@@ -11,7 +11,7 @@ class CabinetLogInModule(Module):
     def __init__(self, app, request, db):
         super().__init__(app, request, db, address)
 
-    def post(self, data, response: Response, auth: Authentication, **kwargs):
+    def post(self, data, response: Response, auth: Auth, **kwargs):
         uid = self.new_uid()
         self.db.set_session(uid=uid, account_id=auth.account_id)
         response.set_data(

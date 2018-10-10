@@ -1,12 +1,13 @@
 from datetime import datetime
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidgetItem
 
 import Date
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderItem import \
+    LessonHeaderItem
 
 
-class WeekNumber(QTableWidgetItem):
+class WeekNumber(LessonHeaderItem):
     def __init__(self, date: datetime):
         super().__init__()
         self.setTextAlignment(Qt.AlignCenter)

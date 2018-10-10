@@ -1,6 +1,5 @@
 from typing import Dict, Any
 
-from Client.Domain import Load
 from Client.IProgram import IProgram
 from Client.Requests.ClientConnection import ServerConnection
 from Client.test import safe
@@ -18,19 +17,17 @@ class Synchronize(ServerConnection):
         self.updates = Update.all()
         self.send_updates = len(self.updates)
 
-    @safe
     def _run(self):
         self._send({"user": self.get_user(),
                     "data": self.send_updates})
 
-    @safe
     def on_response(self, data: Dict[str, Any]):
         print(data)
         if self._check(data[Key.SERVER_ACCEPT_UPDATES_COUNT]):
 
             Update.delete()
 
-            Load.loads(data)
+            # Load.loads(data)
 
             accepted_updates_count = updates_len(data[Key.UPDATES])
 

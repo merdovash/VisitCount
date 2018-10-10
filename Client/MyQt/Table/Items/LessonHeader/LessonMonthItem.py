@@ -1,8 +1,10 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidgetItem
+
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderItem import \
+    LessonHeaderItem
 
 
-class MonthTableItem(QTableWidgetItem):
+class MonthTableItem(LessonHeaderItem):
     """
     item represents month of lesson
     """

@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
 from Client.IProgram import IProgram
 from Client.MyQt.Window.Main.QtMyComboBox import QMyComboBox
-from Client.test import safe
 from DataBase2 import Discipline, Group, Lesson
 
 
@@ -29,14 +28,17 @@ CurrentData = namedtuple('CurrentData', 'discipline groups lesson')
 
 
 class Selector(QWidget):
-    group_changed = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')  # actual signature (int, int)
-    lesson_changed = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')  # actual signature (int, int)
+    group_changed = pyqtSignal('PyQt_PyObject',
+                               'PyQt_PyObject')  # actual signature (int, int)
+    lesson_changed = pyqtSignal('PyQt_PyObject',
+                                'PyQt_PyObject')  # actual signature (int, int)
     data_changed = pyqtSignal()
     lesson_started = pyqtSignal(int)
     lesson_finished = pyqtSignal(int)
 
     def __init__(self, program: IProgram):
         super().__init__()
+        self.setObjectName("Selector")
 
         self.program: IProgram = program
         self.professor = program.professor
@@ -49,16 +51,19 @@ class Selector(QWidget):
         disc_label = QLabel("Дисциплина")
         disc_label.setAlignment(Qt.AlignRight)
 
-        selector_layout.addWidget(disc_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
+        selector_layout.addWidget(disc_label, 1,
+                                  alignment=Qt.AlignCenter | Qt.AlignRight)
         selector_layout.addWidget(self.discipline, 2)
 
         # group
         self.group = QMyComboBox(Group)
+        self.group.setObjectName('custom-select')
         self.group.currentIndexChanged.connect(self._group_changed)
         group_label = QLabel("Группа")
         group_label.setAlignment(Qt.AlignRight)
 
-        selector_layout.addWidget(group_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
+        selector_layout.addWidget(group_label, 1,
+                                  alignment=Qt.AlignCenter | Qt.AlignRight)
         selector_layout.addWidget(self.group, 2)
 
         # lesson
@@ -67,11 +72,11 @@ class Selector(QWidget):
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
 
-        selector_layout.addWidget(lesson_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
+        selector_layout.addWidget(lesson_label, 1,
+                                  alignment=Qt.AlignCenter | Qt.AlignRight)
         selector_layout.addWidget(self.lesson_selector, 2)
 
         self.start_button = QPushButton()
-        self.start_button.setStyleSheet("background-color: #ff8000; color: #ffffff; font-weight: bold;")
         self.start_button.setText("Начать занятие")
         self.start_button.clicked.connect(self._start_lesson)
 
@@ -95,7 +100,7 @@ class Selector(QWidget):
         self._lesson_changed(self.lesson_selector.currentIndex())
 
     # @pyqtSlot(int)
-    @safe
+
     def _discipline_changed(self, new_discipline_index):
         print('discipline_changed')
 
@@ -138,12 +143,12 @@ class Selector(QWidget):
 
     def _lesson_changed(self, new_index=None):
         column = new_index
+        if column != -1:
+            self.lesson_changed.emit(column, self.last_lesson)
 
-        self.lesson_changed.emit(column, self.last_lesson)
         self.last_lesson = column
 
     @pyqtSlot()
-    @safe
     def select_current_lesson(self):
         lesson = closest_lesson(
             self.professor.lessons,
@@ -164,7 +169,6 @@ class Selector(QWidget):
         current_lesson = closest_lesson(lessons, self.program['date_format'])
         self.lesson_selector.setCurrent(current_lesson)
 
-    @safe
     def _start_lesson(self, lesson_index):
         if self.program.reader() is not None:
             self.lesson_started.emit(self.lesson_selector.currentIndex())
@@ -177,24 +181,26 @@ class Selector(QWidget):
             self.discipline.setEnabled(False)
 
             if self.last_lesson is None:
-                self.last_lesson = self.table.lessons.index(closest_lesson(self.lesson_selector.get_data(),
-                                                                           self.program['date_format']))
+                self.last_lesson = self.table.lessons.index(
+                    closest_lesson(self.lesson_selector.get_data(),
+                                   self.program['date_format']))
 
             self.start_button.disconnect()
             self.start_button.setText("Завершить занятие")
             self.start_button.clicked.connect(self._end_lesson)
 
-            self.program.window.message.emit("Учет начался. Приложите карту студента к считывателю.", True)
+            self.program.window.message.emit(
+                "Учет начался. Приложите карту студента к считывателю.", True)
         else:
-            self.program.window.error.emit("Для учета посещений необходимо подключение считывателя.")
+            self.program.window.error.emit(
+                "Для учета посещений необходимо подключение считывателя.")
 
-    @safe
     def _end_lesson(self, lesson_index):
-        print('hello')
         if self.program.reader() is not None:
             self.program.reader().stop_read()
         else:
-            self.program.window.error.emit('Во время учета было потеряно соединение со считывателем. Учет завершен.')
+            self.program.window.error.emit(
+                'Во время учета было потеряно соединение со считывателем. Учет завершен.')
 
         self.program['marking_visits'] = False
         self.lesson_selector.setEnabled(True)

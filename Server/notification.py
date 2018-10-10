@@ -129,7 +129,7 @@ def run(database: DataBaseWorker) -> int:
         data_list = []
 
         disciplines_list = database.get_disciplines(student_id=student["id"])
-        print(student["id"], disciplines_list)
+        # print(student["id"], disciplines_list)
         for discipline in disciplines_list:
             total_lessons = database.get_the_lessons_count(student["id"], discipline["id"])
             visited_lessons = database.get_visited_lessons_count(student["id"], discipline["id"])
