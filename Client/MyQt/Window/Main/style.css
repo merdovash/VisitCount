@@ -10,6 +10,8 @@ QMyComboBox {
     margin: 0;
     subcontrol-origin: padding;
 
+    border-radius: 3px;
+
     background-color: #ffffff;
     border-style: solid ;
     border-width: 5x;
@@ -62,21 +64,29 @@ QMyComboBox QAbstractItemView:hover {
 QPushButton {
     position: relative;
 
-    display: block;
     height: 30px;
     margin: 0;
 
-    overflow: hidden;
-
     border-width: 0;
     outline: none;
-    border-radius: 2px;
+    border-radius: 3px;
 
     font-size:13px;
     font-weight: bold;
 
     background-color: #ff8000;
     color: #ecf0f1;
+
+
+
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+}
+
+QPushButton#start-lesson {
+
+    background-image: url(Client/MyQt/Window/Main/icons/baseline_launch_white_24dp.png);
+    background-repeat: no-repeat;
+    background-position: right;
 }
 
 QPushButton:hover {
@@ -121,7 +131,6 @@ QLabel {
 }
 
 QTableView {
-    border: 0.5px 0px 0.5px;
     gridline-color: white;
     background-color: #ededed;
 }

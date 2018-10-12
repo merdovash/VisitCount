@@ -78,6 +78,7 @@ class Selector(QWidget):
 
         self.start_button = QPushButton()
         self.start_button.setText("Начать занятие")
+        self.start_button.setObjectName("start-lesson")
         self.start_button.clicked.connect(self._start_lesson)
 
         selector_layout.addWidget(self.start_button, 2)

@@ -34,18 +34,6 @@ month_names = "0,Январь,Февраль,Март,Апрель,Май,Июн
     ',')
 
 
-def getLessonIndex(lessons: list, lesson_id: int) -> int:
-    """
-
-    :param lessons: list of lessons
-    :param lesson_id: id of lessons that needs to find
-    :return: index of lesson in list
-    """
-    for i in range(len(lessons)):
-        if lessons[i]["id"] == lesson_id:
-            return i
-
-
 def closest_lesson(lessons: List[Lesson]):
     """
 
@@ -244,7 +232,9 @@ class MainWindowWidget(QWidget):
         Slot!
         Runs synchronization process
         """
-        Synchronize(self.program).start()
+
+        # Synchronize(self.program).start()
+        pass
 
     def _setup_geometry(self):
         pass
@@ -321,10 +311,11 @@ class MainWindowWidget(QWidget):
 
         self.fill_table()
 
-        self.lesson_selector.disconnect()
-        self.lesson_selector.clear()
-        self.lesson_selector.addItems(lessons)
-        self.lesson_selector.currentIndexChanged.connect(self._lesson_changed)
+        self.selector.lesson_selector.disconnect()
+        self.selector.lesson_selector.clear()
+        self.selector.lesson_selector.addItems(lessons)
+        self.selector.lesson_selector.currentIndexChanged.connect(
+            self._lesson_changed)
         closest = closest_lesson(lessons)
         # self.lesson_selector.setCurrentId(closest_lesson(lessons)["id"])
 
@@ -355,8 +346,8 @@ class MainWindowWidget(QWidget):
     # @pyqtSlot(int)
 
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name="mark_current_lesson")
-    def mark_current_lesson(self, column, last_lesson):
-        assert 0 < column, f'wrong columns number: columns={column}'
+    def mark_current_lesson(self, column, last_lesson=None):
+        assert 0 <= column, f'wrong columns number: columns={column}'
         self.table.visit_table.scrollTo(
             self.table.visit_table.model().index(1, column))
 
@@ -370,12 +361,12 @@ class MainWindowWidget(QWidget):
             item.set_current_lesson(True)
 
     def _lesson_changed(self, qt_index=None):
+        index = self.table.lessons.index(
+            self.selector.lesson_selector.current())
+        self.table.lessons = sorted(self.table.lessons, key=lambda x: x.date)
+        self.mark_current_lesson(index)
 
-        current_col = getLessonIndex(self.table.lessons,
-                                     self.lesson_selector.currentId())
-        # select_current_col(current_col)
-
-        self.last_lesson = current_col
+        self.last_lesson = index
         self.table.visit_table.scrollTo(
             self.table.visit_table.model().index(1, self.last_lesson))
 
@@ -404,6 +395,9 @@ class MainWindowWidget(QWidget):
             item.update()
 
         self.program.reader().on_read(self._new_visit)
+
+        self.program.session.flush()
+        self.program.session.commit()
 
     def _new_visit(self, card_id):
         current_data = self.selector.get_current_data()

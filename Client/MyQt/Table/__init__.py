@@ -154,8 +154,8 @@ class VisitTable(QWidget, Configurable):
                 self.visit_table.setRowHidden(int(row), not visible)
                 self.percent_table.setRowHidden(int(row), not visible)
 
+        self.lessons = sorted(lessons, key=lambda x: x.date)
 
-        self.lessons = lessons
         self.visit_table.setColumnCount(len(lessons))
 
         self.visit_table.setRowCount(self.Header.COUNT)
@@ -224,7 +224,7 @@ class VisitTable(QWidget, Configurable):
         for column, lesson in enumerate(self.lessons):
             if self.visit_table.item(VisitTable.Header.WEEK_NUMBER,
                                      column).text() != self.visit_table.item(
-                    VisitTable.Header.WEEK_NUMBER, start).text():
+                VisitTable.Header.WEEK_NUMBER, start).text():
                 self.visit_table.setSpan(VisitTable.Header.WEEK_NUMBER, start,
                                          1, column - start)
                 start = column
@@ -236,7 +236,7 @@ class VisitTable(QWidget, Configurable):
         for column, lesson in enumerate(lessons):
             if self.visit_table.item(VisitTable.Header.MONTH,
                                      column).text() != self.visit_table.item(
-                    VisitTable.Header.MONTH, start).text():
+                VisitTable.Header.MONTH, start).text():
                 self.visit_table.setSpan(VisitTable.Header.MONTH, start, 1,
                                          column - start)
                 start = column

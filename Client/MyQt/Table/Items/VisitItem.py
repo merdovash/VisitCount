@@ -146,7 +146,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
     def _del_visit_by_professor(self):
         assert isinstance(self.visitation, Visitation), \
             f"self.visitation is {type(self.visit_data)}"
-        self.visitation.delete()
+        self.visitation.delete(self.program.session)
         self.visitation = None
         self.update()
 
