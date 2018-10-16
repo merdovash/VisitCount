@@ -5,8 +5,8 @@ from PyQt5.QtWidgets import QMenu, QTableWidget
 from Client.Domain.Data import find
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
-from DataBase.Types import format_name
 from DataBase2 import Visitation, Student, Lesson
+from DataBase2.Types import format_name
 
 
 class VisitItem(MyTableItem, AbstractContextItem):
@@ -79,6 +79,16 @@ class VisitItem(MyTableItem, AbstractContextItem):
             self.visit_data = [0, 0]
             self.setText("")
             self.setBackground(MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NoInfo)
+
+    def get_color(self):
+        if self.status == VisitItem.Status.Visited:
+            return MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.Visited
+
+        elif self.status == VisitItem.Status.NotVisited:
+            return MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NotVisited
+
+        elif self.status == VisitItem.Status.NoInfo:
+            return MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NoInfo
 
     def show_context_menu(self, pos):
         # TODO: insert new visits in DB

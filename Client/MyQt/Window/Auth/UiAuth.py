@@ -54,8 +54,6 @@ class Ui_AuthWindow(object):
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.password_input)
         self.verticalLayout.addLayout(self.formLayout)
         self.auth_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.auth_btn.setStyleSheet("background-color:rgb(255, 80, 0)")
-        self.auth_btn.setObjectName("auth_btn")
         self.verticalLayout.addWidget(self.auth_btn)
         self.verticalLayout_2.addLayout(self.verticalLayout)
         MainWindow.setCentralWidget(self.centralwidget)

@@ -1,10 +1,9 @@
-import traceback
 from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QLabel, \
-    QHBoxLayout
+from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, \
+    QHBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 
@@ -14,16 +13,15 @@ from Client.IProgram import IProgram
 from DataBase2 import Lesson
 
 
-def show(c, program: IProgram):
+def show(graph_window_constructor, program: IProgram):
     def x():
         window = program.window
-        try:
-            if window.dialog is not None:
-                window.dialog.done(0)
-                window.dialog = None
-            window.setDialog(c(program))
-        except Exception as e:
-            traceback.print_exc()
+        if window.dialog is not None:
+            # window.dialog.done(0)
+            window.dialog = None
+        dialog = graph_window_constructor(program)
+        dialog.setStyleSheet(program.css)
+        window.setDialog(graph_window_constructor(program))
 
     return x
 
@@ -95,7 +93,7 @@ class LessonAccumulator:
         return False
 
 
-class QAnalysisDialog(QDialog):
+class QAnalysisDialog(QWidget):
     class DataType(int):
         WEEK = 1
         WEEK_DAY = 2
@@ -103,6 +101,7 @@ class QAnalysisDialog(QDialog):
     # TODO destroy on exit (memory leak)
     def __init__(self, program: IProgram, parent=None):
         super().__init__(parent)
+        self.setStyleSheet(program.css)
         self.program: IProgram = program
         # load data
         self.acc = LessonAccumulator(lessons=self.get_lessons())
@@ -118,29 +117,28 @@ class QAnalysisDialog(QDialog):
         # parameters
         self.count = None
 
-        try:
-            self.figure = plt.figure()
-            self.canvas = FigureCanvas(self.figure)
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
 
-            # init plot type selector
-            combobox_layout = QHBoxLayout()
+        # init plot type selector
+        combobox_layout = QHBoxLayout()
 
-            self.plot_type_label = QLabel('Тип графика')
+        self.plot_type_label = QLabel('Тип графика')
 
-            self.combo_box = QComboBox()
-            self.combo_box.addItems("Ломаная,Гистограма,Диаграма размаха".split(','))
-            self.combo_box.currentIndexChanged.connect(self.draw)
+        self.combo_box = QComboBox()
+        self.combo_box.setStyleSheet(program.css)
+        self.combo_box.addItems("Ломаная,Гистограма,Диаграма размаха".split(','))
+        self.combo_box.currentIndexChanged.connect(self.draw)
 
-            combobox_layout.addWidget(self.plot_type_label)
-            combobox_layout.addWidget(self.combo_box)
+        combobox_layout.addWidget(self.plot_type_label)
+        combobox_layout.addWidget(self.combo_box)
 
-            layout = QVBoxLayout()
-            layout.addWidget(self.canvas)
+        layout = QVBoxLayout()
+        layout.addWidget(self.canvas)
 
-            layout.addLayout(combobox_layout)
-            self.setLayout(layout)
-        except Exception as e:
-            print(e)
+        layout.addLayout(combobox_layout)
+        self.setLayout(layout)
+
 
     def draw(self):
         # remove old and setup new

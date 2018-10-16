@@ -20,6 +20,9 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
 
     def __init__(self, program, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
+
+        self.setStyleSheet(kwargs.get('css'))
+
         self.setupUi(self)
         self.retranslateUi(self)
 

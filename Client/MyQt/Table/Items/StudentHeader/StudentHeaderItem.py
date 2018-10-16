@@ -1,10 +1,10 @@
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QMenu, QTableWidgetItem
+from PyQt5.QtWidgets import QMenu, QTableWidgetItem, QStyledItemDelegate
 
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import AbstractContextItem
-from DataBase.Types import format_name
 from DataBase2 import Student
+from DataBase2.Types import format_name
 
 
 class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
@@ -67,3 +67,25 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         self.program.window.message.emit("Регистрация карты остановлена", False)
         self.register_process = False
         self.program.reader().remove_temporary_function()
+
+    def have_card(self):
+        return self.student.card_id is None or self.student.card_id == 'None'
+
+
+class StudentHeaderItemDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def paint(self, QPainter, QStyleOptionViewItem, QModelIndex):
+        print('hello')
+        item = QModelIndex.data()
+
+        if isinstance(item, StudentHeaderItem):
+            if item.have_card():
+
+                QPainter.fillRect(QStyleOptionViewItem.rect,
+                                  QStyleOptionViewItem.palette.highlight())
+            else:
+                super().paint(QPainter, QStyleOptionViewItem, QModelIndex)
+        else:
+            super().paint(QPainter, QStyleOptionViewItem, QModelIndex)

@@ -75,6 +75,9 @@ if __name__ == "__main__":
     if 'test' in sys.argv:
         kwargs['test'] = True
 
+    if 'no-css' in sys.argv:
+        kwargs['css'] = False
+
     app = QApplication(sys.argv)
     app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")

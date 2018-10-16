@@ -9,7 +9,7 @@ from typing import List
 
 from sqlalchemy.pool import QueuePool
 
-from DataBase.config2 import DataBaseConfig
+from DataBase2.config2 import DataBaseConfig
 from Exception import NoSuchUserException
 
 try:
@@ -103,7 +103,8 @@ class ProfessorsUpdates(Base):
     id = Column(Integer, primary_key=True)
     professor_id = Column(Integer, ForeignKey('professors.id'),
                           primary_key=True)
-    update_id = Column(Integer, ForeignKey('updates.id'), primary_key=True)
+    update_id = Column(Integer, ForeignKey('updates.id'),
+                       primary_key=True)
 
     professor = relationship('Professor')
     update = relationship('Update')
@@ -206,6 +207,7 @@ class Visitation(Base):
         Update.new(self, session=session,
                    action_type=Update.ActionType.DELETE)
         session.delete(self)
+        session.flush()
         session.commit()
 
     def __repr__(self):
@@ -709,7 +711,7 @@ class Update(Base):
     action_type = Column(Integer, nullable=False)
     performer = Column(Integer)
 
-    _professors = relationship("ProfessorsUpdates")
+    _professors = relationship("ProfessorsUpdates", cascade="all, delete-orphan")
     professors = association_proxy('_professors', 'professor')
 
     def __init__(self, table_name, row_id, performer,

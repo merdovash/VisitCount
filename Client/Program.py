@@ -1,6 +1,7 @@
 """
 This module contains class wrapper of all global variables
 """
+import os
 
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.WindowConfig import Config
@@ -18,7 +19,8 @@ class MyProgram(IProgram):
     """
 
     def __init__(self, widget: AbstractWindow = None,
-                 win_config: Config = WindowConfig.load(), test=False):
+                 win_config: Config = WindowConfig.load(), test=False,
+                 css=True):
         self._state = {'marking_visits': False,
                        'host': 'http://127.0.0.1' if test else 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
@@ -31,9 +33,15 @@ class MyProgram(IProgram):
 
         self.auth = None
 
+        if css:
+            with open(os.path.dirname(__file__) + '\\style.css', 'r+') as f:
+                self.css = f.read()
+        else:
+            self.css = None
+
         if widget is None:
             from Client.MyQt.Window.Auth import AuthWindow
-            self.window = AuthWindow(self)
+            self.window = AuthWindow(self, css=self.css)
         else:
             self.window: AbstractWindow = widget
 
@@ -48,6 +56,7 @@ class MyProgram(IProgram):
         """
         self.window.close()
         self.window: AbstractWindow = widget
+        self.window.setStyleSheet(self.css)
         self.window.show()
 
     def reader(self) -> IReader:

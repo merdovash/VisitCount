@@ -6,7 +6,7 @@ from DataBase2 import Auth as Authentication
 class IProgram:
     __slots__ = (
     'window', 'win_config', '_reader', '_state', 'auth', 'professor',
-    'session', 'host')
+    'session', 'host', 'css')
 
     def __getitem__(self, item):
         raise NotImplementedError()

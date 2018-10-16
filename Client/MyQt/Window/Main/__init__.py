@@ -5,11 +5,10 @@ TODO:
     * fix error on relogin after changing user
 """
 import datetime
-import os
 from typing import List
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QAction
 
@@ -26,8 +25,8 @@ from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Types import valid_card
-from DataBase.Types import format_name
 from DataBase2 import Professor, Lesson, Visitation
+from DataBase2.Types import format_name
 from Modules.Synchronize.ClientSide import Synchronize
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
@@ -70,13 +69,6 @@ class MainWindow(AbstractWindow):
         self.__init_menu__()
 
         self.showMaximized()
-
-        fdb = QFontDatabase()
-        fdb.addApplicationFont(
-            os.path.dirname(__file__) + "\\fonts\\PTS55F.ttf")
-
-        with open(os.path.dirname(__file__) + '\\style.css', 'r+') as f:
-            self.setStyleSheet(f.read())
 
     def __init_menu__(self):
         menu_bar = self.menuBar()

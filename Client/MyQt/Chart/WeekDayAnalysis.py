@@ -1,5 +1,3 @@
-import traceback
-
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
@@ -8,19 +6,15 @@ from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
 
 class WeekDayChart(QAnalysisDialog):
     def __init__(self, program, parent=None):
-        try:
-            self.data_type = QAnalysisDialog.DataType.WEEK_DAY
-            super().__init__(program, parent)
+        self.data_type = QAnalysisDialog.DataType.WEEK_DAY
+        super().__init__(program, parent)
 
-            self.global_acc.value = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
-            self.count = 7
+        self.global_acc.value = {0: [100, 63], 1: [100, 64], 2: [100, 67], 3: [100, 60], 4: [100, 53], 5: [100, 44]}
+        self.count = 7
 
-            self.draw()
+        self.draw()
 
-            self.combo_box.setCurrentIndex(1)
-        except Exception as e:
-            print(e)
-            traceback.print_exc()
+        self.combo_box.setCurrentIndex(1)
 
     def format_ax(self):
         self.ax().set_title('Распредление посещений занятий по дням недели')

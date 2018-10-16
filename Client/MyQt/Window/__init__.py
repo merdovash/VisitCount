@@ -11,7 +11,7 @@ class AbstractWindow(QMainWindow):
     message = pyqtSignal(str, bool)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         self.error.connect(self.on_error)
         self.message.connect(self.on_show_message)
