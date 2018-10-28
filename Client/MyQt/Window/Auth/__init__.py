@@ -7,7 +7,6 @@ from Client.Domain.Authentication import Authentication
 from Client.Domain.ServerRequest.FirstLoad import FirstLoad
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
-from Client.MyQt.Window.Auth.QtMyLoginInput import LoginInput
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
 # from DataBase.Authentication import Authentication
 # from DataBase.ClentDataBase import ClientDataBase

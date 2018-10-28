@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 
-from Client.MyQt.Window.Auth import LoginInput
+from Client.MyQt.Widgets.LoginInput import LoginInput
 
 
 class Ui_AuthWindow(object):

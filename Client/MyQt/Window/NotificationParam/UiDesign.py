@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
-from Client.MyQt.LineEdit.LineSearch import ExtendedCombo
 from Client.MyQt.Table.Contacts import ContactTable
+from Client.MyQt.Widgets.ExtendedComboBox import ExtendedCombo
 from DataBase2 import Administration, Parent
 
 

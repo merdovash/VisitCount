@@ -1,4 +1,4 @@
-from DataBase2 import Auth, Session
+from DataBase2 import Auth, Session, ProfessorSession
 from Exception import NoSuchUserException
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
@@ -11,7 +11,7 @@ class Keys(str):
 
 
 class Module:
-    def __init__(self, app, request, db, address, func=None,
+    def __init__(self, app, request, address, func=None,
                  methods=default_methods, form=False):
         self._is_form = form
 
@@ -30,8 +30,11 @@ class Module:
                     data = self._read(request)
                     if data is not None:
                         try:
+                            print(data['user'])
                             authentication = Auth.log_in(**data['user'],
                                                          session=self.db)
+
+                            self.db = ProfessorSession(authentication.user.id, self.db)
                             self.post(data=data.get('data'), response=response,
                                       auth=authentication, **kwargs)
 
@@ -54,6 +57,7 @@ class Module:
                 'data': {}
             }
         else:
+            print(request.data)
             return JsonParser.read(
                 request.data.decode('utf8').replace("'", '"'))
 

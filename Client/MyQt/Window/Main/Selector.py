@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
 from Client.IProgram import IProgram
-from Client.MyQt.Window.Main.QtMyComboBox import QMyComboBox
+from Client.MyQt.Widgets.ComboBox import MComboBox
 from DataBase2 import Discipline, Group, Lesson
 
 
@@ -46,7 +46,7 @@ class Selector(QWidget):
         selector_layout = QHBoxLayout()
 
         # discipline
-        self.discipline = QMyComboBox(Discipline)
+        self.discipline = MComboBox(Discipline)
         self.discipline.currentIndexChanged.connect(self._discipline_changed)
         disc_label = QLabel("Дисциплина")
         disc_label.setAlignment(Qt.AlignRight)
@@ -56,7 +56,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.discipline, 2)
 
         # group
-        self.group = QMyComboBox(Group)
+        self.group = MComboBox(Group)
         self.group.setObjectName('custom-select')
         self.group.currentIndexChanged.connect(self._group_changed)
         group_label = QLabel("Группа")
@@ -67,7 +67,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.group, 2)
 
         # lesson
-        self.lesson_selector = QMyComboBox(Lesson)
+        self.lesson_selector = MComboBox(Lesson)
         self.lesson_selector.currentIndexChanged.connect(self._lesson_changed)
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
@@ -150,14 +150,15 @@ class Selector(QWidget):
         self.last_lesson = column
 
     @pyqtSlot()
-    def select_current_lesson(self):
-        lesson = closest_lesson(
-            self.professor.lessons,
-            self.program['date_format']
-        )
+    def select_current_lesson(self, lesson=None):
+        if lesson is None:
+            lesson = closest_lesson(
+                self.professor.lessons,
+                self.program['date_format']
+            )
 
         self.discipline.setCurrent(lesson.discipline)
-        self.group.setCurrent(lesson.groups)
+        self.group.setCurrent(set(lesson.groups))
         self.lesson_selector.setCurrent(lesson)
 
         # current_data = self.get_current_data()

@@ -5,8 +5,8 @@ from Modules.Cabinet import address
 
 
 class CabinetModule(Module):
-    def __init__(self, app, request, db):
-        super().__init__(app, request, db, address)
+    def __init__(self, app, request, ):
+        super().__init__(app, request, address)
 
     def post(self, data, response, auth: Auth, **kwargs):
         response.set_data({

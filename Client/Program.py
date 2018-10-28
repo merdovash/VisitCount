@@ -2,6 +2,8 @@
 This module contains class wrapper of all global variables
 """
 import os
+from pathlib import PurePath
+from typing import Union
 
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.WindowConfig import Config
@@ -34,7 +36,7 @@ class MyProgram(IProgram):
         self.auth = None
 
         if css:
-            with open(os.path.dirname(__file__) + '\\style.css', 'r+') as f:
+            with open(PurePath(os.path.dirname(__file__), 'style.css'), 'r+') as f:
                 self.css = f.read()
         else:
             self.css = None
@@ -72,7 +74,7 @@ class MyProgram(IProgram):
                 self._reader = None
         return self._reader
 
-    def auth_success(self, auth: Auth or dict):
+    def auth_success(self, auth: Union[Auth, dict]):
         """
         Switch to MainWindow
         :param auth: you have to pass Authentication to switch to MainWindow

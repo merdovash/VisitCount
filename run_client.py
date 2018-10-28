@@ -2,7 +2,6 @@ import os
 import sys
 
 import PyQt5
-from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 
 from Client.Configuartion import WindowConfig
@@ -63,6 +62,15 @@ def check_modules():
         _main(['install', 'requests'])
 
 
+def test(program):
+    from Modules.Synch.ClientSide import Synch
+    from DataBase2 import Auth
+
+    s = Synch(Auth.log_in('VAE', '123456'), program)
+
+    s.start()
+
+
 if __name__ == "__main__":
     window_config = WindowConfig.load()
     if window_config['modules'] != True:
@@ -79,9 +87,11 @@ if __name__ == "__main__":
         kwargs['css'] = False
 
     app = QApplication(sys.argv)
-    app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
+    # app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
     program: IProgram = MyProgram(win_config=window_config, **kwargs)
+
+    # test(program)
 
     sys.exit(app.exec_())

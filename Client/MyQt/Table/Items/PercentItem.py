@@ -47,7 +47,6 @@ class PercentItem(IPercentItem, QTableWidgetItem):
             self.total += item.visit_data[1]
             self.visit += item.visit_data[0]
 
-
     def refresh(self):
         self.calc()
 

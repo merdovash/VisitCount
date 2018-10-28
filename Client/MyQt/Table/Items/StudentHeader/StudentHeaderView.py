@@ -1,9 +1,10 @@
 from PyQt5.QtCore import QPoint
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QColor, QCursor
+from PyQt5.QtGui import QPainter, QColor, QMouseEvent
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem
 
 from Client.MyQt.ColorScheme import Color
+from Client.MyQt.Table.Items import AbstractContextItem
 from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
 
 
@@ -15,8 +16,8 @@ class StudentHeaderView(QHeaderView):
     no_card_color = Color.primary_light
     primary_color = Color.secondary
 
-    def __init__(self, Qt_Orientation):
-        super().__init__(Qt_Orientation)
+    def __init__(self):
+        super().__init__(Qt.Vertical)
 
         self.line_color = QColor(0, 0, 0)
         self.rect_color = QColor(255, 255, 255)
@@ -26,6 +27,24 @@ class StudentHeaderView(QHeaderView):
         self.hovered = -1
 
         self.installEventFilter(self)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.vertical_header_click)
+        self.setSectionResizeMode(QHeaderView.Fixed)
+        self.setMouseTracking(True)
+
+    def vertical_header_click(self, event: QPoint):
+        """
+        Slot
+        Shows context menu on vertical header item under mouse pointer
+        :param event: point on screen
+        """
+        print(type(event))
+        index = self.parent().indexAt(event)
+        row = index.row()
+        item = self.parent().verticalHeaderItem(row)
+        if isinstance(item, AbstractContextItem):
+            real_pos = self.mapToGlobal(event.__pos__())
+            item.show_context_menu(real_pos)
 
     def paintEvent(self, QPaintEvent):
         p = QPainter(self.viewport())
@@ -80,54 +99,24 @@ class StudentHeaderView(QHeaderView):
 
         return item.text(), rect_color, self.parent().rowHeight(row)
 
-    def some(self):
-        # for row in range(6):
-        #    if not self.parent().isRowHidden(row):
-        #        headerHeight += self.row_height
-        #    else:
-        #        hidden_row_count += 1
-        #
-        # p.drawRect(0, 0 - offset, headerWidth - 1, headerHeight)
-        # p.drawLine(0, 0 - offset, headerWidth - 1, headerHeight - offset)
-        #
-        # p.drawText(headerWidth / 3, headerHeight / 3 * 2 - offset, 'Студенты')
-        # p.drawText(headerWidth / 3 * 2, headerHeight / 3 - offset, 'Дата')
-        #:
-        pass
+    def mouseMoveEvent(self, event: QMouseEvent):
+        try:
+            _, row = self.find_item(event.localPos())
 
-    def eventFilter(self, object, event):
-        if event.type() in [10, 183, 12]:
-            try:
-                _, row = self.find_item(QCursor.pos())
+            self.set_hovered(row, True)
 
-                self.set_hovered(row)
-
-                return True
-            except:
-                self.set_hovered(-1)
-                return False
-
-        elif event.type() == 11:
-            self.set_hovered(-1)
-
-            return True
-
-        return False
+        except NoItemException:
+            self.set_hovered(-1, True)
 
     def find_item(self, pos: QPoint) -> (QTableWidgetItem, int):
-        y = pos.y()
-        current = self.mapToGlobal(self.pos()).y() - self.pos().y()
+        row = (pos.y() + self.parent().verticalOffset()) // self.row_height
 
-        for row in range(self.parent().rowCount()):
-            height = self.parent().rowHeight(row)
-            if current <= y < current + height:
-                return self.parent().horizontalHeaderItem(row), row
+        return self.parent().verticalHeaderItem(row), row
 
-            current += height
-
-        raise NoItemException('position out of range')
-
-    def set_hovered(self, index):
+    def set_hovered(self, index, pure=False):
         if self.hovered != index:
             self.hovered = index if index is not None else -1
             self.model().headerDataChanged.emit(Qt.Vertical, 0, self.parent().rowCount())
+
+        if pure:
+            self.parent().set_hover(index, -1)

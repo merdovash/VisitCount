@@ -5,8 +5,8 @@ from Modules.FirstLoad import address
 
 
 class FirstLoadModule(Module):
-    def __init__(self, app, request, db):
-        super().__init__(app, request, db, address)
+    def __init__(self, app, request):
+        super().__init__(app, request, address)
 
     def post(self, data, response, auth, **kwargs):
         print('first_load', auth)

@@ -8,13 +8,13 @@ TODO:
 import json
 from datetime import datetime, date
 
-from DataBase2 import Base
+from DataBase2 import Base, ID
 from Exception import InvalidPOSTDataException
 
 date_format = "%Y-%m-%d %H:%M:%f"
 
 
-def to_json(obj):
+def Base_to_dict(obj):
     if isinstance(obj, Base):
         res = {}
 
@@ -23,9 +23,13 @@ def to_json(obj):
         for column_name in columns:
             res[column_name] = obj.__getattribute__(column_name)
 
-        return JsonParser.dump(res)
+        return res
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(f'item {obj} is instance of {type(obj)}')
+
+
+def to_json(obj):
+    return JsonParser.dump(Base_to_dict(obj))
 
 
 def to_db_object(type_name: str, net_dict: dict):
@@ -39,7 +43,12 @@ def to_db_object(type_name: str, net_dict: dict):
         net_dict['date'] = datetime.strptime(net_dict['date'],
                                              "%Y-%m-%dT%H:%M:%S")
 
-    class_ = eval(f'DataBase2.{type_name}')
+    exec(f'from DataBase2 import {type_name}')
+
+    class_ = eval(type_name)
+
+    if 'id' in net_dict:
+        net_dict['id'] = ID(class_)
 
     res = class_(**net_dict)
 
@@ -118,7 +127,7 @@ class JsonParser:
             for item in obj:
                 res += f'{JsonParser.dump(item)},'
             else:
-                res = res[:-1]
+                res = res[:-1] if len(res) > 1 else res
             res += "]"
 
         elif isinstance(obj, Base):

@@ -10,7 +10,7 @@ from typing import List
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QAction
+    QLabel, QAction, QMenu
 
 from Client.Domain.Data import students_of_groups, find
 from Client.IProgram import IProgram
@@ -70,6 +70,9 @@ class MainWindow(AbstractWindow):
 
         self.showMaximized()
 
+    def closeEvent(self, *args, **kwargs):
+        self.program.reader().close()
+
     def __init_menu__(self):
         menu_bar = self.menuBar()
 
@@ -128,7 +131,10 @@ class MainWindow(AbstractWindow):
         file.addAction(file_exit)
 
     def _init_menu_view(self):
-        data = self.menu_bar.addMenu("Вид")
+        view: QMenu = self.menu_bar.addMenu("Вид")
+
+        data = QMenu('Заголовок таблицы')
+        view.addMenu(data)
 
         data_show_month_day = DataAction(
             ["Отображать день", "Не отображать день"],
@@ -173,6 +179,9 @@ class MainWindow(AbstractWindow):
                 self
             )
         )
+
+        view.addSeparator()
+        view.addAction('Отображать перекрестие', self.centralWidget().switch_show_table_cross)
 
     def _init_menu_updates(self):
         updates = self.menu_bar.addMenu("Синхронизация")
@@ -225,7 +234,7 @@ class MainWindowWidget(QWidget):
         Runs synchronization process
         """
 
-        # Synchronize(self.program).start()
+        Synchronize(self.program).start()
         pass
 
     def _setup_geometry(self):
@@ -267,14 +276,17 @@ class MainWindowWidget(QWidget):
 
         self.ready_draw_table.emit()
 
-    def set_current_lesson(self):
+    def set_current_lesson(self, lesson=None):
         """
         Select a lesson close to the current time.
         """
-        lessons = self.professor.lessons
-        closest = closest_lesson(lessons)
-        # self.lesson_selector.setCurrentId(getLessonIndex(self.lesson_selector.items, closest))
-        self.program['lesson'] = closest
+        if lesson is None:
+            lessons = self.professor.lessons
+            closest = closest_lesson(lessons)
+            # self.lesson_selector.setCurrentId(getLessonIndex(self.lesson_selector.items, closest))
+            self.selector.select_current_lesson(closest)
+        else:
+            self.selector.select_current_lesson(lesson)
 
     def set_current_lesson_of_current_group(self):
         """
@@ -409,3 +421,6 @@ class MainWindowWidget(QWidget):
     @pyqtSlot(int, name='end_lesson')
     def _end_lesson(self, lesson_index):
         self.start_sync.emit()
+
+    def switch_show_table_cross(self):
+        self.table.switch_show_table_cross()

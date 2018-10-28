@@ -1,5 +1,6 @@
-import cx_Freeze
 import sys
+
+import cx_Freeze
 
 base = None
 print(sys.platform)

@@ -10,3 +10,6 @@ class IReader:
 
     def remove_temporary_function(self):
         raise NotImplementedError()
+
+    def close(self):
+        raise NotImplementedError()

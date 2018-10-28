@@ -6,8 +6,6 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 from Client.Configuartion.Configurable import Configurable
 from Client.Configuartion.WindowConfig import Config
 from Client.IProgram import IProgram
-from Client.MyQt.Table.Items.LessonHeader import LessonDateItem, \
-    LessonNumberItem, LessonTypeItem, LessonHeaderFactory
 from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderItem
 from Client.MyQt.Table.Items.PercentHeader import PercentHeaderItem
 from Client.MyQt.Table.Items.PercentItem import PercentItem
@@ -56,8 +54,6 @@ class VisitTable(QWidget, Configurable):
         self._setup_config(program.win_config)
         self.inner_layout = QHBoxLayout()
         self.inner_layout.setSpacing(0)
-
-        self.lesson_header_factory = LessonHeaderFactory(self, program)
 
         self.header_height = 0
         self.first = True
@@ -149,9 +145,8 @@ class VisitTable(QWidget, Configurable):
         self.visit_table.setColumnCount(len(lessons))
 
         for col, lesson in enumerate(self.lessons):
-            self.visit_table.setHorizontalHeaderItem(col, LessonHeaderItem(lesson))
+            self.visit_table.setHorizontalHeaderItem(col, LessonHeaderItem(lesson, self.program))
             self.visit_table.setColumnWidth(col, 15)
-
 
     def add_student(self, student: Student):
         """
@@ -322,3 +317,9 @@ class VisitTable(QWidget, Configurable):
 
             self.percent_table.item(row, 0).refresh()
             self.visit_table.item(self.rowCount() - 1, col).refresh()
+
+    def set_current_lesson(self, lesson):
+        self.parent().set_current_lesson(lesson)
+
+    def switch_show_table_cross(self):
+        self.visit_table.switch_show_table_cross()

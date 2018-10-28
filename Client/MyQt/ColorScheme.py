@@ -4,10 +4,20 @@ from PyQt5.QtGui import QColor
 class Color:
 
     @classmethod
-    def to_accent(self, color):
-        color.setRed(color.red() - 16)
-        color.setGreen(color.green() - 16)
-        color.setBlue(color.blue() - 16)
+    def hover(cls, color):
+        c = QColor(color)
+
+        c.setRed(min(color.red() + 16, 255))
+        c.setGreen(min(color.green() + 16, 255))
+        c.setBlue(min(color.blue() + 16, 255))
+
+        return c
+
+    @classmethod
+    def to_accent(cls, color):
+        color.setRed(max(color.red() - 16, 0))
+        color.setGreen(max(color.green() - 16, 0))
+        color.setBlue(max(color.blue() - 16, 0))
 
         return color
 

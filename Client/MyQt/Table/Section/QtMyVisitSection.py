@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, QPoint, QRectF
-from PyQt5.QtGui import QPainter, QPen, QColor
+from PyQt5.QtCore import Qt, QPoint, QRectF, QEvent
+from PyQt5.QtGui import QPainter, QPen, QColor, QCursor
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton
 
 from Client.MyQt.ColorScheme import Color
@@ -40,14 +40,9 @@ class VisitSection(QTableWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.table_right_click)
 
-        vertical_header = StudentHeaderView(Qt.Vertical)
-        self.setVerticalHeader(vertical_header)
+        self.setVerticalHeader(StudentHeaderView())
 
-        vertical_header.setContextMenuPolicy(Qt.CustomContextMenu)
-        vertical_header.customContextMenuRequested.connect(self.vertical_header_click)
-
-        horizontalHeader = LessonHeaderView()
-        self.setHorizontalHeader(horizontalHeader)
+        self.setHorizontalHeader(LessonHeaderView())
         self.horizontalHeader().setVisible(True)
 
         self.setCornerWidget(CornerWidget())
@@ -55,22 +50,14 @@ class VisitSection(QTableWidget):
         self.row_hovered = -1
         self.col_hovered = -1
 
+        self.row_height = 20
+        self.col_width = 35
+
         self.installEventFilter(self)
 
         self.setMouseTracking(True)
 
-    def vertical_header_click(self, event: QPoint):
-        """
-        Slot
-        Shows context menu on vertical header item under mouse pointer
-        :param event: point on screen
-        """
-        index = self.indexAt(event)
-        row = index.row()
-        item = self.verticalHeaderItem(row)
-        if isinstance(item, AbstractContextItem):
-            real_pos = self.mapToGlobal(event.__pos__())
-            item.show_context_menu(real_pos)
+        self.show_cross = True
 
     def table_right_click(self, event: QPoint):
         """
@@ -83,7 +70,7 @@ class VisitSection(QTableWidget):
         item = self.item(row, col)
 
         if isinstance(item, AbstractContextItem):
-            real_pos = self.mapToGlobal(event.__pos__())
+            real_pos = QCursor.pos()
             item.show_context_menu(real_pos)
 
     def mouseMoveEvent(self, event):
@@ -102,6 +89,13 @@ class VisitSection(QTableWidget):
             width = self.columnWidth(col)
             for row, st in enumerate(self.parent().students):
                 item = self.item(row, col)
+                self.draw_item(p, item, row, col, started_point)
+                started_point[1] += self.rowHeight(row)
+
+            for row in range(len(self.parent().students), len(self.parent().students) + 2):
+                item = self.item(row, col)
+                if isinstance(item, PercentItem):
+                    item.refresh()
                 self.draw_item(p, item, row, col, started_point)
                 started_point[1] += self.rowHeight(row)
             else:
@@ -126,55 +120,56 @@ class VisitSection(QTableWidget):
 
     def get_color(self, item, row, col):
         if isinstance(item, VisitItem):
-            if row == self.row_hovered or col == self.col_hovered:
+            if self.show_cross and (row == self.row_hovered or col == self.col_hovered):
                 return Color.to_accent(QColor(item.get_color()))
             else:
                 return QColor(item.get_color())
         else:
-            if row == self.row_hovered or col == self.col_hovered:
+            if self.show_cross and (row == self.row_hovered or col == self.col_hovered):
                 return Color.secondary_light_accent
             else:
                 return Color.secondary_light
 
     def eventFilter(self, object, event):
-        # if event.type() == 10 or event.type() == 183:
-        #     try:
-        #         item, row, col = self.find_item(QCursor.pos())
-        #         self.set_hover(row, col)
-        #         return True
-        #     except IndexError:
-        #         self.set_hover(-1, -1)
-        #         return True
-        #
-        # elif event.type() == 11:
-        #     self.set_hover(-1, -1)
-        #     return True
+        if event.type() == QEvent.MouseMove:
+            item, row, col = self.find_item(event.pos())
+            self.set_hover(row, col)
+            return True
 
         return False
 
     def find_item(self, pos: QPoint):
-        target_x = pos.x()
-        target_y = pos.y()
+        def find_row(target_y):
+            current_y = - self.verticalOffset()
 
-        current_x = - self.horizontalOffset()
-        current_y = - self.verticalOffset()
+            for row in range(self.rowCount()):
+                height = self.rowHeight(row)
+                if current_y <= target_y <= current_y + height:
+                    return row
 
-        for row in range(self.rowCount()):
-            height = self.rowHeight(row)
-            if current_y <= target_y <= current_y + height:
-                for col in range(self.columnCount()):
-                    width = self.columnWidth(col)
-                    if current_x <= target_x <= current_x + width:
-                        return self.item(row, height), row, col
-                    current_x += width
-                else:
-                    raise IndexError('position out of col')
-            current_y += height
-        else:
-            raise IndexError('position out of row')
+                current_y += height
+            else:
+                return -1
+
+        def find_col(target_x):
+            current_x = - self.horizontalOffset()
+
+            for col in range(self.columnCount()):
+                width = self.columnWidth(col)
+                if current_x <= target_x <= current_x + width:
+                    return col
+                current_x += width
+            else:
+                return -1
+
+        row, col = find_row(pos.y()), find_col(pos.x())
+        return self.item(row, col), row, col
 
     def set_hover(self, row, col):
-        if self.row_hovered != row or self.col_hovered != col:
+        if self.row_hovered != row \
+                or self.col_hovered != col \
+                or (row == -1 and self.row_hovered != -1) \
+                or (col == -1 and self.col_hovered != -1):
             self.row_hovered = row
             self.col_hovered = col
 
@@ -185,6 +180,18 @@ class VisitSection(QTableWidget):
                                           self.model().index(self.columnCount() - 1, self.rowCount() - 1))
 
             self.viewport().repaint()
+
+    def set_row_hover(self, row):
+        self.set_hover(row, self.col_hovered)
+
+    def set_col_hover(self, col):
+        self.set_hover(self.row_hovered, col)
+
+    def select_current_lesson(self, lesson):
+        self.parent().set_current_lesson(lesson)
+
+    def switch_show_table_cross(self):
+        self.show_cross = not self.show_cross
 
     # def eventFilter(self, obj, event):
     #    if event.type() != QtCore.QEvent.Paint or not isinstance(obj, QtWidgets.QAbstractButton):

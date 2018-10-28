@@ -1,12 +1,11 @@
-from DataBase.sql_handler import DataBase
 from Logger import Logger
 from Modules import Module
 from Modules.Synchronize import address, Key, updates_len
 
 
 class SynchronizeModule(Module):
-    def __init__(self, app, request, db: DataBase):
-        super().__init__(app, request, db, address)
+    def __init__(self, app, request, ):
+        super().__init__(app, request, address)
 
     def post(self, data, response, auth, **kwargs):
         if auth.user_type == 1:

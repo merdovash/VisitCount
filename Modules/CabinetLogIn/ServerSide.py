@@ -8,8 +8,8 @@ from Server import Response
 
 
 class CabinetLogInModule(Module):
-    def __init__(self, app, request, db):
-        super().__init__(app, request, db, address)
+    def __init__(self, app, request):
+        super().__init__(app, request, address)
 
     def post(self, data, response: Response, auth: Auth, **kwargs):
         uid = self.new_uid()

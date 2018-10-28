@@ -9,6 +9,7 @@ from DataBase2 import session
 from Modules.Cabinet.ServerSide import CabinetModule
 from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
 from Modules.FirstLoad.ServerSide import FirstLoadModule
+from Modules.Synch.ServerSide import Sycnh
 from Modules.Synchronize.ServerSide import SynchronizeModule
 from Modules.Synchronize2.ServerSide import Synchronize2Module
 from Server.Response import Response
@@ -21,11 +22,12 @@ app = Flask(__name__, static_folder=path + "/static")
 db = session
 
 # load modules
-CabinetModule(app, request, db)
-FirstLoadModule(app, request, db)
-SynchronizeModule(app, request, db)
-Synchronize2Module(app, request, db)
-CabinetLogInModule(app, request, db)
+CabinetModule(app, request)
+FirstLoadModule(app, request)
+SynchronizeModule(app, request)
+Synchronize2Module(app, request)
+Sycnh(app, request)
+CabinetLogInModule(app, request)
 
 print(path)
 

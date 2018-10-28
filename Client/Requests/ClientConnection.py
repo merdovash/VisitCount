@@ -13,6 +13,7 @@ from Client.IProgram import IProgram
 from Client.Types import Status, Response
 from Client.test import safe
 from DataBase2 import Auth
+from Exception import NoSuchUserException
 from Parser.JsonParser import JsonParser
 
 
@@ -22,20 +23,25 @@ class ServerConnection(Thread):
     """
 
     def __init__(self, auth: Auth, url: str, program: IProgram):
-        super().__init__(target=self._run)
-        self.auth = auth
+        super().__init__(target=self.run)
+        self.auth = None
+        self.login = auth.login
+        self.password = auth.password
         self.url = program.host + url
 
     # cached
     def get_user(self):
         return self.auth.user
 
+    def get_auth(self):
+        return self.auth
+
     def _send(self, data: dict):
         try:
 
             request = post(url=self.url,
                            headers={"Content-Type": "application/json"},
-                           data=JsonParser.dump(data))
+                           data=JsonParser.dump(data).encode('utf-8'))
 
             res_status = Status(request.text)
             # print(r.text)
@@ -52,6 +58,13 @@ class ServerConnection(Thread):
                 1. Не удалось аутентифицировать локально (возможно неверно введен логин или пароль) <br>
                 2. Удаленный сервер недоступен <br> <br> 
                 Ошибка: {str(connection_error)}""")
+
+    def run(self):
+        try:
+            self.auth = Auth.log_in(self.login, self.password)
+        except NoSuchUserException:
+            self.auth = Auth(self.login, self.password)
+        self._run()
 
     @safe
     def _run(self):

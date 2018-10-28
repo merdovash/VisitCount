@@ -1,22 +1,26 @@
 from typing import Tuple
 
 from PyQt5.QtCore import Qt, QRectF, QPoint, QEvent
-from PyQt5.QtGui import QPainter, QColor, QPen, QCursor
-from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QMenu
+from PyQt5.QtGui import QPainter, QColor, QPen, QHelpEvent, QMouseEvent
+from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QMenu, QToolTip
 
 import Date
+from Client import IProgram
 from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Time import from_time_to_index
+from Client.MyQt.Widgets.LessonDateChanger import LessonDateChanger
 from DataBase2 import Lesson
 
 
 class LessonHeaderItem(QTableWidgetItem):
-    def __init__(self, lesson: Lesson, *__args):
+    def __init__(self, lesson: Lesson, program: IProgram, *__args):
         super().__init__(*__args)
-
+        self.program = program
         self.lesson = lesson
 
         dt = lesson.date
+
+        self.date = dt
 
         self.month = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')[
             dt.month]
@@ -26,8 +30,27 @@ class LessonHeaderItem(QTableWidgetItem):
         self.number = str(from_time_to_index(dt))
         self.type = ['Л', 'лр', 'п'][lesson.type]
 
+    def unstart(self):
+        self.lesson.completed = False
+
+        self.tableWidget().viewport().repaint()
+
+    def move_lesson(self):
+        self.calendar = LessonDateChanger(self.program, self.date, self.lesson)
+        self.calendar.show()
+
 
 class LessonHeaderView(QHeaderView):
+    class Header(int):
+        MONTH = 0
+        WEEK_NUMBER = 1
+        DAY = 2
+        WEEKDAY = 3
+        LESSON = 4
+        LESSONTYPE = 5
+
+        COUNT = 6
+
     border_pen = QPen(QColor(187, 187, 187))
     border_pen.setWidthF(0.5)
 
@@ -36,12 +59,12 @@ class LessonHeaderView(QHeaderView):
     def __init__(self):
         super().__init__(Qt.Horizontal)
 
-        self.item_width = 15
-        self.item_heigth = 19
+        self.item_width = 35
+        self.item_height = 19
 
         self.text_offset = 2, 16
 
-        self.setFixedHeight(self.item_heigth * 5)
+        self.setFixedHeight(self.item_height * 6)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
@@ -49,6 +72,27 @@ class LessonHeaderView(QHeaderView):
         self.hovered = -1
 
         self.installEventFilter(self)
+
+        self.setSectionResizeMode(QHeaderView.Fixed)
+        self.setMouseTracking(True)
+
+        self._show = [True in range(LessonHeaderView.Header.COUNT)]
+        self.show = [self.set_show_row(i, None) for i in range(LessonHeaderView.Header.COUNT)]
+
+        self.show_cross = True
+
+    def set_show_cross(self, b):
+        assert isinstance(b, bool), f'{b} is not a bool'
+        self.show_cross = b
+
+    def set_show_row(self, i, b):
+        def _show_run(b):
+            self._show[i] = b
+
+        if b is None:
+            return _show_run
+        else:
+            self._show[i] = b
 
     def paintEvent(self, QPaintEvent):
         current_month = None
@@ -109,9 +153,9 @@ class LessonHeaderView(QHeaderView):
 
     def draw_item(self, painter: QPainter, text: str, index: Tuple[int, int], width: int, offset: int, hovered: bool):
         x = index[0]
-        y = index[1] * self.item_heigth
-        rect = QRectF(x - offset, y, width, self.item_heigth)
-        painter.fillRect(rect, Color.secondary_accent if hovered else self.background_color)
+        y = index[1] * self.item_height
+        rect = QRectF(x - offset, y, width, self.item_height)
+        painter.fillRect(rect, Color.secondary_accent if hovered and self.show_cross else self.background_color)
 
         painter.setPen(QPen(QColor(0, 0, 0), ))
         painter.drawText(rect, Qt.AlignCenter, text)
@@ -121,42 +165,44 @@ class LessonHeaderView(QHeaderView):
 
     def contextMenu(self, point: QPoint):
         menu = QMenu()
-        pos = QCursor.pos()
+        # pos = point.pos
 
-        item, _ = self.find_item(pos)
-        if item.lesson.completed:
-            menu.addAction("Отменить факт проведения занятия")
-        menu.addAction("Перенести занятие")
-        menu.exec(pos)
+        item, _, _ = self.find_item(point)
+        if isinstance(item, LessonHeaderItem):
+            if item.lesson.completed:
+                menu.addAction("Отменить факт проведения занятия", item.unstart)
+            menu.addAction("Перенести занятие", item.move_lesson)
+            menu.addAction('Выбрать занятие', lambda: self.parent().select_current_lesson(item.lesson))
+            menu.exec(self.mapToGlobal(point))
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        try:
+            _, col, _ = self.find_item(event.localPos())
+
+            self.set_hovered(col, True)
+
+            QToolTip.hideText()
+
+        except:
+            self.set_hovered(-1, True)
 
     def eventFilter(self, object, event: QEvent, *args, **kwargs):
-        if event.type() == 10 or event.type() == 183:
-            _, col = self.find_item(QCursor.pos())
-            self.set_hovered(col)
-
-            return True
-
-        elif event.type() == 11:
-            self.set_hovered(-1)
-
-            return True
-
-        elif event.type() == QEvent.MouseButtonPress:
-            pass
+        if event.type() == QEvent.ToolTip:
+            pos = QHelpEvent(event).globalPos()
+            item, col, row = self.find_item(QHelpEvent(event).pos())
+            QToolTip.showText(pos, ['Месяц', 'Номер недели', 'День', 'День недели', 'Номер пары', 'Тип занятия'][row])
 
         return False
 
-    def find_item(self, pos: QPoint) -> (LessonHeaderItem, int):
-        x = pos.x()
-        current = self.pos().x() - self.parent().horizontalOffset() + self.parent().pos().x()
-        for col in range(self.parent().columnCount()):
-            width = self.parent().columnWidth(col)
-            if current <= x <= current + width:
-                return self.parent().horizontalHeaderItem(col), col
-            current += width
-        raise IndexError("click is out of range")
+    def find_item(self, pos: QPoint) -> (LessonHeaderItem, int, int):
+        col = (pos.x() + self.parent().horizontalOffset()) // self.item_width
+        row = pos.y() // self.item_height
 
-    def set_hovered(self, index):
+        return self.parent().horizontalHeaderItem(col), col, row
+
+    def set_hovered(self, index, pure=False):
         if index != self.hovered:
             self.hovered = index if index is not None else -1
             self.model().headerDataChanged.emit(Qt.Horizontal, 0, self.parent().columnCount())
+        if pure:
+            self.parent().set_hover(-1, index)

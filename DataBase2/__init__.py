@@ -5,7 +5,7 @@ safsdf
 import os
 import sys
 from itertools import chain
-from typing import List
+from typing import List, Union
 
 from sqlalchemy.pool import QueuePool
 
@@ -20,12 +20,16 @@ except AttributeError:
 
 _new = False
 
+print(os.path.basename(root))
+root = os.path.basename(root)
 if root == 'run_server.py':
     db_path = os.path.abspath('DataBase2\\server.db')
 
-    from sqlalchemy import create_engine
+    from sqlalchemy import create_engine, ForeignKey, Boolean
 
-    engine = create_engine(f"sqlite:///{db_path}")
+    engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor")
+
+    _new = True
 
     from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, \
         Boolean, func, event
@@ -38,7 +42,7 @@ if root == 'run_server.py':
 
     Base = declarative_base(bind=engine)
 
-    Session = scoped_session(sessionmaker(bind=engine))
+    Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
 
     metadata = Base.metadata
 
@@ -74,6 +78,14 @@ else:
 # from Client.Domain.Data import students_of_groups
 from DataBase2.Exception import VisitationAlreadyExist
 
+
+def ProfessorSession(professor_id, session):
+    if session is None:
+        s = Session()
+    else:
+        s = session
+    setattr(s, 'professor_id', professor_id)
+    return s
 
 class Connection():
     _instance = None
@@ -139,6 +151,11 @@ class Visitation(Base):
     """
     Visitation
     """
+
+    def __init__(self, **kwargs):
+        self.lesson_id = kwargs['lesson_id']
+        self.student_id = kwargs['student_id']
+        self.id = ID(self)
 
     __tablename__ = 'visitations'
 
@@ -234,9 +251,9 @@ class Auth(Base):
     __tablename__ = 'auth5'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    login = Column(String, primary_key=True, unique=True)
-    password = Column(String, primary_key=True)
-    uid = Column(String, unique=True)
+    login = Column(String(40), primary_key=True, unique=True)
+    password = Column(String(40), primary_key=True)
+    uid = Column(String(40), unique=True)
     user_type = Column(Integer)
     user_id = Column(Integer)
 
@@ -248,6 +265,7 @@ class Auth(Base):
 
         :return: Professor or Student
         """
+        session = Session()
         if self._user is None:
             if self.user_type == 0:
                 self._user = session.query(Student).filter(
@@ -255,10 +273,12 @@ class Auth(Base):
             elif self.user_type == 1:
                 self._user = session.query(Professor).filter(
                     Professor.id == self.user_id).first()
+
         return self._user
 
     @staticmethod
-    def log_in(login, password, session=session) -> 'Auth':
+    def log_in(login, password, session=session, **kwargs) -> 'Auth':
+        session = Session()
         res = session \
             .query(Auth) \
             .filter(Auth.login == login) \
@@ -266,7 +286,7 @@ class Auth(Base):
             .first()
 
         if res is None:
-            raise NoSuchUserException()
+            raise NoSuchUserException(f'user with login={login} and password={password} not found')
 
         return res
 
@@ -283,7 +303,7 @@ class Discipline(Base):
     __tablename__ = 'disciplines'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    name = Column(String, primary_key=True)
+    name = Column(String(40), primary_key=True)
 
     lessons = relationship('Lesson')
 
@@ -316,7 +336,7 @@ class Lesson(Base):
     type = Column(Integer)
     date = Column(DateTime)
     completed = Column(Integer)
-    room_id = Column(String)
+    room_id = Column(String(40))
 
     _groups = relationship('LessonsGroups')
     groups = association_proxy('_groups', 'group')
@@ -373,10 +393,10 @@ class Administration(Base):
     __tablename__ = 'administrations'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    first_name = Column(String, primary_key=True)
-    last_name = Column(String, primary_key=True)
-    middle_name = Column(String, primary_key=True)
-    email = Column(String)
+    first_name = Column(String(40), primary_key=True)
+    last_name = Column(String(40), primary_key=True)
+    middle_name = Column(String(40), primary_key=True)
+    email = Column(String(40))
 
     notification = relationship('NotificationParam')
     professors = association_proxy('notification', 'professor')
@@ -389,10 +409,10 @@ class Professor(Base):
     __tablename__ = 'professors'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    first_name = Column(String, primary_key=True)
-    last_name = Column(String, primary_key=True)
-    middle_name = Column(String, primary_key=True)
-    card_id = Column('card_id', String, unique=True)
+    first_name = Column(String(40), primary_key=True)
+    last_name = Column(String(40), primary_key=True)
+    middle_name = Column(String(40), primary_key=True)
+    card_id = Column('card_id', String(40), unique=True)
 
     lessons: List[Lesson] = relationship("Lesson", order_by="Lesson.date")
 
@@ -506,7 +526,7 @@ class Group(Base):
     __tablename__ = 'groups'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    name = Column(String, primary_key=True)
+    name = Column(String(40), primary_key=True)
 
     _students = relationship('StudentsGroups')
     students = association_proxy('_students', 'student')
@@ -526,10 +546,10 @@ class Student(Base):
     __tablename__ = 'students'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    first_name = Column(String, primary_key=True)
-    last_name = Column(String, primary_key=True)
-    middle_name = Column(String, primary_key=True)
-    card_id = Column(String)
+    first_name = Column(String(40), primary_key=True)
+    last_name = Column(String(40), primary_key=True)
+    middle_name = Column(String(40), primary_key=True)
+    card_id = Column(String(40))
 
     _parents = relationship('StudentsParents')
     parents = association_proxy('_parents', 'parent')
@@ -599,11 +619,11 @@ class Parent(Base):
     __tablename__ = "parents"
 
     id = Column(Integer, primary_key=True)
-    first_name = Column(String)
-    last_name = Column(String)
-    middle_name = Column(String)
+    first_name = Column(String(40))
+    last_name = Column(String(40))
+    middle_name = Column(String(40))
     sex = Column(Integer)
-    email = Column(String)
+    email = Column(String(100))
 
     _students = relationship("StudentsParents")
     students = association_proxy('_students', 'student')
@@ -635,7 +655,7 @@ class Update(Base):
 
         def make():
             update = Update(id=ID(Update),
-                            table_name=updated_object.__tablename__,
+                            table_name=type(updated_object).__name__,
                             row_id=updated_object.id,
                             action_type=action_type,
                             performer=performer)
@@ -660,6 +680,8 @@ class Update(Base):
 
             return update
 
+        return_ = None
+
         if action_type == Update.ActionType.DELETE:
             old_create = session.query(Update) \
                 .filter(Update.table_name == updated_object.__tablename__) \
@@ -670,7 +692,7 @@ class Update(Base):
             if old_create is not None:
                 session.delete(old_create)
             else:
-                return make()
+                return_ = make()
         else:
             old_update = session \
                 .query(Update) \
@@ -679,7 +701,9 @@ class Update(Base):
                 Update.row_id == updated_object.id).all()
 
             if len(old_update) == 0:
-                return make()
+                return_ = make()
+
+        return return_
 
     @staticmethod
     def all(professor=None):
@@ -706,7 +730,7 @@ class Update(Base):
     __tablename__ = 'updates'
 
     id = Column(Integer, unique=True, autoincrement=True)
-    table_name = Column(String, primary_key=True)
+    table_name = Column(String(40), primary_key=True)
     row_id = Column(Integer, primary_key=True)
     action_type = Column(Integer, nullable=False)
     performer = Column(Integer)
@@ -758,16 +782,20 @@ if _new:
 
 
 @event.listens_for(Lesson.completed, 'set')
-def on_update(target, value, oldvalue, initiator):
-    print(f"update action: session:{value}, old_value: {oldvalue} ,"
+@event.listens_for(Lesson.date, 'set')
+@event.listens_for(Student.card_id, 'set')
+def on_update(target: Union[Lesson, Student], value, oldvalue, initiator):
+    print(f"update action: value:{value}, old_value: {oldvalue} ,"
           f"target: {target}, initiator: {initiator}")
 
-    # Update.new(target, action_type=Update.ActionType.UPDATE,
-    #            session=Session())
+    Update.new(target,
+               action_type=Update.ActionType.UPDATE,
+               session=Session.object_session(target),
+               performer=getattr(Session.object_session(target), 'professor_id', None))
 
 
-@event.listens_for(Visitation, 'after_insert')
-def on_add(mapper, connection, target):
+@event.listens_for(Visitation, 'before_insert')
+def on_add(mapper, session, target):
     print(f"session:{session}, mapper: {mapper}, target: {target}")
     Update.new(target, action_type=Update.ActionType.NEW,
                session=Session())

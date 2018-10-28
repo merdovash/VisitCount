@@ -63,6 +63,8 @@ class RFIDReader(IReader, threading.Thread):
         super().__init__()
         self.status = RFIDReader.NotFound
 
+        self.daemon = True
+
         for i in range(12):
             try:
                 self.connection = serial.Serial('COM' + str(i))
@@ -96,3 +98,6 @@ class RFIDReader(IReader, threading.Thread):
 
     def remove_temporary_function(self):
         self._method = self.temp
+
+    def close(self):
+        self.state = False

@@ -9,9 +9,8 @@ from Modules.Synchronize2.ClientSide import Synchronize2
 
 
 class Synchronize(ServerConnection):
-    @safe
     def __init__(self, program: IProgram):
-        super().__init__(program.auth, program['host'] + address)
+        super().__init__(program.auth, address, program)
         self.program: IProgram = program
 
         self.updates = Update.all()
