@@ -101,7 +101,7 @@ class StudentHeaderView(QHeaderView):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         try:
-            _, row = self.find_item(event.localPos())
+            _, row = self.find_item(event.pos())
 
             self.set_hovered(row, True)
 
@@ -109,7 +109,19 @@ class StudentHeaderView(QHeaderView):
             self.set_hovered(-1, True)
 
     def find_item(self, pos: QPoint) -> (QTableWidgetItem, int):
-        row = (pos.y() + self.parent().verticalOffset()) // self.row_height
+        def find_row(target_y):
+            current_y = - self.parent().verticalOffset()
+
+            for row in range(self.parent().rowCount()):
+                height = self.parent().rowHeight(row)
+                if current_y <= target_y <= current_y + height:
+                    return row
+
+                current_y += height
+            else:
+                return -1
+
+        row = find_row(pos.y())
 
         return self.parent().verticalHeaderItem(row), row
 
