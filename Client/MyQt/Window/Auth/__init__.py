@@ -3,16 +3,16 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QDialog, \
     QErrorMessage
 
-from Client.Domain.Authentication import Authentication
-from Client.Domain.ServerRequest.FirstLoad import FirstLoad
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
+from Domain import Action
+from Domain.Action import InvalidLogin, InvalidPassword
+
+
 # from DataBase.Authentication import Authentication
 # from DataBase.ClentDataBase import ClientDataBase
 # from Modules.FirstLoad.ClientSide import FirstLoad
-from DataBase2 import Auth
-from Exception import NoSuchUserException
 
 
 class AuthWindow(AbstractWindow, Ui_AuthWindow):
@@ -61,16 +61,18 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
             self.program.reader().on_read(imaged_value)
 
     def auth(self, *args):
+        login = self.login_input.login()
+        password = self.password_input.text()
         try:
-            a = Authentication(login=self.login_input.login(), password=self.password_input.text())
+            a = Action.log_in(login, password)
 
-            self.auth_success.emit(a)
-        except NoSuchUserException:
-            FirstLoad(program=self.program,
-                      auth=Auth(login=self.login_input.login(), password=self.password_input.text()),
-                      login=self.login_input.login(),
-                      password=self.password_input.text(),
-                      on_finish=self.auth_success.emit)
+            self.auth_success.emit(dict(login=login, password=password))
+        except InvalidLogin:
+            Action.first_load(login, password, self.program.host,
+                              on_finish=self.auth_success.emit,
+                              on_error=self.program.window.error.emit)
+        except InvalidPassword as e:
+            self.error.emit(str(e))
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         print("keypressEvent", a0.key(), QtCore.Qt.Key_Enter)

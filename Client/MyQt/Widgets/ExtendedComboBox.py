@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import QComboBox, QCompleter
 
-from Client.Domain.Data import student_info
+from Domain.Data import student_info
 
 
 class UserItem(QStandardItem):

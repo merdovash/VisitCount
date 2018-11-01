@@ -18,37 +18,37 @@ class FirstLoadModule(Module):
             response.set_error('no such privileges')
 
     def first_load_data(self, professor_id):
-        return dict(Auth=self.db
+        return dict(Auth=self.session
                     .query(Auth)
                     .filter(Auth.user_type == UserType.PROFESSOR)
                     .filter(Auth.user_id == professor_id)
                     .all(),
-                    Professor=self.db
+                    Professor=self.session
                     .query(Professor)
                     .filter(Professor.id == professor_id).all(),
-                    Lesson=self.db
+                    Lesson=self.session
                     .query(Lesson)
                     .filter(Lesson.professor_id == professor_id)
                     .all(),
-                    LessonsGroups=self.db
+                    LessonsGroups=self.session
                     .query(LessonsGroups)
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)
                     .all(),
-                    Group=self.db
+                    Group=self.session
                     .query(Group)
                     .join(LessonsGroups)
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)
                     .all(),
-                    StudentsGroups=self.db
+                    StudentsGroups=self.session
                     .query(StudentsGroups)
                     .join(Group)
                     .join(LessonsGroups)
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)
                     .all(),
-                    Student=self.db
+                    Student=self.session
                     .query(Student)
                     .join(StudentsGroups)
                     .join(Group)
@@ -56,12 +56,12 @@ class FirstLoadModule(Module):
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)
                     .all(),
-                    Discipline=self.db
+                    Discipline=self.session
                     .query(Discipline)
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)
                     .all(),
-                    Visitation=self.db
+                    Visitation=self.session
                     .query(Visitation)
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)

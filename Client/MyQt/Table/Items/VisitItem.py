@@ -2,11 +2,11 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMenu, QTableWidget
 
-from Client.Domain.Data import find
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
 from DataBase2 import Visitation, Student, Lesson
 from DataBase2.Types import format_name
+from Domain.Data import find
 
 
 class VisitItem(MyTableItem, AbstractContextItem):

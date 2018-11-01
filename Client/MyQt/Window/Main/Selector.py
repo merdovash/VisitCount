@@ -92,7 +92,7 @@ class Selector(QWidget):
         self.load_data()
 
     def load_data(self):
-        self.discipline.addItems(self.professor.disciplines)
+        self.discipline.addItems(Discipline.of(self.professor))
 
     @pyqtSlot()
     def on_ready_draw_table(self):
@@ -107,7 +107,7 @@ class Selector(QWidget):
 
         professor = self.program.professor
 
-        groups = professor.groups
+        groups = Group.of(self.discipline.current())
 
         current_lesson = closest_lesson(professor.lessons,
                                         self.program['date_format'])

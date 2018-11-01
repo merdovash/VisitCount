@@ -62,15 +62,6 @@ def check_modules():
         _main(['install', 'requests'])
 
 
-def test(program):
-    from Modules.Synch.ClientSide import Synch
-    from DataBase2 import Auth
-
-    s = Synch(Auth.log_in('VAE', '123456'), program)
-
-    s.start()
-
-
 if __name__ == "__main__":
     window_config = WindowConfig.load()
     if window_config['modules'] != True:

@@ -13,7 +13,7 @@ class CabinetLogInModule(Module):
 
     def post(self, data, response: Response, auth: Auth, **kwargs):
         uid = self.new_uid()
-        self.db.set_session(uid=uid, account_id=auth.account_id)
+        self.session.set_session(uid=uid, account_id=auth.account_id)
         response.set_data(
             {
                 "uid": uid,
@@ -28,7 +28,7 @@ class CabinetLogInModule(Module):
         """
         number = (random.random() * 100000000000000000) % 13082761331670031
         value = _md5.md5(str(number).encode()).hexdigest()
-        while not self.db.free_uid(value):
+        while not self.session.free_uid(value):
             number = (random.random() * 100000000000000000) % 13082761331670031
             value = _md5.md5(str(number).encode()).hexdigest()
         return value

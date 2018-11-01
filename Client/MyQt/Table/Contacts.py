@@ -3,8 +3,8 @@ from operator import xor
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QComboBox
 
-from Client.Domain.Data import student_info
 from DataBase2 import Administration, Parent
+from Domain.Data import student_info
 
 
 class Header(int):

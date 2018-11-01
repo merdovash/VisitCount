@@ -13,7 +13,7 @@ class Sycnh(Module):
         new_id_map = {}
 
         print('enter', data)
-        with self.db.no_autoflush:
+        with self.session.no_autoflush:
             for action_type in [Update.ActionType.UPDATE, Update.ActionType.NEW, Update.ActionType.DELETE]:
                 changes = data[str(action_type)]
 
@@ -26,7 +26,7 @@ class Sycnh(Module):
                         if action_type == Update.ActionType.UPDATE:
                             exec(f'from DataBase2 import {table}')
                             TableModel = eval(table)
-                            object_ = self.db.query(TableModel).filter(TableModel.id == row['id']).first()
+                            object_ = self.session.query(TableModel).filter(TableModel.id == row['id']).first()
 
                             columns = list(map(lambda x: x.name, object_.__table__._columns))
 
@@ -39,12 +39,12 @@ class Sycnh(Module):
                                     setattr(object_, column_name, new_obj_value)
 
                         if action_type == Update.ActionType.DELETE:
-                            object_ = self.db.query(eval(table)).filter(eval(table).id == row['id']).first()
+                            object_ = self.session.query(eval(table)).filter(eval(table).id == row['id']).first()
 
-                            self.db.delete(object_)
+                            self.session.delete(object_)
 
-        self.db.commit()
-        self.db.flush()
+        self.session.commit()
+        self.session.flush()
 
         print('map', new_id_map)
         response.set_data(new_id_map)

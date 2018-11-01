@@ -9,11 +9,7 @@ from threading import Thread
 import requests
 from requests import post
 
-from Client.IProgram import IProgram
 from Client.Types import Status, Response
-from Client.test import safe
-from DataBase2 import Auth
-from Exception import NoSuchUserException
 from Parser.JsonParser import JsonParser
 
 
@@ -22,22 +18,23 @@ class ServerConnection(Thread):
     Abstract class wrapper of post request
     """
 
-    def __init__(self, auth: Auth, url: str, program: IProgram):
+    UserBlock = 'user'
+
+    def __init__(self, login, password, url, **kwargs):
         super().__init__(target=self.run)
         self.auth = None
-        self.login = auth.login
-        self.password = auth.password
-        self.url = program.host + url
+        self.login = login
+        self.password = password
+        self.url = url
 
-    # cached
-    def get_user(self):
-        return self.auth.user
-
-    def get_auth(self):
-        return self.auth
+        self.on_error = kwargs.get("on_error", self.on_error)
+        self.on_finish = kwargs.get("on_finish", self.on_finish)
+        self.on_response = kwargs.get('on_response', self.on_response)
 
     def _send(self, data: dict):
         try:
+            if ServerConnection.UserBlock not in data.keys():
+                data[ServerConnection.UserBlock] = dict(login=self.login, password=self.password)
 
             request = post(url=self.url,
                            headers={"Content-Type": "application/json"},
@@ -60,28 +57,28 @@ class ServerConnection(Thread):
                 Ошибка: {str(connection_error)}""")
 
     def run(self):
-        try:
-            self.auth = Auth.log_in(self.login, self.password)
-        except NoSuchUserException:
-            self.auth = Auth(self.login, self.password)
         self._run()
 
-    @safe
+    @classmethod
     def _run(self):
         raise NotImplementedError()
 
-    @safe
-    def on_response(self, data):
+    @classmethod
+    def on_response(cls, data):
         """
         abstract method
         :param data:
         """
         raise NotImplementedError()
 
-    @safe
-    def on_error(self, msg):
+    @classmethod
+    def on_error(cls, msg):
         """
         abstract method
         :param msg:
         """
+        raise NotImplementedError()
+
+    @classmethod
+    def on_finish(cls):
         raise NotImplementedError()
