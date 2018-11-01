@@ -8,7 +8,7 @@ TODO:
 import json
 from datetime import datetime, date
 
-from DataBase2 import Base, ID
+from DataBase2 import Base
 from Exception import InvalidPOSTDataException
 
 date_format = "%Y-%m-%d %H:%M:%f"
@@ -46,9 +46,6 @@ def to_db_object(type_name: str, net_dict: dict):
     exec(f'from DataBase2 import {type_name}')
 
     class_ = eval(type_name)
-
-    if 'id' in net_dict:
-        net_dict['id'] = ID(class_)
 
     res = class_(**net_dict)
 

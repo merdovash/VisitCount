@@ -4,7 +4,7 @@ from typing import List
 from PyQt5.QtWidgets import QDialog
 
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
-from DataBase2 import Administration, Professor, UserType, Parent
+from DataBase2 import Administration, Professor, UserType, Parent, Student
 
 
 class NotificationWindow(QDialog, Ui_NotificationWindow):
@@ -28,7 +28,7 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
         self.new_user_type_combo_box.currentIndexChanged.connect(self.on_user_type_changed)
         self.new_user_type_combo_box.setCurrentIndex(2)
 
-        self.student.setItems(professor.students)
+        self.student.setItems(Student.of(professor))
 
         self.tableWidget.set_professor(self.professor)
 

@@ -1,8 +1,9 @@
-from Client.IProgram import IProgram
+from datetime import datetime
+from pydoc import locate
+
 from Client.Requests.ClientConnection import ServerConnection
-from DataBase2 import Auth, Session
+from DataBase2 import Session
 from Modules.FirstLoad import address
-from Parser.JsonParser import to_db_object
 
 
 class FirstLoad(ServerConnection):
@@ -10,60 +11,30 @@ class FirstLoad(ServerConnection):
         ByLogin = 0
         ByCard = 1
 
-    def __init__(self, program, auth: Auth, login=None, card_id=None, password=None,
-                 on_finish: callable = lambda *args: None):
-        super().__init__(auth, url=address, program=program)
-
-        self.program: IProgram = program
-
-        self.password = password
-        if card_id is not None:
-            self.auth_type = FirstLoad.AuthType.ByCard
-            self.card_id = card_id
-        elif login is not None:
-            self.auth_type = FirstLoad.AuthType.ByLogin
-            self.login = login
-        else:
-            raise Exception("expected card_id or login parameter")
-
-        self.on_finish = on_finish
-
-    def get_request_body(self):
-        if self.auth_type == FirstLoad.AuthType.ByLogin:
-            return {'type': 'first',
-                    'user': {
-                        'login': self.login,
-                        'password': self.password
-                        }
-                    }
-        elif self.auth_type == FirstLoad.AuthType.ByCard:
-            return {'type': 'first',
-                    'user': {
-                        'card_id': self.card_id,
-                        'password': self.password
-                        }
-                    }
+    def __init__(self, host, login, password, **kwargs):
+        super().__init__(login, password, host + address, **kwargs)
 
     def _run(self):
-        request = self.get_request_body()
-        print(request)
-        self._send(request)
+        self._send({})
 
     def on_response(self, data):
 
         session = Session()
         for class_name in data.keys():
-            print(class_name)
-            for item in data[class_name]:
-                session.add(to_db_object(class_name, item))
+            mapper = locate(f'DataBase2.{class_name}')
+            mappings = data[class_name]
+            print(class_name, mapper)
+
+            if class_name == 'Lesson':
+                for i, item in enumerate(mappings):
+                    mappings[i]['date'] = datetime.strptime(item['date'], "%Y-%m-%dT%H:%M:%S")
+
+            session.bulk_insert_mappings(mapper, mappings)
 
         session.flush()
         session.commit()
 
         self.on_finish(dict(login=self.login, password=self.password))
-
-    def on_error(self, msg):
-        self.program.window.error.emit(msg)
 
 # if __name__ == "__main__":
 #     f = FirstLoad(card_id="61157", password="123456")

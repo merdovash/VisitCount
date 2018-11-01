@@ -3,7 +3,6 @@ This module contains class wrapper of all global variables
 """
 import os
 from pathlib import PurePath
-from typing import Union
 
 from Client.Configuartion import WindowConfig
 from Client.Configuartion.WindowConfig import Config
@@ -11,7 +10,8 @@ from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.Reader import IReader
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
-from DataBase2 import Auth, session
+from DataBase2 import Session
+from Domain import Action
 
 
 class MyProgram(IProgram):
@@ -31,7 +31,7 @@ class MyProgram(IProgram):
 
         self.host = 'http://127.0.0.1:5000' if test else 'http://bisitor.itut.ru'
 
-        self.session = session
+        self.session = Session()
 
         self.auth = None
 
@@ -74,17 +74,14 @@ class MyProgram(IProgram):
                 self._reader = None
         return self._reader
 
-    def auth_success(self, auth: Union[Auth, dict]):
+    def auth_success(self, auth: dict):
         """
         Switch to MainWindow
         :param auth: you have to pass Authentication to switch to MainWindow
         """
         from Client.MyQt.Window.Main import MainWindow
         print('loading MainWindow')
-        if isinstance(auth, dict):
-            self.auth = Auth.log_in(**auth)
-        else:
-            self.auth = auth
+        self.auth = Action.log_in(**auth)
         self.professor = self.auth.user
         self.win_config.set_professor_id(self.auth.user.id)
         self.set_window(MainWindow(program=self, professor=self.professor))

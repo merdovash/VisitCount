@@ -8,9 +8,8 @@ from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 
 # from Main.DataBase.GlobalStatistic import Statistic
-from Client.Domain.Data import students_of_groups
 from Client.IProgram import IProgram
-from DataBase2 import Lesson
+from DataBase2 import Lesson, Student
 
 
 def show(graph_window_constructor, program: IProgram):
@@ -31,7 +30,7 @@ class LessonData:
         self.lesson = lesson
         self.param = param
         self.visit = len(self.lesson.visitations)
-        self.total = len(students_of_groups(self.lesson.groups))
+        self.total = len(Student.of(lesson))
 
     def __repr__(self):
         return "(lesson: {}, param: {}, visit: {}/{})".format(self.lesson, self.param, self.visit, self.total)

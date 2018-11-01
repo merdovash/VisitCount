@@ -1,5 +1,6 @@
 from DataBase2 import Auth, Session, ProfessorSession
-from Exception import NoSuchUserException
+from Domain import Action
+from Domain.Action import InvalidLogin, InvalidPassword
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
@@ -15,7 +16,7 @@ class Module:
                  methods=default_methods, form=False):
         self._is_form = form
 
-        self.db = None
+        self.session = None
         request_type = address[1:]
 
         if func is not None:
@@ -23,7 +24,7 @@ class Module:
 
         @app.route(address, methods=["POST"], endpoint=address[1:])
         def auth(**kwargs):
-            self.db = Session()
+            self.session = Session()
             if 'POST' in methods:
                 if request.method == 'POST':
                     response = Response(request_type)
@@ -31,15 +32,16 @@ class Module:
                     if data is not None:
                         try:
                             print(data['user'])
-                            authentication = Auth.log_in(**data['user'],
-                                                         session=self.db)
+                            authentication = Action.log_in(**data['user'], session=self.session)
 
-                            self.db = ProfessorSession(authentication.user.id, self.db)
+                            self.session = ProfessorSession(authentication.user.id, self.session)
                             self.post(data=data.get('data'), response=response,
                                       auth=authentication, **kwargs)
 
-                        except NoSuchUserException as e:
-                            response.set_error('No such user')
+                        except InvalidLogin as e:
+                            response.set_error(str(e))
+                        except InvalidPassword as e:
+                            response.set_error(str(e))
                     else:
                         response.set_error(
                             "you send no data: {}".format(request.value))

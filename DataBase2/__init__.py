@@ -4,13 +4,17 @@ safsdf
 """
 import os
 import sys
-from itertools import chain
 from typing import List, Union
 
+from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
+    DateTime, Boolean, event
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 from sqlalchemy.pool import QueuePool
 
 from DataBase2.config2 import DataBaseConfig
-from Exception import NoSuchUserException
+from Domain.functools.List import flat, unique
 
 try:
     root = sys.modules['__main__'].__file__
@@ -23,20 +27,9 @@ _new = False
 print(os.path.basename(root))
 root = os.path.basename(root)
 if root == 'run_server.py':
-    db_path = os.path.abspath('DataBase2\\server.db')
-
-    from sqlalchemy import create_engine, ForeignKey, Boolean
-
-    engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor")
+    engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8")
 
     _new = True
-
-    from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, \
-        Boolean, func, event
-    from sqlalchemy.ext.associationproxy import association_proxy
-    from sqlalchemy.orm import sessionmaker, relationship, scoped_session
-
-    from sqlalchemy.ext.declarative import declarative_base
 
     # session = scoped_session(sessionmaker(bind=engine))
 
@@ -47,18 +40,11 @@ if root == 'run_server.py':
     metadata = Base.metadata
 
 else:
-    import sqlalchemy
-    from sqlalchemy.ext.declarative import declarative_base
+    db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
 
-    Base = declarative_base()
+    engine = create_engine(db_path, echo=False, poolclass=QueuePool)
 
-    from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, \
-        Boolean, func, event
-    from sqlalchemy import create_engine
-    from sqlalchemy.ext.associationproxy import association_proxy
-    from sqlalchemy.orm import sessionmaker, relationship, scoped_session
-
-    db_path = 'sqlite:///{}'.format(DataBaseConfig().db['database'])
+    Base = declarative_base(bind=engine)
 
     try:
         fh = open(db_path.split('///')[1], 'r')
@@ -68,15 +54,10 @@ else:
         fh.close()
         _new = True
 
-    engine = create_engine(db_path, echo=False, poolclass=QueuePool)
-
-    Session = scoped_session(sessionmaker(bind=engine))
+    Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
     # session = Session()
 
     metadata = Base.metadata
-
-# from Client.Domain.Data import students_of_groups
-from DataBase2.Exception import VisitationAlreadyExist
 
 
 def ProfessorSession(professor_id, session):
@@ -87,24 +68,14 @@ def ProfessorSession(professor_id, session):
     setattr(s, 'professor_id', professor_id)
     return s
 
-class Connection():
-    _instance = None
-
-    @staticmethod
-    def get():
-        if Connection._instance is None:
-            Connection._instance = Session()
-        return Connection._instance
-
-
-session = Connection.get()
-
 
 class StudentsGroups(Base):
     __tablename__ = 'students_groups'
     id = Column(Integer, primary_key=True)
-    student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
-    group_id = Column(Integer, ForeignKey('groups.id'), primary_key=True)
+    student_id = Column(Integer, ForeignKey('students.id'))
+    group_id = Column(Integer, ForeignKey('groups.id'))
+
+    UniqueConstraint('student_id', 'group_id', name='students_groups_UK')
 
     student = relationship('Student')
     group = relationship('Group')
@@ -113,18 +84,13 @@ class StudentsGroups(Base):
 class ProfessorsUpdates(Base):
     __tablename__ = 'professors_updates'
     id = Column(Integer, primary_key=True)
-    professor_id = Column(Integer, ForeignKey('professors.id'),
-                          primary_key=True)
-    update_id = Column(Integer, ForeignKey('updates.id'),
-                       primary_key=True)
+    professor_id = Column(Integer, ForeignKey('professors.id'))
+    update_id = Column(Integer, ForeignKey('updates.id'))
+
+    UniqueConstraint('professor_id', 'update_id', name='professor_update_UK')
 
     professor = relationship('Professor')
     update = relationship('Update')
-
-    def __init__(self, **kwargs):
-        self.id = ID(self)
-        self.professor_id = kwargs.get('professor_id')
-        self.update_id = kwargs.get('update_id')
 
 
 class LessonsGroups(Base):
@@ -152,83 +118,21 @@ class Visitation(Base):
     Visitation
     """
 
-    def __init__(self, **kwargs):
-        self.lesson_id = kwargs['lesson_id']
-        self.student_id = kwargs['student_id']
-        self.id = ID(self)
-
     __tablename__ = 'visitations'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    student_id = Column(Integer,
-                        ForeignKey('students.id', ondelete="RESTRICT"),
-                        primary_key=True)
-    lesson_id = Column(Integer,
-                       ForeignKey('lessons.id', ondelete="RESTRICT"),
-                       primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey('students.id', ondelete="RESTRICT"))
+    lesson_id = Column(Integer, ForeignKey('lessons.id', ondelete="RESTRICT"))
+
+    UniqueConstraint('student_id', 'lesson_id', 'visitation_UK')
 
     lesson = relationship('Lesson')
     student = relationship('Student')
 
-    _professor = None
-
-    @property
-    def professors(self):
-        """
-
-        :return: all professors of this visitation
-        """
-        if self._professor is None:
-            self._professor = session.query(Professor) \
-                .join(Lesson) \
-                .join(Visitation) \
-                .filter(Visitation.id == self.id) \
-                .all()
-        return self._professor
-
-    @staticmethod
-    def new(student: 'Student', lesson: 'Lesson'):
-        """
-        Creates new visitation and update.
-        :param student:
-        :param lesson:
-        :return:
-        """
-
-        row_id = ID(Visitation)
-
-        visit = Visitation(student_id=student.id, lesson_id=lesson.id,
-                           id=row_id)
-
-        try:
-            session.add(visit)
-
-            Update.new(visit, Update.ActionType.NEW)
-
-            session.flush()
-
-            session.commit()
-
-        except sqlalchemy.orm.exc.FlushError:
-            session.rollback()
-            raise VisitationAlreadyExist()
-
-        finally:
-            return visit
-
-    def delete(self, session):
-        """
-        deletes this visitation
-        """
-
-        Update.new(self, session=session,
-                   action_type=Update.ActionType.DELETE)
-        session.delete(self)
-        session.flush()
-        session.commit()
+    professors = association_proxy('lesson', 'professor')
 
     def __repr__(self):
-        return f'<Visitation(student_id={self.student_id},' \
+        return f'<Visitation(id={self.id}, student_id={self.student_id},' \
                f' lesson_id={self.lesson_id})>'
 
 
@@ -239,20 +143,15 @@ class UserType(int):
     ADMIN = 3
 
 
-def ID(table):
-    max_index = session.query(func.max(table.id)).first()[0]
-    return max_index + 1 if max_index else 1
-
-
 class Auth(Base):
     """
     Authentication table
     """
     __tablename__ = 'auth5'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    login = Column(String(40), primary_key=True, unique=True)
-    password = Column(String(40), primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    login = Column(String(40), unique=True)
+    password = Column(String(40))
     uid = Column(String(40), unique=True)
     user_type = Column(Integer)
     user_id = Column(Integer)
@@ -276,20 +175,6 @@ class Auth(Base):
 
         return self._user
 
-    @staticmethod
-    def log_in(login, password, session=session, **kwargs) -> 'Auth':
-        session = Session()
-        res = session \
-            .query(Auth) \
-            .filter(Auth.login == login) \
-            .filter(Auth.password == password) \
-            .first()
-
-        if res is None:
-            raise NoSuchUserException(f'user with login={login} and password={password} not found')
-
-        return res
-
     def __repr__(self):
         return f"<Auth(id={self.id}," \
                f" user_type={self.user_type}," \
@@ -307,21 +192,19 @@ class Discipline(Base):
 
     lessons = relationship('Lesson')
 
-    _groups = None
-
-    @property
-    def groups(self):
-        """
-
-        :return: group of discipline
-        """
-        if self._groups is None:
-            self._groups = set(map(lambda x: x.groups, self.lessons))
-        return self._groups
-
     def __repr__(self):
         return f"<Discipline(id={self.id}," \
                f" name={self.name})>"
+
+    @staticmethod
+    def of(obj) -> list:
+        if isinstance(obj, Lesson):
+            return [obj.discipline]
+        elif isinstance(obj, Professor):
+            return unique(flat([lesson.discipline for lesson in obj.lessons]))
+        else:
+            raise NotImplementedError(type(obj))
+
 
 
 class Lesson(Base):
@@ -374,22 +257,6 @@ class Administration(Base):
     """
     Administration user
     """
-
-    @staticmethod
-    def new(last_name, first_name, middle_name, email, professor):
-        admin = Administration(last_name=last_name,
-                               first_name=first_name,
-                               middle_name=middle_name,
-                               email=email,
-                               id=ID(Administration))
-        session.add(admin)
-        NotificationParam.new(professor, admin)
-        Update.new(admin, Update.ActionType.NEW)
-
-        session.commit()
-        print('admins after new', session.query(Administration).all(),
-              session.dirty, admin)
-
     __tablename__ = 'administrations'
 
     id = Column(Integer, unique=True, autoincrement=True)
@@ -419,50 +286,8 @@ class Professor(Base):
     _admins = relationship('NotificationParam')
     admins = association_proxy('_admins', 'admin')
 
-    @property
-    def professors(self):
-        """
-        Need to update function
-        :return: self
-        """
-        return [self]
-
     # disciplines
     _disciplines = None
-
-    @property
-    def disciplines(self):
-        """
-
-        :return: list of disciplines
-        """
-        if self._disciplines is None:
-            self._disciplines = list(
-                set(map(lambda x: x.discipline, self.lessons)))
-        return self._disciplines
-
-    # groups
-    _groups = None
-
-    @property
-    def groups(self):
-        """
-
-        :return: list of groups
-        """
-        if self._groups is None:
-            self._groups = list(map(lambda y: list(y), list(
-                set(map(lambda x: frozenset(x.groups), self.lessons)))))
-        return self._groups
-
-    _students = None
-
-    @property
-    def students(self):
-        if self._students is None:
-            self._students = set(chain.from_iterable(
-                map(lambda x: x.students, chain.from_iterable(self.groups))))
-        return self._students
 
     _updates = relationship('ProfessorsUpdates')
     updates = association_proxy('_updates', 'update')
@@ -478,21 +303,6 @@ class NotificationParam(Base):
     Notification
     """
 
-    @staticmethod
-    def new(professor: Professor, admin: Administration):
-        """
-        creates new contact from professor and admin
-        add new update
-        :param professor:
-        :param admin:
-        :return:
-        """
-        np = NotificationParam(professor_id=professor.id, admin_id=admin.id,
-                               active=True, id=ID(NotificationParam))
-        session.add(np)
-        Update.new(np, Update.ActionType.NEW)
-        return np
-
     __tablename__ = 'notifications'
 
     id = Column(Integer, primary_key=True)
@@ -503,20 +313,6 @@ class NotificationParam(Base):
     admin = relationship('Administration', lazy='select')
 
     professors = relationship('Professor')
-
-    @property
-    def active(self):
-        """
-
-        :return: active status
-        """
-        return self._active
-
-    @active.setter
-    def active(self, val: bool):
-        self._active = val
-        Update.new(self, Update.ActionType.UPDATE)
-        session.commit()
 
 
 class Group(Base):
@@ -536,6 +332,23 @@ class Group(Base):
 
     def __repr__(self):
         return f"<Group(id={self.id}, name={self.name})>"
+
+    @staticmethod
+    def of(obj, flat_list=False) -> list:
+        if isinstance(obj, Lesson):
+            return flat(obj.groups) if flat_list else obj.groups
+        elif isinstance(obj, Professor):
+            if flat_list:
+                return flat(unique([lesson.groups for lesson in obj.lessons]))
+            else:
+                return unique([lesson.groups for lesson in obj.lessons])
+        elif isinstance(obj, Discipline):
+            if flat_list:
+                raise NotImplementedError(f'{type(obj)}, flat_list=True')
+            else:
+                return unique([Group.of(lesson) for lesson in obj.lessons])
+        else:
+            raise NotImplementedError(type(obj))
 
 
 class Student(Base):
@@ -561,61 +374,26 @@ class Student(Base):
 
     _professors = None
 
-    @property
-    def professors(self):
-        """
-
-        :return: professors of student
-        """
-        if self._professors is None:
-            self._professors = session.query(Professor) \
-                .join(Lesson) \
-                .join(Group) \
-                .filter(Group.id.in_(list(map(lambda x: x.id, self.groups)))) \
-                .all()
-        return self._professors
-
     def __repr__(self):
         return f"<Student(id={self.id}, card_id={self.card_id}," \
                f" last_name={self.last_name}, first_name={self.first_name}, " \
                f"middle_name={self.middle_name})>"
 
+    @staticmethod
+    def of(obj) -> List['Student']:
+        if isinstance(obj, list):
+            return flat([Student.of(o) for o in unique(obj)])
+        elif isinstance(obj, Group):
+            return sorted(obj.students, key=lambda student: student.last_name)
+        elif isinstance(obj, Lesson):
+            return flat(map(lambda group: Student.of(group), obj.groups))
+        elif isinstance(obj, Professor):
+            return flat(map(lambda lesson: Student.of(lesson), obj.lessons))
+        else:
+            raise NotImplementedError(type(obj))
+
 
 class Parent(Base):
-    @staticmethod
-    def new(student, last_name, first_name, middle_name, email, sex,
-            professor=None):
-        existing: Parent = session \
-            .query(Parent) \
-            .filter(Parent.last_name == last_name) \
-            .filter(Parent.first_name == first_name) \
-            .filter(Parent.middle_name == middle_name).filter(
-            Parent.email == email) \
-            .first()
-
-        if existing is not None:
-            existing.students.append(student)
-        else:
-            new_parent = Parent(last_name=last_name, first_name=first_name,
-                                middle_name=middle_name, email=email,
-                                id=ID(Parent), sex=sex)
-
-            assosiation = StudentsParents()
-            assosiation.student = student
-            assosiation.parent = new_parent
-
-            session.add(new_parent)
-            session.add(assosiation)
-
-        list_of_new = session.dirty
-
-        print(list_of_new)
-        for new_object in session.dirty:
-            Update.new(new_object, action_type=Update.ActionType.NEW,
-                       performer=professor)
-
-        session.commit()
-
     __tablename__ = "parents"
 
     id = Column(Integer, primary_key=True)
@@ -629,122 +407,32 @@ class Parent(Base):
     students = association_proxy('_students', 'student')
 
 
+class UpdateType(int):
+    """
+    Update type
+    """
+    NEW = 2
+    UPDATE = 0
+    DELETE = 1
+
+
 class Update(Base):
     """
     Update
     """
 
-    class ActionType(int):
-        """
-        Update type
-        """
-        NEW = 2
-        UPDATE = 0
-        DELETE = 1
-
-    @staticmethod
-    def new(updated_object, session, action_type=ActionType.UPDATE,
-            performer=None):
-        """
-        Creates new update and connects to professors
-        :param performer:
-        :param updated_object:
-        :param action_type:
-        :return:
-        """
-
-        def make():
-            update = Update(id=ID(Update),
-                            table_name=type(updated_object).__name__,
-                            row_id=updated_object.id,
-                            action_type=action_type,
-                            performer=performer)
-
-            professors_affected = updated_object.professors
-            if isinstance(professors_affected, list):
-                if performer in professors_affected:
-                    professors_affected.remove(performer)
-
-            elif isinstance(professors_affected, Professor):
-                if performer == professors_affected:
-                    professors_affected = []
-                else:
-                    professors_affected = [professors_affected]
-
-            print(update.professors, professors_affected)
-            update._professors.extend(
-                list(map(lambda x: ProfessorsUpdates(professor_id=x.id,
-                                                     update_id=update.id),
-                         professors_affected)))
-            session.add(update)
-
-            return update
-
-        return_ = None
-
-        if action_type == Update.ActionType.DELETE:
-            old_create = session.query(Update) \
-                .filter(Update.table_name == updated_object.__tablename__) \
-                .filter(Update.row_id == updated_object.id) \
-                .filter(Update.action_type == Update.ActionType.NEW) \
-                .first()
-
-            if old_create is not None:
-                session.delete(old_create)
-            else:
-                return_ = make()
-        else:
-            old_update = session \
-                .query(Update) \
-                .filter(
-                Update.table_name == updated_object.__tablename__).filter(
-                Update.row_id == updated_object.id).all()
-
-            if len(old_update) == 0:
-                return_ = make()
-
-        return return_
-
-    @staticmethod
-    def all(professor=None):
-        if professor is not None:
-            return session.query(Update).join(Professor).filter(
-                Professor.id == professor.id).all()
-        return session.query(Update).all()
-
-    @staticmethod
-    def delete(professor=None):
-        if professor is not None:
-            session.query(Update).join(Professor).filter(
-                Professor.id == professor.id).delete()
-        else:
-            session.query(Update).delete()
-
-    @staticmethod
-    def loads(updates: List[dict]):
-        for i in updates:
-            update = Update(**i)
-
-            session.commit()
-
     __tablename__ = 'updates'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    table_name = Column(String(40), primary_key=True)
-    row_id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    table_name = Column(String(40))
+    row_id = Column(Integer)
     action_type = Column(Integer, nullable=False)
     performer = Column(Integer)
 
+    UniqueConstraint('row_id', 'table_name', name='update_UK')
+
     _professors = relationship("ProfessorsUpdates", cascade="all, delete-orphan")
     professors = association_proxy('_professors', 'professor')
-
-    def __init__(self, table_name, row_id, performer,
-                 action_type=ActionType.UPDATE, id=None):
-        self.id = ID(self) if id is None else id
-        self.table_name = table_name
-        self.row_id = row_id
-        self.action_type = action_type
-        self.performer = performer
 
     def __repr__(self):
         return f"<Update(id={self.id}, table_name={self.table_name}, " \

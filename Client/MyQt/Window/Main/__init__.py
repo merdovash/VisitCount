@@ -12,7 +12,6 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QAction, QMenu
 
-from Client.Domain.Data import students_of_groups, find
 from Client.IProgram import IProgram
 from Client.MyQt.Chart.QAnalysisDialog import show
 from Client.MyQt.Chart.WeekAnalysis import WeekChart
@@ -25,9 +24,10 @@ from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Types import valid_card
-from DataBase2 import Professor, Lesson, Visitation
+from DataBase2 import Professor, Lesson, Visitation, Student
 from DataBase2.Types import format_name
-from Modules.Synchronize.ClientSide import Synchronize
+from Domain import Action, Prepare
+from Domain.Data import find
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
     ',')
@@ -187,7 +187,10 @@ class MainWindow(AbstractWindow):
         updates = self.menu_bar.addMenu("Синхронизация")
 
         updates_action = QAction("Обновить локальную базу данных", self)
-        updates_action.triggered.connect(Synchronize(self.program).start)
+        updates_action.triggered.connect(lambda x: Action.send_updates(self.program.auth.login,
+                                                                       self.program.auth.password,
+                                                                       self.program.host,
+                                                                       ))
 
         updates.addAction(updates_action)
 
@@ -234,7 +237,10 @@ class MainWindowWidget(QWidget):
         Runs synchronization process
         """
 
-        Synchronize(self.program).start()
+        Action.send_updates(self.program.auth.login,
+                            self.program.auth.password,
+                            self.program.host,
+                            Prepare.updates(self.program.session))
         pass
 
     def _setup_geometry(self):
@@ -331,7 +337,9 @@ class MainWindowWidget(QWidget):
         professor = self.program.professor
 
         self.table.clear()
-        self.students = students_of_groups(groups)
+        print(type(groups))
+        self.students = Student.of(groups)
+        print('students', len(self.students))
         self.lessons = Lesson.filter(self.professor,
                                      self.selector.discipline.current(),
                                      groups)
