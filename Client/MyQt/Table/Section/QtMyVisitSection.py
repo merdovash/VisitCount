@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QPoint, QRectF, QEvent
+from PyQt5.QtCore import Qt, QPoint, QRectF
 from PyQt5.QtGui import QPainter, QPen, QColor, QCursor
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton
 
@@ -129,14 +129,6 @@ class VisitSection(QTableWidget):
                 return Color.secondary_light_accent
             else:
                 return Color.secondary_light
-
-    def eventFilter(self, object, event):
-        if event.type() == QEvent.MouseMove:
-            item, row, col = self.find_item(event.pos())
-            self.set_hover(row, col)
-            return True
-
-        return False
 
     def find_item(self, pos: QPoint):
         def find_row(target_y):

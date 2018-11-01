@@ -4,7 +4,7 @@ from DataBase2 import Update, UpdateType
 from Parser.JsonParser import Base_to_dict
 
 
-def _get_updated_object(update: Update, session):
+def get_updated_object(update: Update, session):
     exec(f'from DataBase2 import {update.table_name}')
     type_ = eval(update.table_name)
     obj = session.query(type_).filter(type_.id == update.row_id).first()
@@ -20,12 +20,12 @@ def updates(session):
                   UpdateType.DELETE: None}
 
     for action_type in [UpdateType.UPDATE, UpdateType.NEW, UpdateType.DELETE]:
-        updates_list = query.filter(action_type=action_type).all()
+        updates_list = query.filter_by(action_type=action_type).all()
 
         changes_dict = defaultdict(list)
 
         for i, update in enumerate(updates_list):
-            change = _get_updated_object(update, session)
+            change = get_updated_object(update, session)
 
             if change is not None:
                 item = Base_to_dict(change)

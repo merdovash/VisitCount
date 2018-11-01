@@ -4,17 +4,17 @@ safsdf
 """
 import os
 import sys
-from typing import List, Union
+from typing import List
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
-    DateTime, Boolean, event
+    DateTime, Boolean
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 from sqlalchemy.pool import QueuePool
 
 from DataBase2.config2 import DataBaseConfig
-from Domain.functools.List import flat, unique
+from Domain.functools.List import flat, unique, intersect
 
 try:
     root = sys.modules['__main__'].__file__
@@ -206,7 +206,6 @@ class Discipline(Base):
             raise NotImplementedError(type(obj))
 
 
-
 class Lesson(Base):
     """
     Lesson
@@ -228,29 +227,25 @@ class Lesson(Base):
 
     visitations = relationship('Visitation')
 
-    professors = relationship('Professor')
-
-    @staticmethod
-    def filter(professor: 'Professor', discipline: Discipline,
-               group: 'Group' or List['Group']):
-        """
-
-        :param professor:
-        :param discipline:
-        :param group:
-        :return: lessons of current discipline
-        """
-        return sorted(list(filter(lambda x: (set(group) == set(x.groups) or (
-                len(group) == 1 and group[0] in x.groups))
-                                            and x.discipline == discipline,
-                                  professor.lessons)),
-                      key=lambda x: x.date)
+    professor = relationship('Professor')
 
     def __repr__(self):
         return f"<Lesson(id={self.id}, professor_id={self.professor_id}," \
                f" discipline_id={self.discipline_id}, " \
                f"date={self.date}, type={self.type}," \
                f" completed={self.completed})>"
+
+    @staticmethod
+    def of(obj):
+        if isinstance(obj, list):
+            if isinstance(obj[0], Group):
+                return intersect([Lesson.of(o) for o in obj])
+            else:
+                return unique(flat([Lesson.of(o) for o in obj]))
+        elif isinstance(obj, (Professor, Discipline, Group)):
+            return obj.lessons
+        else:
+            raise NotImplementedError(type(obj))
 
 
 class Administration(Base):
@@ -296,6 +291,15 @@ class Professor(Base):
         return f"<Professor(id={self.id}, card_id={self.card_id}, " \
                f"last_name={self.last_name}, first_name={self.first_name}, " \
                f"middle_name={self.middle_name})>"
+
+    @staticmethod
+    def of(obj) -> list:
+        if isinstance(obj, list):
+            return flat([Professor.of(o) for o in obj])
+        elif isinstance(obj, Lesson):
+            return [obj.professor]
+        else:
+            raise NotImplementedError(type(obj))
 
 
 class NotificationParam(Base):
@@ -469,21 +473,22 @@ if _new:
 # event.listens_for(Professor.card_id, 'modified', on_update)
 
 
-@event.listens_for(Lesson.completed, 'set')
-@event.listens_for(Lesson.date, 'set')
-@event.listens_for(Student.card_id, 'set')
-def on_update(target: Union[Lesson, Student], value, oldvalue, initiator):
-    print(f"update action: value:{value}, old_value: {oldvalue} ,"
-          f"target: {target}, initiator: {initiator}")
-
-    Update.new(target,
-               action_type=Update.ActionType.UPDATE,
-               session=Session.object_session(target),
-               performer=getattr(Session.object_session(target), 'professor_id', None))
-
-
-@event.listens_for(Visitation, 'before_insert')
-def on_add(mapper, session, target):
-    print(f"session:{session}, mapper: {mapper}, target: {target}")
-    Update.new(target, action_type=Update.ActionType.NEW,
-               session=Session())
+# @event.listens_for(Lesson.completed, 'set')
+# @event.listens_for(Lesson.date, 'set')
+# @event.listens_for(Student.card_id, 'set')
+# def on_update(target: Union[Lesson, Student], value, oldvalue, initiator):
+#    print(f"update action: value:{value}, old_value: {oldvalue} ,"
+#          f"target: {target}, initiator: {initiator}")
+#
+#    Update.new(target,
+#               action_type=Update.ActionType.UPDATE,
+#               session=Session.object_session(target),
+#               performer=getattr(Session.object_session(target), 'professor_id', None))
+#
+#
+# @event.listens_for(Visitation, 'before_insert')
+# def on_add(mapper, session, target):
+#    print(f"session:{session}, mapper: {mapper}, target: {target}")
+#    Update.new(target, action_type=Update.ActionType.NEW,
+#               session=Session())
+#

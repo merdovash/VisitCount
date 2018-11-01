@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 from Client.IProgram import IProgram
 from Client.MyQt.Widgets.ComboBox import MComboBox
 from DataBase2 import Discipline, Group, Lesson
+from Domain import Data
 
 
 def closest_lesson(lessons: list, date_format="%d-%m-%Y %I:%M%p") -> Lesson:
@@ -129,7 +130,7 @@ class Selector(QWidget):
 
         self.group_changed.emit(discipline, groups)
 
-        lessons = Lesson.filter(professor, discipline, groups)
+        lessons = Data.lessons(professor=self.professor, discipline=discipline, groups=groups)
 
         current_lesson = closest_lesson(lessons, self.program['date_format'])
 
@@ -172,7 +173,7 @@ class Selector(QWidget):
         self.lesson_selector.setCurrent(current_lesson)
 
     def _start_lesson(self, lesson_index):
-        if self.program.reader() is not None:
+        def start():
             self.lesson_started.emit(self.lesson_selector.currentIndex())
 
             self.lesson_selector.current().completed = True
@@ -193,9 +194,15 @@ class Selector(QWidget):
 
             self.program.window.message.emit(
                 "Учет начался. Приложите карту студента к считывателю.", True)
+
+        if self.program.test:
+            start()
         else:
-            self.program.window.error.emit(
-                "Для учета посещений необходимо подключение считывателя.")
+            if self.program.reader() is not None:
+                start()
+            else:
+                self.program.window.error.emit(
+                    "Для учета посещений необходимо подключение считывателя.")
 
     def _end_lesson(self, lesson_index):
         if self.program.reader() is not None:
