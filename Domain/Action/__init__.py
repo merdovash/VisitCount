@@ -1,5 +1,6 @@
-from DataBase2 import Visitation, Student, Lesson, Auth, Session
+from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, UpdateType
 from Domain.Action.Exceptions import InvalidLogin, InvalidPassword
+from Domain.Action.Update import create_update
 from Modules.FirstLoad.ClientSide import FirstLoad
 from Modules.Synch.ClientSide import Synch
 
@@ -55,3 +56,12 @@ def send_updates(login, password, host, data, **kwargs) -> None:
     assert isinstance(data, dict), f'object {data} is not dict'
 
     Synch(login, password, host, data, **kwargs)
+
+
+def start_lesson(lesson, professor) -> None:
+    assert isinstance(lesson, Lesson), f'object {lesson} is not Lesson'
+    assert isinstance(professor, Professor), f'object {professor} is not Professor'
+
+    lesson.completed = True
+
+    create_update(lesson, professor.id, UpdateType.UPDATE)

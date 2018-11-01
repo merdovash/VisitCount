@@ -26,7 +26,7 @@ from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Types import valid_card
 from DataBase2 import Professor, Lesson, Visitation, Student
 from DataBase2.Types import format_name
-from Domain import Action, Prepare
+from Domain import Action, Prepare, Data
 from Domain.Data import find
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
@@ -340,9 +340,9 @@ class MainWindowWidget(QWidget):
         print(type(groups))
         self.students = Student.of(groups)
         print('students', len(self.students))
-        self.lessons = Lesson.filter(self.professor,
-                                     self.selector.discipline.current(),
-                                     groups)
+        self.lessons = Data.lessons(professor=self.professor,
+                                    discipline=self.selector.discipline.current(),
+                                    groups=groups)
 
         self.last_lesson = None
 
@@ -399,14 +399,20 @@ class MainWindowWidget(QWidget):
 
     @pyqtSlot(int, name='start_lesson')
     def _start_lesson(self, lesson_index):
+
         lesson = self.table.lessons[lesson_index]
-        lesson.completed = True
+
+        Action.start_lesson(lesson, self.professor)
 
         column = self.table.get_column(lesson_index)
         for item in column:
             item.update()
 
-        self.program.reader().on_read(self._new_visit)
+        try:
+            self.program.reader().on_read(self._new_visit)
+        except AttributeError as e:
+            if not self.program.test:
+                raise e
 
         self.program.session.flush()
         self.program.session.commit()

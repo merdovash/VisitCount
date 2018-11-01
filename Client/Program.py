@@ -29,6 +29,8 @@ class MyProgram(IProgram):
 
         self._reader: IReader = None
 
+        self.test = test
+
         self.host = 'http://127.0.0.1:5000' if test else 'http://bisitor.itut.ru'
 
         self.session = Session()

@@ -1,6 +1,19 @@
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 
+def intersect(l: list):
+    total = None
+    for item in l:
+        assert isinstance(item, (list, set, _AssociationList)), f'items of l should be lists, but its {item}'
+
+        if total is None:
+            total = set(item)
+        else:
+            total = total.intersection(set(item))
+
+    return list(total)
+
+
 def flat(l: list or map) -> list:
     if isinstance(l, map):
         l = list(l)

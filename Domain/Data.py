@@ -1,6 +1,6 @@
 from typing import List
 
-from DataBase2 import Student, Group
+from DataBase2 import Student, Group, Lesson
 
 
 def names_of_groups(groups: List[Group]) -> str:
@@ -17,3 +17,11 @@ def find(func, list_, default=None):
         if func(item):
             return item
     return default
+
+
+def lessons(professor, groups, discipline):
+    discipline_lessons = set(Lesson.of(discipline))
+    groups_lessons = set(Lesson.of(groups))
+    professor_lessons = set(Lesson.of(professor))
+
+    return discipline_lessons.intersection(groups_lessons.intersection(professor_lessons))
