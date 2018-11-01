@@ -177,7 +177,7 @@ class LessonHeaderView(QHeaderView):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         try:
-            _, col, _ = self.find_item(event.localPos())
+            _, col, _ = self.find_item(event.pos())
 
             self.set_hovered(col, True)
 
@@ -195,7 +195,18 @@ class LessonHeaderView(QHeaderView):
         return False
 
     def find_item(self, pos: QPoint) -> (LessonHeaderItem, int, int):
-        col = (pos.x() + self.parent().horizontalOffset()) // self.item_width
+        def find_col(target_x):
+            current_x = - self.parent().horizontalOffset()
+
+            for col in range(self.parent().columnCount()):
+                width = self.parent().columnWidth(col)
+                if current_x <= target_x <= current_x + width:
+                    return col
+                current_x += width
+            else:
+                return -1
+
+        col = find_col(pos.x())
         row = pos.y() // self.item_height
 
         return self.parent().horizontalHeaderItem(col), col, row
