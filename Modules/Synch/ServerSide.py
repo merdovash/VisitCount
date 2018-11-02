@@ -1,4 +1,4 @@
-from DataBase2 import Auth, Update
+from DataBase2 import Auth, UpdateType
 from Modules import Module
 from Modules.Synch import address
 from Parser.JsonParser import to_db_object
@@ -13,19 +13,22 @@ class Sycnh(Module):
         new_id_map = {}
 
         print('enter', data)
+        updates_dict = data['total_dict']
         with self.session.no_autoflush:
-            for action_type in [Update.ActionType.UPDATE, Update.ActionType.NEW, Update.ActionType.DELETE]:
-                changes = data[str(action_type)]
+            for action_type in [UpdateType.UPDATE, UpdateType.NEW, UpdateType.DELETE]:
+                changes = updates_dict.get(str(action_type), {})
+                changes.update(updates_dict.get(action_type, {}))
 
                 for table in changes:
+                    exec(f'from DataBase2 import {table}')
+                    TableModel = eval(table)
                     for row in changes[table]:
-                        if action_type == Update.ActionType.NEW:
+                        if action_type == UpdateType.NEW:
                             object_ = to_db_object(table, row)
                             new_id_map[row['new_index']] = object_.id
 
-                        if action_type == Update.ActionType.UPDATE:
-                            exec(f'from DataBase2 import {table}')
-                            TableModel = eval(table)
+                        if action_type == UpdateType.UPDATE:
+
                             object_ = self.session.query(TableModel).filter(TableModel.id == row['id']).first()
 
                             columns = list(map(lambda x: x.name, object_.__table__._columns))
@@ -38,8 +41,8 @@ class Sycnh(Module):
                                 if obj_vale != new_obj_value:
                                     setattr(object_, column_name, new_obj_value)
 
-                        if action_type == Update.ActionType.DELETE:
-                            object_ = self.session.query(eval(table)).filter(eval(table).id == row['id']).first()
+                        if action_type == UpdateType.DELETE:
+                            object_ = self.session.query(TableModel).filter(TableModel.id == row['id']).first()
 
                             self.session.delete(object_)
 

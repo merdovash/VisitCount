@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String,
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.pool import SingletonThreadPool
 
 from DataBase2.config2 import DataBaseConfig
 from Domain.functools.List import flat, unique, intersect
@@ -26,23 +26,12 @@ _new = False
 
 print(os.path.basename(root))
 root = os.path.basename(root)
-if root == 'run_server.py':
-    engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8")
 
-    _new = True
 
-    # session = scoped_session(sessionmaker(bind=engine))
-
-    Base = declarative_base(bind=engine)
-
-    Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
-
-    metadata = Base.metadata
-
-else:
+def create_threaded():
     db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
 
-    engine = create_engine(db_path, echo=False, poolclass=QueuePool)
+    engine = create_engine(db_path, echo=False, poolclass=SingletonThreadPool)
 
     Base = declarative_base(bind=engine)
 
@@ -58,6 +47,50 @@ else:
     # session = Session()
 
     metadata = Base.metadata
+
+    return Session, Base, metadata, engine
+
+
+def create():
+    if root == 'run_server.py':
+        engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8")
+
+        _new = True
+
+        # session = scoped_session(sessionmaker(bind=engine))
+
+        Base = declarative_base(bind=engine)
+
+        Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
+
+        metadata = Base.metadata
+
+        return Session, Base, metadata, engine
+
+    else:
+        db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
+
+        engine = create_engine(db_path, echo=False, poolclass=SingletonThreadPool)
+
+        Base = declarative_base(bind=engine)
+
+        try:
+            fh = open(db_path.split('///')[1], 'r')
+            fh.close()
+        except FileNotFoundError:
+            fh = open(db_path.split('///')[1], 'w+')
+            fh.close()
+            _new = True
+
+        Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
+        # session = Session()
+
+        metadata = Base.metadata
+
+        return Session, Base, metadata, engine
+
+
+Session, Base, metadata, engine = create()
 
 
 def ProfessorSession(professor_id, session):
@@ -254,14 +287,19 @@ class Administration(Base):
     """
     __tablename__ = 'administrations'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    first_name = Column(String(40), primary_key=True)
-    last_name = Column(String(40), primary_key=True)
-    middle_name = Column(String(40), primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    first_name = Column(String(40))
+    last_name = Column(String(40))
+    middle_name = Column(String(40))
     email = Column(String(40))
 
     notification = relationship('NotificationParam')
     professors = association_proxy('notification', 'professor')
+
+    def __repr__(self):
+        return f"<Professor(id={self.id}, card_id={self.email}, " \
+               f"last_name={self.last_name}, first_name={self.first_name}, " \
+               f"middle_name={self.middle_name})>"
 
 
 class Professor(Base):
@@ -270,10 +308,10 @@ class Professor(Base):
     """
     __tablename__ = 'professors'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    first_name = Column(String(40), primary_key=True)
-    last_name = Column(String(40), primary_key=True)
-    middle_name = Column(String(40), primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    first_name = Column(String(40))
+    last_name = Column(String(40))
+    middle_name = Column(String(40))
     card_id = Column('card_id', String(40), unique=True)
 
     lessons: List[Lesson] = relationship("Lesson", order_by="Lesson.date")
@@ -296,8 +334,12 @@ class Professor(Base):
     def of(obj) -> list:
         if isinstance(obj, list):
             return flat([Professor.of(o) for o in obj])
-        elif isinstance(obj, Lesson):
+        elif isinstance(obj, (Lesson, NotificationParam)):
             return [obj.professor]
+        elif isinstance(obj, Visitation):
+            return Professor.of(obj.lesson)
+        elif isinstance(obj, Administration):
+            return obj.professors
         else:
             raise NotImplementedError(type(obj))
 
@@ -312,11 +354,13 @@ class NotificationParam(Base):
     id = Column(Integer, primary_key=True)
     professor_id = Column(Integer, ForeignKey('professors.id'))
     admin_id = Column(Integer, ForeignKey('administrations.id'))
-    _active = Column('active', Boolean)
+    active = Column(Boolean)
+
+    UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK')
 
     admin = relationship('Administration', lazy='select')
 
-    professors = relationship('Professor')
+    professor = relationship('Professor')
 
 
 class Group(Base):

@@ -9,6 +9,7 @@ import json
 from datetime import datetime, date
 
 from DataBase2 import Base
+from Domain.functools.Dict import without
 from Exception import InvalidPOSTDataException
 
 date_format = "%Y-%m-%d %H:%M:%f"
@@ -47,7 +48,7 @@ def to_db_object(type_name: str, net_dict: dict):
 
     class_ = eval(type_name)
 
-    res = class_(**net_dict)
+    res = class_(**without(net_dict, 'new_index'))
 
     return res
 
@@ -115,7 +116,7 @@ class JsonParser:
                 else:
                     res += f'"{key}":{JsonParser.dump(obj[key])},'
             else:
-                res = res[:-1]
+                res = res[:-1] if len(res) > 1 else res
             res += "}"
 
         elif isinstance(obj, list):

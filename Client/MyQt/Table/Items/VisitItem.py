@@ -6,6 +6,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
 from DataBase2 import Visitation, Student, Lesson
 from DataBase2.Types import format_name
+from Domain import Action
 from Domain.Data import find
 
 
@@ -130,13 +131,16 @@ class VisitItem(MyTableItem, AbstractContextItem):
             self._set_visited_by_professor_onReadCard(None)
 
     def _set_visited_by_professor_onReadCard(self, card_id):
+        def create():
+            visitation = Action.new_visitation(self.student, self.lesson, self.program.professor.id)
+            self.set_visitation(visitation)
+            self.program.window.message.emit("Подтвеждено", False)
+
         if self.safe:
             professor_card_id = self.program.professor.card_id
             if professor_card_id is not None and professor_card_id != 'None':
                 if int(card_id) == int(professor_card_id):
-                    self.program.window.message.emit("Подтвеждено", False)
-                    visitation = Visitation.new(self.student, self.lesson)
-                    self.set_visitation(visitation)
+                    create()
                 else:
                     self.program.window.error.emit("Считанная карта не совпадает с картой преподавателя")
                     # RFIDReader.instance()._method = nothing
@@ -144,19 +148,11 @@ class VisitItem(MyTableItem, AbstractContextItem):
                 self.program.window.error.emit('У вас не зарегистрирована карта.<br>'
                                                'Пожалуйста зрегистрируйте карту в меню "Файл"->"Зарегистрирвоать карту"')
         else:
-            self.program.window.message.emit("Подтвеждено", False)
-            visitation = Visitation.new(self.student, self.lesson)
-            self.set_visitation(visitation)
-
-            self.program.session.add(visitation)
-
-            self.program.session.flush()
-            self.program.session.commit()
+            create()
 
     def _del_visit_by_professor(self):
-        assert isinstance(self.visitation, Visitation), \
-            f"self.visitation is {type(self.visit_data)}"
-        self.visitation.delete(self.program.session)
+        assert isinstance(self.visitation, Visitation), f"self.visitation is {type(self.visit_data)}"
+        Action.remove_visitation(self.visitation, self.program.professor.id)
         self.visitation = None
         self.update()
 

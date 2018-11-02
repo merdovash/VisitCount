@@ -32,6 +32,7 @@ class ServerConnection(Thread):
         self.on_response = kwargs.get('on_response', self.on_response)
 
     def _send(self, data: dict):
+        print('sending ', self.url)
         try:
             if ServerConnection.UserBlock not in data.keys():
                 data[ServerConnection.UserBlock] = dict(login=self.login, password=self.password)
