@@ -3,8 +3,10 @@ from typing import List
 
 from PyQt5.QtWidgets import QDialog
 
+from Client.IProgram import IProgram
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
 from DataBase2 import Administration, Professor, UserType, Parent, Student
+from Domain import Action, Prepare
 
 
 class NotificationWindow(QDialog, Ui_NotificationWindow):
@@ -32,24 +34,36 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
 
         self.tableWidget.set_professor(self.professor)
 
+        program: IProgram = self.parent().program
+
+        self.save_btn.clicked.connect(lambda: Action.send_updates(
+            login=program.auth.login,
+            password=program.auth.password,
+            host=program.host,
+            data=Prepare.updates(program.session),
+            on_error=program.window.error.emit,
+            on_finish=lambda: program.window.ok_message.emit('Успешно сохранено')
+        ))
+
+        self.run_btn.clicked.connect(lambda: Action.run_notification(
+            login=program.auth.login,
+            password=program.auth.password,
+            host=program.host,
+            on_finish=lambda: program.window.ok_message.emit('Успешно отправлено')
+        ))
+
     def on_add_user(self):
         if self.new_user_type_combo_box.currentIndex() == UserType.ADMIN:
-            admin = Administration.new(last_name=self.new_user_last_name.text(),
-                                       first_name=self.new_user_first_name.text(),
-                                       middle_name=self.new_user_middle_name.text(),
-                                       email=self.new_user_email.text(),
-                                       professor=self.professor)
+            Action.create_administration(performer_id=self.professor.id,
+                                         **dict(last_name=self.new_user_last_name.text(),
+                                                first_name=self.new_user_first_name.text(),
+                                                middle_name=self.new_user_middle_name.text(),
+                                                email=self.new_user_email.text()))
 
             self.tabWidget.setCurrentIndex(NotificationWindow.Tabs.ADMIN_TABLE)
         elif self.new_user_type_combo_box.currentIndex() == UserType.PARENT:
 
-            parent = Parent.new(first_name=self.new_user_first_name.text(),
-                                last_name=self.new_user_last_name.text(),
-                                middle_name=self.new_user_middle_name.text(),
-                                email=self.new_user_email.text(),
-                                student=self.student.currentItem(),
-                                sex=self.new_user_sex_combo_box.currentIndex(),
-                                professor=self.professor)
+            raise NotImplementedError('TODO')
 
             self.tabWidget.setCurrentIndex(NotificationWindow.Tabs.PARENT_TABLE)
 
@@ -75,7 +89,7 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
     def show_parent_table(self):
         self.tableWidget_2.clear()
 
-        students = self.professor.students
+        students = Student.of(self.professor)
         lists_of_parents = map(lambda student: student.parents, students)
         parents: List[Parent] = chain.from_iterable(lists_of_parents)
 

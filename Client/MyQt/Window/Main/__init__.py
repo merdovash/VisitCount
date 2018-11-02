@@ -24,7 +24,7 @@ from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Types import valid_card
-from DataBase2 import Professor, Lesson, Visitation, Student
+from DataBase2 import Professor, Lesson, Student
 from DataBase2.Types import format_name
 from Domain import Action, Prepare, Data
 from Domain.Data import find
@@ -420,15 +420,14 @@ class MainWindowWidget(QWidget):
     def _new_visit(self, card_id):
         current_data = self.selector.get_current_data()
 
-        student = find(lambda student: student.card_id == card_id,
-                       self.students)
+        student = find(lambda student: student.card_id == card_id, self.students)
 
         if student is None:
             self.program.window.message.emit("Студента нет в списке.", False)
         else:
             lesson = current_data.lesson
 
-            Visitation.new(student, lesson)
+            Action.new_visitation(student, lesson, self.professor.id)
 
             self.table.new_visit(student, lesson)
 

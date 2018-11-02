@@ -12,15 +12,18 @@ def get_updated_object(update: Update, session):
 
 
 def updates(session):
+    print('making updates data')
     query = session.query(Update)
 
     new_items_map = dict()
-    total_dict = {UpdateType.UPDATE: None,
-                  UpdateType.NEW: None,
-                  UpdateType.DELETE: None}
+    total_dict = {UpdateType.UPDATE: {},
+                  UpdateType.NEW: {},
+                  UpdateType.DELETE: {}}
 
     for action_type in [UpdateType.UPDATE, UpdateType.NEW, UpdateType.DELETE]:
         updates_list = query.filter_by(action_type=action_type).all()
+
+        print(updates_list)
 
         changes_dict = defaultdict(list)
 
@@ -35,9 +38,9 @@ def updates(session):
                 changes_dict[type(change).__name__].append(item)
 
         if len(changes_dict) > 0:
+            print(changes_dict)
             total_dict[action_type] = changes_dict
-        else:
-            total_dict[action_type] = []
 
-        return dict(new_items_map=new_items_map,
-                    total_dict=total_dict)
+        print(total_dict)
+    return dict(new_items_map=new_items_map,
+                total_dict=total_dict)

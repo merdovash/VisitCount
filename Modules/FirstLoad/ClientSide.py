@@ -34,6 +34,9 @@ class FirstLoad(ServerConnection):
         session.flush()
         session.commit()
 
+        session.expire_all()
+        session.close()
+
         self.on_finish(dict(login=self.login, password=self.password))
 
 # if __name__ == "__main__":

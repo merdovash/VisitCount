@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QComboBox
 
 from DataBase2 import Administration, Parent
-from Domain.Data import student_info
+from Domain.Data import student_info, find
 
 
 class Header(int):
@@ -80,11 +80,11 @@ class EmailItem(UpdateableItem):
 class ActiveStatusItem(UpdateableItem):
     @property
     def data(self):
-        return self.user.notification(self.professor).active
+        return self.user.active
 
     @data.setter
     def data(self, value):
-        self.user.notification(self.professor).active = value
+        self.user.active = value
 
 
 class StudentInfoItem(BlockedUpdateItem):
@@ -178,11 +178,14 @@ class ContactTable(QTableWidget):
             index,
             Header.EMAIL,
             ContactTableItem(user, self.professor, EmailItem))
-        if self.Class == Administration:
+        if isinstance(user, Administration):
             self.setCellWidget(
                 index,
                 Header.STATUS,
-                ContactTableComboItem(user, self.professor, ActiveStatusItem))
+                ContactTableComboItem(find(lambda note: note.professor_id == self.professor.id,
+                                           user.notification),
+                                      self.professor,
+                                      ActiveStatusItem))
         elif self.Class == Parent:
             self.setItem(
                 index,
