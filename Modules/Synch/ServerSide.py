@@ -1,4 +1,5 @@
 from DataBase2 import Auth, UpdateType
+from Domain.functools.Dict import without
 from Modules import Module
 from Modules.Synch import address
 from Parser.JsonParser import to_db_object
@@ -24,7 +25,9 @@ class Sycnh(Module):
                     TableModel = eval(table)
                     for row in changes[table]:
                         if action_type == UpdateType.NEW:
-                            object_ = to_db_object(table, row)
+                            object_ = to_db_object(table, without(row, 'id'))
+                            self.session.add(object_)
+                            self.session.commit()
                             new_id_map[row['new_index']] = object_.id
 
                         if action_type == UpdateType.UPDATE:

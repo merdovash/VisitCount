@@ -8,6 +8,8 @@ TODO:
 import json
 from datetime import datetime, date
 
+from sqlalchemy.ext.associationproxy import _AssociationList
+
 from DataBase2 import Base
 from Domain.functools.Dict import without
 from Exception import InvalidPOSTDataException
@@ -43,6 +45,9 @@ def to_db_object(type_name: str, net_dict: dict):
     if 'date' in net_dict:
         net_dict['date'] = datetime.strptime(net_dict['date'],
                                              "%Y-%m-%dT%H:%M:%S")
+
+    if 'active' in net_dict:
+        net_dict['active'] = eval(net_dict['active'])
 
     exec(f'from DataBase2 import {type_name}')
 
@@ -119,7 +124,7 @@ class JsonParser:
                 res = res[:-1] if len(res) > 1 else res
             res += "}"
 
-        elif isinstance(obj, list):
+        elif isinstance(obj, (list, _AssociationList)):
             res = "["
 
             for item in obj:
