@@ -8,6 +8,7 @@ from flask import Flask, make_response, request
 from Modules.Cabinet.ServerSide import CabinetModule
 from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
 from Modules.FirstLoad.ServerSide import FirstLoadModule
+from Modules.NotificationModule.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import Sycnh
 
 path, file = os.path.split(os.path.abspath(__file__))
@@ -20,6 +21,7 @@ CabinetModule(app, request)
 FirstLoadModule(app, request)
 Sycnh(app, request)
 CabinetLogInModule(app, request)
+NotificationModule(app, request)
 
 print(path)
 

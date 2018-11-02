@@ -8,7 +8,7 @@ from typing import List
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
     DateTime, Boolean
-from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 from sqlalchemy.pool import SingletonThreadPool
@@ -21,8 +21,6 @@ try:
     print(sys.modules['__main__'].__file__)
 except AttributeError:
     root = "run_client.py"
-
-_new = False
 
 print(os.path.basename(root))
 root = os.path.basename(root)
@@ -52,27 +50,14 @@ def create_threaded():
 
 
 def create():
+    _new = False
     if root == 'run_server.py':
         engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8")
-
-        _new = True
-
-        # session = scoped_session(sessionmaker(bind=engine))
-
-        Base = declarative_base(bind=engine)
-
-        Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
-
-        metadata = Base.metadata
-
-        return Session, Base, metadata, engine
 
     else:
         db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
 
         engine = create_engine(db_path, echo=False, poolclass=SingletonThreadPool)
-
-        Base = declarative_base(bind=engine)
 
         try:
             fh = open(db_path.split('///')[1], 'r')
@@ -82,15 +67,16 @@ def create():
             fh.close()
             _new = True
 
-        Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
-        # session = Session()
+    Base = declarative_base(bind=engine)
 
-        metadata = Base.metadata
+    Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
 
-        return Session, Base, metadata, engine
+    metadata = Base.metadata
+
+    return Session, Base, metadata, engine, _new
 
 
-Session, Base, metadata, engine = create()
+Session, Base, metadata, engine, _new = create()
 
 
 def ProfessorSession(professor_id, session):
@@ -167,6 +153,17 @@ class Visitation(Base):
     def __repr__(self):
         return f'<Visitation(id={self.id}, student_id={self.student_id},' \
                f' lesson_id={self.lesson_id})>'
+
+    @staticmethod
+    def of(obj):
+        if isinstance(obj, (list, _AssociationList)):
+            return unique(flat([Visitation.of(o) for o in obj]))
+        elif isinstance(obj, (Student, Lesson)):
+            return obj.visitations
+        elif isinstance(obj, Group):
+            return flat(Visitation.of(Student.of(obj)))
+        else:
+            raise NotImplementedError(type(obj))
 
 
 class UserType(int):
@@ -297,9 +294,18 @@ class Administration(Base):
     professors = association_proxy('notification', 'professor')
 
     def __repr__(self):
-        return f"<Professor(id={self.id}, card_id={self.email}, " \
+        return f"<Administration(id={self.id}, card_id={self.email}, " \
                f"last_name={self.last_name}, first_name={self.first_name}, " \
                f"middle_name={self.middle_name})>"
+
+    @staticmethod
+    def of(obj):
+        if isinstance(obj, (list, _AssociationList)):
+            return flat([Administration.of(o) for o in obj])
+        elif isinstance(obj, Professor):
+            return obj.admins
+        else:
+            raise NotImplementedError(type(obj))
 
 
 class Professor(Base):
@@ -361,6 +367,15 @@ class NotificationParam(Base):
     admin = relationship('Administration', lazy='select')
 
     professor = relationship('Professor')
+
+    @staticmethod
+    def of(obj):
+        if isinstance(obj, (list, _AssociationList)):
+            return flat([NotificationParam.of(o) for o in obj])
+        elif isinstance(obj, Professor):
+            return obj._admins
+        else:
+            raise NotImplementedError(type(obj))
 
 
 class Group(Base):
@@ -453,6 +468,17 @@ class Parent(Base):
 
     _students = relationship("StudentsParents")
     students = association_proxy('_students', 'student')
+
+    @staticmethod
+    def of(obj):
+        if isinstance(obj, (list, _AssociationList)):
+            return unique(flat([Parent.of(o) for o in obj]))
+        elif isinstance(obj, Student):
+            return obj.parents
+        elif isinstance(obj, Professor):
+            return unique(flat(Parent.of(Student.of(obj))))
+        else:
+            raise NotImplementedError(type(obj))
 
 
 class UpdateType(int):

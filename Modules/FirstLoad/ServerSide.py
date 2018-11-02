@@ -1,5 +1,5 @@
 from DataBase2 import Professor, Lesson, Group, LessonsGroups, \
-    StudentsGroups, Student, Discipline, Visitation, Auth, UserType
+    StudentsGroups, Student, Discipline, Visitation, Auth, UserType, Administration, NotificationParam
 from Modules import Module
 from Modules.FirstLoad import address
 
@@ -18,6 +18,7 @@ class FirstLoadModule(Module):
             response.set_error('no such privileges')
 
     def first_load_data(self, professor_id):
+        professor = self.session.query(Professor).filter_by(id=professor_id).first()
         return dict(Auth=self.session
                     .query(Auth)
                     .filter(Auth.user_type == UserType.PROFESSOR)
@@ -65,4 +66,6 @@ class FirstLoadModule(Module):
                     .query(Visitation)
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)
-                    .all())
+                    .all(),
+                    Administration=Administration.of(professor),
+                    NotificationParam=NotificationParam.of(professor))

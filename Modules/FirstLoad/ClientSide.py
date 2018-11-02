@@ -28,6 +28,9 @@ class FirstLoad(ServerConnection):
             if class_name == 'Lesson':
                 for i, item in enumerate(mappings):
                     mappings[i]['date'] = datetime.strptime(item['date'], "%Y-%m-%dT%H:%M:%S")
+            if class_name == 'NotificationParam':
+                for i, item in enumerate(mappings):
+                    mappings[i]['active'] = eval(mappings[i]['active'])
 
             session.bulk_insert_mappings(mapper, mappings)
 

@@ -7,6 +7,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
 from DataBase2 import Administration, Professor, UserType, Parent, Student
 from Domain import Action, Prepare
+from Domain.Action import NetAction
 
 
 class NotificationWindow(QDialog, Ui_NotificationWindow):
@@ -45,11 +46,12 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
             on_finish=lambda: program.window.ok_message.emit('Успешно сохранено')
         ))
 
-        self.run_btn.clicked.connect(lambda: Action.run_notification(
+        self.run_btn.clicked.connect(lambda: NetAction.run_notification(
             login=program.auth.login,
             password=program.auth.password,
             host=program.host,
-            on_finish=lambda: program.window.ok_message.emit('Успешно отправлено')
+            on_finish=lambda: program.window.ok_message.emit('Успешно отправлено'),
+            on_error=program.window.error.emit
         ))
 
     def on_add_user(self):
