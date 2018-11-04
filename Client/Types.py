@@ -1,10 +1,6 @@
 import json
 
 
-def valid_card(card_id):
-    return card_id is not None and card_id != 'None'
-
-
 class LoadingInfo:
     """
     class descibes downloading status

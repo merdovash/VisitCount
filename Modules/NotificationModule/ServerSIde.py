@@ -57,7 +57,7 @@ class NotificationModule(Module):
         return conn
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
-        admins = Administration.of(auth.user)
+        admins = Administration.active_of(auth.user)
         parents = Parent.of(auth.user)
 
         print(admins)
@@ -65,6 +65,7 @@ class NotificationModule(Module):
         message = MessageMaker(auth.user)
 
         for receiver in flat([admins, parents]):
+            assert receiver is not None, f'receiver is None'
             assert receiver.email is not None, f'receiver {receiver} email is None'
             print(receiver, receiver.email)
             try:

@@ -8,6 +8,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.Widgets.ComboBox import MComboBox
 from DataBase2 import Discipline, Group, Lesson
 from Domain import Data
+from Domain.Data import lessons
 
 
 def closest_lesson(lessons: list, date_format="%d-%m-%Y %I:%M%p") -> Lesson:
@@ -152,15 +153,21 @@ class Selector(QWidget):
 
     @pyqtSlot()
     def select_current_lesson(self, lesson=None):
-        if lesson is None:
-            lesson = closest_lesson(
-                self.professor.lessons,
-                self.program['date_format']
-            )
+        try:
+            if lesson is None:
+                lesson = closest_lesson(
+                    self.professor.lessons,
+                    self.program['date_format']
+                )
 
-        self.discipline.setCurrent(lesson.discipline)
-        self.group.setCurrent(set(lesson.groups))
-        self.lesson_selector.setCurrent(lesson)
+            self.discipline.setCurrent(lesson.discipline)
+            self.group.setCurrent(set(lesson.groups))
+            self.lesson_selector.setCurrent(lesson)
+        except IndexError:
+            self.lesson_selector.clear()
+            self.lesson_selector.addItems(lessons(lesson.professor, lesson.groups, lesson.discipline))
+
+            self.select_current_lesson(lesson)
 
         # current_data = self.get_current_data()
         # self.group_changed.emit(current_data.discipline_id, current_data.group_id)

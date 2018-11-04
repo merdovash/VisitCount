@@ -3,6 +3,7 @@ from operator import xor
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QComboBox
 
+from Client.MyQt.Widgets.Buttons import DeleteContactButton
 from DataBase2 import Administration, Parent
 from Domain.Data import student_info, find
 
@@ -16,7 +17,9 @@ class Header(int):
     STATUS = 4
     STUDENT = 4
 
-    COUNT = 5
+    DELETE = 5
+
+    COUNT = 6
 
 
 class UpdateableItem:
@@ -150,6 +153,7 @@ class ContactTable(QTableWidget):
             self.setHorizontalHeaderItem(Header.STATUS, QTableWidgetItem("Статус"))
         elif Class == Parent:
             self.setHorizontalHeaderItem(Header.STUDENT, QTableWidgetItem("Студент"))
+        self.setHorizontalHeaderItem(Header.DELETE, QTableWidgetItem('Удалить'))
 
         self.itemChanged.connect(self.on_item_change)
 
@@ -191,6 +195,8 @@ class ContactTable(QTableWidget):
                 index,
                 Header.STATUS,
                 ContactTableItem(user, self.professor, StudentInfoItem))
+
+        self.setCellWidget(index, Header.DELETE, DeleteContactButton(user, self, index))
 
         self.resizeColumnsToContents()
 

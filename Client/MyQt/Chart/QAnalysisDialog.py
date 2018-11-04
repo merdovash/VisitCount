@@ -5,11 +5,14 @@ import numpy as np
 from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, \
     QHBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import \
-    FigureCanvasQTAgg as FigureCanvas
-
+    FigureCanvasQTAgg as FigureCanvas, \
+    NavigationToolbar2QT as NavigationToolbar
 # from Main.DataBase.GlobalStatistic import Statistic
+from matplotlib.figure import Figure
+
 from Client.IProgram import IProgram
 from DataBase2 import Lesson, Student
+from Domain.Aggregation import Column
 
 
 def show(graph_window_constructor, program: IProgram):
@@ -97,17 +100,19 @@ class QAnalysisDialog(QWidget):
         WEEK = 1
         WEEK_DAY = 2
 
+    plot_types = {
+        0: dict(type='line', xlabel=None, ylabel='Процент посещений'),
+        1: dict(type='hist', xlabel='Процент посещений', ylabel='Количество занятий'),
+    }
+
     # TODO destroy on exit (memory leak)
     def __init__(self, program: IProgram, parent=None):
         super().__init__(parent)
         self.setStyleSheet(program.css)
         self.program: IProgram = program
-        # load data
-        self.acc = LessonAccumulator(lessons=self.get_lessons())
 
-        # load global statistic data
-        # TODO make real global statistic load
-        self.global_acc = LessonAccumulator()
+        self.setFixedWidth(600)
+        self.setFixedHeight(600)
 
         # initialise plots variables
         self._ax = None
@@ -117,7 +122,11 @@ class QAnalysisDialog(QWidget):
         self.count = None
 
         self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
+        self.canvas = FigureCanvas(Figure(figsize=(5, 3)))
+
+        self._ax = self.canvas.figure.subplots()
+
+        self.toolbar = NavigationToolbar(self.canvas, self)
 
         # init plot type selector
         combobox_layout = QHBoxLayout()
@@ -126,7 +135,7 @@ class QAnalysisDialog(QWidget):
 
         self.combo_box = QComboBox()
         self.combo_box.setStyleSheet(program.css)
-        self.combo_box.addItems("Ломаная,Гистограма,Диаграма размаха".split(','))
+        self.combo_box.addItems("Ломаная,Гистограма".split(','))
         self.combo_box.currentIndexChanged.connect(self.draw)
 
         combobox_layout.addWidget(self.plot_type_label)
@@ -134,60 +143,39 @@ class QAnalysisDialog(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
+        layout.addWidget(self.toolbar)
 
         layout.addLayout(combobox_layout)
         self.setLayout(layout)
 
-
     def draw(self):
         # remove old and setup new
         self.ax().clear()
-        self.format_ax()
 
-        # depend on selected type
-        if self.combo_box.currentIndex() == 0:
-            self._plot()
-        elif self.combo_box.currentIndex() == 1:
-            self._hist()
-        elif self.combo_box.currentIndex() == 2:
-            self._boxplot()
+        index = self.combo_box.currentIndex()
+
+        plot_legend = self.plot_types[index]
+
+        kwargs = {'ylim': [0, 100] if index == 0 else None}
+
+        self._draw(ax=self.ax(), plot_type=plot_legend['type'], **kwargs)
+
+        if plot_legend['xlabel'] is not None:
+            self.ax().set_xlabel(plot_legend['xlabel'])
+        if plot_legend['ylabel'] is not None:
+            self.ax().set_ylabel(plot_legend['ylabel'])
 
         # refresh canvas
         self.canvas.draw()
 
     def ax(self):
-        if self._ax is None:
-            self._ax = self.figure.add_subplot(111)
         return self._ax
 
-    def _plot(self):
-        if self.global_acc.is_ready():
-            self.ax().plot(self.acc.get_data(), label="Процент посещений ваших занятий")
-            self.ax().plot(self.global_acc.get_data(), label="Процент посещений по университету")
-
-            self.ax().legend()
-        else:
-            self.ax().plot(self.acc.get_data())
-
-    def _hist(self):
-        if self.global_acc.is_ready():
-            self.ax().hist([self.acc.get_hist_data(), self.global_acc.get_hist_data()],
-                           bins=range(0, self.count), align='right', rwidth=0.7, histtype='menu_bar',
-                           label=["Процент посещений ваших занятий",
-                                  "Процент посещений по университету"])
-
-            self.ax().legend()
-        else:
-            N, bins, patches = self.ax().hist(self.acc.get_hist_data(),
-                                              bins=range(0, self.count), align='right', rwidth=0.7)
-            for i in range(len(patches)):
-                if i % 2 == 0:
-                    patches[i].set_facecolor(color="#ff8000")
-                else:
-                    patches[i].set_facecolor(color="#ff7010")
-
-    def _boxplot(self):
-        self.ax().boxplot(self.acc.get_box_data(), '*-', sym="")
-
-    def get_lessons(self):
-        raise NotImplementedError()
+    def _draw(self, plot_type, ax, **kwargs):
+        self.get_data().plot(
+            x=Column.date,
+            y=Column.visit_rate,
+            ax=ax,
+            kind=plot_type,
+            title='Посещения',
+            **kwargs)
