@@ -7,7 +7,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
 from Domain import Action
-from Domain.Action import InvalidLogin, InvalidPassword
+from Domain.Action import InvalidLogin, InvalidPassword, NetAction
 
 
 # from DataBase.Authentication import Authentication
@@ -68,9 +68,9 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
 
             self.auth_success.emit(dict(login=login, password=password))
         except InvalidLogin:
-            Action.first_load(login, password, self.program.host,
-                              on_finish=self.auth_success.emit,
-                              on_error=self.program.window.error.emit)
+            NetAction.first_load(login, password, self.program.host,
+                                 on_finish=self.auth_success.emit,
+                                 on_error=self.program.window.error.emit)
         except InvalidPassword as e:
             self.error.emit(str(e))
 

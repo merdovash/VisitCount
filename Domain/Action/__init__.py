@@ -1,11 +1,9 @@
 from sqlalchemy import inspect
 
-from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, UpdateType, Administration, \
-    NotificationParam
+from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, Administration, \
+    NotificationParam, Parent
+from Domain.Action import Updates
 from Domain.Action.Exceptions import InvalidLogin, InvalidPassword
-from Domain.Action.Update import create_update, create_delete_update
-from Modules.FirstLoad.ClientSide import FirstLoad
-from Modules.Synch.ClientSide import Synch
 
 
 def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
@@ -30,7 +28,7 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
         except:
             raise
 
-    create_update(visit, professor_id, update_type=UpdateType.NEW)
+    Updates.New.row(visit, professor_id)
 
     return visit
 
@@ -48,8 +46,7 @@ def remove_visitation(visitation, professor_id):
     session.commit()
 
     assert isinstance(visitation, Visitation), f'object {visitation} is not Visitation'
-    create_delete_update(visitation.id, type(visitation).__name__, professor_id, professors)
-
+    Updates.Delete.row(visitation.id, type(visitation).__name__, professor_id, professors)
 
 
 def log_in(login, password, session=None) -> Auth:
@@ -71,29 +68,13 @@ def log_in(login, password, session=None) -> Auth:
             return auth
 
 
-def first_load(login, password, host, **kwargs) -> None:
-    assert isinstance(login, str), f'object {login} is not str'
-    assert isinstance(password, str), f'object {password} is not str'
-
-    FirstLoad(host, login, password, **kwargs).start()
-
-
-def send_updates(login, password, host, data, **kwargs) -> None:
-    assert isinstance(login, str), f'object {login} is not str'
-    assert isinstance(password, str), f'object {password} is not str'
-    assert isinstance(host, str), f'object {host} is not str'
-    assert isinstance(data, dict), f'object {data} is not dict'
-
-    Synch(login, password, host, data, **kwargs).start()
-
-
 def start_lesson(lesson, professor) -> None:
     assert isinstance(lesson, Lesson), f'object {lesson} is not Lesson'
     assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
     lesson.completed = True
 
-    create_update(lesson, professor.id, UpdateType.UPDATE)
+    Updates.Changed.row(lesson.id, type(lesson).__name__, professor.id)
 
 
 def create_administration(performer_id, **kwargs) -> Administration:
@@ -113,7 +94,24 @@ def create_administration(performer_id, **kwargs) -> Administration:
 
     session.commit()
 
-    create_update(admin, performer_id, UpdateType.NEW)
-    create_update(np, performer_id, UpdateType.NEW)
+    Updates.New.row(admin, performer_id)
+    Updates.New.row(np, performer_id)
 
     return admin
+
+
+def delete_contact(contact, professor_id):
+    assert isinstance(contact, (Administration, Parent)), f'object {contact} is not Administration or Parent'
+    assert isinstance(professor_id, int), f'object {professor_id} is not id (int)'
+
+    session = inspect(contact).session
+
+    if isinstance(contact, Administration):
+        nps = NotificationParam.of(contact)
+
+        for np in nps:
+            Updates.Delete.row(np.id, type(np).__name__, professor_id)
+
+    session.delete(contact)
+
+    session.commit()

@@ -267,7 +267,7 @@ class Lesson(Base):
 
     @staticmethod
     def of(obj):
-        if isinstance(obj, list):
+        if isinstance(obj, (list, _AssociationList)):
             if isinstance(obj[0], Group):
                 return intersect([Lesson.of(o) for o in obj])
             else:
@@ -304,6 +304,16 @@ class Administration(Base):
             return flat([Administration.of(o) for o in obj])
         elif isinstance(obj, Professor):
             return obj.admins
+        elif isinstance(obj, NotificationParam):
+            return
+        else:
+            raise NotImplementedError(type(obj))
+
+    @staticmethod
+    def active_of(obj):
+        if isinstance(obj, Professor):
+            nps = list(filter(lambda np: np.active, NotificationParam.of(obj)))
+            return Administration.of(nps)
         else:
             raise NotImplementedError(type(obj))
 

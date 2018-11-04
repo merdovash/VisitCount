@@ -23,11 +23,11 @@ from Client.MyQt.Table import VisitTable
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.NotificationParam import NotificationWindow
-from Client.Types import valid_card
 from DataBase2 import Professor, Lesson, Student
 from DataBase2.Types import format_name
 from Domain import Action, Prepare, Data
-from Domain.Data import find
+from Domain.Action import NetAction
+from Domain.Data import find, valid_card
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
     ',')
@@ -122,7 +122,7 @@ class MainWindow(AbstractWindow):
         file.addAction(file_change_user)
 
         if self.program.professor is not None:
-            if not valid_card(self.program.professor.card_id):
+            if not valid_card(self.program.professor):
                 file.addAction(RegisterProfessorCard(self.program, self))
 
         file_exit = QAction("Выход", self)
@@ -237,10 +237,10 @@ class MainWindowWidget(QWidget):
         Runs synchronization process
         """
 
-        Action.send_updates(self.program.auth.login,
-                            self.program.auth.password,
-                            self.program.host,
-                            Prepare.updates(self.program.session))
+        NetAction.send_updates(self.program.auth.login,
+                               self.program.auth.password,
+                               self.program.host,
+                               Prepare.updates(self.program.session))
         pass
 
     def _setup_geometry(self):
