@@ -142,6 +142,8 @@ class JsonParser:
         elif isinstance(obj, (datetime, date)):
             res = f'"{obj.isoformat()}"'
 
+        elif hasattr(obj, 'to_json'):
+            res = obj.to_json()
         else:
             res = json.dumps(encode(obj)).encode("utf-8")
 

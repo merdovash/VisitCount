@@ -16,22 +16,37 @@ class Column(object):
 
 class Lessons:
     @staticmethod
-    def by_professor(professor: Professor) -> DataFrame:
+    def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
-        visit_rates = [
-            [
+        lessons = Lesson.of(professor)
+        if groups is not None:
+            lessons = list(set(lessons).intersection(set(Lesson.of(groups))))
+        if disciplines is not None:
+            lessons = list(set(lessons).intersection(set(Lesson.of(disciplines))))
+
+        visit_rates = []
+        for lesson in lessons:
+            students = Student.of(lesson)
+            if groups is not None:
+                students = list(set(students).intersection(set(Student.of(groups))))
+
+            visits = Visitation.of(lesson)
+            if groups is not None:
+                visits = list(set(visits).intersection(set(Visitation.of(students))))
+
+            row = [
                 lesson.date,
                 lesson.type,
                 lesson.discipline.name,
-                len(Visitation.of(lesson)),
-                len(Student.of(lesson))
+                len(visits),
+                len(students)
             ]
-            for lesson in Lesson.of(professor)]
+
+            visit_rates.append(row)
 
         df = DataFrame(visit_rates,
                        columns=[Column.date, Column.type, Column.discipline, Column.visit_count, Column.student_count])
-
         return df
 
 
@@ -65,10 +80,10 @@ class GroupAggregation:
 
 class Weeks:
     @staticmethod
-    def by_professor(professor: Professor) -> DataFrame:
+    def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
-        df = Lessons.by_professor(professor)
+        df = Lessons.by_professor(professor, groups=groups, disciplines=disciplines)
 
         df[Column.date] = df[Column.date].apply(lambda date: date.isocalendar()[1])
         df[Column.date] = df[Column.date].apply(lambda date: 1 + date - df[Column.date].min())
@@ -87,10 +102,11 @@ class Weeks:
 
 class WeekDays:
     @staticmethod
-    def by_professor(professor: Professor) -> DataFrame:
+    def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
+        print(groups, disciplines)
 
-        df = Lessons.by_professor(professor)
+        df = Lessons.by_professor(professor, groups=groups, disciplines=disciplines)
 
         df[Column.date] = df[Column.date].apply(lambda date: date.isoweekday())
 

@@ -14,7 +14,8 @@ from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 from sqlalchemy.pool import SingletonThreadPool
 
 from DataBase2.config2 import DataBaseConfig
-from Domain.functools.List import flat, unique, intersect
+from Domain.functools.Function import memoize
+from Domain.functools.List import flat, unique
 
 try:
     root = sys.modules['__main__'].__file__
@@ -266,10 +267,12 @@ class Lesson(Base):
                f" completed={self.completed})>"
 
     @staticmethod
-    def of(obj):
+    def of(obj, inresect=False):
         if isinstance(obj, (list, _AssociationList)):
-            if isinstance(obj[0], Group):
-                return intersect([Lesson.of(o) for o in obj])
+            if inresect:
+                lessons = None
+                for o in obj:
+                    lessons = Lesson.of(o) if lessons is None else list(set(lessons).intersection(Lesson.of(o)))
             else:
                 return unique(flat([Lesson.of(o) for o in obj]))
         elif isinstance(obj, (Professor, Discipline, Group)):
@@ -305,7 +308,7 @@ class Administration(Base):
         elif isinstance(obj, Professor):
             return obj.admins
         elif isinstance(obj, NotificationParam):
-            return
+            return obj.admin
         else:
             raise NotImplementedError(type(obj))
 
@@ -367,14 +370,14 @@ class NotificationParam(Base):
 
     __tablename__ = 'notifications'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     professor_id = Column(Integer, ForeignKey('professors.id'))
     admin_id = Column(Integer, ForeignKey('administrations.id'))
     active = Column(Boolean)
 
     UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK')
 
-    admin = relationship('Administration', lazy='select')
+    admin = relationship('Administration')
 
     professor = relationship('Professor')
 
@@ -407,12 +410,12 @@ class Group(Base):
         return f"<Group(id={self.id}, name={self.name})>"
 
     @staticmethod
-    def of(obj, flat_list=False) -> list:
+    def of(obj, flat_list=False) -> List['Group']:
         if isinstance(obj, Lesson):
             return flat(obj.groups) if flat_list else obj.groups
         elif isinstance(obj, Professor):
             if flat_list:
-                return flat(unique([lesson.groups for lesson in obj.lessons]))
+                return unique(flat([lesson.groups for lesson in obj.lessons]))
             else:
                 return unique([lesson.groups for lesson in obj.lessons])
         elif isinstance(obj, Discipline):
@@ -453,6 +456,7 @@ class Student(Base):
                f"middle_name={self.middle_name})>"
 
     @staticmethod
+    @memoize
     def of(obj) -> List['Student']:
         if isinstance(obj, list):
             return flat([Student.of(o) for o in unique(obj)])

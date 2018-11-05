@@ -37,7 +37,7 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
 
         program: IProgram = self.parent().program
 
-        self.save_btn.clicked.connect(lambda: Action.send_updates(
+        self.save_btn.clicked.connect(lambda: NetAction.send_updates(
             login=program.auth.login,
             password=program.auth.password,
             host=program.host,
@@ -83,9 +83,10 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
     def show_admin_table(self):
         self.tableWidget.clear()
 
-        admins: List[Administration] = self.professor.admins
+        admins: List[Administration] = Administration.of(self.professor)
 
         for admin in admins:
+            assert admin is not None, f'admin is None, in list {admins}'
             self.tableWidget.add_row(admin)
 
     def show_parent_table(self):

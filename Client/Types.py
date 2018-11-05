@@ -1,6 +1,3 @@
-import json
-
-
 class LoadingInfo:
     """
     class descibes downloading status
@@ -18,12 +15,4 @@ class Response(int):
     """
     JSON = 1
     ERROR = 0
-
-
-def Status(res) -> int:
-    try:
-        json.loads(res)
-        return Response.JSON
-    except json.decoder.JSONDecodeError:
-        return Response.ERROR
 

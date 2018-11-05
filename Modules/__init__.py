@@ -60,8 +60,10 @@ class Module:
             }
         else:
             print(request.data)
-            return JsonParser.read(
-                request.data.decode('utf8').replace("'", '"'))
+            return self.read_data(request.data)
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
         pass
+
+    def read_data(self, data: str):
+        return JsonParser.read(data.decode('utf8').replace("'", '"'))
