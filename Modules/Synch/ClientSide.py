@@ -1,5 +1,6 @@
 from Client.Requests.ClientConnection import ServerConnection
 from DataBase2 import Update, create_threaded
+from Domain.functools.Dict import fix_keys
 from Modules.Synch import address
 
 
@@ -15,25 +16,21 @@ class Synch(ServerConnection):
 
     def on_response(self, data):
         new_items_map_before = self.updates['new_items_map']
-        new_items_map_after = data
+        new_items_map_after = fix_keys(data)
 
         Session, _, _, _ = create_threaded()
 
         session = Session()
 
-        for key in new_items_map_before.keys():
-            item = new_items_map_before[key]
-            new_id = int(new_items_map_after[str(key)])
+        for table in new_items_map_before.dict.keys():
+            new_items = new_items_map_before.dict[table]
 
-            if item.id != new_id:
-                print(f'item {item} gets new id={new_id}')
-                session.execute(
-                    "UPDATE {table_name} SET id={id} WHERE id={old_id}".format(
-                        table_name=item.__tablename__,
-                        id=new_id,
-                        old_id=item.id
-                    )
-                )
+            if len(new_items) > 0:
+                for item in new_items:
+                    session.merge(item)
+                    item.id = new_items_map_after[new_items_map_before.index(item)]
+
+                session.commit()
         else:
             session.commit()
 

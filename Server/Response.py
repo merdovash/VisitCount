@@ -8,13 +8,17 @@ class Response(object):
     """
     main class of response builder
     """
-    __slots__ = ('type', 'status', 'data', 'message')
+    __slots__ = ('type', 'status', 'data', 'message', '_dumps')
 
     def __init__(self, response_type):
         self.type = response_type
         self.status = None
         self.data = None
         self.message = None
+        self._dumps = lambda x: JsonParser.dump(x)
+
+    def set_dumper(self, dumper: callable):
+        self._dumps = dumper
 
     def set_data(self, data):
         """
@@ -47,4 +51,4 @@ class Response(object):
         else:
             json_object['message'] = self.message
 
-        return JsonParser.dump(json_object)
+        return self._dumps(json_object)

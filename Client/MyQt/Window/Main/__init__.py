@@ -71,7 +71,8 @@ class MainWindow(AbstractWindow):
         self.showMaximized()
 
     def closeEvent(self, *args, **kwargs):
-        self.program.reader().close()
+        if self.program.reader() is not None:
+            self.program.reader().close()
 
     def __init_menu__(self):
         menu_bar = self.menuBar()
@@ -340,9 +341,9 @@ class MainWindowWidget(QWidget):
         print(type(groups))
         self.students = Student.of(groups)
         print('students', len(self.students))
-        self.lessons = Data.lessons(professor=self.professor,
-                                    discipline=self.selector.discipline.current(),
-                                    groups=groups)
+        self.lessons = Data.lessons_of(professor=self.professor,
+                                       discipline=self.selector.discipline.current(),
+                                       groups=groups)
 
         self.last_lesson = None
 

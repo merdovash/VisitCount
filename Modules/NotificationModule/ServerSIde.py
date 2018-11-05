@@ -3,6 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from flask import render_template
+from premailer import transform
 
 from DataBase2 import Auth, Administration, Parent
 from DataBase2.Types import format_name
@@ -26,11 +27,13 @@ class MessageMaker:
     def to(self, receiver):
         total_rate, group_table = GroupAggregation.by_professor(self.user, html=True)
 
-        html_text = render_template(MessageMaker.rule[type(receiver)],
-                                    receiver_name=format_name(receiver),
-                                    sender_name=self.sender_name,
-                                    visit_rate=total_rate,
-                                    group_table=group_table)
+        html_text = transform(
+            render_template(MessageMaker.rule[type(receiver)],
+                            receiver_name=format_name(receiver),
+                            sender_name=self.sender_name,
+                            visit_rate=total_rate,
+                            group_table=group_table)
+        )
 
         message = MIMEMultipart("alternative", None, [MIMEText(html_text, 'html')])
         message["Subject"] = "Пропуски занятий"
@@ -60,7 +63,7 @@ class NotificationModule(Module):
         admins = Administration.active_of(auth.user)
         parents = Parent.of(auth.user)
 
-        print(admins)
+        print(admins, Administration.of(auth.user))
 
         message = MessageMaker(auth.user)
 
@@ -77,5 +80,13 @@ class NotificationModule(Module):
                 print(f'send to {receiver.email}')
             except smtplib.SMTPRecipientsRefused:
                 pass
+            except smtplib.SMTPSenderRefused:
+                self.connection = self.connector()
+
+                self.connection.sendmail(
+                    to_addrs=receiver.email,
+                    from_addr=config.email,
+                    msg=message.to(receiver)
+                )
 
         response.set_data({})

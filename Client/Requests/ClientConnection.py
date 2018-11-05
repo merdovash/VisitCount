@@ -9,7 +9,6 @@ from threading import Thread
 import requests
 from requests import post
 
-from Client.Types import Status, Response
 from Parser.JsonParser import JsonParser
 
 
@@ -39,18 +38,16 @@ class ServerConnection(Thread):
 
             request = post(url=self.url,
                            headers={"Content-Type": "application/json"},
-                           data=JsonParser.dump(data).encode('utf-8'))
+                           data=self.dump_data(data))
 
-            res_status = Status(request.text)
-            # print(r.text)
-            if res_status == Response.JSON:
-                res = JsonParser.read(request.text)
+            try:
+                res = self.read_data(request.text)
                 if res["status"] == "OK":
                     self.on_response(res["data"])
                 else:
                     self.on_error(f"Неудачная удаленная аутентификациия: {res}")
-            else:
-                self.on_error(str(request.status_code) + '<br>' + str(request.text))
+            except Exception as e:
+                self.on_error(e)
         except requests.exceptions.ConnectionError as connection_error:
             self.on_error(f"""Отсутсвует возможность аутентификации так как: <br>
                 1. Не удалось аутентифицировать локально (возможно неверно введен логин или пароль) <br>
@@ -83,3 +80,9 @@ class ServerConnection(Thread):
     @classmethod
     def on_finish(cls):
         raise NotImplementedError()
+
+    def dump_data(self, data):
+        return JsonParser.dump(data).encode('utf-8')
+
+    def read_data(self, data: str):
+        return JsonParser.read(data)

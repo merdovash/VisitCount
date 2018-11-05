@@ -2,8 +2,9 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, \
-    QHBoxLayout, QWidget
+    QHBoxLayout, QWidget, QFormLayout, QCheckBox
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas, \
     NavigationToolbar2QT as NavigationToolbar
@@ -11,8 +12,10 @@ from matplotlib.backends.backend_qt5agg import \
 from matplotlib.figure import Figure
 
 from Client.IProgram import IProgram
-from DataBase2 import Lesson, Student
+from Client.MyQt.Widgets.HLine import HLine
+from DataBase2 import Lesson, Student, Group, Discipline
 from Domain.Aggregation import Column
+from Domain.Data import names_of_groups
 
 
 def show(graph_window_constructor, program: IProgram):
@@ -101,7 +104,7 @@ class QAnalysisDialog(QWidget):
         WEEK_DAY = 2
 
     plot_types = {
-        0: dict(type='line', xlabel=None, ylabel='Процент посещений'),
+        0: dict(type='bar', xlabel=None, ylabel='Процент посещений'),
         1: dict(type='hist', xlabel='Процент посещений', ylabel='Количество занятий'),
     }
 
@@ -111,8 +114,8 @@ class QAnalysisDialog(QWidget):
         self.setStyleSheet(program.css)
         self.program: IProgram = program
 
-        self.setFixedWidth(600)
-        self.setFixedHeight(600)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(600)
 
         # initialise plots variables
         self._ax = None
@@ -135,7 +138,7 @@ class QAnalysisDialog(QWidget):
 
         self.combo_box = QComboBox()
         self.combo_box.setStyleSheet(program.css)
-        self.combo_box.addItems("Ломаная,Гистограма".split(','))
+        self.combo_box.addItems("Столбчатая диаграмма,Гистограма".split(','))
         self.combo_box.currentIndexChanged.connect(self.draw)
 
         combobox_layout.addWidget(self.plot_type_label)
@@ -146,7 +149,58 @@ class QAnalysisDialog(QWidget):
         layout.addWidget(self.toolbar)
 
         layout.addLayout(combobox_layout)
+
+        layout.addWidget(HLine())
+
+        self.__init_control_panel__(layout)
+
         self.setLayout(layout)
+
+    def refresh_data(self):
+        raise NotImplementedError()
+
+    def __init_control_panel__(self, layout):
+        self.groups = {}
+        self.disciplines = {}
+
+        params_layout = QHBoxLayout()
+        layout.addLayout(params_layout)
+
+        group_layout = QFormLayout()
+        for group in Group.of(self.program.professor, flat_list=True):
+            def action(g):
+                def a():
+                    self.groups[g] = not self.groups[g]
+                    self.refresh_data()
+                    self.draw()
+
+                return a
+
+            check_box = QCheckBox()
+            self.groups[group] = True
+            check_box.setCheckState(Qt.Checked)
+            check_box.stateChanged.connect(action(group))
+            group_layout.addRow(names_of_groups(group), check_box)
+
+        params_layout.addLayout(group_layout)
+
+        discipline_layout = QFormLayout()
+        for disc in Discipline.of(self.program.professor):
+            def action(d):
+                def a():
+                    self.disciplines[d] = not self.disciplines[d]
+                    self.refresh_data()
+                    self.draw()
+
+                return a
+
+            check_box = QCheckBox()
+            self.disciplines[disc] = True
+            check_box.setCheckState(Qt.Checked)
+            check_box.stateChanged.connect(action(disc))
+            discipline_layout.addRow(disc.name, check_box)
+
+        params_layout.addLayout(discipline_layout)
 
     def draw(self):
         # remove old and setup new
