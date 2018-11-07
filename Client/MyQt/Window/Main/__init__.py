@@ -437,3 +437,6 @@ class MainWindowWidget(QWidget):
 
     def switch_show_table_cross(self):
         self.table.switch_show_table_cross()
+
+    def hasDialog(self):
+        return

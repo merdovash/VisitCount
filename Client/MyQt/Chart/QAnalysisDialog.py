@@ -1,7 +1,4 @@
-from math import ceil
-
 import matplotlib.pyplot as plt
-import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, \
     QHBoxLayout, QWidget, QFormLayout, QCheckBox
@@ -13,7 +10,8 @@ from matplotlib.figure import Figure
 
 from Client.IProgram import IProgram
 from Client.MyQt.Widgets.HLine import HLine
-from DataBase2 import Lesson, Student, Group, Discipline
+from Client.MyQt.Window.interfaces import IParentWindow, IChildWindow
+from DataBase2 import Group, Discipline
 from Domain.Aggregation import Column
 from Domain.Data import names_of_groups
 
@@ -21,84 +19,17 @@ from Domain.Data import names_of_groups
 def show(graph_window_constructor, program: IProgram):
     def x():
         window = program.window
-        if window.dialog is not None:
-            # window.dialog.done(0)
-            window.dialog = None
-        dialog = graph_window_constructor(program)
-        dialog.setStyleSheet(program.css)
-        window.setDialog(graph_window_constructor(program))
+        if isinstance(window, IParentWindow):
+            dialog = graph_window_constructor(program)
+            dialog.setStyleSheet(program.css)
+            window.setDialog(graph_window_constructor(program))
+        else:
+            raise TypeError(f'window {window} is not able to take child window')
 
     return x
 
 
-class LessonData:
-    def __init__(self, lesson: Lesson, param):
-        self.lesson = lesson
-        self.param = param
-        self.visit = len(self.lesson.visitations)
-        self.total = len(Student.of(lesson))
-
-    def __repr__(self):
-        return "(lesson: {}, param: {}, visit: {}/{})".format(self.lesson, self.param, self.visit, self.total)
-
-
-class LessonAccumulator:
-    TOTAL = 0
-    VISIT = 1
-
-    def __init__(self, r: range = None, lessons: list = None):
-        # init base containers
-        if r is not None:
-            self.data = {i: [0, 0] for i in r}
-        else:
-            self.data = {}
-        self.all = {}
-
-        # allow to fill in constructor
-        if lessons is not None:
-            for l in lessons:
-                self.add_lesson(l)
-
-    def add_lesson(self, lesson: LessonData):
-        if lesson.param not in self.data.keys():
-            self.data[lesson.param] = [0, 0]
-            self.all[lesson.param] = []
-        self.data[lesson.param][LessonAccumulator.TOTAL] += lesson.total
-        self.data[lesson.param][LessonAccumulator.VISIT] += lesson.visit
-        self.all[lesson.param].append(lesson.visit * 100 / lesson.total)
-
-    def get_data(self):
-        total, visit = [], []
-        for d in self.data:
-            total.append(self.data[d][LessonAccumulator.TOTAL])
-            visit.append(self.data[d][LessonAccumulator.VISIT])
-
-        f = []
-        for i in range(len(total)):
-            if total[i] != 0:
-                f.append(visit[i] * 100 / total[i])
-            else:
-                f.append(0)
-        return f
-
-    def get_hist_data(self):
-        data = self.get_data()
-        arr = []
-        for i in range(len(data)):
-            for j in range(int(ceil(data[i]))):
-                arr.append(i)
-        return arr
-
-    def get_box_data(self):
-        for x in self.all:
-            print(x, self.all[x])
-        return [np.array(self.all[x]) for x in self.all]
-
-    def is_ready(self):
-        return False
-
-
-class QAnalysisDialog(QWidget):
+class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
     class DataType(int):
         WEEK = 1
         WEEK_DAY = 2
@@ -110,7 +41,9 @@ class QAnalysisDialog(QWidget):
 
     # TODO destroy on exit (memory leak)
     def __init__(self, program: IProgram, parent=None):
-        super().__init__(parent)
+        super(QWidget, self).__init__(parent)
+        super(IParentWindow, self).__init__()
+
         self.setStyleSheet(program.css)
         self.program: IProgram = program
 
@@ -233,3 +166,6 @@ class QAnalysisDialog(QWidget):
             kind=plot_type,
             title='Посещения',
             **kwargs)
+
+    def showAsChild(self, *args):
+        self.show()

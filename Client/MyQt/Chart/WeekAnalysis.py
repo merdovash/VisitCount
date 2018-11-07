@@ -1,4 +1,4 @@
-from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog, LessonData
+from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog
 from Domain.Aggregation import Weeks, Column
 
 
@@ -15,17 +15,6 @@ class WeekChart(QAnalysisDialog):
         self.data = Weeks.by_professor(self.program.professor,
                                        groups=[i for i in self.groups.keys() if self.groups[i]],
                                        disciplines=[i for i in self.disciplines.keys() if self.disciplines[i]])
-
-    def get_lessons(self):
-        lessons = [LessonData(lesson, lesson.date.isocalendar()[1]) for lesson in self.program.professor.lessons]
-
-        lessons.sort(key=lambda x: x.param)
-        start = lessons[0].param - 1
-
-        for lesson in lessons:
-            lesson.param -= start
-
-        return lessons
 
     def get_data(self):
         return self.data

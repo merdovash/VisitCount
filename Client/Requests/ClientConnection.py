@@ -47,7 +47,7 @@ class ServerConnection(Thread):
                 else:
                     self.on_error(f"Неудачная удаленная аутентификациия: {res}")
             except Exception as e:
-                self.on_error(e)
+                self.on_error(str(e))
         except requests.exceptions.ConnectionError as connection_error:
             self.on_error(f"""Отсутсвует возможность аутентификации так как: <br>
                 1. Не удалось аутентифицировать локально (возможно неверно введен логин или пароль) <br>

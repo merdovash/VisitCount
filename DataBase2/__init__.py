@@ -218,8 +218,8 @@ class Discipline(Base):
     """
     __tablename__ = 'disciplines'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    name = Column(String(40), primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    name = Column(String(40))
 
     lessons = relationship('Lesson')
 
