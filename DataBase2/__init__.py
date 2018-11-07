@@ -267,12 +267,13 @@ class Lesson(Base):
                f" completed={self.completed})>"
 
     @staticmethod
-    def of(obj, inresect=False):
+    def of(obj, intersect=False):
         if isinstance(obj, (list, _AssociationList)):
-            if inresect:
+            if intersect:
                 lessons = None
                 for o in obj:
                     lessons = Lesson.of(o) if lessons is None else list(set(lessons).intersection(Lesson.of(o)))
+                return lessons
             else:
                 return unique(flat([Lesson.of(o) for o in obj]))
         elif isinstance(obj, (Professor, Discipline, Group)):

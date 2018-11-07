@@ -335,6 +335,7 @@ class MainWindowWidget(QWidget):
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject',
               name="on_group_change")  # actual signature (int, int)
     def on_group_change(self, discipline, groups):
+        self.last_lesson = None
         professor = self.program.professor
 
         self.table.clear()
@@ -344,8 +345,6 @@ class MainWindowWidget(QWidget):
         self.lessons = Data.lessons_of(professor=self.professor,
                                        discipline=self.selector.discipline.current(),
                                        groups=groups)
-
-        self.last_lesson = None
 
         self.fill_table()
 
