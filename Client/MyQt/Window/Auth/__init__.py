@@ -1,7 +1,5 @@
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QDialog, \
-    QErrorMessage
 
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
@@ -38,14 +36,6 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
     @pyqtSlot('PyQt_PyObject')
     def on_auth_success(self, auth):
         self.program.auth_success(auth)
-
-    def showDialog(self, d: QDialog):
-        self.dialog = d
-        self.dialog.show()
-
-    def showError(self, msg):
-        self.dialog = QErrorMessage()
-        self.dialog.showMessage(msg)
 
     def setup_serial(self):
         def imaged_value(prof_card_id):

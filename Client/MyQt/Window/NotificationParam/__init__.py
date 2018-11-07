@@ -4,21 +4,23 @@ from typing import List
 from PyQt5.QtWidgets import QDialog
 
 from Client.IProgram import IProgram
+from Client.MyQt.Window import IParentWindow
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
+from Client.MyQt.Window.interfaces import IChildWindow
 from DataBase2 import Administration, Professor, UserType, Parent, Student
 from Domain import Action, Prepare
 from Domain.Action import NetAction
 
 
-class NotificationWindow(QDialog, Ui_NotificationWindow):
+class NotificationWindow(QDialog, Ui_NotificationWindow, IParentWindow, IChildWindow):
     class Tabs(int):
         NEW_USER = 0
         ADMIN_TABLE = 1
         PARENT_TABLE = 2
 
     def __init__(self, professor: Professor, flags, *args, **kwargs):
-        super().__init__(flags, *args, **kwargs)
-
+        super(QDialog, self).__init__(flags, *args, **kwargs)
+        super(IParentWindow, self).__init__()
         self.setupUi(self)
 
         self.professor = professor
@@ -104,3 +106,6 @@ class NotificationWindow(QDialog, Ui_NotificationWindow):
     def on_user_type_changed(self, current_index):
         self.student_label.setHidden(current_index != UserType.PARENT)
         self.student.setHidden(current_index != UserType.PARENT)
+
+    def showAsChild(self, *args):
+        self.exec_()
