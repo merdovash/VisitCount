@@ -124,6 +124,7 @@ class Selector(QWidget):
 
     @pyqtSlot(int)
     def _group_changed(self, new_group_index):
+        self.last_lesson = None
         print('group_changed', new_group_index)
         professor = self.program.professor
         groups = self.group.current()

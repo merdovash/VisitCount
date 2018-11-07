@@ -39,7 +39,7 @@ def find(func, list_, default=None):
 @memoize
 def lessons_of(professor, groups, discipline):
     discipline_lessons = set(Lesson.of(discipline))
-    groups_lessons = set(Lesson.of(groups))
+    groups_lessons = set(Lesson.of(groups, intersect=True))
     professor_lessons = set(Lesson.of(professor))
 
     return sorted(discipline_lessons.intersection(groups_lessons.intersection(professor_lessons)),
@@ -55,7 +55,6 @@ def is_exist(base, object_, session):
         return old is not None, old
     elif isinstance(object_, (Student, Professor, Lesson, Discipline, Group, Administration)):
         old = session.query(base).filter(base.id == object_.id).first()
-
         return old is not None, old
     elif isinstance(object_, NotificationParam):
         old = session.query(NotificationParam) \
