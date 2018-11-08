@@ -16,7 +16,10 @@ class IParentWindow:
         self.child_pool = []
 
     def setDialog(self, dialog, *args):
-        if self.child_window is not None:
+        if dialog == self:
+            dialog.showNormal()
+            dialog.activateWindow()
+        elif self.child_window is not None:
             if isinstance(self.child_window, IParentWindow):
                 self.child_window.setDialog(dialog, *args)
             else:

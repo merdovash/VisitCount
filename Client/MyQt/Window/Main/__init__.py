@@ -201,7 +201,7 @@ class MainWindow(AbstractWindow):
         note_run = QAction('Настройка оповещения', self)
         note_run.triggered.connect(
             lambda:
-            self.setDialog(NotificationWindow(self.program))
+            self.setDialog(NotificationWindow.instance(self.program))
         )
 
         note.addAction(note_run)
