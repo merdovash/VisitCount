@@ -11,6 +11,14 @@ from Domain.Action import NetAction
 
 
 class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWindow):
+    _instance = None
+
+    @staticmethod
+    def instance(program, flags=None):
+        if NotificationWindow._instance is None:
+            NotificationWindow._instance = NotificationWindow(program, flags)
+        return NotificationWindow._instance
+
     class Tabs(int):
         NEW_USER = 0
         ADMIN_TABLE = 1
@@ -29,7 +37,7 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         self.tabWidget.currentChanged.connect(self.on_change_tab)
 
         self.new_user_sex_combo_box.addItems(["Мужской", "Женский"])
-        self.new_user_type_combo_box.addItems(["Студент", "Родитель", "Преподаватель", "Администрация университета"])
+        self.new_user_type_combo_box.addItems(["Студент", "Преподаватель", "Родитель", "Администрация университета"])
         self.new_user_type_combo_box.currentIndexChanged.connect(self.on_user_type_changed)
         self.new_user_type_combo_box.setCurrentIndex(2)
 
