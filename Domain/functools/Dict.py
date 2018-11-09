@@ -1,5 +1,21 @@
+from typing import Dict
+
 from DataBase2 import Base
 from Domain.Primitives import value_of
+
+
+def format_view(d: Dict[str, str]):
+    for key in ['last_name', 'first_name', 'middle_name']:
+        d[key] = d[key].capitalize()
+    return d
+
+
+def validate_new_user(d: Dict):
+    for key in ['last_name', 'first_name', 'middle_name', 'email']:
+        if key not in d.keys() or d[key] == "" or d[key] is None:
+            return False
+    else:
+        return True
 
 
 def to_dict(obj):
