@@ -10,6 +10,7 @@ class AbstractWindow(QMainWindow, IParentWindow):
     error = pyqtSignal(str)
     message = pyqtSignal(str, bool)
     ok_message = pyqtSignal(str)
+    synch_finished = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(QMainWindow, self).__init__()
@@ -18,6 +19,7 @@ class AbstractWindow(QMainWindow, IParentWindow):
         self.error.connect(self.on_error)
         self.message.connect(self.on_show_message)
         self.ok_message.connect(self.on_ok_message)
+        self.synch_finished.connect(self.on_finish)
 
     def change_widget(self, widget):
         self.setCentralWidget(widget)
@@ -33,3 +35,8 @@ class AbstractWindow(QMainWindow, IParentWindow):
     @pyqtSlot(str, name='on_ok_message')
     def on_ok_message(self, text):
         self.setDialog(OkMessage(text))
+
+    @pyqtSlot(name='on_finish')
+    def on_finish(self):
+        self.ok_message.emit('Успешно сохранено')
+        self.program.session.expire_all()

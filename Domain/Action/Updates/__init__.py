@@ -1,23 +1,31 @@
 from DataBase2 import Session, Update, UpdateType, Professor, ProfessorsUpdates
+from Domain.Data import get_db_object
 from Domain.Prepare import get_updated_object
+from Parser.JsonParser import JsonParser
 
 
 class New:
     @staticmethod
-    def row(new_row_id, performer_id):
+    def row(table, new_row_id, performer_id):
         assert isinstance(performer_id, int), f'object {performer_id} is not id (int)'
+        assert isinstance(new_row_id, int), f'new_row_id {new_row_id} is not id (int)'
+
+        if not isinstance(table, str):
+            table = table.__name__
 
         session = Session()
 
-        update = Update(row_id=new_row_id.id,
-                        table_name=type(new_row_id).__name__,
+        update = Update(row_id=new_row_id,
+                        table_name=table,
                         performer=performer_id,
                         action_type=UpdateType.NEW)
+        print(update)
 
         session.add(update)
+        print(update)
 
         session.commit()
-
+        print('new_update', update)
         New.professors_update(update.id, performer_id)
 
     @staticmethod
@@ -44,21 +52,26 @@ class New:
 
 class Delete:
     @staticmethod
-    def row(deleted_object_id, deleted_object_table, performer_id, professors_affected=None):
+    def row(deleted_object: dict, deleted_object_table, performer_id, professors_affected=None):
+        assert isinstance(deleted_object, dict), f'deleted_object {deleted_object} is not a dict'
+        assert 'id' in deleted_object.keys(), f'deleted_object {deleted_object} has no "id" key'
         assert isinstance(performer_id, int), f'object {performer_id} is not id (int)'
 
         session = Session()
 
-        old_create: Update = session \
+        old_update: Update = session \
             .query(Update) \
-            .filter_by(table_name=deleted_object_table, row_id=deleted_object_id) \
+            .filter(Update.table_name == deleted_object_table,
+                    Update.row_id == deleted_object['id']) \
             .first()
-        if old_create is None:
+        print(old_update)
+        if old_update is None:
 
             update = Update(table_name=deleted_object_table,
-                            row_id=deleted_object_id,
+                            row_id=deleted_object['id'],
                             performer=performer_id,
-                            action_type=UpdateType.DELETE)
+                            action_type=UpdateType.DELETE,
+                            extra=JsonParser.dump(deleted_object))
 
             session.add(update)
 
@@ -69,16 +82,16 @@ class Delete:
             return update
 
         else:
-            if old_create.action_type == UpdateType.NEW:
-                session.delete(old_create)
+            if old_update.action_type == UpdateType.NEW:
+                session.delete(old_update)
 
                 session.commit()
             else:
-                old_create.action_type = UpdateType.DELETE
+                old_update.action_type = UpdateType.DELETE
 
                 session.commit()
 
-                return old_create
+                return old_update
 
 
 class Changed:
@@ -100,10 +113,14 @@ class Changed:
                             performer=performer_id,
                             action_type=UpdateType.UPDATE)
 
-            session.add(update)
+            _, old = get_db_object(Update, update, session)
+            if old is not None:
+                session.add(update)
 
-            session.commit()
+                session.commit()
 
-            New.professors_update(update.id, performer_id)
+                New.professors_update(update.id, performer_id)
 
-            return update
+                return update
+            else:
+                return old

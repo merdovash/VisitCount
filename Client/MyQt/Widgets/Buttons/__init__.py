@@ -14,9 +14,9 @@ class DeleteContactButton(QToolButton):
 
         self.setText('Удалить')
 
-        self.clicked.connect(self.on_clcik)
+        self.clicked.connect(self.on_click)
 
-    def on_clcik(self):
+    def on_click(self):
         reply = QMessageBox.question(self, 'Удаление',
                                      f"Вы действительно хотите удалить контакт ({format_name(self.user)})",
                                      QMessageBox.Yes, QMessageBox.No)

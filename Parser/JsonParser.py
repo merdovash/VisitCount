@@ -11,28 +11,14 @@ from datetime import datetime, date
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 from DataBase2 import Base
-from Domain.functools.Dict import without
+from Domain.functools.Dict import without, to_dict
 from Exception import InvalidPOSTDataException
 
 date_format = "%Y-%m-%d %H:%M:%f"
 
 
-def Base_to_dict(obj):
-    if isinstance(obj, Base):
-        res = {}
-
-        columns = list(map(lambda x: x.name, obj.__table__._columns))
-
-        for column_name in columns:
-            res[column_name] = obj.__getattribute__(column_name)
-
-        return res
-    else:
-        raise NotImplementedError(f'item {obj} is instance of {type(obj)}')
-
-
 def to_json(obj):
-    return JsonParser.dump(Base_to_dict(obj))
+    return JsonParser.dump(to_dict(obj))
 
 
 def to_db_object(type_name: str, net_dict: dict):
@@ -49,9 +35,13 @@ def to_db_object(type_name: str, net_dict: dict):
     if 'active' in net_dict:
         net_dict['active'] = eval(net_dict['active'])
 
-    exec(f'from DataBase2 import {type_name}')
-
-    class_ = eval(type_name)
+    if isinstance(type_name, str):
+        exec(f'from DataBase2 import {type_name}')
+        class_ = eval(type_name)
+    elif isinstance(type_name, type):
+        class_ = type_name
+    else:
+        raise NotImplementedError(type(type_name))
 
     res = class_(**without(net_dict, 'new_index'))
 

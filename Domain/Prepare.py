@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import DataBase2
 from DataBase2 import Update, UpdateType
-from Parser.JsonParser import Base_to_dict, JsonParser
+from Parser.JsonParser import to_dict, JsonParser
 
 
 class NewIDMap:
@@ -82,7 +82,7 @@ def updates(session):
             change = get_updated_object(update, session)
 
             if change is not None:
-                mapping = Base_to_dict(change)
+                mapping = to_dict(change)
                 if action_type == UpdateType.NEW:
                     new_items_map.append(update.table_name, change, mapping)
                     mapping['new_index'] = new_items_map.index(mapping)

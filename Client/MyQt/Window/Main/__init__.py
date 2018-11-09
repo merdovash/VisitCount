@@ -25,9 +25,10 @@ from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.NotificationParam import NotificationWindow
 from DataBase2 import Professor, Lesson, Student
 from DataBase2.Types import format_name
-from Domain import Action, Prepare, Data
+from Domain import Action, Data
 from Domain.Action import NetAction
-from Domain.Data import find, valid_card
+from Domain.Data import valid_card
+from Domain.functools.List import find
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
     ',')
@@ -243,7 +244,8 @@ class MainWindowWidget(QWidget):
         NetAction.send_updates(self.program.auth.login,
                                self.program.auth.password,
                                self.program.host,
-                               Prepare.updates(self.program.session))
+                               self.professor.id,
+                               self.program.session)
         pass
 
     def _setup_geometry(self):

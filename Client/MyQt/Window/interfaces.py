@@ -1,3 +1,6 @@
+from DataBase2 import Session
+
+
 class IChildWindow():
     def showAsChild(self, *args):
         raise NotImplementedError()
@@ -49,3 +52,11 @@ class IParentWindow:
 
     def hasDialog(self):
         return self.child_window is not None
+
+
+class IDataBaseUser:
+    def __init__(self, session=None):
+        if session is None:
+            self.session = Session()
+        else:
+            self.session = Session()
