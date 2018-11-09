@@ -8,6 +8,7 @@ class OkMessage(QMessageBox, IChildWindow):
         super().__init__(*__args)
 
         self.setStandardButtons(QMessageBox.Ok)
+        self.button(QMessageBox.Ok).clicked.connect(self.closeSelf)
 
         self.setText(text)
 

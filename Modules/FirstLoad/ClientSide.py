@@ -3,6 +3,7 @@ from pydoc import locate
 
 from Client.Requests.ClientConnection import ServerConnection
 from DataBase2 import Session
+from Domain.Action.SynchAction import table_order
 from Modules.FirstLoad import address
 
 
@@ -20,19 +21,20 @@ class FirstLoad(ServerConnection):
     def on_response(self, data):
 
         session = Session()
-        for class_name in data.keys():
-            mapper = locate(f'DataBase2.{class_name}')
-            mappings = data[class_name]
-            print(class_name, mapper)
+        for class_name in table_order:
+            if class_name in data.keys():
+                mapper = locate(f'DataBase2.{class_name}')
+                mappings = data[class_name]
+                print(class_name, mapper)
 
-            if class_name == 'Lesson':
-                for i, item in enumerate(mappings):
-                    mappings[i]['date'] = datetime.strptime(item['date'], "%Y-%m-%dT%H:%M:%S")
-            if class_name == 'NotificationParam':
-                for i, item in enumerate(mappings):
-                    mappings[i]['active'] = eval(mappings[i]['active'])
+                if class_name == 'Lesson':
+                    for i, item in enumerate(mappings):
+                        mappings[i]['date'] = datetime.strptime(item['date'], "%Y-%m-%dT%H:%M:%S")
+                if class_name == 'NotificationParam':
+                    for i, item in enumerate(mappings):
+                        mappings[i]['active'] = eval(mappings[i]['active'])
 
-            session.bulk_insert_mappings(mapper, mappings)
+                session.bulk_insert_mappings(mapper, mappings)
 
         session.flush()
         session.commit()

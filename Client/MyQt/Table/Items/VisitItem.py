@@ -1,13 +1,14 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMenu, QTableWidget
+from sqlalchemy.orm.exc import ObjectDeletedError
 
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
 from DataBase2 import Visitation, Student, Lesson
 from DataBase2.Types import format_name
 from Domain import Action
-from Domain.Data import find
+from Domain.functools.List import find
 
 
 class VisitItem(MyTableItem, AbstractContextItem):
@@ -111,14 +112,12 @@ class VisitItem(MyTableItem, AbstractContextItem):
                 menu.addAction("Отменить запись", self._del_visit_by_professor)
         menu.exec_()
 
-
     def _show_info(self):
         msg = "{} {}посетил занятие {}".format(format_name(self.student),
                                                "" if self.status == VisitItem.Status.Visited else "не ",
                                                self.lesson.date)
         self.program.window.message.emit(msg, False)
         # RFIDReader.instance()._method = nothing
-
 
     def _set_visited_by_professor(self):
         if self.safe:
@@ -152,9 +151,13 @@ class VisitItem(MyTableItem, AbstractContextItem):
 
     def _del_visit_by_professor(self):
         assert isinstance(self.visitation, Visitation), f"self.visitation is {type(self.visit_data)}"
-        Action.remove_visitation(self.visitation, self.program.professor.id)
-        self.visitation = None
-        self.update()
+        try:
+            Action.remove_visitation(self.visitation, self.program.professor.id)
+            self.visitation = None
+            self.update()
+        except ObjectDeletedError:
+            self.visitation = find(lambda x: x.student_id == self.student.id, Visitation.of(self.lesson))
+            self._del_visit_by_professor()
 
 
 class VisitItemFactory:

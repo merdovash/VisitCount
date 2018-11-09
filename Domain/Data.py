@@ -1,10 +1,37 @@
+from pydoc import locate
 from typing import List
 
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 from DataBase2 import Student, Group, Lesson, Visitation, Administration, Discipline, Professor, NotificationParam, \
-    StudentsGroups, LessonsGroups
+    StudentsGroups, LessonsGroups, Update
 from Domain.functools.Function import memoize
+
+
+def select_by_id(session, mapper, ID):
+    assert isinstance(ID, int), f'ID is not a number'
+    if isinstance(mapper, str):
+        return select_by_id(session, locate(f'DataBase2.{mapper}'), ID)
+    else:
+        return session.query(mapper).filter(mapper.id == ID).first()
+
+
+def select(session, mapper, mapping):
+    if mapper == Visitation:
+        return session \
+            .query(Visitation) \
+            .filter(Visitation.lesson_id == mapping['lesson_id'],
+                    Visitation.student_id == mapping['student_id']) \
+            .first()
+    elif mapper in [Update, Administration, NotificationParam]:
+        return session \
+            .query(mapper) \
+            .filter(mapper.id == mapping['id']) \
+            .first()
+    elif isinstance(mapper, str):
+        return select(session, locate(f'DataBase2.{mapper}'), mapping)
+    else:
+        raise NotImplementedError(mapper)
 
 
 def valid_card(user):
@@ -29,13 +56,6 @@ def student_info(student: Student) -> str:
     return f'{student.last_name} {student.first_name} {student.middle_name}, {names_of_groups(student.groups)}'
 
 
-def find(func, list_, default=None):
-    for item in list_:
-        if func(item):
-            return item
-    return default
-
-
 @memoize
 def lessons_of(professor, groups, discipline):
     discipline_lessons = set(Lesson.of(discipline))
@@ -46,11 +66,18 @@ def lessons_of(professor, groups, discipline):
                   key=lambda lesson: lesson.date)
 
 
-def is_exist(base, object_, session):
+def get_db_object(base, object_, session):
+    """
+
+    :param base:
+    :param object_:
+    :param session:
+    :return: возвращает такой же объект в БД
+    """
     if isinstance(object_, Visitation):
         old = session \
             .query(Visitation) \
-            .filter(Visitation.lesson_id == object_.lesson_id, Visitation.student_id == Visitation.student_id).first()
+            .filter(Visitation.lesson_id == object_.lesson_id, Visitation.student_id == object_.student_id).first()
 
         return old is not None, old
     elif isinstance(object_, (Student, Professor, Lesson, Discipline, Group, Administration)):
@@ -70,6 +97,12 @@ def is_exist(base, object_, session):
     elif isinstance(object_, LessonsGroups):
         old = session.query(LessonsGroups) \
             .filter(LessonsGroups.lesson_id == object_.lesson_id, LessonsGroups.group_id == object_.group_id) \
+            .first()
+        return old is not None, old
+    elif isinstance(object_, Update):
+        old = session.query(Update) \
+            .filter(Update.table_name == object_.table_name,
+                    Update.row_id == Update.row_id) \
             .first()
         return old is not None, old
     else:

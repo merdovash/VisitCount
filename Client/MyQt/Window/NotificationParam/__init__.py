@@ -1,16 +1,18 @@
 from itertools import chain
 from typing import List
 
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QWidget
+from sqlalchemy import inspect
 
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
-from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow
+from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow, IDataBaseUser
 from DataBase2 import Administration, UserType, Parent, Student
-from Domain import Action, Prepare
+from Domain import Action
 from Domain.Action import NetAction
 
 
-class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWindow):
+class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWindow, IDataBaseUser):
     _instance = None
 
     @staticmethod
@@ -25,9 +27,12 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         PARENT_TABLE = 2
 
     def __init__(self, program, flags=None, *args, **kwargs):
-        super(IParentWindow, self).__init__()
+        IParentWindow.__init__(self)
+        IDataBaseUser.__init__(self, program.session)
         super(QWidget, self).__init__(flags)
         self.setupUi(self)
+
+        assert self.session == inspect(program.professor).session
 
         self.child_window = None
 
@@ -45,14 +50,19 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
 
         self.tableWidget.set_professor(self.professor)
 
-        self.save_btn.clicked.connect(lambda: NetAction.send_updates(
-            login=program.auth.login,
-            password=program.auth.password,
-            host=program.host,
-            data=Prepare.updates(program.session),
-            on_error=program.window.error.emit,
-            on_finish=lambda: program.window.ok_message.emit('Успешно сохранено')
-        ))
+        program.window.synch_finished.connect(self.on_synch_finished)
+
+        self.save_btn.clicked.connect(
+            lambda: NetAction.send_updates(
+                login=program.auth.login,
+                password=program.auth.password,
+                host=program.host,
+                professor_id=self.professor.id,
+                session=program.session,
+                on_error=program.window.error.emit,
+                on_finish=program.window.synch_finished.emit
+            )
+        )
 
         self.run_btn.clicked.connect(lambda: NetAction.run_notification(
             login=program.auth.login,
@@ -117,3 +127,14 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
 
     def showAsChild(self, *args):
         self.show()
+
+    @pyqtSlot(name='on_sycnh_finished')
+    def on_synch_finished(self):
+        self.session.refresh(self.professor)
+
+        if self.tabWidget.currentIndex() == NotificationWindow.Tabs.ADMIN_TABLE:
+            self.show_admin_table()
+        elif self.tabWidget.currentIndex() == NotificationWindow.Tabs.PARENT_TABLE:
+            self.show_parent_table()
+        else:
+            pass

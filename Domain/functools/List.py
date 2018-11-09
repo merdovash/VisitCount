@@ -41,3 +41,10 @@ def unique(l: list) -> list:
             new_list[i] = list(item)
 
     return new_list
+
+
+def find(func, list_, default=None):
+    for item in list_:
+        if func(item):
+            return item
+    return default

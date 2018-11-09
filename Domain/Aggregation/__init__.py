@@ -65,7 +65,7 @@ class GroupAggregation:
         visits_count = [-1 for _ in range(len(groups))]
 
         for i, group in enumerate(groups):
-            visits_count[i] = len(Visitation.of(lessons))
+            visits_count[i] = len(set(Visitation.of(lessons)).intersection(set(Visitation.of(group))))
             data[i] = [round(visits_count[i] / students_count[i], 2)]
 
         df = DataFrame(data, index=list(map(lambda group: group.name, groups)), columns=['Посещения. %'])

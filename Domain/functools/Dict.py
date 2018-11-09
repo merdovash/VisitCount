@@ -1,4 +1,19 @@
+from DataBase2 import Base
 from Domain.Primitives import value_of
+
+
+def to_dict(obj):
+    if isinstance(obj, Base):
+        res = {}
+
+        columns = list(map(lambda x: x.name, obj.__table__._columns))
+
+        for column_name in columns:
+            res[column_name] = obj.__getattribute__(column_name)
+
+        return res
+    else:
+        raise NotImplementedError(f'item {obj} is instance of {type(obj)}')
 
 
 def without(d, *keys) -> dict:
@@ -9,6 +24,13 @@ def without(d, *keys) -> dict:
             new_dict[key] = d[key]
 
     return new_dict
+
+
+def fix_values(d: dict) -> dict:
+    new_d = {}
+    for key, value in d.items():
+        new_d[key] = value_of(value)
+    return new_d
 
 
 def fix_keys(d) -> dict:

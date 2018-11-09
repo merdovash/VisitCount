@@ -10,8 +10,8 @@ from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String,
     DateTime, Boolean
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, scoped_session
-from sqlalchemy.pool import SingletonThreadPool
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
+from sqlalchemy.pool import SingletonThreadPool, StaticPool
 
 from DataBase2.config2 import DataBaseConfig
 from Domain.functools.Function import memoize
@@ -58,7 +58,7 @@ def create():
     else:
         db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
 
-        engine = create_engine(db_path, echo=False, poolclass=SingletonThreadPool)
+        engine = create_engine(db_path, echo=False, poolclass=StaticPool, connect_args={'check_same_thread': False})
 
         try:
             fh = open(db_path.split('///')[1], 'r')
@@ -97,9 +97,6 @@ class StudentsGroups(Base):
 
     UniqueConstraint('student_id', 'group_id', name='students_groups_UK')
 
-    student = relationship('Student')
-    group = relationship('Group')
-
 
 class ProfessorsUpdates(Base):
     __tablename__ = 'professors_updates'
@@ -109,18 +106,15 @@ class ProfessorsUpdates(Base):
 
     UniqueConstraint('professor_id', 'update_id', name='professor_update_UK')
 
-    professor = relationship('Professor')
-    update = relationship('Update')
-
 
 class LessonsGroups(Base):
     __tablename__ = 'lessons_groups'
+
     id = Column(Integer, primary_key=True)
     lesson_id = Column(Integer, ForeignKey('lessons.id'))
     group_id = Column(Integer, ForeignKey('groups.id'))
 
-    lesson = relationship('Lesson')
-    group = relationship('Group')
+    UniqueConstraint('lesson_id', 'group_id', name='lesson_groups_UK')
 
 
 class StudentsParents(Base):
@@ -128,9 +122,6 @@ class StudentsParents(Base):
 
     parent_id = Column(Integer, ForeignKey('parents.id'), primary_key=True)
     student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
-
-    parent = relationship("Parent")
-    student = relationship("Student")
 
 
 class Visitation(Base):
@@ -141,15 +132,10 @@ class Visitation(Base):
     __tablename__ = 'visitations'
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    student_id = Column(Integer, ForeignKey('students.id', ondelete="RESTRICT"))
-    lesson_id = Column(Integer, ForeignKey('lessons.id', ondelete="RESTRICT"))
+    student_id = Column(Integer, ForeignKey('students.id'))
+    lesson_id = Column(Integer, ForeignKey('lessons.id'))
 
     UniqueConstraint('student_id', 'lesson_id', 'visitation_UK')
-
-    lesson = relationship('Lesson')
-    student = relationship('Student')
-
-    professors = association_proxy('lesson', 'professor')
 
     def __repr__(self):
         return f'<Visitation(id={self.id}, student_id={self.student_id},' \
@@ -219,9 +205,10 @@ class Discipline(Base):
     __tablename__ = 'disciplines'
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    name = Column(String(40))
+    name = Column(String(40), nullable=False)
+    full_name = Column(String(200))
 
-    lessons = relationship('Lesson')
+    lessons = relationship('Lesson', backref=backref('discipline'))
 
     def __repr__(self):
         return f"<Discipline(id={self.id}," \
@@ -244,21 +231,17 @@ class Lesson(Base):
     __tablename__ = 'lessons'
 
     id = Column(Integer, primary_key=True)
-    professor_id = Column(Integer, ForeignKey('professors.id'))
-    discipline_id = Column(Integer, ForeignKey('disciplines.id'))
-    type = Column(Integer)
-    date = Column(DateTime)
-    completed = Column(Integer)
-    room_id = Column(String(40))
+    professor_id = Column(Integer, ForeignKey('professors.id'), nullable=False)
+    discipline_id = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
+    type = Column(Integer, nullable=False)
+    date = Column(DateTime, nullable=False)
+    completed = Column(Integer, nullable=False)
+    room_id = Column(String(40), nullable=False)
 
-    _groups = relationship('LessonsGroups')
+    _groups = relationship('LessonsGroups', backref=backref('lesson'))
     groups = association_proxy('_groups', 'group')
 
-    discipline = relationship("Discipline", lazy='joined')
-
-    visitations = relationship('Visitation')
-
-    professor = relationship('Professor')
+    visitations = relationship('Visitation', backref=backref('lesson'))
 
     def __repr__(self):
         return f"<Lesson(id={self.id}, professor_id={self.professor_id}," \
@@ -294,7 +277,8 @@ class Administration(Base):
     middle_name = Column(String(40))
     email = Column(String(40))
 
-    notification = relationship('NotificationParam')
+    notification = relationship('NotificationParam', backref=backref("admin", cascade="all,delete"),
+                                passive_updates=False)
     professors = association_proxy('notification', 'professor')
 
     def __repr__(self):
@@ -334,15 +318,12 @@ class Professor(Base):
     middle_name = Column(String(40))
     card_id = Column('card_id', String(40), unique=True)
 
-    lessons: List[Lesson] = relationship("Lesson", order_by="Lesson.date")
+    lessons: List[Lesson] = relationship("Lesson", backref=backref('professor'), order_by="Lesson.date")
 
-    _admins = relationship('NotificationParam')
+    _admins = relationship('NotificationParam', backref="professor")
     admins = association_proxy('_admins', 'admin')
 
-    # disciplines
-    _disciplines = None
-
-    _updates = relationship('ProfessorsUpdates')
+    _updates = relationship('ProfessorsUpdates', backref=backref('professor'))
     updates = association_proxy('_updates', 'update')
 
     def __repr__(self):
@@ -378,18 +359,20 @@ class NotificationParam(Base):
 
     UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK')
 
-    admin = relationship('Administration')
-
-    professor = relationship('Professor')
-
     @staticmethod
     def of(obj):
         if isinstance(obj, (list, _AssociationList)):
             return flat([NotificationParam.of(o) for o in obj])
         elif isinstance(obj, Professor):
             return obj._admins
+        elif isinstance(obj, Administration):
+            return obj.notification
         else:
             raise NotImplementedError(type(obj))
+
+    def __repr__(self):
+        return f"<NotificationParam (id={self.id}, professor_id={self.professor_id}, admin_id={self.admin_id}, " \
+               f"active={self.active})>"
 
 
 class Group(Base):
@@ -398,13 +381,13 @@ class Group(Base):
     """
     __tablename__ = 'groups'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    name = Column(String(40), primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    name = Column(String(40))
 
-    _students = relationship('StudentsGroups')
+    _students = relationship('StudentsGroups', backref=backref('group'))
     students = association_proxy('_students', 'student')
 
-    _lessons = relationship('LessonsGroups')
+    _lessons = relationship('LessonsGroups', backref=backref('group'))
     lessons = association_proxy('_lessons', 'lesson')
 
     def __repr__(self):
@@ -435,21 +418,19 @@ class Student(Base):
 
     __tablename__ = 'students'
 
-    id = Column(Integer, unique=True, autoincrement=True)
-    first_name = Column(String(40), primary_key=True)
-    last_name = Column(String(40), primary_key=True)
-    middle_name = Column(String(40), primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+    first_name = Column(String(40))
+    last_name = Column(String(40))
+    middle_name = Column(String(40))
     card_id = Column(String(40))
 
-    _parents = relationship('StudentsParents')
+    _parents = relationship('StudentsParents', backref=backref('student'))
     parents = association_proxy('_parents', 'parent')
 
-    _groups = relationship('StudentsGroups')
+    _groups = relationship('StudentsGroups', backref=backref('student'))
     groups = association_proxy('_groups', 'group')
 
-    visitations = relationship("Visitation")
-
-    _professors = None
+    visitations = relationship("Visitation", backref=backref('student'))
 
     def __repr__(self):
         return f"<Student(id={self.id}, card_id={self.card_id}," \
@@ -481,7 +462,7 @@ class Parent(Base):
     sex = Column(Integer)
     email = Column(String(100))
 
-    _students = relationship("StudentsParents")
+    _students = relationship("StudentsParents", backref=backref('parent'))
     students = association_proxy('_students', 'student')
 
     @staticmethod
@@ -513,14 +494,15 @@ class Update(Base):
     __tablename__ = 'updates'
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    table_name = Column(String(40))
-    row_id = Column(Integer)
+    table_name = Column(String(40), nullable=False)
+    row_id = Column(Integer, nullable=False)
     action_type = Column(Integer, nullable=False)
     performer = Column(Integer)
+    extra = Column(String(500))
 
     UniqueConstraint('row_id', 'table_name', name='update_UK')
 
-    _professors = relationship("ProfessorsUpdates", cascade="all, delete-orphan")
+    _professors = relationship("ProfessorsUpdates", backref=backref('update'))
     professors = association_proxy('_professors', 'professor')
 
     def __repr__(self):
@@ -538,10 +520,16 @@ class Update(Base):
             }
         )
 
+    @staticmethod
+    def of(obj):
+        if isinstance(obj, Professor):
+            return obj.updates
+        else:
+            raise NotImplementedError(type(obj))
+
 
 if _new:
     Base.metadata.create_all(engine)
-
 
 # def on_update(target, initiator):
 #     print(f"target: {target}, initiator: {initiator}")

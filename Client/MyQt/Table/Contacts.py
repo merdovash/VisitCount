@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QComboBox
 
 from Client.MyQt.Widgets.Buttons import DeleteContactButton
 from DataBase2 import Administration, Parent
-from Domain.Data import student_info, find
+from Domain.Data import student_info
+from Domain.functools.List import find
 
 
 class Header(int):
