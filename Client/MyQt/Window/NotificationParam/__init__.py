@@ -10,6 +10,7 @@ from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow, IDataBase
 from DataBase2 import Administration, UserType, Parent, Student
 from Domain import Action
 from Domain.Action import NetAction
+from Domain.functools.Dict import format_view, validate_new_user
 
 
 class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWindow, IDataBaseUser):
@@ -31,6 +32,8 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         IDataBaseUser.__init__(self, program.session)
         super(QWidget, self).__init__(flags)
         self.setupUi(self)
+
+        self.program = program
 
         assert self.session == inspect(program.professor).session
 
@@ -73,16 +76,24 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         ))
 
         assert hasattr(self, 'child_window'), f'inheritance gone wrong'
+        assert hasattr(self, 'child_pool'), f'inheritance gone wrong'
 
     def on_add_user(self):
         if self.new_user_type_combo_box.currentIndex() == UserType.ADMIN:
-            Action.create_administration(performer_id=self.professor.id,
-                                         **dict(last_name=self.new_user_last_name.text(),
-                                                first_name=self.new_user_first_name.text(),
-                                                middle_name=self.new_user_middle_name.text(),
-                                                email=self.new_user_email.text()))
+            admin_data = dict(last_name=self.new_user_last_name.text(),
+                              first_name=self.new_user_first_name.text(),
+                              middle_name=self.new_user_middle_name.text(),
+                              email=self.new_user_email.text())
 
-            self.tabWidget.setCurrentIndex(NotificationWindow.Tabs.ADMIN_TABLE)
+            if validate_new_user(admin_data):
+                admin_data = format_view(admin_data)
+                Action.create_administration(performer_id=self.professor.id,
+                                             **admin_data)
+
+                self.program.window.ok_message.emit('Контакт добавлен')
+                self.tabWidget.setCurrentIndex(NotificationWindow.Tabs.ADMIN_TABLE)
+            else:
+                self.program.window.ok_message.emit(f'Необходимо заполнить поля [Фамилия, Имя, Отчество, Email]')
         elif self.new_user_type_combo_box.currentIndex() == UserType.PARENT:
 
             raise NotImplementedError('TODO')
