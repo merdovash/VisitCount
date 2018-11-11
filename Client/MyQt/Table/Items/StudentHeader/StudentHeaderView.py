@@ -1,9 +1,10 @@
-from PyQt5.QtCore import QPoint
+from PyQt5.QtCore import QPoint, QRectF
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QColor, QMouseEvent
+from PyQt5.QtGui import QPainter, QColor, QMouseEvent, QPen
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem
 
 from Client.MyQt.ColorScheme import Color
+from Client.MyQt.Table import PercentHeaderItem
 from Client.MyQt.Table.Items import AbstractContextItem
 from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
 
@@ -15,6 +16,11 @@ class NoItemException(Exception):
 class StudentHeaderView(QHeaderView):
     no_card_color = Color.primary_light
     primary_color = Color.secondary
+
+    border_pen = QPen(Color.secondary_dark)
+    border_pen.setWidthF(0.5)
+
+    textPen = QPen(Color.text_color)
 
     def __init__(self):
         super().__init__(Qt.Vertical)
@@ -56,30 +62,42 @@ class StudentHeaderView(QHeaderView):
         headerHeight = 0
         hidden_row_count = 0
 
+        row_count = self.parent().model().rowCount()
+
         start_pixel = headerHeight
-        for row in range(self.parent().model().rowCount()):
+        for row in range(row_count):
             try:
-                text, bg_color, height = self.data(row)
+                item = self.parent().verticalHeaderItem(row)
 
-                p.fillRect(0, start_pixel - offset,
-                           headerWidth, height, bg_color)
+                if isinstance(item, StudentHeaderItem):
+                    self.draw_item(p, item, row, headerWidth, [0, start_pixel])
+                elif isinstance(item, PercentHeaderItem):
+                    y_pos = self.height() - self.parent().rowHeight(row) * (
+                                row_count - row - 1) + self.parent().verticalOffset() - self.parent().horizontalScrollBar().height() - 14
+                    self.draw_item(p, item, row, headerWidth, [0, y_pos])
+                else:
+                    raise NotImplementedError(type(item))
 
-                text = text
-                p.drawText(8, 15 + start_pixel - offset, str(text))
-
-                p.drawLine(0, start_pixel + height - 1 - offset,
-                           headerWidth, start_pixel + height - 1 - offset)
-
-                start_pixel += height
+                start_pixel += self.parent().rowHeight(row)
             except NoItemException:
                 print('no item', row)
 
-    def data(self, row):
-        item = self.parent().verticalHeaderItem(row)
+    def draw_item(self, p: QPainter, item, row, width, started_point):
+        height = self.parent().rowHeight(row)
 
-        if item is None:
-            raise NoItemException()
+        rect = QRectF(started_point[0] - self.parent().horizontalOffset(),
+                      started_point[1] - self.parent().verticalOffset(),
+                      width, height)
 
+        p.fillRect(rect, self.get_color(item, row))
+
+        p.setPen(self.textPen)
+        p.drawText(rect, Qt.AlignCenter, item.text())
+
+        p.setPen(self.border_pen)
+        p.drawRect(rect)
+
+    def get_color(self, item, row):
         if isinstance(item, StudentHeaderItem):
             if item.have_card():
                 if row == self.hovered:
@@ -96,8 +114,7 @@ class StudentHeaderView(QHeaderView):
                 rect_color = Color.secondary_accent
             else:
                 rect_color = self.primary_color
-
-        return item.text(), rect_color, self.parent().rowHeight(row)
+        return rect_color
 
     def mouseMoveEvent(self, event: QMouseEvent):
         try:
@@ -110,16 +127,22 @@ class StudentHeaderView(QHeaderView):
 
     def find_item(self, pos: QPoint) -> (QTableWidgetItem, int):
         def find_row(target_y):
-            current_y = - self.parent().verticalOffset()
-
-            for row in range(self.parent().rowCount()):
-                height = self.parent().rowHeight(row)
-                if current_y <= target_y <= current_y + height:
-                    return row
-
-                current_y += height
+            last_row_height = self.parent().rowHeight(self.parent().rowCount() - 1)
+            if target_y > self.height() - last_row_height:
+                return self.parent().rowCount() - 1
+            elif target_y > self.height() - last_row_height * 2:
+                return self.parent().rowCount() - 2
             else:
-                return -1
+                current_y = - self.parent().verticalOffset()
+
+                for row in range(self.parent().rowCount()):
+                    height = self.parent().rowHeight(row)
+                    if current_y <= target_y <= current_y + height:
+                        return row
+
+                    current_y += height
+                else:
+                    return -1
 
         row = find_row(pos.y())
 
