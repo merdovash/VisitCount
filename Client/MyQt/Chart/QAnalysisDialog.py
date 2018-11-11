@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, \
     QHBoxLayout, QWidget, QFormLayout, QCheckBox
+from matplotlib.axes import Axes
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas, \
     NavigationToolbar2QT as NavigationToolbar
@@ -30,6 +31,22 @@ def show(graph_window_constructor, program: IProgram):
 
 
 class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
+    instances = {}
+
+    @staticmethod
+    def instance(type_, **kwargs) -> 'QAnalysisDialog':
+        if QAnalysisDialog.instances.get(type_, None) is None:
+            QAnalysisDialog.instances[type_] = type_(**kwargs)
+        return QAnalysisDialog.instances[type_]
+
+    @staticmethod
+    def loader(type_, **kwargs):
+        def f():
+            inst = QAnalysisDialog.instance(type_, **kwargs)
+            inst.show()
+
+        return f
+
     class DataType(int):
         WEEK = 1
         WEEK_DAY = 2
@@ -41,9 +58,9 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
 
     # TODO destroy on exit (memory leak)
     def __init__(self, program: IProgram, parent=None):
-        super(QWidget, self).__init__(parent)
-        super(IParentWindow, self).__init__()
-
+        QWidget.__init__(self, parent)
+        IParentWindow.__init__(self)
+        self.setWindowFlags(self.windowFlags() | Qt.WA_DeleteOnClose)
         self.setStyleSheet(program.css)
         self.program: IProgram = program
 
@@ -144,8 +161,10 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
         plot_legend = self.plot_types[index]
 
         kwargs = {'ylim': [0, 100] if index == 0 else None}
-
-        self._draw(ax=self.ax(), plot_type=plot_legend['type'], **kwargs)
+        try:
+            self._draw(ax=self.ax(), plot_type=plot_legend['type'], **kwargs)
+        except TypeError:
+            self.program.window.error.emit('Пусто')
 
         if plot_legend['xlabel'] is not None:
             self.ax().set_xlabel(plot_legend['xlabel'])
@@ -155,7 +174,7 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
         # refresh canvas
         self.canvas.draw()
 
-    def ax(self):
+    def ax(self) -> Axes:
         return self._ax
 
     def _draw(self, plot_type, ax, **kwargs):
@@ -169,3 +188,6 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
 
     def showAsChild(self, *args):
         self.show()
+
+    def closeEvent(self, QCloseEvent):
+        self.setVisible(False)
