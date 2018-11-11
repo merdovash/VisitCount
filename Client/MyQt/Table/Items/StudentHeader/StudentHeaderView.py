@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QPoint, QRectF
+from PyQt5.QtCore import QPoint, QRectF, pyqtSignal
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QColor, QMouseEvent, QPen
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem
@@ -22,8 +22,10 @@ class StudentHeaderView(QHeaderView):
 
     textPen = QPen(Color.text_color)
 
-    def __init__(self):
-        super().__init__(Qt.Vertical)
+    hover_changed = pyqtSignal(int)
+
+    def __init__(self, parent):
+        super().__init__(Qt.Vertical, parent=parent)
 
         self.line_color = QColor(0, 0, 0)
         self.rect_color = QColor(255, 255, 255)
@@ -37,6 +39,10 @@ class StudentHeaderView(QHeaderView):
         self.customContextMenuRequested.connect(self.vertical_header_click)
         self.setSectionResizeMode(QHeaderView.Fixed)
         self.setMouseTracking(True)
+
+        self.row_clicked = -1
+
+        self.hover_changed.connect(self.parent().set_row_hovered)
 
     def vertical_header_click(self, event: QPoint):
         """
@@ -98,6 +104,8 @@ class StudentHeaderView(QHeaderView):
         p.drawRect(rect)
 
     def get_color(self, item, row):
+        if row == self.row_clicked:
+            return Color.primary_dark
         if isinstance(item, StudentHeaderItem):
             if item.have_card():
                 if row == self.hovered:
@@ -120,10 +128,10 @@ class StudentHeaderView(QHeaderView):
         try:
             _, row = self.find_item(event.pos())
 
-            self.set_hovered(row, True)
+            self.set_row_hovered(row)
 
         except NoItemException:
-            self.set_hovered(-1, True)
+            self.set_row_hovered(-1)
 
     def find_item(self, pos: QPoint) -> (QTableWidgetItem, int):
         def find_row(target_y):
@@ -148,10 +156,29 @@ class StudentHeaderView(QHeaderView):
 
         return self.parent().verticalHeaderItem(row), row
 
-    def set_hovered(self, index, pure=False):
-        if self.hovered != index:
-            self.hovered = index if index is not None else -1
-            self.model().headerDataChanged.emit(Qt.Vertical, 0, self.parent().rowCount())
+    def set_row_hovered(self, row):
+        if row != self.hovered and self.row_clicked == -1:
+            self.hovered = row
+            self.hover_changed.emit(row)
+            self.changes(row)
 
-        if pure:
-            self.parent().set_hover(index, -1)
+    def mousePressEvent(self, event: QMouseEvent):
+        item, row = self.find_item(event)
+
+        if self.row_clicked == -1:
+            self.row_clicked = row
+            self.changes(row)
+        else:
+            temp = self.row_clicked
+            self.row_clicked = -1
+            self.changes(temp)
+
+    def row_hovered(self) -> int:
+        if self.row_clicked == -1:
+            return self.hovered
+        else:
+            return self.row_clicked
+
+    def changes(self, row):
+        self.model().headerDataChanged.emit(Qt.Vertical, row - 1, row + 1)
+        self.viewport().repaint()

@@ -40,7 +40,7 @@ class VisitSection(QTableWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.table_right_click)
 
-        self.setVerticalHeader(StudentHeaderView())
+        self.setVerticalHeader(StudentHeaderView(self))
 
         self.setHorizontalHeader(LessonHeaderView())
         self.horizontalHeader().setVisible(True)
@@ -173,16 +173,21 @@ class VisitSection(QTableWidget):
                 or self.col_hovered != col \
                 or (row == -1 and self.row_hovered != -1) \
                 or (col == -1 and self.col_hovered != -1):
-            self.row_hovered = row
             self.col_hovered = col
 
-            self.verticalHeader().set_hovered(row)
+            self.verticalHeader().set_row_hovered(row)
             self.horizontalHeader().set_hovered(col)
 
             self.model().dataChanged.emit(self.model().index(0, 0),
                                           self.model().index(self.columnCount() - 1, self.rowCount() - 1))
 
             self.viewport().repaint()
+
+    def set_row_hovered(self, row):
+        self.row_hovered = row
+        self.model().dataChanged.emit(self.model().index(0, 0),
+                                      self.model().index(self.columnCount() - 1, self.rowCount() - 1))
+        self.viewport().repaint()
 
     def set_row_hover(self, row):
         self.set_hover(row, self.col_hovered)
