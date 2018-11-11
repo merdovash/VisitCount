@@ -92,11 +92,16 @@ class VisitSection(QTableWidget):
                 self.draw_item(p, item, row, col, started_point)
                 started_point[1] += self.rowHeight(row)
 
-            for row in range(len(self.parent().students), len(self.parent().students) + 2):
+            for percent_row in range(2):
+                row = len(self.parent().students) + percent_row
+
+                y_pos = self.height() - self.horizontalHeader().height() - self.rowHeight(row) * (
+                            2 - percent_row) + self.verticalOffset() - self.horizontalScrollBar().height()
+
                 item = self.item(row, col)
                 if isinstance(item, PercentItem):
                     item.refresh()
-                self.draw_item(p, item, row, col, started_point)
+                self.draw_item(p, item, row, col, [started_point[0], y_pos])
                 started_point[1] += self.rowHeight(row)
             else:
                 started_point[1] = -1
@@ -132,16 +137,22 @@ class VisitSection(QTableWidget):
 
     def find_item(self, pos: QPoint):
         def find_row(target_y):
-            current_y = - self.verticalOffset()
-
-            for row in range(self.rowCount()):
-                height = self.rowHeight(row)
-                if current_y <= target_y <= current_y + height:
-                    return row
-
-                current_y += height
+            last_row_height = self.rowHeight(self.rowCount() - 1)
+            if target_y > self.height() - last_row_height:
+                return self.rowCount() - 1
+            elif target_y > self.height() - last_row_height * 2:
+                return self.rowCount() - 2
             else:
-                return -1
+                current_y = - self.verticalOffset()
+
+                for row in range(self.rowCount()):
+                    height = self.rowHeight(row)
+                    if current_y <= target_y <= current_y + height:
+                        return row
+
+                    current_y += height
+                else:
+                    return -1
 
         def find_col(target_x):
             current_x = - self.horizontalOffset()
