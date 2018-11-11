@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QAction, QMenu
 
 from Client.IProgram import IProgram
-from Client.MyQt.Chart.QAnalysisDialog import show
+from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog
 from Client.MyQt.Chart.WeekAnalysis import WeekChart
 from Client.MyQt.Chart.WeekDayAnalysis import WeekDayChart
 from Client.MyQt.QAction.DataAction import DataAction
@@ -91,12 +91,12 @@ class MainWindow(AbstractWindow):
         analysis = self.menu_bar.addMenu("Анализ")
 
         analysis_weeks = QAction("По неделям", self)
-        analysis_weeks.triggered.connect(show(WeekChart, self.program))
+        analysis_weeks.triggered.connect(QAnalysisDialog.loader(WeekChart, program=self.program))
 
         analysis.addAction(analysis_weeks)
 
         analysis_week_days = QAction("По дням недели", self)
-        analysis_week_days.triggered.connect(show(WeekDayChart, self.program))
+        analysis_week_days.triggered.connect(QAnalysisDialog.loader(WeekDayChart, program=self.program))
 
         analysis.addAction(analysis_week_days)
 
