@@ -37,7 +37,7 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
     session.commit()
 
     try:
-        print(f'new visitation: {visit}')
+        visit.id
     except:
         try:
             session.merge(visit)

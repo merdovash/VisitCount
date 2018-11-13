@@ -24,14 +24,14 @@ class MyProgram(IProgram):
                  win_config: Config = WindowConfig.load(), test=False,
                  css=True):
         self._state = {'marking_visits': False,
-                       'host': 'http://127.0.0.1' if test else 'http://bisitor.itut.ru',
+                       'host': 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
 
         self._reader: IReader = None
 
         self.test = test
 
-        self.host = 'http://127.0.0.1:5000' if test else 'http://bisitor.itut.ru'
+        self.host = 'http://bisitor.itut.ru'
 
         self.session = Session()
 
