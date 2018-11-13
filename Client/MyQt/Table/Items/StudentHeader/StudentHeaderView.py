@@ -91,7 +91,7 @@ class StudentHeaderView(QHeaderView):
     def draw_item(self, p: QPainter, item, row, width, started_point):
         height = self.parent().rowHeight(row)
 
-        rect = QRectF(started_point[0] - self.parent().horizontalOffset(),
+        rect = QRectF(started_point[0],
                       started_point[1] - self.parent().verticalOffset(),
                       width, height)
 
