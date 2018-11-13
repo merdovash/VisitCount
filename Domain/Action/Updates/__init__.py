@@ -1,5 +1,4 @@
 from DataBase2 import Session, Update, UpdateType, Professor, ProfessorsUpdates
-from Domain.Data import get_db_object
 from Domain.Prepare import get_updated_object
 from Parser.JsonParser import JsonParser
 
@@ -111,14 +110,10 @@ class Changed:
                             performer=performer_id,
                             action_type=UpdateType.UPDATE)
 
-            _, old = get_db_object(Update, update, session)
-            if old is not None:
-                session.add(update)
+            session.add(update)
 
-                session.commit()
+            session.commit()
 
-                New.professors_update(update.id, performer_id)
+            New.professors_update(update.id, performer_id)
 
-                return update
-            else:
-                return old
+            return update

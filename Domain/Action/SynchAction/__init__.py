@@ -93,6 +93,7 @@ def apply_new_indexes(new: Dict[str, List[Dict[str, Any]]], old: Dict[str, List[
     else:
         for p in prepares:
             p.object.id = p.new_id
+            session.commit()
         else:
             session.commit()
 
