@@ -1,6 +1,7 @@
 from typing import List
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtGui import QDropEvent
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
 
 from Client.Configuartion.Configurable import Configurable
@@ -60,20 +61,12 @@ class VisitTable(QWidget, Configurable):
 
         # init sections
         self.visit_table = VisitSection(self)
-        self.percent_table = PercentSection()
-        self.home_work_table = HomeworkSection()
 
         # share scroll menu_bar between sections
         scroll_bar = self.visit_table.verticalScrollBar()
-        scroll_bar.valueChanged.connect(
-            self.percent_table.verticalScrollBar().setValue)
-        scroll_bar.valueChanged.connect(
-            self.home_work_table.verticalScrollBar().setValue)
 
         # self.scroll_area.setWidget(self.visit_table)
         self.inner_layout.addWidget(self.visit_table)
-        self.inner_layout.addWidget(self.percent_table)
-        self.inner_layout.addWidget(self.home_work_table)
 
         self.students = []
         self.lessons = []
@@ -82,6 +75,33 @@ class VisitTable(QWidget, Configurable):
 
         self.table_item_factory = VisitItemFactory(self.program,
                                                    self.visit_table)
+
+        self.setAcceptDrops(True)
+        # self.setDefaultDropAction(Qt.MoveAction)
+        # self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QDropEvent):
+        print(event)
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+
+            self.program.window.excel_reader.read(event.mimeData().urls()[0])
+        else:
+            event.ignore()
 
     def _setup_config(self, window_config: Config):
         print(window_config)
@@ -113,14 +133,6 @@ class VisitTable(QWidget, Configurable):
         self.visit_table.clear()
         self.visit_table.setRowCount(0)
         self.visit_table.setColumnCount(0)
-
-        self.percent_table.clear()
-        self.percent_table.setRowCount(0)
-        self.percent_table.setColumnCount(0)
-
-        self.home_work_table.clear()
-        self.home_work_table.setRowCount(0)
-        self.home_work_table.setColumnCount(0)
 
         self.students = []
         self.lessons = []
@@ -166,12 +178,11 @@ class VisitTable(QWidget, Configurable):
 
             self.visit_table.setItem(row, lesson_index, item)
 
+        self.visit_table.resizeRowToContents(row)
+
         percent_item = PercentItem(self.get_row(row),
                                    PercentItem.Orientation.ByStudents)
-        self.percent_table.setItem(row, 0, percent_item)
-
-        self.visit_table.resizeRowsToContents()
-        self.percent_table.resizeRowsToContents()
+        # TODO percent item
 
     def on_cellChanged(self, row, col):
         item = self.visit_table.item(row, col)
@@ -180,8 +191,7 @@ class VisitTable(QWidget, Configurable):
             if item.ready:
                 percent_row = VisitTable.Header.COUNT + len(self.students)
                 percents = [self.visit_table.item(percent_row, col),
-                            self.visit_table.item(percent_row + 1, col),
-                            self.percent_table.item(row, 0)]
+                            self.visit_table.item(percent_row + 1, col)]
 
                 for percent in percents:
                     # assert isinstance(percent,
@@ -231,8 +241,6 @@ class VisitTable(QWidget, Configurable):
         :param index:
         """
         self.visit_table.insertRow(index)
-        self.percent_table.insertRow(index)
-        # self.home_work_table.insertRow(index)
 
     def removeRow(self, index: int):
         """
@@ -240,8 +248,6 @@ class VisitTable(QWidget, Configurable):
         :param index:
         """
         self.visit_table.removeRow(index)
-        self.percent_table.removeRow(index)
-        # self.home_work_table.removeRow(index)
 
     def row(self, student: Student) -> int:
         """
@@ -315,7 +321,6 @@ class VisitTable(QWidget, Configurable):
             self.show_visitation_msg.emit(
                 f"Студент {format_name(student)} отмечен")
 
-            self.percent_table.item(row, 0).refresh()
             self.visit_table.item(self.rowCount() - 1, col).refresh()
 
     def set_current_lesson(self, lesson):

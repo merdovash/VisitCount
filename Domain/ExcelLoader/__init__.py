@@ -3,16 +3,18 @@ from datetime import datetime
 from typing import List
 
 import xlrd
+from PyQt5.QtCore import QUrl
 from xlrd import Book
 from xlrd.sheet import Sheet
 
 from Client.IProgram import IProgram
 from DataBase2 import Group, Student, Lesson
+from Domain import Action
 from Domain.Validation import ExcelValidation
 from Domain.functools.Function import memoize
 from Domain.functools.List import find
 
-student = namedtuple('student', 'last_name first_name middle_name card_id visitations')
+student = namedtuple('student', 'real_student visitations')
 lesson = namedtuple('lesson', 'date col real_lesson')
 
 
@@ -58,7 +60,7 @@ class ExcelVisitationLoader:
         raw_group_name = sheet.cell(*self.group_name_index)
         group_name = ExcelValidation.group_name(raw_group_name.value)
 
-        return self.session.query(Group).filter(Group.name == group_name).first()
+        return self.session.query(Group).filter(Group.name.in_(group_name)).all()
 
     def _get_lesson_header(self, sheet: Sheet, group: Group) -> List[lesson]:
         lessons = []
@@ -78,7 +80,7 @@ class ExcelVisitationLoader:
 
                 real_lesson = find(lambda x: x.date == date, real_lessons)
                 assert real_lesson is not None, f'no lesson for date {date}'
-                lessons.append(lesson(date, col, real_lessons))
+                lessons.append(lesson(date, col, real_lesson))
 
         return lessons
 
@@ -99,11 +101,15 @@ class ExcelVisitationLoader:
             return student_cell[0], student_cell[1], student_cell[2]
         elif len(student_cell) == 2:
             return student_cell[0], student_cell[1], ''
+        elif len(student_cell) == 4 and (student_cell[3] == "*" or student_cell[3] == "**"):
+            return student_cell[0], student_cell[1], student_cell[2]
         else:
             raise NotImplementedError(student_cell)
 
-    def _get_students(self, sheet: Sheet) -> List[student]:
+    def _get_students(self, sheet: Sheet, group: Group) -> List[student]:
         lesson_count = self._get_lessons_count(sheet)
+
+        real_students = Student.of(group)
 
         student_info = []
 
@@ -121,25 +127,52 @@ class ExcelVisitationLoader:
                     visit_cell = sheet.cell(row, col)
                     visitation.append(visit_cell.value == 1)
 
-                student_info.append(student(last_name, first_name, middle_name, student_card_id, visitation))
+                real_student = find(
+                    lambda x: x.last_name == last_name and x.first_name == first_name and x.middle_name == middle_name,
+                    real_students)
+                assert real_student is not None, f'no such student for {student_fio}'
+
+                student_info.append(student(real_student, visitation))
 
         return student_info
 
     def read(self, file_path):
-        assert isinstance(file_path, str), TypeError()
+        """
+
+        :param file_path: принимает строку адреса или QUrl объект
+        """
+        if isinstance(file_path, str):
+            pass
+        if isinstance(file_path, QUrl):
+            file_path = file_path.toLocalFile()
+        else:
+            raise NotImplementedError(type(file_path))
+
         wb = self._read_file(file_path)
 
         sheet = self._get_sheet(wb)
 
         db_group = self._get_group(sheet)
 
-        db_students = Student.of(db_group)
-
-        students = self._get_students(sheet)
+        students = self._get_students(sheet, db_group)
 
         lessons = self._get_lesson_header(sheet, db_group)
 
-        print(lessons, students)
+        total = len(students) * len(lessons)
+        read = 0
+
+        for col, l in enumerate(lessons):
+            Action.start_lesson(lesson=l.real_lesson, professor=self.program.professor)
+
+        for st in students:
+            for index, visit in enumerate(st.visitations):
+                self.program.window.statusBar().showMessage(f"Записано {read} из {total}")
+                if visit:
+                    Action.new_visitation(student=st.real_student, lesson=lessons[index].real_lesson,
+                                          professor_id=self.program.professor.id)
+                read += 1
+
+        self.program.window.statusBar().showMessage(f"Успешно прочитан файл {file_path}")
 
     def test(self):
         self.read('/home/vlad/PycharmProjects/VisitCount/Domain/ExcelLoader/Группа_ИСТ_622.xls')

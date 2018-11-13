@@ -19,13 +19,11 @@ class New:
                         table_name=table,
                         performer=performer_id,
                         action_type=UpdateType.NEW)
-        print(update)
 
         session.add(update)
-        print(update)
 
         session.commit()
-        print('new_update', update)
+
         New.professors_update(update.id, performer_id)
 
     @staticmethod

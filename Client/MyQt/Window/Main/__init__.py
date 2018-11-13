@@ -8,9 +8,9 @@ import datetime
 from typing import List
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QDropEvent
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QAction, QMenu
+    QLabel, QAction, QMenu, QStatusBar
 
 from Client.IProgram import IProgram
 from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog
@@ -73,6 +73,41 @@ class MainWindow(AbstractWindow):
         self.showMaximized()
 
         self.excel_reader = ExcelVisitationLoader(self.program)
+        self.setAcceptDrops(True)
+
+        self.setStatusBar(QStatusBar(self))
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QDropEvent):
+        print(event)
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+
+            for url in event.mimeData().urls():
+                try:
+                    self.ok_message.emit(
+                        f'Процесс записи файла ({url}) начат. Информация о статусе процесса слева внизу экрана.')
+                    self.excel_reader.read(url)
+                except Exception as e:
+                    self.error.emit(str(e))
+            else:
+                self.centralWidget().ready_draw_table.emit()
+        else:
+            event.ignore()
+
 
     def closeEvent(self, *args, **kwargs):
         if self.program.reader() is not None:
