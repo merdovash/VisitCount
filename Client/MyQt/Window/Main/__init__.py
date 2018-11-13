@@ -28,6 +28,7 @@ from DataBase2.Types import format_name
 from Domain import Action, Data
 from Domain.Action import NetAction
 from Domain.Data import valid_card
+from Domain.ExcelLoader import ExcelVisitationLoader
 from Domain.functools.List import find
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
@@ -70,6 +71,8 @@ class MainWindow(AbstractWindow):
         self.__init_menu__()
 
         self.showMaximized()
+
+        self.excel_reader = ExcelVisitationLoader(self.program)
 
     def closeEvent(self, *args, **kwargs):
         if self.program.reader() is not None:

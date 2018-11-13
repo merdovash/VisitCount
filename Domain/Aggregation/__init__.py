@@ -2,6 +2,7 @@ from pandas import DataFrame, np
 from pandas.core.groupby import GroupBy
 
 from DataBase2 import Professor, Group, Lesson, Student, Visitation
+from Domain.functools.Function import memoize
 from Domain.functools.List import unique
 
 
@@ -80,6 +81,7 @@ class GroupAggregation:
 
 class Weeks:
     @staticmethod
+    @memoize
     def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
@@ -102,13 +104,13 @@ class Weeks:
 
 class WeekDays:
     @staticmethod
+    @memoize
     def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
-        print(groups, disciplines)
 
         df = Lessons.by_professor(professor, groups=groups, disciplines=disciplines)
 
-        df[Column.date] = df[Column.date].apply(lambda date: date.isoweekday())
+        df[Column.date] = df[Column.date].apply(lambda date: ',Пн,Вт,Ср,Чт,Пт,Сб,Вс'.split(',')[date.isoweekday()])
 
         grouped: GroupBy = df.groupby(Column.date)
 
@@ -116,7 +118,5 @@ class WeekDays:
 
         df = DataFrame(np.round(grouped[Column.visit_count] / grouped[Column.student_count], 2) * 100,
                        columns=[Column.visit_rate]).reset_index()
-
-        print(df)
 
         return df
