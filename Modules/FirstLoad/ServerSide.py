@@ -62,10 +62,6 @@ class FirstLoadModule(Module):
                     .join(Lesson)
                     .filter(Lesson.professor_id == professor_id)
                     .all(),
-                    Visitation=self.session
-                    .query(Visitation)
-                    .join(Lesson)
-                    .filter(Lesson.professor_id == professor_id)
-                    .all(),
+                    Visitation=Visitation.of(professor),
                     Administration=Administration.of(professor),
                     NotificationParam=NotificationParam.of(professor))
