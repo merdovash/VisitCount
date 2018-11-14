@@ -14,7 +14,6 @@ from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import SingletonThreadPool, StaticPool
 
 from DataBase2.config2 import DataBaseConfig
-from Domain.functools.Function import memoize
 from Domain.functools.List import flat, unique
 
 try:
@@ -438,7 +437,6 @@ class Student(Base):
                f"middle_name={self.middle_name})>"
 
     @staticmethod
-    @memoize
     def of(obj) -> List['Student']:
         if isinstance(obj, list):
             return flat([Student.of(o) for o in unique(obj)])
