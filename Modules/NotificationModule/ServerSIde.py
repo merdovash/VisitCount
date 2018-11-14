@@ -23,16 +23,21 @@ class MessageMaker:
     def __init__(self, user):
         self.user = user
         self.sender_name = format_name(user)
+        self.to_sender_name = format_name(self.user, case={'gent'})
+        print(self.to_sender_name)
 
     def to(self, receiver):
         total_rate, group_table = GroupAggregation.by_professor(self.user, html=True)
 
         html_text = transform(
-            render_template(MessageMaker.rule[type(receiver)],
-                            receiver_name=format_name(receiver),
-                            sender_name=self.sender_name,
-                            visit_rate=total_rate,
-                            group_table=group_table)
+            render_template(
+                MessageMaker.rule[type(receiver)],
+                receiver_name=format_name(receiver),
+                sender_name=self.sender_name,
+                to_sender_name=self.to_sender_name,
+                visit_rate=total_rate,
+                group_table=group_table
+            )
         )
 
         message = MIMEMultipart("alternative", None, [MIMEText(html_text, 'html')])

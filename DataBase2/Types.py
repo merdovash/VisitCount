@@ -2,27 +2,36 @@
 This module contains all Structures, Classes and Functions needed in DataBase.
 """
 from collections import namedtuple
-from typing import Dict
+from typing import Dict, List
 
-from DataBase2 import Professor, Student
+import pymorphy2
+
+from DataBase2 import Professor, Student, Administration, Parent
 
 
-def format_name(user: Dict[str, str] or Professor or Student):
+def format_name(user: Dict[str, str] or Professor or Student, case=None):
     """
     Do format user data to readable string
     :param user: dictionary that contains keys: [last_name, first_name, middle_name]
     :return: string like 'Mark A.F.'
     """
+    fio: List = []
     if isinstance(user, dict):
         middle_name_len = len(user['middle_name'])
         if middle_name_len > 0:
-            result = f'{user["last_name"]} {user["first_name"][0]}.{user["middle_name"][0]}.'
+            fio = [user["last_name"], user["first_name"], user["middle_name"]]
         else:
-            result = f'{user["last_name"]} {user["first_name"][0]}.'
+            fio = [user["last_name"], user["first_name"]]
+    elif isinstance(user, (Student, Professor, Administration, Parent)):
+        fio = [user.last_name, user.first_name, user.middle_name]
     else:
-        result = f'{user.last_name} {user.first_name} {user.middle_name}'
+        raise NotImplementedError(type(user))
 
-    return result
+    if case is not None:
+        morph = pymorphy2.MorphAnalyzer()
+        fio = [morph.parse(name)[0].inflect(case).word for name in fio]
+
+    return ' '.join([f.capitalize() for f in fio])
 
 
 Table = namedtuple('Table', 'name columns extra')

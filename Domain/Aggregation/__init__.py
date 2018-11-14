@@ -1,3 +1,5 @@
+from typing import List
+
 from pandas import DataFrame, np
 from pandas.core.groupby import GroupBy
 
@@ -56,22 +58,44 @@ class GroupAggregation:
     def by_professor(professor: Professor, html=False):
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
-        groups = unique(Group.of(professor, flat_list=True))
+        # список групп
+        groups: List[Group] = unique(Group.of(professor, flat_list=True))
 
-        lessons = list(map(lambda group: Lesson.of(group), groups))
+        # список занятий по группам
+        lessons: List[List[Lesson]] = list(map(lambda group: Lesson.of(group), groups))
 
-        data = [-1 for _ in range(len(groups))]
+        # количество студентов по группам
+        students_count: List[int] = list(map(lambda group: len(Student.of(group)), groups))
 
-        students_count = list(map(lambda group: len(Student.of(group)), groups))
-        visits_count = [-1 for _ in range(len(groups))]
+        # сюда будут записаны процент посещений по группам
+        data: List[float] = [-1 for _ in range(len(groups))]
+
+        visits_count = 0
+        total_count = 0
 
         for i, group in enumerate(groups):
-            visits_count[i] = len(set(Visitation.of(lessons)).intersection(set(Visitation.of(group))))
-            data[i] = [round(visits_count[i] / students_count[i], 2)]
+            group_data = []
+            for lesson in lessons[i]:
+                if lesson.completed:
+                    # посещение занятия группой находим как пересечение наборов посещений занятия и посещений группы
+                    visits = len(set(Visitation.of(lesson)).intersection(set(Visitation.of(group))))
+                    total = students_count[i]
+                else:
+                    visits = 0
+                    total = 0
+
+                group_data.append([visits, total])
+                visits_count += visits
+                total_count += total
+            else:
+                data[i] = [round(sum(map(lambda x: x[0], group_data)) / sum(map(lambda x: x[1], group_data)) * 100, 1)]
 
         df = DataFrame(data, index=list(map(lambda group: group.name, groups)), columns=['Посещения. %'])
 
-        total = round(sum(visits_count) / sum(students_count), 2)
+        # итоговый процент посещений
+        total = round(visits_count / total_count * 100, 2)
+
+        print(df)
 
         if html:
             return total, df.to_html()
