@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QPoint, QRectF, pyqtSignal
+from PyQt5.QtCore import QPoint, QRectF, pyqtSignal, QSizeF
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QColor, QMouseEvent, QPen
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem
@@ -7,6 +7,7 @@ from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Table import PercentHeaderItem
 from Client.MyQt.Table.Items import AbstractContextItem
 from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
+from Client.MyQt.Table.Section import Markup
 
 
 class NoItemException(Exception):
@@ -78,15 +79,28 @@ class StudentHeaderView(QHeaderView):
                 if isinstance(item, StudentHeaderItem):
                     self.draw_item(p, item, row, headerWidth, [0, start_pixel])
                 elif isinstance(item, PercentHeaderItem):
-                    y_pos = self.height() - self.parent().rowHeight(row) * (
-                                row_count - row - 1) + self.parent().verticalOffset() - self.parent().horizontalScrollBar().height() - 14
-                    self.draw_item(p, item, row, headerWidth, [0, y_pos])
+                    rect = QRectF(
+                        QPoint(
+                            0,
+                            Markup.visit_count_row if item.absolute else Markup.visit_rate_row
+                        ),
+                        QSizeF(
+                            headerWidth,
+                            self.parent().rowHeight(row)
+                        )
+                    )
+                    item.draw(p, rect, self.isHighlighted(row))
+                elif item is None:
+                    pass
                 else:
-                    raise NotImplementedError(type(item))
+                    raise NotImplementedError(f'{type(item)} row: {row}')
 
                 start_pixel += self.parent().rowHeight(row)
             except NoItemException:
                 print('no item', row)
+
+    def isHighlighted(self, row):
+        return (self.row_clicked != -1 and self.row_clicked == row) or (self.row_clicked == -1 and self.hovered == row)
 
     def draw_item(self, p: QPainter, item, row, width, started_point):
         height = self.parent().rowHeight(row)
@@ -98,7 +112,7 @@ class StudentHeaderView(QHeaderView):
         p.fillRect(rect, self.get_color(item, row))
 
         p.setPen(self.textPen)
-        p.drawText(rect, Qt.AlignCenter, item.text())
+        p.drawText(rect, Qt.AlignLeft, item.text())
 
         p.setPen(self.border_pen)
         p.drawRect(rect)
@@ -135,11 +149,10 @@ class StudentHeaderView(QHeaderView):
 
     def find_item(self, pos: QPoint) -> (QTableWidgetItem, int):
         def find_row(target_y):
-            last_row_height = self.parent().rowHeight(self.parent().rowCount() - 1)
-            if target_y > self.height() - last_row_height:
-                return self.parent().rowCount() - 1
-            elif target_y > self.height() - last_row_height * 2:
-                return self.parent().rowCount() - 2
+            if target_y > Markup.visit_rate_row:
+                return Markup.visit_rate_row_index
+            elif target_y > Markup.visit_count_row:
+                return Markup.visit_count_row_index
             else:
                 current_y = - self.parent().verticalOffset()
 

@@ -23,9 +23,9 @@ from Client.MyQt.Table import VisitTable
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.NotificationParam import NotificationWindow
-from DataBase2 import Professor, Lesson, Student
+from DataBase2 import Professor, Lesson
 from DataBase2.Types import format_name
-from Domain import Action, Data
+from Domain import Action
 from Domain.Action import NetAction
 from Domain.Data import valid_card
 from Domain.ExcelLoader import ExcelVisitationLoader
@@ -251,13 +251,14 @@ class MainWindowWidget(QWidget):
     contains select lesson menu and table
     """
     ready_draw_table = pyqtSignal()
+    table_changed = pyqtSignal()
 
     def __init__(self, program: IProgram, professor: Professor):
         super().__init__()
 
         self.program: IProgram = program
         self.professor = professor
-        self.table = None
+        self.table: VisitTable = None
 
         self.last_lesson = None
 
@@ -267,6 +268,8 @@ class MainWindowWidget(QWidget):
         # self._setup_data()
 
         self.start_sync.connect(self.run_synchronization)
+        self.table_changed.connect(self.table.visit_table.on_table_change)
+        self.ready_draw_table.connect(self.table.visit_table.on_ready)
 
     # signals
     start_sync = pyqtSignal()
@@ -305,25 +308,29 @@ class MainWindowWidget(QWidget):
         info_layout.addWidget(professor_label, alignment=Qt.AlignLeft)
         info_layout.addWidget(self.info_label, alignment=Qt.AlignRight)
 
-        main_layout.addLayout(info_layout)
+        main_layout.addLayout(info_layout, stretch=1)
+
+        # DATA BLOCK
+        self.table = VisitTable(self.program)
+        self.table.show_visitation_msg.connect(self.show_message)
 
         # SELECTOR BLOCK
         self.selector = Selector(self.program)
-        self.selector.group_changed.connect(self.on_group_change)
-        self.selector.lesson_changed.connect(self.mark_current_lesson)
-        self.ready_draw_table.connect(self.selector.on_ready_draw_table)
+
+        self.selector.discipline_changed.connect(self.table.visit_table.set_discipline)
+        self.selector.group_changed.connect(self.table.visit_table.set_group)
+        self.selector.lesson_changed.connect(self.table.visit_table.set_lesson)
+
+        self.selector.start()
+
         self.selector.lesson_started.connect(self._start_lesson)
         self.selector.lesson_finished.connect(self._end_lesson)
 
-        main_layout.addWidget(self.selector)
+        main_layout.addWidget(self.selector, alignment=Qt.AlignTop, stretch=1)
 
-        # DATA BLOCK
-        self.table = VisitTable(main_layout, self.program)
-        self.table.show_visitation_msg.connect(self.show_message)
+        main_layout.addWidget(self.table, stretch=90)
 
         self.setLayout(main_layout)
-
-        self.ready_draw_table.emit()
 
     def set_current_lesson(self, lesson=None):
         """
@@ -351,54 +358,6 @@ class MainWindowWidget(QWidget):
         self.info_label.setText(text)
         self.info_label.setStyleSheet(f'color: {"red" if is_red else "black"}')
 
-    def refresh_table(self):
-        """
-        refill table
-        """
-        self.table.clear()
-        lessons = Lesson.filter(professor=self.professor,
-                                discipline=self.selector.discipline.current(),
-                                group=self.selector.group.current())
-
-        self.table.set_horizontal_header(lessons)
-
-        self.fill_table()
-
-        self.selector.lesson_selector.disconnect()
-        self.selector.lesson_selector.clear()
-        self.selector.lesson_selector.addItems(lessons)
-        self.selector.lesson_selector.currentIndexChanged.connect(
-            self._lesson_changed)
-        closest = closest_lesson(lessons)
-        # self.lesson_selector.setCurrentId(closest_lesson(lessons)["id"])
-
-        self._lesson_changed()
-
-    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject',
-              name="on_group_change")  # actual signature (int, int)
-    def on_group_change(self, discipline, groups):
-        self.last_lesson = None
-        professor = self.program.professor
-
-        self.table.clear()
-        print(type(groups))
-        self.students = Student.of(groups)
-        print('students', len(self.students))
-        self.lessons = Data.lessons_of(professor=self.professor,
-                                       discipline=self.selector.discipline.current(),
-                                       groups=groups)
-
-        self.fill_table()
-
-        if self.program.reader() is not None:
-            self.program.reader().stop_read()
-
-        self.info_label.setText(
-            f"Выбрана группа {groups[0].name}" if len(groups) == 1
-            else f'Выбраны группы {",".join([x.name for x in groups])}')
-
-    # @pyqtSlot(int)
-
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name="mark_current_lesson")
     def mark_current_lesson(self, column, last_lesson=None):
         assert 0 <= column, f'wrong columns number: columns={column}'
@@ -416,7 +375,7 @@ class MainWindowWidget(QWidget):
 
     def _lesson_changed(self, qt_index=None):
         index = self.table.lessons.index(
-            self.selector.lesson_selector.current())
+            self.selector.lesson.current())
         self.table.lessons = sorted(self.table.lessons, key=lambda x: x.date)
         self.mark_current_lesson(index)
 

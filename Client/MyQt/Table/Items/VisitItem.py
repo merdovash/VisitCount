@@ -4,17 +4,28 @@ from PyQt5.QtWidgets import QMenu, QTableWidget
 from sqlalchemy.orm.exc import ObjectDeletedError
 
 from Client.IProgram import IProgram
-from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem
+from Client.MyQt.ColorScheme import Color
+from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem, IDraw
+from Client.MyQt.utils import Signaler
 from DataBase2 import Visitation, Student, Lesson
 from DataBase2.Types import format_name
 from Domain import Action
 from Domain.functools.List import find
 
 
-class VisitItem(MyTableItem, AbstractContextItem):
+class VisitItem(IDraw, MyTableItem, AbstractContextItem):
     """
     item represents visitation
     """
+
+    def draw(self, painter, rect, highlighted=False):
+        painter.fillRect(rect, self.get_color(highlighted))
+
+        painter.setPen(self.textPen)
+        painter.drawText(rect, Qt.AlignCenter, self.text())
+
+        painter.setPen(self.border_pen)
+        painter.drawRect(rect)
 
     class Status(int):
         Visited = 1
@@ -32,6 +43,8 @@ class VisitItem(MyTableItem, AbstractContextItem):
         self.student = student
         self.lesson = lesson
         self.visitation = find(lambda x: x.student == self.student, lesson.visitations)
+
+        self.info_changed = Signaler()
 
         super().__init__()
         self.program: IProgram = program
@@ -57,6 +70,12 @@ class VisitItem(MyTableItem, AbstractContextItem):
         # assert visitation.student == self.student and visitation.lesson == self.lesson, "wrong visitation given"
         self.visitation = visitation
         self.update()
+        self.info_changed()
+
+    def remove_visitation(self):
+        self.visitation = None
+        self.update()
+        self.info_changed()
 
     def text(self):
         self.update()
@@ -82,15 +101,20 @@ class VisitItem(MyTableItem, AbstractContextItem):
             self.setText("")
             self.setBackground(MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NoInfo)
 
-    def get_color(self):
+    def get_color(self, highlighted=False):
         if self.status == VisitItem.Status.Visited:
-            return MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.Visited
+            color = MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.Visited
 
         elif self.status == VisitItem.Status.NotVisited:
-            return MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NotVisited
+            color = MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NotVisited
 
         elif self.status == VisitItem.Status.NoInfo:
-            return MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NoInfo
+            color = MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NoInfo
+
+        if highlighted:
+            color = Color.to_accent(color)
+
+        return color
 
     def show_context_menu(self, pos):
         # TODO: insert new visits in DB
@@ -153,8 +177,7 @@ class VisitItem(MyTableItem, AbstractContextItem):
         assert isinstance(self.visitation, Visitation), f"self.visitation is {type(self.visit_data)}"
         try:
             Action.remove_visitation(self.visitation, self.program.professor.id)
-            self.visitation = None
-            self.update()
+            self.remove_visitation()
         except ObjectDeletedError:
             self.visitation = find(lambda x: x.student_id == self.student.id, Visitation.of(self.lesson))
             self._del_visit_by_professor()
@@ -166,4 +189,7 @@ class VisitItemFactory:
         self.table = table
 
     def create(self, student, lesson) -> VisitItem:
-        return VisitItem(self.table, self.program, student, lesson)
+        visit_item = VisitItem(self.table, self.program, student, lesson)
+        visit_item.info_changed += self.table.cell_changed
+
+        return visit_item
