@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QPen
+from PyQt5.QtCore import Qt, QRect, QPoint
+from PyQt5.QtGui import QColor, QPen, QPixmap, QPainter
 from PyQt5.QtWidgets import QMenu, QTableWidget
 from sqlalchemy.orm.exc import ObjectDeletedError
 
@@ -19,15 +19,29 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
     """
     select_border_pen = QPen(Color.secondary_light)
     select_border_pen.setWidthF(1.3)
+    image = {}
 
-    def draw(self, painter, rect, highlighted=False, selected=False):
-        painter.fillRect(rect, self.get_color(highlighted=highlighted, selected=selected))
+    def draw(self, painter, rect: QRect, highlighted=False, selected=False):
+        code = (highlighted, selected, self.isVisit(), rect.width(), rect.height())
+        if code not in VisitItem.image.keys():
+            pix = QPixmap(rect.size())
 
-        painter.setPen(self.textPen)
-        painter.drawText(rect, Qt.AlignCenter, self.text())
+            p = QPainter(pix)
 
-        painter.setPen(self.border_pen if not selected else self.select_border_pen)
-        painter.drawRect(rect)
+            r = QRect(QPoint(0, 0), rect.size())
+
+            p.fillRect(r, self.get_color(highlighted=highlighted, selected=selected))
+
+            p.setPen(self.textPen)
+            p.drawText(r, Qt.AlignCenter, self.text())
+
+            p.setPen(self.border_pen if not selected else self.select_border_pen)
+            p.drawRect(r)
+
+            VisitItem.image[code] = pix.toImage()
+
+            p.end()
+        painter.drawImage(rect, VisitItem.image[code])
 
     class Status(int):
         Visited = 1
@@ -67,6 +81,9 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
                 return VisitItem.Status.NotVisited
         else:
             return VisitItem.Status.NoInfo
+
+    def isVisit(self):
+        return self.visitation is not None
 
     def set_visitation(self, visitation: Visitation):
         # assert visitation.student == self.student and visitation.lesson == self.lesson, "wrong visitation given"
