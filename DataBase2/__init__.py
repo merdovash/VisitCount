@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String,
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
-from sqlalchemy.pool import SingletonThreadPool, StaticPool
+from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool
 
 from DataBase2.config2 import DataBaseConfig
 from Domain.functools.List import flat, unique
@@ -52,12 +52,17 @@ def create_threaded():
 def create():
     _new = False
     if root == 'run_server.py':
-        engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8")
+        engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8",
+                               pool_pre_ping=True,
+                               poolclass=NullPool)
 
     else:
         db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
 
-        engine = create_engine(db_path, echo=False, poolclass=StaticPool, connect_args={'check_same_thread': False})
+        engine = create_engine(db_path,
+                               echo=False,
+                               poolclass=StaticPool,
+                               connect_args={'check_same_thread': False})
 
         try:
             fh = open(db_path.split('///')[1], 'r')

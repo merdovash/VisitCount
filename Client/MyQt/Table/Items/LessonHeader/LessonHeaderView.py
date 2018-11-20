@@ -226,7 +226,7 @@ class LessonHeaderView(QHeaderView):
             if item.lesson.completed:
                 menu.addAction("Отменить факт проведения занятия", item.unstart)
             menu.addAction("Перенести занятие", item.move_lesson)
-            menu.addAction('Выбрать занятие', lambda: self.parent().select_current_lesson(item.lesson))
+            menu.addAction('Выбрать занятие', lambda: self.parent().set_lesson(item.lesson))
             menu.exec(self.mapToGlobal(point))
 
     def mouseMoveEvent(self, event: QMouseEvent):

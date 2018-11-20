@@ -4,6 +4,16 @@ from PyQt5.QtGui import QColor
 class Color:
 
     @classmethod
+    def to_select(cls, color):
+        c = QColor(color)
+
+        c.setBlue(max(color.blue() - 80, 0))
+        c.setGreen(max(color.green() - 80, 0))
+        c.setRed(0)
+
+        return c
+
+    @classmethod
     def hover(cls, color):
         c = QColor(color)
 

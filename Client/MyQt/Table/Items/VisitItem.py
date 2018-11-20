@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QPen
 from PyQt5.QtWidgets import QMenu, QTableWidget
 from sqlalchemy.orm.exc import ObjectDeletedError
 
@@ -17,14 +17,16 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
     """
     item represents visitation
     """
+    select_border_pen = QPen(Color.secondary_light)
+    select_border_pen.setWidthF(1.3)
 
-    def draw(self, painter, rect, highlighted=False):
-        painter.fillRect(rect, self.get_color(highlighted))
+    def draw(self, painter, rect, highlighted=False, selected=False):
+        painter.fillRect(rect, self.get_color(highlighted=highlighted, selected=selected))
 
         painter.setPen(self.textPen)
         painter.drawText(rect, Qt.AlignCenter, self.text())
 
-        painter.setPen(self.border_pen)
+        painter.setPen(self.border_pen if not selected else self.select_border_pen)
         painter.drawRect(rect)
 
     class Status(int):
@@ -101,7 +103,7 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
             self.setText("")
             self.setBackground(MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.NoInfo)
 
-    def get_color(self, highlighted=False):
+    def get_color(self, highlighted=False, selected=False):
         if self.status == VisitItem.Status.Visited:
             color = MyTableItem.CurrentLessonColor if self.current else VisitItem.Color.Visited
 
@@ -113,6 +115,9 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
 
         if highlighted:
             color = Color.to_accent(color)
+
+        if selected:
+            color = Color.to_select(color)
 
         return color
 
