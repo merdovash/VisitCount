@@ -3,7 +3,7 @@ This module contains Abstract class of post request.
 
 You need to override class ServerConnection and override methods _run, on_response and on_error
 """
-
+import json
 from threading import Thread
 
 import requests
@@ -39,8 +39,10 @@ class ServerConnection(Thread):
             request = post(url=self.url,
                            headers={"Content-Type": "application/json"},
                            data=self.dump_data(data))
-
-            res = self.read_data(request.text)
+            try:
+                res = self.read_data(request.text)
+            except json.decoder.JSONDecodeError:
+                self.on_error(request.text)
             if res["status"] == "OK":
                 self.on_response(res["data"])
             else:
