@@ -153,6 +153,8 @@ class Visitation(Base):
             return obj.visitations
         elif isinstance(obj, Group):
             return flat(Visitation.of(Student.of(obj)))
+        elif isinstance(obj, Professor):
+            return Visitation.of(Lesson.of(obj))
         else:
             raise NotImplementedError(type(obj))
 
