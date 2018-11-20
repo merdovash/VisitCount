@@ -5,9 +5,9 @@ from email.mime.text import MIMEText
 from flask import render_template
 from premailer import transform
 
-from DataBase2 import Auth, Administration, Parent
+from DataBase2 import Auth, Administration, Parent, Lesson
 from DataBase2.Types import format_name
-from Domain.Aggregation import GroupAggregation
+from Domain.Aggregation import GroupAggregation, DisciplineAggregation
 from Domain.functools.List import flat
 from Modules import Module
 from Modules.NotificationModule import address
@@ -24,19 +24,34 @@ class MessageMaker:
         self.user = user
         self.sender_name = format_name(user)
         self.to_sender_name = format_name(self.user, case={'gent'})
+
+        lessons = sorted(Lesson.of(user), key=lambda x: x.date)
+
+        self.lessons_count = len(lessons)
+        self.completed_count = len(list(filter(lambda x: x.completed == 1, lessons)))
+        self.first_lesson_date = lessons[0].date
+        self.last_lesson_date = lessons[-1].date
+
+        self.total_rate, self.group_table = GroupAggregation.by_professor(self.user, html=True)
+
+        self.discipline_table = DisciplineAggregation.by_professor(self.user).to_html()
+
         print(self.to_sender_name)
 
     def to(self, receiver):
-        total_rate, group_table = GroupAggregation.by_professor(self.user, html=True)
-
         html_text = transform(
             render_template(
                 MessageMaker.rule[type(receiver)],
+                total_count=self.lessons_count,
+                completed_count=self.completed_count,
+                first_lesson_date=self.first_lesson_date,
+                last_lesson_date=self.last_lesson_date,
                 receiver_name=format_name(receiver),
                 sender_name=self.sender_name,
                 to_sender_name=self.to_sender_name,
-                visit_rate=total_rate,
-                group_table=group_table
+                visit_rate=self.total_rate,
+                group_table=self.group_table,
+                discipline_table=self.discipline_table
             )
         )
 

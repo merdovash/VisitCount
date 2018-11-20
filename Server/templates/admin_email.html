@@ -26,13 +26,29 @@ text-align: left;
 
 </style>
 <body>
-<p> Уважаемый (-ая) {{receiver_name}},</p>
-<p> Преподаватель {{sender_name}} иницировал рассылку оповещений.</p>
-<p> Процент посещений занятий {{to_sender_name}}: {{visit_rate}}%.</p>
-<p> Посещения занятий {{to_sender_name}} по группам:</p>
-<div>
-    {{group_table|safe}}
+<div class="intro">
+    <p> Уважаемый (-ая) {{receiver_name}},</p>
+    <p> Преподаватель {{sender_name}} иницировал рассылку оповещений.</p>
+    <p> Информация за интервал {{first_lesson_date}} - {{last_lesson_date}}.</p>
+    <p> Проведено занятий {{completed_count}} из {{total_count}}.</p>
 </div>
+<div class="main">
+    <p> Общий процент посещений занятий {{to_sender_name}}: {{visit_rate}}%.</p>
+    <div class="by_group">
+        <p> Посещения занятий {{to_sender_name}} по группам:</p>
+        <div>
+            {{group_table|safe}}
+        </div>
+    </div>
+    <div class="by_discipline">
+        <p> Посещения занятий {{to_sender_name}} по дисциплинам:</p>
+        <div>
+            {{discipline_table|safe}}
+        </div>
+    </div>
+</div>
+
 <p> Данное письмо сформировано автоматически. </p>
+
 </body>
 </html>

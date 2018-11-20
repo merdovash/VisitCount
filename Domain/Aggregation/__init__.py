@@ -3,7 +3,7 @@ from typing import List
 from pandas import DataFrame, np
 from pandas.core.groupby import GroupBy
 
-from DataBase2 import Professor, Group, Lesson, Student, Visitation
+from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline
 from Domain.functools.Function import memoize
 from Domain.functools.List import unique
 
@@ -101,6 +101,36 @@ class GroupAggregation:
             return total, df.to_html()
         else:
             return total, df
+
+
+class DisciplineAggregation:
+    @staticmethod
+    def by_professor(professor: Professor) -> DataFrame:
+        disciplines = {disc.name: {
+            'Проведено занятий': 0,
+            'Всего занятий': 0,
+            'visit': 0,
+            'total': 0,
+            'Посещения, %': 0,
+        } for disc in Discipline.of(professor)}
+
+        lessons = Lesson.of(professor)
+
+        for lesson in lessons:
+            name = lesson.discipline.name
+            if lesson.completed:
+                disciplines[name]['total'] += len(Student.of(lesson))
+                disciplines[name]['visit'] += len(Visitation.of(lesson))
+                disciplines[name]['Проведено занятий'] += 1
+            disciplines[name]['Всего занятий'] += 1
+
+        df = DataFrame(disciplines).T
+        df['Посещения, %'] = round(df['visit'] / df['total'] * 100, 1)
+
+        df = df.drop(['visit', 'total'], axis=1)
+
+        return df
+
 
 
 class Weeks:
