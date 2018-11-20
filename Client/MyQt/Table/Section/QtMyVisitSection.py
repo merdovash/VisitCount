@@ -82,7 +82,7 @@ class VisitSection(QTableWidget):
 
         self.discipline = None
         self.groups = None
-        self.lessons = None
+        self.lessons: List[Lesson] = None
         self.students = None
 
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -260,8 +260,11 @@ class VisitSection(QTableWidget):
     @pyqtSlot('PyQt_PyObject', name='set_lesson')
     def set_lesson(self, lesson):
         assert isinstance(lesson, Lesson)
+        print('lesson is set')
 
-        pass
+        self.current_lesson = lesson
+        if self.lessons is not None:
+            self.horizontalScrollBar().setValue(self.lessons.index(lesson))
 
     def find_lessons(self):
         assert self.groups is not None
@@ -324,7 +327,7 @@ class VisitSection(QTableWidget):
 
                     if isinstance(item, VisitItem):
                         rect = QRectF(current_point - offset_point, QSizeF(width, height))
-                        item.draw(p, rect, self.isHighlighted(row, col))
+                        item.draw(p, rect, self.isHighlighted(row, col), self.isCurrentLesson(item.lesson))
 
                     elif isinstance(item, HorizontalSum):
                         rect = QRectF(
@@ -395,6 +398,9 @@ class VisitSection(QTableWidget):
         # for col in range(len(self.parent().lessons), len(self.parent().lessons)+2):
         #     for row in range(len(self.parent().students)):
         #         pass
+
+    def isCurrentLesson(self, lesson):
+        return self.current_lesson == lesson
 
     def cell_changed(self):
         self.model().dataChanged.emit(self.model().index(0, 0),

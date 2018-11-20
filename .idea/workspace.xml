@@ -2,22 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="Добавлены проценты справа таблицы&#10;Исправлены незначительные ошибки в работе таблицы">
-      <change afterPath="$PROJECT_DIR$/Client/MyQt/utils/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/MyQt/ColorScheme.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/ColorScheme.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Items/PercentHeader/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Items/PercentItem.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Items/PercentItem.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderView.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderView.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Section/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Section/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Widgets/ComboBox.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Widgets/ComboBox.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/functools/List.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/functools/List.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DataBase2/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/DataBase2/__init__.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -156,14 +147,14 @@
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="html" value="6" />
-          <entry key="py" value="349" />
+          <entry key="py" value="359" />
           <entry key="pyi" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="HTML" value="6" />
-          <entry key="Python" value="349" />
+          <entry key="Python" value="359" />
           <entry key="PythonStub" value="1" />
         </counts>
       </usages-collector>
@@ -171,7 +162,7 @@
         <counts>
           <entry key="dummy" value="16" />
           <entry key="html" value="402" />
-          <entry key="py" value="64091" />
+          <entry key="py" value="64944" />
           <entry key="txt" value="1966" />
         </counts>
       </usages-collector>
@@ -179,18 +170,18 @@
         <counts>
           <entry key="HTML" value="402" />
           <entry key="PLAIN_TEXT" value="1982" />
-          <entry key="Python" value="64091" />
+          <entry key="Python" value="64944" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+    <leaf>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="117">
-              <caret line="161" selection-start-line="161" selection-end-line="161" selection-end-column="82" />
+            <state relative-caret-position="-168">
+              <caret line="22" lean-forward="true" selection-start-line="22" selection-end-line="22" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
@@ -199,10 +190,13 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Section/__init__.py">
+        <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="171">
-              <caret line="34" column="35" selection-start-line="34" selection-start-column="35" selection-end-line="34" selection-end-column="35" />
+            <state relative-caret-position="107">
+              <caret line="77" lean-forward="true" selection-start-line="77" selection-end-line="77" />
+              <folding>
+                <element signature="e#16#25#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -210,64 +204,40 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2640">
-              <caret line="176" lean-forward="true" selection-start-line="176" selection-end-line="176" />
+            <state relative-caret-position="179">
+              <caret line="179" column="24" selection-start-line="179" selection-start-column="24" selection-end-line="179" selection-end-column="24" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/ComboBox.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="77">
-              <caret line="61" column="13" lean-forward="true" selection-start-line="61" selection-start-column="13" selection-end-line="61" selection-end-column="13" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="114">
-              <caret line="87" column="60" selection-start-line="87" selection-start-column="60" selection-end-line="87" selection-end-column="60" />
-              <folding>
-                <element signature="e#4790#4938#0" />
-                <element signature="e#2374#2739#0" />
-                <element signature="e#2879#3099#0" />
-                <element signature="e#6218#6273#0" />
-                <element signature="e#6765#7019#0" />
-                <element signature="e#7057#7149#0" />
-                <element signature="e#2402#2789#0" />
-                <element signature="e#2836#2996#0" />
-                <element signature="e#7953#11817#0" />
-              </folding>
+            <state relative-caret-position="107">
+              <caret line="266" column="75" lean-forward="true" selection-start-line="266" selection-start-column="75" selection-end-line="266" selection-end-column="75" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderView.py">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/__init__.py">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="126">
-              <caret line="154" column="42" lean-forward="true" selection-start-line="154" selection-start-column="42" selection-end-line="154" selection-end-column="42" />
+            <state relative-caret-position="-30">
+              <caret line="19" column="50" selection-start-line="19" selection-start-column="50" selection-end-line="19" selection-end-column="50" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Domain/functools/List.py">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/ColorScheme.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="24" column="33" lean-forward="true" selection-start-line="24" selection-start-column="33" selection-end-line="24" selection-end-column="33" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state>
-              <caret line="316" column="24" lean-forward="true" selection-start-line="316" selection-start-column="24" selection-end-line="316" selection-end-column="24" />
+            <state relative-caret-position="135">
+              <caret line="9" column="34" lean-forward="true" selection-start-line="9" selection-start-column="34" selection-end-line="9" selection-end-column="34" />
             </state>
           </provider>
         </entry>
@@ -275,8 +245,29 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="212">
-              <caret line="260" lean-forward="true" selection-start-line="260" selection-end-line="260" />
+            <state relative-caret-position="272">
+              <caret line="228" column="90" selection-start-line="228" selection-start-column="90" selection-end-line="228" selection-end-column="90" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="180">
+              <caret line="321" column="30" lean-forward="true" selection-start-line="321" selection-start-column="30" selection-end-line="321" selection-end-column="30" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="141">
+              <caret line="40" column="29" lean-forward="true" selection-start-line="39" selection-start-column="4" selection-end-line="40" selection-end-column="29" />
+              <folding>
+                <element signature="e#0#36#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -365,7 +356,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="DB2+Notification" />
+        <entry key="$PROJECT_DIR$" value="Vertcal_percents" />
       </map>
     </option>
   </component>
@@ -403,15 +394,11 @@
         <option value="$PROJECT_DIR$/Domain/Action/Updates/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Action/SynchAction/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Aggregation/__init__.py" />
-        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Data.py" />
         <option value="$PROJECT_DIR$/Server/templates/admin_email.html" />
         <option value="$PROJECT_DIR$/Modules/NotificationModule/ServerSIde.py" />
         <option value="$PROJECT_DIR$/DataBase2/Types.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/ColorScheme.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/utils/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/PercentHeader/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/PercentItem.py" />
         <option value="$PROJECT_DIR$/Domain/functools/List.py" />
@@ -419,10 +406,14 @@
         <option value="$PROJECT_DIR$/Client/MyQt/Widgets/ComboBox.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderView.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Section/__init__.py" />
+        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/ColorScheme.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py" />
       </list>
     </option>
   </component>
@@ -476,32 +467,7 @@
               <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
               <item name="Client" type="462c0819:PsiDirectoryNode" />
               <item name="MyQt" type="462c0819:PsiDirectoryNode" />
-              <item name="Table" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Client" type="462c0819:PsiDirectoryNode" />
-              <item name="MyQt" type="462c0819:PsiDirectoryNode" />
-              <item name="Table" type="462c0819:PsiDirectoryNode" />
-              <item name="Items" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Client" type="462c0819:PsiDirectoryNode" />
-              <item name="MyQt" type="462c0819:PsiDirectoryNode" />
-              <item name="Table" type="462c0819:PsiDirectoryNode" />
-              <item name="Items" type="462c0819:PsiDirectoryNode" />
-              <item name="LessonHeader" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Client" type="462c0819:PsiDirectoryNode" />
-              <item name="MyQt" type="462c0819:PsiDirectoryNode" />
-              <item name="Table" type="462c0819:PsiDirectoryNode" />
-              <item name="Section" type="462c0819:PsiDirectoryNode" />
+              <item name="Widgets" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
@@ -517,17 +483,6 @@
               <item name="MyQt" type="462c0819:PsiDirectoryNode" />
               <item name="Window" type="462c0819:PsiDirectoryNode" />
               <item name="Main" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Domain" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Domain" type="462c0819:PsiDirectoryNode" />
-              <item name="functools" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -758,13 +713,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529582063510</updated>
-    </task>
-    <task id="LOCAL-00044" summary="Исправлена неправильвная разметка базы данных">
-      <created>1535466866000</created>
-      <option name="number" value="00044" />
-      <option name="presentableId" value="LOCAL-00044" />
-      <option name="project" value="LOCAL" />
-      <updated>1535466866000</updated>
     </task>
     <task id="LOCAL-00045" summary="Элементы управления вынесены в отдельный виджет Selector&#10;Студенты без записанного идентификатора карточки теперь обозначаются желтым">
       <created>1535544722221</created>
@@ -1102,7 +1050,14 @@
       <option name="project" value="LOCAL" />
       <updated>1542138634082</updated>
     </task>
-    <option name="localTasksCounter" value="93" />
+    <task id="LOCAL-00093" summary="Добавлены проценты справа таблицы&#10;Исправлены незначительные ошибки в работе таблицы">
+      <created>1542707552123</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
+      <option name="project" value="LOCAL" />
+      <updated>1542707552125</updated>
+    </task>
+    <option name="localTasksCounter" value="94" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -1137,7 +1092,7 @@
       <configuration name="Nosetests for ClientSide.test" configurationId="tests" />
     </history-entry>
   </component>
-  <component name="TodoView">
+  <component name="TodoView" selected-index="4">
     <todo-panel id="selected-file">
       <is-autoscroll-to-source value="true" />
     </todo-panel>
@@ -1156,12 +1111,12 @@
       <window_info anchor="bottom" id="Messages" order="0" />
       <window_info anchor="bottom" id="Message" order="1" />
       <window_info anchor="bottom" id="Find" order="2" sideWeight="0.4827856" weight="0.3267974" />
-      <window_info anchor="bottom" id="Run" order="3" sideWeight="0.85367763" weight="0.39508197" />
+      <window_info active="true" anchor="bottom" id="Run" order="3" sideWeight="0.85367763" visible="true" weight="0.39508197" />
       <window_info anchor="bottom" id="Debug" order="4" sideWeight="0.6376702" weight="0.3704918" />
       <window_info anchor="bottom" id="Cvs" order="5" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="6" weight="0.4" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.14632238" side_tool="true" weight="0.3627451" />
-      <window_info active="true" anchor="bottom" id="TODO" order="8" sideWeight="0.4976526" visible="true" weight="0.34590164" />
+      <window_info anchor="bottom" id="TODO" order="8" sideWeight="0.4976526" weight="0.34590164" />
       <window_info anchor="bottom" id="Terminal" order="9" sideWeight="0.6703869" weight="0.2777778" />
       <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.60156864" weight="0.3267974" />
       <window_info anchor="bottom" id="Version Control" order="11" sideWeight="0.4976526" weight="0.3267974" />
@@ -1170,6 +1125,27 @@
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Data View" order="3" weight="0.32980332" />
     </layout>
+    <layout-to-restore>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.22952087" />
+      <window_info id="Structure" order="1" weight="0.24884081" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Messages" order="0" />
+      <window_info anchor="bottom" id="Message" order="1" />
+      <window_info anchor="bottom" id="Find" order="2" sideWeight="0.4827856" weight="0.3267974" />
+      <window_info anchor="bottom" id="Run" order="3" sideWeight="0.85367763" visible="true" weight="0.39508197" />
+      <window_info anchor="bottom" id="Debug" order="4" sideWeight="0.6376702" weight="0.3704918" />
+      <window_info anchor="bottom" id="Cvs" order="5" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="6" weight="0.4" />
+      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.14632238" side_tool="true" weight="0.3627451" />
+      <window_info anchor="bottom" id="TODO" order="8" sideWeight="0.4976526" weight="0.34590164" />
+      <window_info anchor="bottom" id="Terminal" order="9" sideWeight="0.6703869" weight="0.2777778" />
+      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.60156864" weight="0.3267974" />
+      <window_info anchor="bottom" id="Version Control" order="11" sideWeight="0.4976526" weight="0.3267974" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Data View" order="3" weight="0.32980332" />
+    </layout-to-restore>
   </component>
   <component name="UnknownFeatures">
     <option featureType="com.intellij.fileTypeFactory" implementationName="*.js" />
@@ -1549,9 +1525,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="311">
           <caret line="67" selection-start-line="67" selection-end-line="67" />
-          <folding>
-            <element signature="e#0#167#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1573,9 +1546,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="194">
           <caret line="41" column="13" lean-forward="true" selection-start-line="41" selection-start-column="13" selection-end-line="41" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1586,30 +1556,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="164">
-          <caret line="432" column="49" selection-start-line="432" selection-start-column="49" selection-end-line="432" selection-end-column="49" />
-          <folding>
-            <element signature="e#16#25#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/DataBase2/Types.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="240">
           <caret line="24" column="61" selection-start-line="24" selection-start-column="61" selection-end-line="24" selection-end-column="61" />
-          <folding>
-            <element signature="e#87#121#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/ColorScheme.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="23" column="16" selection-start-line="23" selection-start-column="16" selection-end-line="23" selection-end-column="16" />
         </state>
       </provider>
     </entry>
@@ -1624,9 +1574,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="114">
           <caret line="128" column="39" selection-start-line="128" selection-start-column="39" selection-end-line="128" selection-end-column="39" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1637,9 +1584,6 @@
           <caret line="1019" column="4" selection-start-line="1019" selection-start-column="4" selection-end-line="1019" selection-end-column="4" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/-821062067/PyQt5/QtCore/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -1658,20 +1602,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="27" column="30" selection-start-line="21" selection-start-column="8" selection-end-line="27" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" selection-start-line="2" selection-end-line="2" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharmCE2018.2/system/python_stubs/-821062067/builtins.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="179">
@@ -1683,20 +1613,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="114">
           <caret line="32" column="8" selection-start-line="32" selection-start-column="8" selection-end-line="32" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2640">
-          <caret line="176" lean-forward="true" selection-start-line="176" selection-end-line="176" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret line="316" column="24" lean-forward="true" selection-start-line="316" selection-start-column="24" selection-end-line="316" selection-end-column="24" />
         </state>
       </provider>
     </entry>
@@ -1714,35 +1630,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="212">
-          <caret line="260" lean-forward="true" selection-start-line="260" selection-end-line="260" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderView.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="126">
           <caret line="154" column="42" lean-forward="true" selection-start-line="154" selection-start-column="42" selection-end-line="154" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="114">
-          <caret line="87" column="60" selection-start-line="87" selection-start-column="60" selection-end-line="87" selection-end-column="60" />
-          <folding>
-            <element signature="e#4790#4938#0" />
-            <element signature="e#2374#2739#0" />
-            <element signature="e#2879#3099#0" />
-            <element signature="e#6218#6273#0" />
-            <element signature="e#6765#7019#0" />
-            <element signature="e#7057#7149#0" />
-            <element signature="e#2402#2789#0" />
-            <element signature="e#2836#2996#0" />
-            <element signature="e#7953#11817#0" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1760,13 +1651,78 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="107">
+          <caret line="77" lean-forward="true" selection-start-line="77" selection-end-line="77" />
+          <folding>
+            <element signature="e#16#25#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="117">
-          <caret line="161" selection-start-line="161" selection-end-line="161" selection-end-column="82" />
+        <state relative-caret-position="-168">
+          <caret line="22" lean-forward="true" selection-start-line="22" selection-end-line="22" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="228" column="90" selection-start-line="228" selection-start-column="90" selection-end-line="228" selection-end-column="90" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="141">
+          <caret line="40" column="29" lean-forward="true" selection-start-line="39" selection-start-column="4" selection-end-line="40" selection-end-column="29" />
+          <folding>
+            <element signature="e#0#36#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="321" column="30" lean-forward="true" selection-start-line="321" selection-start-column="30" selection-end-line="321" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/ColorScheme.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="34" lean-forward="true" selection-start-line="9" selection-start-column="34" selection-end-line="9" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-30">
+          <caret line="19" column="50" selection-start-line="19" selection-start-column="50" selection-end-line="19" selection-end-column="50" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="179" column="24" selection-start-line="179" selection-start-column="24" selection-end-line="179" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="107">
+          <caret line="266" column="75" lean-forward="true" selection-start-line="266" selection-start-column="75" selection-end-line="266" selection-end-column="75" />
         </state>
       </provider>
     </entry>
