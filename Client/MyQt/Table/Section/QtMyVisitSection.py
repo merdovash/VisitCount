@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Dict, Any
 
 import numpy
-from PyQt5.QtCore import Qt, QPoint, QRectF, QSizeF, pyqtSlot
+from PyQt5.QtCore import Qt, QPoint, QRectF, pyqtSlot, QSize, QRect
 from PyQt5.QtGui import QPainter, QPen, QColor, QCursor
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton
 
@@ -70,6 +70,48 @@ class Row:
         self.visit_rate = HorizontalSum(visit_items, absolute=False)
 
 
+class DrawInfo:
+    _point: QPoint
+    point: QPoint
+    size = QSize
+    rect = QRect
+
+    def __init__(self, x, y, width, height, frozen_x=False, frozen_y=False):
+        self._point = QPoint(x, y)
+        self.size = QSize(width, height)
+        self.point = self._point
+        self.frozen_x = frozen_x
+        self.frozen_y = frozen_y
+        self.setup()
+
+    def offset_changed(self, vertical_offset, horizontal_offset):
+        self.point = self._point - QPoint(
+            0 if self.frozen_x else horizontal_offset,
+            0 if self.frozen_y else vertical_offset)
+        self.setup()
+
+    def setup(self):
+        self.rect = QRect(self.point, self.size)
+
+
+class VisitMap:
+    def __init__(self):
+        self.items: Dict[Any, DrawInfo] = {}
+
+    def offset_changed(self, vertical_offset, horizontal_offset):
+        for item in self.items.values():
+            item.offset_changed(vertical_offset, horizontal_offset)
+
+    def __getitem__(self, item):
+        try:
+            return self.items[item]
+        except KeyError:
+            return None
+
+    def __setitem__(self, key, value):
+        self.items[key] = value
+
+
 class VisitSection(QTableWidget):
     border_pen = QPen(Color.secondary_dark)
     border_pen.setWidthF(0.5)
@@ -85,8 +127,13 @@ class VisitSection(QTableWidget):
         self.lessons: List[Lesson] = None
         self.students = None
 
+        self.map = VisitMap()
+
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.verticalScrollBar().valueChanged.connect(self.on_offset_changed)
+        self.horizontalScrollBar().valueChanged.connect(self.on_offset_changed)
+
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -113,6 +160,11 @@ class VisitSection(QTableWidget):
 
         self.ready = False
 
+    @pyqtSlot(name='on_offset_changed')
+    def on_offset_changed(self):
+        print('offset_changed')
+        self.map.offset_changed(self.verticalOffset(), self.horizontalOffset())
+
     @pyqtSlot(name='on_table_change')
     def on_table_change(self):
         Markup.setup(self)
@@ -121,6 +173,7 @@ class VisitSection(QTableWidget):
     @pyqtSlot(name='on_ready')
     def on_ready(self):
         Markup.setup(self)
+        self.map = VisitMap()
         self.clear()
 
         self.students_headers = {}
@@ -263,7 +316,7 @@ class VisitSection(QTableWidget):
         print('lesson is set')
 
         self.current_lesson = lesson
-        if self.lessons is not None:
+        if self.lessons is not None and lesson in self.lessons:
             self.horizontalScrollBar().setValue(self.lessons.index(lesson))
 
     def find_lessons(self):
@@ -279,6 +332,7 @@ class VisitSection(QTableWidget):
         super().resizeEvent(QResizeEvent)
         self.on_table_change()
         self.cell_changed()
+        self.map.offset_changed(self.verticalOffset(), self.horizontalOffset())
 
     def table_right_click(self, event: QPoint):
         """
@@ -310,49 +364,46 @@ class VisitSection(QTableWidget):
         offset_point = QPoint(self.horizontalOffset(), self.verticalOffset())
         current_point = QPoint(-1, -1)
 
-        abs_row = True
         current_abs_row = False
 
         for row in range(len(self.students) + 2):
             height = self.rowHeight(row)
-            abs_column = True
 
             for col in range(self.columnCount()):
-
                 width = self.columnWidth(col)
-
                 item = self.item(row, col)
+                if self.map[row, col] is None:
+                    if isinstance(item, VisitItem):
+                        self.map[row, col] = DrawInfo(
+                            current_point.x(),
+                            current_point.y(),
+                            width,
+                            height)
+                    elif isinstance(item, VerticalSum):
+                        self.map[row, col] = DrawInfo(
+                            current_point.x(),
+                            Markup.visit_count_row if item.absolute else Markup.visit_rate_row,
+                            width,
+                            height,
+                            frozen_y=True)
+                    elif isinstance(item, HorizontalSum):
+                        self.map[row, col] = DrawInfo(
+                            Markup.visit_count_col if item.absolute else Markup.visit_rate_col,
+                            current_point.y(),
+                            width,
+                            height,
+                            frozen_x=True)
 
                 if isinstance(item, IDraw):
-
                     if isinstance(item, VisitItem):
-                        rect = QRectF(current_point - offset_point, QSizeF(width, height))
+                        rect = self.map[row, col].rect
                         item.draw(p, rect, self.isHighlighted(row, col), self.isCurrentLesson(item.lesson))
-
                     elif isinstance(item, HorizontalSum):
-                        rect = QRectF(
-                            QPoint(
-                                Markup.visit_count_col if item.absolute else Markup.visit_rate_col,
-                                current_point.y() - offset_point.y()),
-                            QSizeF(
-                                width,
-                                height)
-                        )
+                        rect = self.map[row, col].rect
                         item.draw(p, rect, self.isHighlighted(row, col))
-                        abs_column = False
-
                     elif isinstance(item, VerticalSum):
-                        rect = QRectF(
-                            QPoint(
-                                current_point.x() - offset_point.x(),
-                                Markup.visit_count_row if item.absolute else Markup.visit_rate_row),
-                            QSizeF(
-                                width,
-                                height))
+                        rect = self.map[row, col].rect
                         item.draw(p, rect, self.isHighlighted(row, col))
-
-                        current_abs_row = True
-
                 else:
                     pass
 
