@@ -30,10 +30,10 @@ CurrentData = namedtuple('CurrentData', 'discipline groups lesson')
 
 
 class Selector(QWidget):
-    group_changed = pyqtSignal('PyQt_PyObject',
-                               'PyQt_PyObject')  # actual signature (int, int)
-    lesson_changed = pyqtSignal('PyQt_PyObject',
-                                'PyQt_PyObject')  # actual signature (int, int)
+    discipline_changed = pyqtSignal('PyQt_PyObject')  # actual Signature (Discipline)
+    group_changed = pyqtSignal('PyQt_PyObject')  # actual signature (List[Group])
+    lesson_changed = pyqtSignal('PyQt_PyObject')  # actual signature (Lesson)
+
     data_changed = pyqtSignal()
     lesson_started = pyqtSignal(int)
     lesson_finished = pyqtSignal(int)
@@ -69,14 +69,14 @@ class Selector(QWidget):
         selector_layout.addWidget(self.group, 2)
 
         # lesson
-        self.lesson_selector = MComboBox(Lesson)
-        self.lesson_selector.currentIndexChanged.connect(self._lesson_changed)
+        self.lesson = MComboBox(Lesson)
+        self.lesson.currentIndexChanged.connect(self._lesson_changed)
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
 
         selector_layout.addWidget(lesson_label, 1,
                                   alignment=Qt.AlignCenter | Qt.AlignRight)
-        selector_layout.addWidget(self.lesson_selector, 2)
+        selector_layout.addWidget(self.lesson, 2)
 
         self.start_button = QPushButton()
         self.start_button.setText("Начать занятие")
@@ -90,19 +90,6 @@ class Selector(QWidget):
         selector_layout.setContentsMargins(0, 0, 0, 0)
 
         self.last_lesson = 0
-
-        self.load_data()
-
-    def load_data(self):
-        self.discipline.addItems(Discipline.of(self.professor))
-
-    @pyqtSlot()
-    def on_ready_draw_table(self):
-        self.group_changed.emit(self.discipline.current(),
-                                self.group.current())
-        self._lesson_changed(self.lesson_selector.currentIndex())
-
-    # @pyqtSlot(int)
 
     def _discipline_changed(self, new_discipline_index):
         print('discipline_changed')
@@ -122,7 +109,9 @@ class Selector(QWidget):
         self.group.blockSignals(False)
         self.group.setCurrent(current_group)
 
-    @pyqtSlot(int)
+        self.discipline_changed.emit(self.discipline.current())
+
+    @pyqtSlot(int, name='_group_changed')
     def _group_changed(self, new_group_index):
         self.last_lesson = None
         print('group_changed', new_group_index)
@@ -130,25 +119,25 @@ class Selector(QWidget):
         groups = self.group.current()
         discipline = self.discipline.current()
 
-        self.group_changed.emit(discipline, groups)
-
         lessons = Data.lessons_of(professor=self.professor, discipline=discipline, groups=groups)
 
         current_lesson = closest_lesson(lessons, self.program['date_format'])
 
-        start_index = self.lesson_selector.currentIndex() if self.lesson_selector.currentIndex() >= 0 else 0
-        self.lesson_selector.blockSignals(True)
-        self.lesson_selector.clear()
-        self.lesson_selector.addItems(lessons)
-        self.lesson_selector.blockSignals(False)
-        self.lesson_selector.setCurrent(current_lesson)
-        if self.lesson_selector.currentIndex() == start_index:
-            self._lesson_changed(self.lesson_selector.currentIndex())
+        start_index = self.lesson.currentIndex() if self.lesson.currentIndex() >= 0 else 0
+        self.lesson.blockSignals(True)
+        self.lesson.clear()
+        self.lesson.addItems(lessons)
+        self.lesson.blockSignals(False)
+        self.lesson.setCurrent(current_lesson)
+        if self.lesson.currentIndex() == start_index:
+            self._lesson_changed(self.lesson.currentIndex())
+
+        self.group_changed.emit(groups)
 
     def _lesson_changed(self, new_index=None):
         column = new_index
         if column != -1:
-            self.lesson_changed.emit(column, self.last_lesson)
+            self.lesson_changed.emit(self.lesson.current())
 
         self.last_lesson = column
 
@@ -163,10 +152,10 @@ class Selector(QWidget):
 
             self.discipline.setCurrent(lesson.discipline)
             self.group.setCurrent(set(lesson.groups))
-            self.lesson_selector.setCurrent(lesson)
+            self.lesson.setCurrent(lesson)
         except IndexError:
-            self.lesson_selector.clear()
-            self.lesson_selector.addItems(lessons_of(lesson.professor, lesson.groups, lesson.discipline))
+            self.lesson.clear()
+            self.lesson.addItems(lessons_of(lesson.professor, lesson.groups, lesson.discipline))
 
             self.select_current_lesson(lesson)
 
@@ -176,24 +165,34 @@ class Selector(QWidget):
 
     @pyqtSlot()
     def select_current_group_current_lesson(self):
-        lessons = list(self.lesson_selector.items.values())
+        lessons = list(self.lesson.items.values())
         current_lesson = closest_lesson(lessons, self.program['date_format'])
-        self.lesson_selector.setCurrent(current_lesson)
+        self.lesson.setCurrent(current_lesson)
+
+    def start(self):
+        lessons = Lesson.of(self.professor)
+        lesson = closest_lesson(lessons)
+
+        self.discipline.addItems(Discipline.of(self.professor))
+
+        self.discipline.setCurrent(Discipline.of(lesson)[0])
+        self.group.setCurrent(Group.of(lesson))
+        self.lesson.setCurrent(lesson)
 
     def _start_lesson(self, lesson_index):
         def start():
-            self.lesson_started.emit(self.lesson_selector.currentIndex())
+            self.lesson_started.emit(self.lesson.currentIndex())
 
-            self.lesson_selector.current().completed = True
+            self.lesson.current().completed = True
 
             self.program['marking_visits'] = True
-            self.lesson_selector.setEnabled(False)
+            self.lesson.setEnabled(False)
             self.group.setEnabled(False)
             self.discipline.setEnabled(False)
 
             if self.last_lesson is None:
                 self.last_lesson = self.table.lessons.index(
-                    closest_lesson(self.lesson_selector.get_data(),
+                    closest_lesson(self.lesson.get_data(),
                                    self.program['date_format']))
 
             self.start_button.disconnect()
@@ -220,7 +219,7 @@ class Selector(QWidget):
                 'Во время учета было потеряно соединение со считывателем. Учет завершен.')
 
         self.program['marking_visits'] = False
-        self.lesson_selector.setEnabled(True)
+        self.lesson.setEnabled(True)
         self.group.setEnabled(True)
         self.discipline.setEnabled(True)
 
@@ -231,7 +230,7 @@ class Selector(QWidget):
 
         # if self.last_lesson is not None:
         self.program.window.message.emit("Учет посещений завершен.", False)
-        self.lesson_finished.emit(self.lesson_selector.currentIndex())
+        self.lesson_finished.emit(self.lesson.currentIndex())
 
     @pyqtSlot()
     def on_data_change(self):
@@ -241,5 +240,5 @@ class Selector(QWidget):
         return CurrentData(
             self.discipline.current(),
             self.group.current(),
-            self.lesson_selector.current()
+            self.lesson.current()
         )

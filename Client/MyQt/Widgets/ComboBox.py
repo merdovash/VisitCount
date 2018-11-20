@@ -1,6 +1,6 @@
 import collections
 import datetime
-from typing import List, Dict
+from typing import List, Dict, TypeVar
 
 from PyQt5.QtCore import QRectF
 from PyQt5.QtCore import Qt
@@ -12,6 +12,7 @@ from DataBase2 import Discipline, Group, Lesson
 
 compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
 
+T = TypeVar('T')
 
 class MComboBox(QComboBox):
     image = QImage('Client/MyQt/Window/Main/icons/baseline_arrow_drop_down_black_18dp.png')
@@ -21,7 +22,7 @@ class MComboBox(QComboBox):
     hovered_pen = QPen(Color.primary)
     hovered_pen.setWidth(3)
 
-    def __init__(self, type_):
+    def __init__(self, type_: T):
         super().__init__()
 
         self.type = type_
@@ -34,14 +35,14 @@ class MComboBox(QComboBox):
 
         self.items: Dict[int, type_] = {}
 
-    def addItems(self, iterable: List, p_str=None) -> None:
+    def addItems(self, iterable: List[T], p_str=None) -> None:
         for i, value in enumerate(iterable):
             # print(i, value)
             self.items[i] = value
         pass
         super().addItems([self.rule(i) for i in iterable])
 
-    def current(self):
+    def current(self) -> T:
         return self.items[self.currentIndex()]
 
     def get_data(self):
@@ -58,7 +59,7 @@ class MComboBox(QComboBox):
         super().clear()
         self.items = {}
 
-    def setCurrent(self, item):
+    def setCurrent(self, item: T):
         # print(self.items)
         for i, value in enumerate(self.items):
             if self.type == Group:

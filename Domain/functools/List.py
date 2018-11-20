@@ -1,6 +1,14 @@
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 
+def empty(l: list or set) -> bool:
+    if l is None:
+        return True
+    if len(l) == 0:
+        return True
+    return False
+
+
 def intersect(l: list):
     total = None
     for item in l:

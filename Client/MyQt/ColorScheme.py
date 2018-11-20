@@ -15,11 +15,13 @@ class Color:
 
     @classmethod
     def to_accent(cls, color):
-        color.setRed(max(color.red() - 16, 0))
-        color.setGreen(max(color.green() - 16, 0))
-        color.setBlue(max(color.blue() - 16, 0))
+        c = QColor(color)
 
-        return color
+        c.setRed(max(color.red() - 16, 0))
+        c.setGreen(max(color.green() - 16, 0))
+        c.setBlue(max(color.blue() - 16, 0))
+
+        return c
 
     primary = QColor("#ff8000")
 

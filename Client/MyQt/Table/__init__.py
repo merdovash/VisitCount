@@ -2,14 +2,13 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QDropEvent
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QHBoxLayout
 
 from Client.Configuartion.Configurable import Configurable
 from Client.Configuartion.WindowConfig import Config
 from Client.IProgram import IProgram
-from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderItem
-from Client.MyQt.Table.Items.PercentHeader import PercentHeaderItem
-from Client.MyQt.Table.Items.PercentItem import PercentItem
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderItem, PercentHeaderItem
+from Client.MyQt.Table.Items.PercentItem import PercentItem, HorizontalSum, VerticalSum
 from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import \
     StudentHeaderItem
 from Client.MyQt.Table.Items.StudentHeader.StudentHeaderView import \
@@ -49,7 +48,7 @@ class VisitTable(QWidget, Configurable):
             }
         }
 
-    def __init__(self, parent: QVBoxLayout, program: IProgram):
+    def __init__(self, program: IProgram):
         super().__init__()
         self.program: IProgram = program
         self._setup_config(program.win_config)
@@ -60,23 +59,22 @@ class VisitTable(QWidget, Configurable):
         self.first = True
 
         # init sections
-        self.visit_table = VisitSection(self)
+        self.visit_table = VisitSection(self.program, self)
 
         # share scroll menu_bar between sections
         scroll_bar = self.visit_table.verticalScrollBar()
 
-        # self.scroll_area.setWidget(self.visit_table)
-        self.inner_layout.addWidget(self.visit_table)
-
         self.students = []
         self.lessons = []
-
-        parent.addLayout(self.inner_layout)
 
         self.table_item_factory = VisitItemFactory(self.program,
                                                    self.visit_table)
 
+        self.inner_layout.addWidget(self.visit_table)
+
         self.setAcceptDrops(True)
+
+        self.setLayout(self.inner_layout)
         # self.setDefaultDropAction(Qt.MoveAction)
         # self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
 
@@ -154,11 +152,25 @@ class VisitTable(QWidget, Configurable):
 
         self.lessons = sorted(lessons, key=lambda x: x.date)
 
-        self.visit_table.setColumnCount(len(lessons))
+        self.visit_table.setColumnCount(len(lessons) + 2)
 
         for col, lesson in enumerate(self.lessons):
             self.visit_table.setHorizontalHeaderItem(col, LessonHeaderItem(lesson, self.program))
             self.visit_table.setColumnWidth(col, 15)
+
+        count = len(list(filter(lambda x: x.completed, lessons)))
+        # TODO автоматическое изменение количества проведенных занятий в заголовке
+        self.visit_table.setHorizontalHeaderItem(
+            len(lessons),
+            PercentHeaderItem(
+                max_count=count,
+                orientation=Qt.Horizontal,
+                absolute=True))
+        self.visit_table.setHorizontalHeaderItem(
+            len(lessons) + 1,
+            PercentHeaderItem(
+                orientation=Qt.Horizontal
+            ))
 
     def add_student(self, student: Student):
         """
@@ -169,10 +181,11 @@ class VisitTable(QWidget, Configurable):
         row = self.visit_table.rowCount()
         self.insertRow(row)
 
-        # set row header
+        # Устанавливаем заголовок студента
         header_item = StudentHeaderItem(self.program, student)
         self.visit_table.setVerticalHeaderItem(row, header_item)
 
+        # Устанаваливает ячейки
         for lesson_index, lesson in enumerate(self.lessons):
             item = self.table_item_factory.create(student, lesson)
 
@@ -180,8 +193,15 @@ class VisitTable(QWidget, Configurable):
 
         self.visit_table.resizeRowToContents(row)
 
-        percent_item = PercentItem(self.get_row(row),
-                                   PercentItem.Orientation.ByStudents)
+        # Проценты по каждому из студентов
+        visit_count_by_student_col = len(self.lessons)
+        abs_count_item = HorizontalSum(self.get_row(row), absolute=True)
+        self.visit_table.setItem(row, visit_count_by_student_col, abs_count_item)
+
+        visit_rate_by_student_col = visit_count_by_student_col + 1
+        rate_item = HorizontalSum(self.get_row(row), absolute=False)
+        self.visit_table.setItem(row, visit_rate_by_student_col, rate_item)
+
         # TODO percent item
 
     def on_cellChanged(self, row, col):
@@ -205,7 +225,7 @@ class VisitTable(QWidget, Configurable):
         """
         fill percents
         """
-        student_count = self.rowCount() - self.Header.COUNT
+        student_count = self.rowCount()
 
         absolute_percent_row_index = self.rowCount()
         self.insertRow(absolute_percent_row_index)
@@ -216,22 +236,20 @@ class VisitTable(QWidget, Configurable):
         vertical_percents = []
 
         for col in range(self.visit_table.columnCount()):
-            item = PercentItem(self.get_column(col),
-                               PercentItem.Orientation.ByLessons, True)
+            item = VerticalSum(self.get_column(col), absolute=True)
+
             self.visit_table.setItem(absolute_percent_row_index, col, item)
             vertical_percents.append(item)
 
-            item = PercentItem(self.get_column(col),
-                               PercentItem.Orientation.ByLessons)
+            item = VerticalSum(self.get_column(col), absolute=False)
             self.visit_table.setItem(rel_percent_row_index, col, item)
             vertical_percents.append(item)
 
-        self.visit_table.setVerticalHeaderItem(absolute_percent_row_index,
-                                               PercentHeaderItem(student_count,
-                                                                 absolute=True))
-        self.visit_table.setVerticalHeaderItem(rel_percent_row_index,
-                                               PercentHeaderItem(
-                                                   student_count))
+        count_visits_item = PercentHeaderItem(Qt.Horizontal, student_count, absolute=True)
+        self.visit_table.setVerticalHeaderItem(absolute_percent_row_index, count_visits_item)
+
+        rate_visits_item = PercentHeaderItem(Qt.Horizontal, student_count, absolute=False)
+        self.visit_table.setVerticalHeaderItem(rel_percent_row_index, rate_visits_item)
 
         self.visit_table.cellChanged.connect(self.on_cellChanged)
 

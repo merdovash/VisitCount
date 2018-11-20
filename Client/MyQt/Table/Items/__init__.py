@@ -1,5 +1,7 @@
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QPen
 from PyQt5.QtWidgets import QTableWidgetItem
+
+from Client.MyQt.ColorScheme import Color
 
 
 class AbstractContextItem:
@@ -32,3 +34,13 @@ class MyTableItem(QTableWidgetItem):
         abstract _method
         """
         pass
+
+
+class IDraw:
+    border_pen = QPen(Color.secondary_dark)
+    border_pen.setWidthF(0.5)
+
+    textPen = QPen(Color.text_color)
+
+    def draw(self, painter, rect, highlighted=False):
+        raise NotImplementedError()

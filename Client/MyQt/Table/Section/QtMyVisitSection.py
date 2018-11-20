@@ -1,11 +1,18 @@
-from PyQt5.QtCore import Qt, QPoint, QRectF
+from typing import List
+
+import numpy
+from PyQt5.QtCore import Qt, QPoint, QRectF, QSizeF, pyqtSlot
 from PyQt5.QtGui import QPainter, QPen, QColor, QCursor
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton
 
 from Client.MyQt.ColorScheme import Color
-from Client.MyQt.Table import StudentHeaderView, VisitItem, PercentItem
-from Client.MyQt.Table.Items import AbstractContextItem
-from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderView
+from Client.MyQt.Table import StudentHeaderView, VisitItem, PercentItem, HorizontalSum, VerticalSum, StudentHeaderItem
+from Client.MyQt.Table.Items import AbstractContextItem, IDraw
+from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderView, LessonHeaderItem, PercentHeaderItem
+from Client.MyQt.Table.Section import Markup
+from DataBase2 import Group, Student, Lesson, Discipline
+from DataBase2.Types import format_name
+from Domain.functools.List import empty
 
 
 class CornerWidget(QPushButton):
@@ -24,16 +31,61 @@ class CornerWidget(QPushButton):
         p.drawLine(0, 0, self.width(), self.height())
 
 
+class Column:
+    index: int
+    header: StudentHeaderItem
+    items: List[VisitItem]
+    visit_count: PercentItem
+    visit_rate: PercentItem
+
+    def __init__(self, index, header):
+        self.index = index
+        self.header = header
+
+    def set_visits(self, visit_items: List[VisitItem]):
+        assert all([isinstance(vi, VisitItem) for vi in visit_items])
+
+        self.items = visit_items
+        self.visit_count = VerticalSum(self.items, absolute=True)
+        self.visit_rate = VerticalSum(self.items, absolute=False)
+
+
+class Row:
+    index: int
+    header: StudentHeaderItem
+    items: List[VisitItem]
+    visit_count: PercentItem
+    visit_rate: PercentItem
+
+    def __init__(self, index, header):
+        self.index = index
+        self.header = header
+        self.items = []
+
+    def set_visits(self, visit_items: List[VisitItem]):
+        assert all([isinstance(vi, VisitItem) for vi in visit_items])
+
+        self.items = visit_items
+        self.visit_count = HorizontalSum(visit_items, absolute=True)
+        self.visit_rate = HorizontalSum(visit_items, absolute=False)
+
+
 class VisitSection(QTableWidget):
     border_pen = QPen(Color.secondary_dark)
     border_pen.setWidthF(0.5)
 
     textPen = QPen(Color.text_color)
 
-    def __init__(self, *__args):
+    def __init__(self, program, *__args):
         super().__init__(*__args)
+        self.program = program
 
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.discipline = None
+        self.groups = None
+        self.lessons = None
+        self.students = None
+
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
@@ -42,7 +94,7 @@ class VisitSection(QTableWidget):
 
         self.setVerticalHeader(StudentHeaderView(self))
 
-        self.setHorizontalHeader(LessonHeaderView())
+        self.setHorizontalHeader(LessonHeaderView(self))
         self.horizontalHeader().setVisible(True)
 
         self.setCornerWidget(CornerWidget())
@@ -58,6 +110,172 @@ class VisitSection(QTableWidget):
         self.setMouseTracking(True)
 
         self.show_cross = True
+
+        self.ready = False
+
+    @pyqtSlot(name='on_table_change')
+    def on_table_change(self):
+        Markup.setup(self)
+        self.cell_changed()
+
+    @pyqtSlot(name='on_ready')
+    def on_ready(self):
+        Markup.setup(self)
+        self.clear()
+
+        self.students_headers = {}
+        self.lessons_header = {}
+
+        self.setRowCount(len(self.students) + 2)
+        self.setColumnCount(len(self.lessons) + 2)
+
+        # init rows and columns
+        for row, student in enumerate(self.students):
+            header_item = StudentHeaderItem(self.program, student)
+            self.students_headers[student] = Row(row, header_item)
+
+            for col, lesson in enumerate(self.lessons):
+                lesson_header_item = LessonHeaderItem(lesson, self.program)
+                self.lessons_header[lesson] = Column(col, lesson_header_item)
+
+        # init visit items
+        self.visits = numpy.array([[VisitItem(self, self.program, student, lesson)
+                                    for lesson in self.lessons
+                                    ] for student in self.students
+                                   ])
+
+        # set visit items to rows
+        for row, student in enumerate(self.students):
+            self.students_headers[student].set_visits(self.visits[row, :])
+
+        # set visit items in columns
+        for col, lesson in enumerate(self.lessons):
+            self.lessons_header[lesson].set_visits(self.visits[:, col])
+
+        self._fillVerticalHeader()
+        self._fillHorizontalHeader()
+        self._fillVisitSection()
+        self._fillVerticalPercent()
+        self._fillHorizontalPercent()
+
+    def _fillHorizontalPercent(self):
+        for col_index, lesson in enumerate(self.lessons_header.keys()):
+            column = self.lessons_header[lesson]
+
+            self.setItem(
+                Markup.visit_count_row_index,
+                col_index,
+                column.visit_count
+            )
+
+            self.setItem(
+                Markup.visit_rate_row_index,
+                col_index,
+                column.visit_rate
+            )
+
+    def _fillVerticalPercent(self):
+        for row_index, student in enumerate(self.students_headers.keys()):
+            row = self.students_headers[student]
+
+            self.setItem(
+                row_index,
+                Markup.visit_rate_col_index,
+                row.visit_rate
+            )
+
+            self.setItem(
+                row_index,
+                Markup.visit_count_col_index,
+                row.visit_count
+            )
+
+    def _fillVisitSection(self):
+        for row in range(len(self.students)):
+            for col in range(len(self.lessons)):
+                self.setItem(row, col, self.visits[row, col])
+
+    def _fillVerticalHeader(self):
+        for row, student in enumerate(self.students):
+            self.setVerticalHeaderItem(row, self.students_headers[student].header)
+            self.setRowHeight(row, 15)
+
+        self.setVerticalHeaderItem(
+            Markup.visit_count_row_index,
+            PercentHeaderItem(orientation=Qt.Horizontal, absolute=True))
+        self.setRowHeight(Markup.visit_count_row_index, 15)
+
+        self.setVerticalHeaderItem(
+            Markup.visit_rate_row_index,
+            PercentHeaderItem(orientation=Qt.Horizontal, absolute=False))
+        self.setRowHeight(Markup.visit_rate_row_index, 15)
+
+    def _fillHorizontalHeader(self):
+        for col, lesson in enumerate(self.lessons):
+            self.setHorizontalHeaderItem(col, self.lessons_header[lesson].header)
+            self.setColumnWidth(col, 25)
+
+        self.setHorizontalHeaderItem(
+            Markup.visit_count_col_index,
+            PercentHeaderItem(orientation=Qt.Vertical, absolute=True))
+        self.setColumnWidth(Markup.visit_count_col_index, 30)
+
+        self.setHorizontalHeaderItem(
+            Markup.visit_rate_col_index,
+            PercentHeaderItem(orientation=Qt.Vertical, absolute=False))
+        self.setColumnWidth(Markup.visit_rate_col_index, 30)
+
+    @pyqtSlot('PyQt_PyObject', name='set_group')
+    def set_group(self, groups: List[Group]):
+        """
+        Устанавливает группу/группы для таблицы
+        Если дисциплина установлена и список занятий не пустой, то отрисовывает таблицу
+
+        :param groups: List[Group]
+        """
+        assert all([isinstance(g, Group) for g in groups])
+        print('group set')
+
+        self.groups = groups
+        self.students = sorted(Student.of(groups), key=lambda student: format_name(student))
+        print(self.students)
+
+        if self.discipline is not None:
+            self.find_lessons()
+            if self.lessons is not None:
+                self.on_ready()
+
+    @pyqtSlot('PyQt_PyObject', name='set_discipline')
+    def set_dicipline(self, discipline: Discipline):
+        assert isinstance(discipline, Discipline)
+        print('discipline set')
+
+        self.discipline = discipline
+
+        if self.groups is not None:
+            self.find_lessons()
+            if not empty(self.lessons):
+                self.on_ready()
+
+    @pyqtSlot('PyQt_PyObject', name='set_lesson')
+    def set_lesson(self, lesson):
+        assert isinstance(lesson, Lesson)
+
+        pass
+
+    def find_lessons(self):
+        assert self.groups is not None
+        assert self.discipline is not None
+
+        self.lessons = sorted(
+            list(set(Lesson.of(self.discipline)).intersection(Lesson.of(self.groups, intersect=True))),
+            key=lambda lesson: lesson.date
+        )
+
+    def resizeEvent(self, QResizeEvent):
+        super().resizeEvent(QResizeEvent)
+        self.on_table_change()
+        self.cell_changed()
 
     def table_right_click(self, event: QPoint):
         """
@@ -81,32 +299,109 @@ class VisitSection(QTableWidget):
             self.set_hover(-1, -1)
 
     def paintEvent(self, QPaintEvent):
+        Markup.setup(self)
         p = QPainter(self.viewport())
 
-        started_point = [-1, -1]
+        self.horizontalHeader().update()
 
-        for col, l in enumerate(self.parent().lessons):
-            width = self.columnWidth(col)
-            for row, st in enumerate(self.parent().students):
+        offset_point = QPoint(self.horizontalOffset(), self.verticalOffset())
+        current_point = QPoint(-1, -1)
+
+        abs_row = True
+        current_abs_row = False
+
+        for row in range(len(self.students) + 2):
+            height = self.rowHeight(row)
+            abs_column = True
+
+            for col in range(self.columnCount()):
+
+                width = self.columnWidth(col)
+
                 item = self.item(row, col)
-                self.draw_item(p, item, row, col, started_point)
-                started_point[1] += self.rowHeight(row)
 
-            for percent_row in range(2):
-                row = len(self.parent().students) + percent_row
+                if isinstance(item, IDraw):
 
-                y_pos = self.height() - self.horizontalHeader().height() - self.rowHeight(row) * (
-                            2 - percent_row) + self.verticalOffset() - self.horizontalScrollBar().height()
+                    if isinstance(item, VisitItem):
+                        rect = QRectF(current_point - offset_point, QSizeF(width, height))
+                        item.draw(p, rect, self.isHighlighted(row, col))
 
-                item = self.item(row, col)
-                if isinstance(item, PercentItem):
-                    item.refresh()
-                self.draw_item(p, item, row, col, [started_point[0], y_pos])
-                started_point[1] += self.rowHeight(row)
-            else:
-                started_point[1] = -1
+                    elif isinstance(item, HorizontalSum):
+                        rect = QRectF(
+                            QPoint(
+                                Markup.visit_count_col if item.absolute else Markup.visit_rate_col,
+                                current_point.y() - offset_point.y()),
+                            QSizeF(
+                                width,
+                                height)
+                        )
+                        item.draw(p, rect, self.isHighlighted(row, col))
+                        abs_column = False
 
-            started_point[0] += width
+                    elif isinstance(item, VerticalSum):
+                        rect = QRectF(
+                            QPoint(
+                                current_point.x() - offset_point.x(),
+                                Markup.visit_count_row if item.absolute else Markup.visit_rate_row),
+                            QSizeF(
+                                width,
+                                height))
+                        item.draw(p, rect, self.isHighlighted(row, col))
+
+                        current_abs_row = True
+
+                else:
+                    pass
+
+                current_point.setX(current_point.x() + width)
+
+            current_point.setX(-1)
+            current_point.setY(current_point.y() + height)
+
+            if current_abs_row:
+                abs_row = False
+
+        # # рисуем ячейки для занятий
+        # for col, l in enumerate(self.parent().lessons):
+        #     width = self.columnWidth(col)
+        #     # рисуем ячейки посещений
+        #     for row, st in enumerate(self.parent().students):
+        #         height = self.rowHeight(row)
+        #         item = self.item(row, col)
+        #         if isinstance(item, IDraw):
+        #             rect = QRectF(started_point[0], started_point[1], width, height)
+        #             item.draw(p, rect, self.isHighlighted(row, col))
+        #
+        #         started_point[1] += height
+        #
+        #     # рисуем ячейки процентов по занятиям
+        #     for percent_row in range(2):
+        #         row = len(self.parent().students) + percent_row
+        #
+        #         y_pos = self.height() - self.horizontalHeader().height() - self.rowHeight(row) * (
+        #                     2 - percent_row) + self.verticalOffset() - self.horizontalScrollBar().height()
+        #
+        #         item = self.item(row, col)
+        #         if isinstance(item, PercentItem):
+        #             item.refresh()
+        #         self.draw_item(p, item, row, col, [started_point[0], y_pos])
+        #         started_point[1] += self.rowHeight(row)
+        #     else:
+        #         started_point[1] = -1
+        #
+        #     started_point[0] += width
+        #
+        # # рисуем ячейки для процентов по студентам
+        # for col in range(len(self.parent().lessons), len(self.parent().lessons)+2):
+        #     for row in range(len(self.parent().students)):
+        #         pass
+
+    def cell_changed(self):
+        self.model().dataChanged.emit(self.model().index(0, 0),
+                                      self.model().index(self.columnCount() - 1, self.rowCount() - 1))
+
+        self.viewport().repaint()
+
 
     def draw_item(self, p: QPainter, item: VisitItem or PercentItem, row, col, started_point):
         width = self.columnWidth(col)
@@ -135,13 +430,15 @@ class VisitSection(QTableWidget):
             else:
                 return Color.secondary_light
 
+    def isHighlighted(self, row, col):
+        return row == self.row_hovered or col == self.col_hovered
+
     def find_item(self, pos: QPoint):
         def find_row(target_y):
-            last_row_height = self.rowHeight(self.rowCount() - 1)
-            if target_y > self.height() - last_row_height:
-                return self.rowCount() - 1
-            elif target_y > self.height() - last_row_height * 2:
-                return self.rowCount() - 2
+            if target_y > Markup.visit_rate_row:
+                return Markup.visit_rate_row_index
+            elif target_y > Markup.visit_count_col:
+                return Markup.visit_count_row_index
             else:
                 current_y = - self.verticalOffset()
 
@@ -155,15 +452,20 @@ class VisitSection(QTableWidget):
                     return -1
 
         def find_col(target_x):
-            current_x = - self.horizontalOffset()
-
-            for col in range(self.columnCount()):
-                width = self.columnWidth(col)
-                if current_x <= target_x <= current_x + width:
-                    return col
-                current_x += width
+            if target_x > Markup.visit_rate_col:
+                return Markup.visit_rate_col_index
+            elif target_x > Markup.visit_count_col:
+                return Markup.visit_count_col_index
             else:
-                return -1
+                current_x = - self.horizontalOffset()
+
+                for col in range(self.columnCount()):
+                    width = self.columnWidth(col)
+                    if current_x <= target_x <= current_x + width:
+                        return col
+                    current_x += width
+                else:
+                    return -1
 
         row, col = find_row(pos.y()), find_col(pos.x())
         return self.item(row, col), row, col
