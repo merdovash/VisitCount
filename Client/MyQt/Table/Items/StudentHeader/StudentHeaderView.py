@@ -62,12 +62,8 @@ class StudentHeaderView(QHeaderView):
     def paintEvent(self, QPaintEvent):
         p = QPainter(self.viewport())
 
-        offset = self.parent().verticalOffset()
-
-        row_height = self.row_height
         headerWidth = self.size().width()
         headerHeight = 0
-        hidden_row_count = 0
 
         row_count = self.parent().model().rowCount()
 

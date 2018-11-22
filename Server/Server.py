@@ -44,16 +44,6 @@ def page(path):
     return open(path, encoding='utf-8').read()
 
 
-@app.route("/super_secret")
-def super_secret():
-    """
-    do not uncomment this lines
-    """
-    # import create_sql
-    # create_sql.recreate(dt_type)
-    pass
-
-
 @app.route('/file/<path:file_name>')
 def get_resource(file_name):  # pragma: no cover
     """
