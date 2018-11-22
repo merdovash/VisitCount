@@ -22,7 +22,7 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
     image = {}
 
     def draw(self, painter, rect: QRect, highlighted=False, selected=False):
-        code = (highlighted, selected, self.isVisit(), rect.width(), rect.height())
+        code = (highlighted, selected, self.isVisit(), self.lesson.completed, rect.width(), rect.height())
         if code not in VisitItem.image.keys():
             pix = QPixmap(rect.size())
 

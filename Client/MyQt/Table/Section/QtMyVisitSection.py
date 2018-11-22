@@ -118,9 +118,6 @@ class VisitSection(QTableWidget):
 
     textPen = QPen(Color.text_color)
 
-    default_width = 35
-    default_height = 20
-
     def __init__(self, program, *__args):
         super().__init__(*__args)
         self.program = program
@@ -166,19 +163,21 @@ class VisitSection(QTableWidget):
     @pyqtSlot(name='on_offset_changed')
     def on_offset_changed(self):
         print('offset_changed')
-        self.onViewChange()
+        Markup.setup(self)
+        self.map.offset_changed(self.verticalOffset(), self.horizontalOffset())
 
     @pyqtSlot(name='on_table_change')
     def on_table_change(self):
-        Markup.setup(self)
-        self.map = VisitMap()
+        if self.lessons is not None and self.students is not None:
+            Markup.setup(self)
         self.cell_changed()
 
     @pyqtSlot(name='on_ready')
     def on_ready(self):
-        self.clear()
-        self.map = VisitMap()
+        self.ready = True
         Markup.setup(self)
+        self.map = VisitMap()
+        self.clear()
 
         self.students_headers = {}
         self.lessons_header = {}
@@ -215,7 +214,7 @@ class VisitSection(QTableWidget):
         self._fillVerticalPercent()
         self._fillHorizontalPercent()
 
-        self.onViewChange()
+        self.cell_changed()
 
     def _fillHorizontalPercent(self):
         for col_index, lesson in enumerate(self.lessons_header.keys()):
@@ -257,32 +256,32 @@ class VisitSection(QTableWidget):
     def _fillVerticalHeader(self):
         for row, student in enumerate(self.students):
             self.setVerticalHeaderItem(row, self.students_headers[student].header)
-            self.setRowHeight(row, self.default_height)
+            self.setRowHeight(row, 20)
 
         self.setVerticalHeaderItem(
             Markup.visit_count_row_index,
             PercentHeaderItem(orientation=Qt.Horizontal, absolute=True))
-        self.setRowHeight(Markup.visit_count_row_index, self.default_height)
+        self.setRowHeight(Markup.visit_count_row_index, 25)
 
         self.setVerticalHeaderItem(
             Markup.visit_rate_row_index,
             PercentHeaderItem(orientation=Qt.Horizontal, absolute=False))
-        self.setRowHeight(Markup.visit_rate_row_index, self.default_height)
+        self.setRowHeight(Markup.visit_rate_row_index, 25)
 
     def _fillHorizontalHeader(self):
         for col, lesson in enumerate(self.lessons):
             self.setHorizontalHeaderItem(col, self.lessons_header[lesson].header)
-            self.setColumnWidth(col, self.default_width)
+            self.setColumnWidth(col, 35)
 
         self.setHorizontalHeaderItem(
             Markup.visit_count_col_index,
             PercentHeaderItem(orientation=Qt.Vertical, absolute=True))
-        self.setColumnWidth(Markup.visit_count_col_index, self.default_width)
+        self.setColumnWidth(Markup.visit_count_col_index, 45)
 
         self.setHorizontalHeaderItem(
             Markup.visit_rate_col_index,
             PercentHeaderItem(orientation=Qt.Vertical, absolute=False))
-        self.setColumnWidth(Markup.visit_rate_col_index, self.default_width)
+        self.setColumnWidth(Markup.visit_rate_col_index, 45)
 
     @pyqtSlot('PyQt_PyObject', name='set_group')
     def set_group(self, groups: List[Group]):
@@ -297,7 +296,6 @@ class VisitSection(QTableWidget):
 
         self.groups = groups
         self.students = sorted(Student.of(groups), key=lambda student: format_name(student))
-        print(self.students)
 
         if self.discipline is not None:
             self.find_lessons()
@@ -336,11 +334,7 @@ class VisitSection(QTableWidget):
 
     def resizeEvent(self, QResizeEvent):
         super().resizeEvent(QResizeEvent)
-        self.cell_changed()
-        self.onViewChange()
-
-    def onViewChange(self):
-        Markup.setup(self)
+        self.on_table_change()
         self.map.offset_changed(self.verticalOffset(), self.horizontalOffset())
 
     def table_right_click(self, event: QPoint):
@@ -363,14 +357,21 @@ class VisitSection(QTableWidget):
             self.set_hover(row, col)
         except IndexError:
             self.set_hover(-1, -1)
+        except TypeError:
+            pass
 
     def paintEvent(self, QPaintEvent):
+        if not self.ready:
+            return
         Markup.setup(self)
         p = QPainter(self.viewport())
 
         self.horizontalHeader().update()
 
+        offset_point = QPoint(self.horizontalOffset(), self.verticalOffset())
         current_point = QPoint(-1, -1)
+
+        current_abs_row = False
 
         for row in range(len(self.students) + 2):
             height = self.rowHeight(row)
@@ -406,31 +407,79 @@ class VisitSection(QTableWidget):
                         item.draw(p, rect, self.isHighlighted(row, col), self.isCurrentLesson(item.lesson))
                     elif isinstance(item, HorizontalSum):
                         rect = self.map[row, col].rect
-                        print(rect, Markup.visit_count_col, Markup.visit_rate_col)
                         item.draw(p, rect, self.isHighlighted(row, col))
                     elif isinstance(item, VerticalSum):
                         rect = self.map[row, col].rect
                         item.draw(p, rect, self.isHighlighted(row, col))
                 else:
-                    if row >= len(self.students) and col >= len(self.lessons):
-                        print('fsdfsdf')
-                    else:
-                        print(f'{len(self.students)}:{row},{len(self.lessons)}:{col}')
-
+                    pass
 
                 current_point.setX(current_point.x() + width)
 
             current_point.setX(-1)
             current_point.setY(current_point.y() + height)
 
+            if current_abs_row:
+                abs_row = False
+
+        # # рисуем ячейки для занятий
+        # for col, l in enumerate(self.parent().lessons):
+        #     width = self.columnWidth(col)
+        #     # рисуем ячейки посещений
+        #     for row, st in enumerate(self.parent().students):
+        #         height = self.rowHeight(row)
+        #         item = self.item(row, col)
+        #         if isinstance(item, IDraw):
+        #             rect = QRectF(started_point[0], started_point[1], width, height)
+        #             item.draw(p, rect, self.isHighlighted(row, col))
+        #
+        #         started_point[1] += height
+        #
+        #     # рисуем ячейки процентов по занятиям
+        #     for percent_row in range(2):
+        #         row = len(self.parent().students) + percent_row
+        #
+        #         y_pos = self.height() - self.horizontalHeader().height() - self.rowHeight(row) * (
+        #                     2 - percent_row) + self.verticalOffset() - self.horizontalScrollBar().height()
+        #
+        #         item = self.item(row, col)
+        #         if isinstance(item, PercentItem):
+        #             item.refresh()
+        #         self.draw_item(p, item, row, col, [started_point[0], y_pos])
+        #         started_point[1] += self.rowHeight(row)
+        #     else:
+        #         started_point[1] = -1
+        #
+        #     started_point[0] += width
+        #
+        # # рисуем ячейки для процентов по студентам
+        # for col in range(len(self.parent().lessons), len(self.parent().lessons)+2):
+        #     for row in range(len(self.parent().students)):
+        #         pass
+
     def isCurrentLesson(self, lesson):
         return self.current_lesson == lesson
 
     def cell_changed(self):
-        # self.model().dataChanged.emit(self.model().index(0, 0),
-        #                              self.model().index(self.columnCount() - 1, self.rowCount() - 1))
+        self.model().dataChanged.emit(self.model().index(0, 0),
+                                      self.model().index(self.columnCount() - 1, self.rowCount() - 1))
 
-        self.viewport().repaint()
+        self.viewport().update()
+
+    def draw_item(self, p: QPainter, item: VisitItem or PercentItem, row, col, started_point):
+        width = self.columnWidth(col)
+        height = self.rowHeight(row)
+
+        rect = QRectF(started_point[0] - self.horizontalOffset(), started_point[1] - self.verticalOffset(),
+                      width, height)
+
+        p.fillRect(rect, self.get_color(item, row, col))
+
+        p.setPen(self.textPen)
+        p.drawText(rect, Qt.AlignCenter, item.text())
+
+        p.setPen(self.border_pen)
+        p.drawRect(rect)
 
     def get_color(self, item, row, col):
         if isinstance(item, VisitItem):
@@ -481,6 +530,8 @@ class VisitSection(QTableWidget):
                 else:
                     return -1
 
+        if not self.ready:
+            return
         row, col = find_row(pos.y()), find_col(pos.x())
         return self.item(row, col), row, col
 
