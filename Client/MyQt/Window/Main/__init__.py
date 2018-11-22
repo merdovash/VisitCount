@@ -352,7 +352,7 @@ class MainWindowWidget(QWidget):
                                 discipline=self.selector.discipline.current(),
                                 group=self.selector.group.current())
         closest = closest_lesson(lessons)
-        self.lesson_selector.setCurrent(closest['id'])
+        self.lesson.setCurrent(closest['id'])
 
     def show_message(self, text, is_red):
         self.info_label.setText(text)

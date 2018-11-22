@@ -35,12 +35,20 @@ class MComboBox(QComboBox):
 
         self.items: Dict[int, type_] = {}
 
+        self.pending = None
+
     def addItems(self, iterable: List[T], p_str=None) -> None:
         for i, value in enumerate(iterable):
             # print(i, value)
             self.items[i] = value
         pass
         super().addItems([self.rule(i) for i in iterable])
+        if self.pending is not None:
+            try:
+                self.setCurrent(self.pending)
+            except IndexError:
+                pass
+            self.pending = None
 
     def current(self) -> T:
         return self.items[self.currentIndex()]
@@ -70,7 +78,10 @@ class MComboBox(QComboBox):
                 if self.items[i] == item:
                     super().setCurrentIndex(i)
                     return
-        raise IndexError("no such item {} in {}".format(item, self.items))
+        if len(self.items) == 0:
+            self.pending = item
+        else:
+            raise IndexError('no such', item, 'in', self.items)
 
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)

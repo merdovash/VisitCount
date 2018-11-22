@@ -27,29 +27,27 @@ class Markup:
 
     @classmethod
     def setup(cls, table: 'VisitSection'):
-        if cls.last_horizontal_offset != table.horizontalOffset() or cls.last_vertical_offset != table.verticalOffset() \
-                or cls.size != table.size():
-            cls.last_vertical_offset = table.verticalOffset()
-            cls.last_horizontal_offset = table.horizontalOffset()
+        cls.last_vertical_offset = table.verticalOffset()
+        cls.last_horizontal_offset = table.horizontalOffset()
 
-            cls.window_width = table.width() - table.verticalHeader().width() - 1 - table.verticalScrollBar().width()
-            cls.window_height = table.height() - table.horizontalHeader().height() - 1 - table.horizontalScrollBar().height()
+        cls.window_width = table.width() - table.verticalHeader().width() - 1 - table.verticalScrollBar().width()
+        cls.window_height = table.height() - table.horizontalHeader().height() - 1 - table.horizontalScrollBar().height()
 
-            cls.visit_count_col_index = len(table.lessons)
-            cls.visit_rate_col_index = cls.visit_count_col_index + 1
+        cls.visit_count_col_index = len(table.lessons)
+        cls.visit_rate_col_index = cls.visit_count_col_index + 1
 
-            cls.visit_count_row_index = len(table.students)
-            cls.visit_rate_row_index = cls.visit_count_row_index + 1
+        cls.visit_count_row_index = len(table.students)
+        cls.visit_rate_row_index = cls.visit_count_row_index + 1
 
-            cls.lessons_count = table.columnCount() - 2
-            cls.students_count = table.rowCount() - 2
+        cls.lessons_count = table.columnCount() - 2
+        cls.students_count = table.rowCount() - 2
 
-            cls.visit_rate_col = cls.window_width - table.columnWidth(table.columnCount() - 1)
-            cls.visit_count_col = cls.visit_rate_col - table.columnWidth(table.columnCount() - 2)
+        cls.visit_rate_col = cls.window_width - table.columnWidth(table.columnCount() - 1)
+        cls.visit_count_col = cls.visit_rate_col - table.columnWidth(table.columnCount() - 2)
 
-            cls.visit_rate_row = cls.window_height - table.rowHeight(table.rowCount() - 1)
-            cls.visit_count_row = cls.visit_rate_row - table.rowHeight(table.rowCount() - 2)
+        cls.visit_rate_row = cls.window_height - table.rowHeight(table.rowCount() - 1)
+        cls.visit_count_row = cls.visit_rate_row - table.rowHeight(table.rowCount() - 2)
 
-            assert cls.window_height >= cls.visit_rate_row >= cls.visit_count_row
+        assert cls.window_height >= cls.visit_rate_row >= cls.visit_count_row
 
         # print(f"width:{cls.window_width}, height:{cls.window_height}, count_col:{cls.visit_count_col}")
