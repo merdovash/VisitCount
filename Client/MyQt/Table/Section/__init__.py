@@ -2,6 +2,10 @@ from PyQt5.QtCore import QSize
 
 
 class Markup:
+    """
+    Класс содержащий размеры и расстояния для отрисовки таблицы.
+    Используется для сохранения рехультатов расчетов и повторного их использования
+    """
     window_width: int = None
     window_height: int = None
 

@@ -8,9 +8,8 @@ import datetime
 from typing import List
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QFont, QDropEvent
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QAction, QMenu, QStatusBar
+from PyQt5.QtGui import QDropEvent
+from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar
 
 from Client.IProgram import IProgram
 from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog
@@ -18,13 +17,13 @@ from Client.MyQt.Chart.WeekAnalysis import WeekChart
 from Client.MyQt.Chart.WeekDayAnalysis import WeekDayChart
 from Client.MyQt.QAction.DataAction import DataAction
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
-from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Table import VisitTable
+from Client.MyQt.Table.Control import VisitTableControl
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main.Selector import Selector
+from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.MyQt.Window.NotificationParam import NotificationWindow
 from DataBase2 import Professor, Lesson
-from DataBase2.Types import format_name
 from Domain import Action
 from Domain.Action import NetAction
 from Domain.Data import valid_card
@@ -65,8 +64,12 @@ class MainWindow(AbstractWindow):
             program.win_config.new_user(professor.id)
             program.win_config.set_professor_id(professor.id)
 
-        self.c_w = MainWindowWidget(program=program, professor=professor)
-        self.setCentralWidget(self.c_w)
+        self.central_widget = MainWindowWidget(
+            program=program,
+            professor=professor,
+            parent=self)
+
+        self.setCentralWidget(self.central_widget)
 
         self.__init_menu__()
 
@@ -246,33 +249,43 @@ class MainWindow(AbstractWindow):
         note.addAction(note_run)
 
 
-class MainWindowWidget(QWidget):
+class MainWindowWidget(QWidget, UI_TableWindow):
     """
     contains select lesson menu and table
     """
     ready_draw_table = pyqtSignal()
     table_changed = pyqtSignal()
+    start_sync = pyqtSignal()
 
-    def __init__(self, program: IProgram, professor: Professor):
-        super().__init__()
+    def __init__(self, program: IProgram, professor: Professor, parent=None):
+        super().__init__(parent)
 
         self.program: IProgram = program
         self.professor = professor
-        self.table: VisitTable = None
+
+        self.setupUi(self)
+
+        self.control = VisitTableControl(
+            window=self.parent(),
+            table=self.table,
+            selector=self.selector,
+            reader=self.program.reader,
+            professor=self.professor,
+            session=self.program.session
+        )
 
         self.last_lesson = None
 
-        self._setup_select_lesson()
-        self._setup_geometry()
+        self.selector.discipline_changed.connect(self.control.change_discipline)
+        self.selector.group_changed.connect(self.control.change_group)
+        self.selector.lesson_changed.connect(self.control.select_lesson)
+        self.selector.lesson_started.connect(self.control.start_lesson)
+        self.selector.lesson_finished.connect(self.control.end_lesson)
 
-        # self._setup_data()
+        self.table_changed.connect(self.table.on_table_change)
+        self.ready_draw_table.connect(self.table.on_ready)
 
-        self.start_sync.connect(self.run_synchronization)
-        self.table_changed.connect(self.table.visit_table.on_table_change)
-        self.ready_draw_table.connect(self.table.visit_table.on_ready)
-
-    # signals
-    start_sync = pyqtSignal()
+        self.selector.start()
 
     # slots
     @pyqtSlot(name='run_synchronization')
@@ -282,55 +295,16 @@ class MainWindowWidget(QWidget):
         Runs synchronization process
         """
 
-        NetAction.send_updates(self.program.auth.login,
-                               self.program.auth.password,
-                               self.program.host,
-                               self.professor.id,
-                               self.program.session)
+        NetAction.send_updates(
+            self.program.auth.login,
+            self.program.auth.password,
+            self.program.host,
+            self.professor.id,
+            self.program.session)
         pass
 
-    def _setup_geometry(self):
-        pass
-
-    def _setup_select_lesson(self):
-        main_layout = QVBoxLayout()
-
-        # INFO BLOCK
-        info_layout = QHBoxLayout()
-
-        professor_label = QLabel(
-            format_name(self.professor)
-        )
-        professor_label.setFont(QFont("", 20))
-
-        self.info_label = QStatusMessage()
-
-        info_layout.addWidget(professor_label, alignment=Qt.AlignLeft)
-        info_layout.addWidget(self.info_label, alignment=Qt.AlignRight)
-
-        main_layout.addLayout(info_layout, stretch=1)
-
-        # DATA BLOCK
-        self.table = VisitTable(self.program)
-        self.table.show_visitation_msg.connect(self.show_message)
-
-        # SELECTOR BLOCK
-        self.selector = Selector(self.program)
-
-        self.selector.discipline_changed.connect(self.table.visit_table.set_discipline)
-        self.selector.group_changed.connect(self.table.visit_table.set_group)
-        self.selector.lesson_changed.connect(self.table.visit_table.set_lesson)
-
-        self.selector.start()
-
-        self.selector.lesson_started.connect(self._start_lesson)
-        self.selector.lesson_finished.connect(self._end_lesson)
-
-        main_layout.addWidget(self.selector, alignment=Qt.AlignTop, stretch=1)
-
-        main_layout.addWidget(self.table, stretch=90)
-
-        self.setLayout(main_layout)
+    def getControl(self):
+        return self.control
 
     def set_current_lesson(self, lesson=None):
         """
@@ -373,50 +347,24 @@ class MainWindowWidget(QWidget):
         for item in table.get_column(column):
             item.set_current_lesson(True)
 
-    def _lesson_changed(self, qt_index=None):
-        index = self.table.lessons.index(
-            self.selector.lesson.current())
-        self.table.lessons = sorted(self.table.lessons, key=lambda x: x.date)
-        self.mark_current_lesson(index)
-
-        self.last_lesson = index
-        self.table.visit_table.scrollTo(
-            self.table.visit_table.model().index(1, self.last_lesson))
-
-    def fill_table(self):
-        """
-        fill table with current group students and lessons
-        :return: None
-        """
-
-        self.table.set_horizontal_header(self.lessons)
-
-        for student in self.students:
-            self.table.add_student(student)
-
-        self.table.fill_percents_byStudent()
-
-        return
-
-    @pyqtSlot(int, name='start_lesson')
-    def _start_lesson(self, lesson_index):
-
-        lesson = self.table.lessons[lesson_index]
-
-        Action.start_lesson(lesson, self.professor)
-
-        column = self.table.get_column(lesson_index)
-        for item in column:
-            item.update()
-
+    @pyqtSlot('PyQt_PyObject', name='_start_lesson')
+    def _start_lesson(self, lesson):
         try:
             self.program.reader().on_read(self._new_visit)
-        except AttributeError as e:
-            if not self.program.test:
-                raise e
 
-        self.program.session.flush()
-        self.program.session.commit()
+            Action.start_lesson(lesson, self.professor)
+
+            self.program.window.message.emit("Учет начался. Приложите карту студента к считывателю.", True)
+        except:
+            self.program.window.error.emit("Для учета посещений необходимо подключение считывателя.")
+
+    @pyqtSlot(name='_end_lesson')
+    def _end_lesson(self):
+        if self.program.reader() is not None:
+            self.program.reader().stop_read()
+        else:
+            self.program.window.error.emit(
+                'Во время учета было потеряно соединение со считывателем. Учет завершен.')
 
     def _new_visit(self, card_id):
         current_data = self.selector.get_current_data()
@@ -431,10 +379,6 @@ class MainWindowWidget(QWidget):
             Action.new_visitation(student, lesson, self.professor.id)
 
             self.table.new_visit(student, lesson)
-
-    @pyqtSlot(int, name='end_lesson')
-    def _end_lesson(self, lesson_index):
-        self.start_sync.emit()
 
     def switch_show_table_cross(self):
         self.table.switch_show_table_cross()

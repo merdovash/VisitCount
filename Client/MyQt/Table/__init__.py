@@ -1,6 +1,6 @@
 from typing import List
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, pyqtSlot
 from PyQt5.QtGui import QDropEvent
 from PyQt5.QtWidgets import QWidget, QHBoxLayout
 
@@ -64,9 +64,6 @@ class VisitTable(QWidget, Configurable):
         # share scroll menu_bar between sections
         scroll_bar = self.visit_table.verticalScrollBar()
 
-        self.students = []
-        self.lessons = []
-
         self.table_item_factory = VisitItemFactory(self.program,
                                                    self.visit_table)
 
@@ -77,6 +74,12 @@ class VisitTable(QWidget, Configurable):
         self.setLayout(self.inner_layout)
         # self.setDefaultDropAction(Qt.MoveAction)
         # self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
+
+    @pyqtSlot('PyQt_PyObject', name='on_lesson_start')
+    def on_lesson_start(self, lesson: Lesson):
+        assert isinstance(lesson, Lesson), lesson
+
+        self.visit_table.on_lesson_started(lesson)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:

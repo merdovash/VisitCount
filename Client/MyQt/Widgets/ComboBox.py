@@ -41,14 +41,8 @@ class MComboBox(QComboBox):
         for i, value in enumerate(iterable):
             # print(i, value)
             self.items[i] = value
-        pass
-        super().addItems([self.rule(i) for i in iterable])
-        if self.pending is not None:
-            try:
-                self.setCurrent(self.pending)
-            except IndexError:
-                pass
-            self.pending = None
+        else:
+            super().addItems([self.rule(i) for i in iterable])
 
     def current(self) -> T:
         return self.items[self.currentIndex()]

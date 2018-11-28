@@ -12,6 +12,7 @@ from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderVi
 from Client.MyQt.Table.Section import Markup
 from DataBase2 import Group, Student, Lesson, Discipline
 from DataBase2.Types import format_name
+from Domain import Data
 from Domain.functools.List import empty
 
 
@@ -177,9 +178,10 @@ class VisitSection(QTableWidget):
         self.ready = True
         Markup.setup(self)
         self.map = VisitMap()
+        self.map.offset_changed(self.verticalOffset(), self.horizontalOffset())
         self.clear()
 
-        self.students_headers = {}
+        self.students_header = {}
         self.lessons_header = {}
 
         self.setRowCount(len(self.students) + 2)
@@ -188,7 +190,7 @@ class VisitSection(QTableWidget):
         # init rows and columns
         for row, student in enumerate(self.students):
             header_item = StudentHeaderItem(self.program, student)
-            self.students_headers[student] = Row(row, header_item)
+            self.students_header[student] = Row(row, header_item)
 
             for col, lesson in enumerate(self.lessons):
                 lesson_header_item = LessonHeaderItem(lesson, self.program)
@@ -202,7 +204,7 @@ class VisitSection(QTableWidget):
 
         # set visit items to rows
         for row, student in enumerate(self.students):
-            self.students_headers[student].set_visits(self.visits[row, :])
+            self.students_header[student].set_visits(self.visits[row, :])
 
         # set visit items in columns
         for col, lesson in enumerate(self.lessons):
@@ -233,8 +235,8 @@ class VisitSection(QTableWidget):
             )
 
     def _fillVerticalPercent(self):
-        for row_index, student in enumerate(self.students_headers.keys()):
-            row = self.students_headers[student]
+        for row_index, student in enumerate(self.students_header.keys()):
+            row = self.students_header[student]
 
             self.setItem(
                 row_index,
@@ -255,7 +257,7 @@ class VisitSection(QTableWidget):
 
     def _fillVerticalHeader(self):
         for row, student in enumerate(self.students):
-            self.setVerticalHeaderItem(row, self.students_headers[student].header)
+            self.setVerticalHeaderItem(row, self.students_header[student].header)
             self.setRowHeight(row, 20)
 
         self.setVerticalHeaderItem(
@@ -323,14 +325,18 @@ class VisitSection(QTableWidget):
         if self.lessons is not None and lesson in self.lessons:
             self.horizontalScrollBar().setValue(self.lessons.index(lesson))
 
+    def getControl(self):
+        control = self.parent().getControl()
+        return control
+
     def find_lessons(self):
         assert self.groups is not None
         assert self.discipline is not None
 
-        self.lessons = sorted(
-            list(set(Lesson.of(self.discipline)).intersection(Lesson.of(self.groups, intersect=True))),
-            key=lambda lesson: lesson.date
-        )
+        self.lessons = Data.lessons_of(
+            professor=self.program.professor,
+            discipline=self.discipline,
+            groups=self.groups)
 
     def resizeEvent(self, QResizeEvent):
         super().resizeEvent(QResizeEvent)
@@ -465,6 +471,12 @@ class VisitSection(QTableWidget):
                                       self.model().index(self.columnCount() - 1, self.rowCount() - 1))
 
         self.viewport().update()
+
+    def force_repaint(self):
+        self.model().dataChanged.emit(self.model().index(0, 0),
+                                      self.model().index(self.columnCount() - 1, self.rowCount() - 1))
+
+        self.viewport().repaint()
 
     def draw_item(self, p: QPainter, item: VisitItem or PercentItem, row, col, started_point):
         width = self.columnWidth(col)
