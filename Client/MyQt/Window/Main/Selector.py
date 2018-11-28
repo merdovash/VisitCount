@@ -35,8 +35,8 @@ class Selector(QWidget):
     lesson_changed = pyqtSignal('PyQt_PyObject')  # actual signature (Lesson)
 
     data_changed = pyqtSignal()
-    lesson_started = pyqtSignal(int)
-    lesson_finished = pyqtSignal(int)
+    lesson_started = pyqtSignal('PyQt_PyObject')
+    lesson_finished = pyqtSignal()
 
     def __init__(self, program: IProgram):
         super().__init__()
@@ -107,7 +107,10 @@ class Selector(QWidget):
         self.group.clear()
         self.group.addItems(groups)
         self.group.blockSignals(False)
+        index_before = self.group.currentIndex()
         self.group.setCurrent(current_group)
+        if self.group.currentIndex() == index_before:
+            self._group_changed(self.group.currentIndex())
 
         self.discipline_changed.emit(self.discipline.current())
 
@@ -120,6 +123,7 @@ class Selector(QWidget):
         discipline = self.discipline.current()
 
         lessons = Data.lessons_of(professor=self.professor, discipline=discipline, groups=groups)
+        assert len(lessons) > 0, lessons
 
         current_lesson = closest_lesson(lessons, self.program['date_format'])
 
@@ -180,57 +184,25 @@ class Selector(QWidget):
         self.lesson.setCurrent(lesson)
 
     def _start_lesson(self, lesson_index):
-        def start():
-            self.lesson_started.emit(self.lesson.currentIndex())
+        self.lesson_started.emit(self.lesson.current())
 
-            self.lesson.current().completed = True
+    def _end_lesson(self):
+        self.lesson_finished.emit()
 
-            self.program['marking_visits'] = True
-            self.lesson.setEnabled(False)
-            self.group.setEnabled(False)
-            self.discipline.setEnabled(False)
-
-            if self.last_lesson is None:
-                self.last_lesson = self.table.lessons.index(
-                    closest_lesson(self.lesson.get_data(),
-                                   self.program['date_format']))
-
+    def switchBtnAction(self, b):
+        if not b:
             self.start_button.disconnect()
             self.start_button.setText("Завершить занятие")
             self.start_button.clicked.connect(self._end_lesson)
-
-            self.program.window.message.emit(
-                "Учет начался. Приложите карту студента к считывателю.", True)
-
-        if self.program.test:
-            start()
         else:
-            if self.program.reader() is not None:
-                start()
-            else:
-                self.program.window.error.emit(
-                    "Для учета посещений необходимо подключение считывателя.")
+            self.start_button.disconnect()
+            self.start_button.setText("Начать занятие")
+            self.start_button.clicked.connect(self._start_lesson)
 
-    def _end_lesson(self, lesson_index):
-        if self.program.reader() is not None:
-            self.program.reader().stop_read()
-        else:
-            self.program.window.error.emit(
-                'Во время учета было потеряно соединение со считывателем. Учет завершен.')
-
-        self.program['marking_visits'] = False
-        self.lesson.setEnabled(True)
-        self.group.setEnabled(True)
-        self.discipline.setEnabled(True)
-
-        # change button behavior
-        self.start_button.disconnect()
-        self.start_button.setText("Начать занятие")
-        self.start_button.clicked.connect(self._start_lesson)
-
-        # if self.last_lesson is not None:
-        self.program.window.message.emit("Учет посещений завершен.", False)
-        self.lesson_finished.emit(self.lesson.currentIndex())
+    def setEnabledControl(self, b: bool):
+        self.lesson.setEnabled(b)
+        self.group.setEnabled(b)
+        self.discipline.setEnabled(b)
 
     @pyqtSlot()
     def on_data_change(self):

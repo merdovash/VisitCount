@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QMenu, QToolTip
 import Date
 from Client import IProgram
 from Client.MyQt.ColorScheme import Color
+from Client.MyQt.Table.Control import VisitTableControl
 from Client.MyQt.Table.Items import IDraw
 from Client.MyQt.Table.Section import Markup
 from Client.MyQt.Time import from_time_to_index
@@ -222,11 +223,15 @@ class LessonHeaderView(QHeaderView):
         # pos = point.pos
 
         item, _, _ = self.find_item(point)
+        control: VisitTableControl = self.parent().getControl()
         if isinstance(item, LessonHeaderItem):
             if item.lesson.completed:
                 menu.addAction("Отменить факт проведения занятия", item.unstart)
             menu.addAction("Перенести занятие", item.move_lesson)
-            menu.addAction('Выбрать занятие', lambda: self.parent().set_lesson(item.lesson))
+            if control.isLessonStarted():
+                menu.addAction('Завершить учет', lambda: control.end_lesson())
+            elif control.currentLesson() != item.lesson:
+                menu.addAction('Выбрать занятие', lambda: control.select_lesson(item.lesson))
             menu.exec(self.mapToGlobal(point))
 
     def mouseMoveEvent(self, event: QMouseEvent):

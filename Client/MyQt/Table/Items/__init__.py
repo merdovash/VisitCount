@@ -42,5 +42,7 @@ class IDraw:
 
     textPen = QPen(Color.text_color)
 
+    cached = dict()
+
     def draw(self, painter, rect, highlighted=False, selected=False):
         raise NotImplementedError()

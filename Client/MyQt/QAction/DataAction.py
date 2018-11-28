@@ -21,7 +21,7 @@ class DataAction(QAction):
         self.name = name
         self.table = window.centralWidget().table
         self.program: IProgram = window.program
-        super().__init__(name[0] if self.table.visit_table.isRowHidden(row) else name[1], window)
+        super().__init__(name[0] if self.table.isRowHidden(row) else name[1], window)
         self.row = row
         self.triggered.connect(self._action)
         # self.setCheckable(True)
