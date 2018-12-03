@@ -2,6 +2,7 @@ import os
 import sys
 
 import PyQt5
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 
 from Client.Configuartion import WindowConfig
@@ -63,6 +64,16 @@ def check_modules():
 
 
 if __name__ == "__main__":
+    def catch_exceptions(t, val, tb):
+        QtWidgets.QMessageBox.critical(None,
+                                       "An exception was raised",
+                                       "Exception type: {}".format(t))
+        old_hook(t, val, tb)
+
+
+    old_hook = sys.excepthook
+    sys.excepthook = catch_exceptions
+
     window_config = WindowConfig.load()
     if window_config['modules'] != True:
         check_modules()

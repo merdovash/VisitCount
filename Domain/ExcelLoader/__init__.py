@@ -10,11 +10,12 @@ from xlrd.sheet import Sheet
 from Client.IProgram import IProgram
 from DataBase2 import Group, Student, Lesson
 from Domain import Action
+from Domain.Exception import UnnecessaryActionException
 from Domain.Validation import ExcelValidation
 from Domain.functools.Function import memoize
 from Domain.functools.List import find
 
-student = namedtuple('student', 'real_student visitations')
+student = namedtuple('student', 'real_student visitations new_card_id')
 lesson = namedtuple('lesson', 'date col real_lesson')
 
 
@@ -118,7 +119,7 @@ class ExcelVisitationLoader:
                 student_fio = self._extract_student_info(sheet, row)
                 assert len(student_fio) == 3, f'row {row} is not valid, {student_fio}'
                 last_name, first_name, middle_name = student_fio
-                student_card_id = sheet.cell(row, self.card_id_column)
+                student_card_id = int(sheet.cell(row, self.card_id_column).value)
                 visitation = []
 
                 for lesson in range(lesson_count):
@@ -132,13 +133,14 @@ class ExcelVisitationLoader:
                     real_students)
                 assert real_student is not None, f'no such student for {student_fio}'
 
-                student_info.append(student(real_student, visitation))
+                student_info.append(student(real_student, visitation, student_card_id))
 
         return student_info
 
-    def read(self, file_path):
+    def read(self, file_path, progress_bar=None):
         """
 
+        :param progress_bar: индикатор для отображения прогресса чтения
         :param file_path: принимает строку адреса или QUrl объект
         """
         if isinstance(file_path, str):
@@ -147,6 +149,8 @@ class ExcelVisitationLoader:
             file_path = file_path.toLocalFile()
         else:
             raise NotImplementedError(type(file_path))
+
+        progress_updated = self.progress_updater_factory(progress_bar)
 
         wb = self._read_file(file_path)
 
@@ -162,17 +166,47 @@ class ExcelVisitationLoader:
         read = 0
 
         for col, l in enumerate(lessons):
-            Action.start_lesson(lesson=l.real_lesson, professor=self.program.professor)
+            try:
+                Action.start_lesson(lesson=l.real_lesson, professor=self.program.professor)
+            except UnnecessaryActionException:
+                pass
 
         for st in students:
-            for index, visit in enumerate(st.visitations):
-                self.program.window.statusBar().showMessage(f"Записано {read} из {total}")
-                if visit:
-                    Action.new_visitation(student=st.real_student, lesson=lessons[index].real_lesson,
-                                          professor_id=self.program.professor.id)
-                read += 1
+            try:
+                Action.change_student_card_id(
+                    student=st.real_student,
+                    new_card_id=st.new_card_id,
+                    professor_id=self.program.professor.id
+                )
+            except UnnecessaryActionException:
+                pass
 
-        self.program.window.statusBar().showMessage(f"Успешно прочитан файл {file_path}")
+            for index, visit in enumerate(st.visitations):
+                if visit:
+                    try:
+                        Action.new_visitation(student=st.real_student,
+                                              lesson=lessons[index].real_lesson,
+                                              professor_id=self.program.professor.id)
+                    except UnnecessaryActionException:
+                        pass
+                read += 1
+                progress_updated(int(read / total * 100))
+
+    def progress_updater_factory(self, progress_bar):
+        def nothing(value):
+            print('nothing')
+            pass
+
+        def main(value):
+            print('set', value)
+            progress_bar.setValue(value)
+
+        if progress_bar is None:
+            return nothing
+        elif hasattr(progress_bar, 'setValue'):
+            return main
+        else:
+            raise NotImplementedError()
 
     def test(self):
         self.read('/home/vlad/PycharmProjects/VisitCount/Domain/ExcelLoader/Группа_ИСТ_622.xls')

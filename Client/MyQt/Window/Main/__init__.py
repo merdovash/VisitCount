@@ -19,7 +19,8 @@ from Client.MyQt.QAction.DataAction import DataAction
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
 from Client.MyQt.Table import VisitTable
 from Client.MyQt.Table.Control import VisitTableControl
-from Client.MyQt.Window import AbstractWindow
+from Client.MyQt.Window import AbstractWindow, IParentWindow
+from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
 from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.MyQt.Window.NotificationParam import NotificationWindow
@@ -27,7 +28,6 @@ from DataBase2 import Professor, Lesson
 from Domain import Action
 from Domain.Action import NetAction
 from Domain.Data import valid_card
-from Domain.ExcelLoader import ExcelVisitationLoader
 from Domain.functools.List import find
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
@@ -49,13 +49,14 @@ def closest_lesson(lessons: List[Lesson]):
     return closest
 
 
-class MainWindow(AbstractWindow):
+class MainWindow(AbstractWindow, IParentWindow):
     """
     class represents main window in program. includes table, control elements, status info, professor data.
     """
 
     def __init__(self, program: IProgram, professor: Professor):
-        super().__init__()
+        AbstractWindow.__init__(self)
+        IParentWindow.__init__(self)
 
         self.program: IProgram = program
 
@@ -75,7 +76,6 @@ class MainWindow(AbstractWindow):
 
         self.showMaximized()
 
-        self.excel_reader = ExcelVisitationLoader(self.program)
         self.setAcceptDrops(True)
 
         self.setStatusBar(QStatusBar(self))
@@ -99,15 +99,16 @@ class MainWindow(AbstractWindow):
             event.setDropAction(Qt.CopyAction)
             event.accept()
 
-            for url in event.mimeData().urls():
-                try:
-                    self.ok_message.emit(
-                        f'Процесс записи файла ({url}) начат. Информация о статусе процесса слева внизу экрана.')
-                    self.excel_reader.read(url)
-                except Exception as e:
-                    self.error.emit(str(e))
-            else:
-                self.centralWidget().ready_draw_table.emit()
+            try:
+                self.setDialog(
+                    dialog=ExcelLoadingWidget(
+                        files=event.mimeData().urls(),
+                        program=self.program
+                    )
+                )
+                print('drop dialog')
+            except Exception as e:
+                self.error.emit(str(e))
         else:
             event.ignore()
 
@@ -230,10 +231,14 @@ class MainWindow(AbstractWindow):
         updates = self.menu_bar.addMenu("Синхронизация")
 
         updates_action = QAction("Обновить локальную базу данных", self)
-        updates_action.triggered.connect(lambda x: Action.send_updates(self.program.auth.login,
-                                                                       self.program.auth.password,
-                                                                       self.program.host,
-                                                                       ))
+        updates_action.triggered.connect(
+            lambda x: NetAction.send_updates(
+                login=self.program.auth.login,
+                password=self.program.auth.password,
+                host=self.program.host,
+                professor_id=self.professor.id,
+                session=self.program.session)
+        )
 
         updates.addAction(updates_action)
 
