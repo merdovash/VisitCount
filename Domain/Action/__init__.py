@@ -4,6 +4,7 @@ from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, Adm
     NotificationParam, Parent
 from Domain.Action import Updates
 from Domain.Action.Exceptions import InvalidLogin, InvalidPassword
+from Domain.Exception import UnnecessaryActionException
 from Domain.functools.Dict import to_dict
 
 
@@ -29,6 +30,14 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
 
     if session is None:
         session = Session()
+
+    old_visit = session \
+        .query(Visitation) \
+        .filter(Visitation.lesson_id == lesson.id) \
+        .filter(Visitation.student_id == student.id) \
+        .first()
+    if old_visit is not None:
+        raise UnnecessaryActionException
 
     visit = Visitation(student_id=student.id, lesson_id=lesson.id)
 
@@ -95,6 +104,9 @@ def start_lesson(lesson, professor) -> None:
     assert isinstance(lesson, Lesson), f'object {lesson} is not Lesson'
     assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
+    if lesson.completed:
+        raise UnnecessaryActionException(f'{lesson} is already started')
+
     lesson.completed = True
 
     Updates.Changed.row(lesson.id, type(lesson).__name__, professor.id)
@@ -140,3 +152,19 @@ def delete_contact(contact, professor_id):
     session.delete(contact)
 
     session.commit()
+
+
+def change_student_card_id(student, new_card_id, professor_id):
+    assert isinstance(student, Student)
+    assert isinstance(new_card_id, (str, int)), f'card_id {new_card_id} is not id'
+
+    if student.card_id == new_card_id:
+        raise UnnecessaryActionException(f'Student already has same card_id {student.card_id}=={new_card_id}')
+
+    session = inspect(student).session
+
+    student.card_id = new_card_id
+
+    session.commit()
+
+    Updates.Changed.row(changed_row_id=student.id, table_name=type(student).__name__, performer_id=professor_id)
