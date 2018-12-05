@@ -3,7 +3,7 @@
 """
 import os
 
-from flask import Flask, make_response, request
+from flask import Flask, make_response, request, render_template
 
 from Modules.Cabinet.ServerSide import CabinetModule
 from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
@@ -14,7 +14,7 @@ from Modules.Synch.ServerSide import Sycnh
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
-app = Flask(__name__, static_folder=path + "/static")
+app = Flask(__name__, static_folder=path + "/static", template_folder=path + '/templates')
 
 # load modules
 CabinetModule(app, request)
@@ -106,55 +106,55 @@ def cabinet():
     :return:
     """
     if request.method == 'GET':
-        return page(f'{path}/templates/cabinet.html')
+        return render_template('cabs.html')
 
 
-def fix_request_args(args, user_type, user_id):
-    """
-
-    Denies access to private fields
-
-    :param args: request's dict of args
-    :param user_type: type of user access
-    :param user_id: use ID
-    :return: fixed dict of args
-    """
-    request_args = {key: args[key][0] if args[key] is list else args[key] for key in args}
-
-    if str(user_type) == "0":
-        request_args["student_id"] = user_id
-        request_args["user_type"] = 0
-
-    elif str(user_type) == "1":
-        request_args["professor_id"] = user_id
-        request_args["user_type"] = 1
-
-    elif str(user_type) == "2":
-        request_args["admin_id"] = user_id
-        request_args["user_type"] = 2
-
-    return request_args
-
-
-def read_params(args, keys) -> dict:
-    """
-
-    :param args: request's dict of args
-    :param keys: function params
-    :return:
-    """
-    intersect = list(set(keys) & set(args))
-
-    params = {keys[i]: None for i in range(len(keys))}
-
-    for i in range(len(params)):
-        if keys[i] in intersect:
-            params[keys[i]] = args[keys[i]]
-            intersect.remove(keys[i])
-
-    return params
-
-
+# def fix_request_args(args, user_type, user_id):
+#     """
+#
+#     Denies access to private fields
+#
+#     :param args: request's dict of args
+#     :param user_type: type of user access
+#     :param user_id: use ID
+#     :return: fixed dict of args
+#     """
+#     request_args = {key: args[key][0] if args[key] is list else args[key] for key in args}
+#
+#     if str(user_type) == "0":
+#         request_args["student_id"] = user_id
+#         request_args["user_type"] = 0
+#
+#     elif str(user_type) == "1":
+#         request_args["professor_id"] = user_id
+#         request_args["user_type"] = 1
+#
+#     elif str(user_type) == "2":
+#         request_args["admin_id"] = user_id
+#         request_args["user_type"] = 2
+#
+#     return request_args
+#
+#
+# def read_params(args, keys) -> dict:
+#     """
+#
+#     :param args: request's dict of args
+#     :param keys: function params
+#     :return:
+#     """
+#     intersect = list(set(keys) & set(args))
+#
+#     params = {keys[i]: None for i in range(len(keys))}
+#
+#     for i in range(len(params)):
+#         if keys[i] in intersect:
+#             params[keys[i]] = args[keys[i]]
+#             intersect.remove(keys[i])
+#
+#     return params
+#
+#
 # @app.route("/get")
 # def get_field():
 #     """

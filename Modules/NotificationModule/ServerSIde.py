@@ -69,7 +69,7 @@ class NotificationModule(Module):
         super().__init__(app, request, address)
         self.connector = lambda: self.connect(config.email, config.password)
 
-        self.connection = self.connector()
+        self.connection = None
 
     def connect(self, login, password):
         conn = smtplib.SMTP('smtp.gmail.com:587')
@@ -80,6 +80,8 @@ class NotificationModule(Module):
         return conn
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
+        if self.connection is None:
+            self.connection = self.connector()
         admins = Administration.active_of(auth.user)
         parents = Parent.of(auth.user)
 
