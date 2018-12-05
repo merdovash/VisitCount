@@ -51,7 +51,7 @@ def create_threaded():
 
 def create():
     _new = False
-    if root == 'run_server.py':
+    if root == 'run_server2.py':
         engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8",
                                pool_pre_ping=True,
                                poolclass=NullPool)
