@@ -501,6 +501,20 @@ class UpdateType(int):
     contact_admin_del = 41
     contact_admin_email_changed = 42
 
+    @staticmethod
+    def of(val):
+        if isinstance(val, int):
+            return {
+                UpdateType.lesson_completed: 'Урок проведен',
+                UpdateType.lesson_uncompleted: 'Проведение урока отменено',
+                UpdateType.visit_new: 'Записано новое посещение',
+                UpdateType.visit_del: 'Посещения удалено',
+                UpdateType.contact_admin_new: 'Новый контакт администрации',
+                UpdateType.contact_admin_del: 'Удален контакт администрации',
+                UpdateType.student_card_id_updated: 'Обновлен идентификатор карточки студента',
+                UpdateType.contact_admin_email_changed: 'Изменена почта администрации',
+            }[val]
+
 
 class Update(Base):
     """
@@ -516,6 +530,7 @@ class Update(Base):
     performer = Column(Integer)
     update_type = Column(Integer)
     extra = Column(String(500))
+    date = Column(DateTime)
 
     UniqueConstraint('row_id', 'table_name', name='update_UK')
 
