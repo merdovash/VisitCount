@@ -1,5 +1,5 @@
 from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog
-from Domain.Aggregation import WeekDays, Column
+from Domain.Aggregation import WeekDaysAggregation, Column
 
 
 class WeekDayChart(QAnalysisDialog):
@@ -7,7 +7,7 @@ class WeekDayChart(QAnalysisDialog):
         self.data_type = QAnalysisDialog.DataType.WEEK_DAY
         super().__init__(program, parent)
 
-        self.data = WeekDays.by_professor(self.program.professor)
+        self.data = WeekDaysAggregation.by_professor(self.program.professor)
 
         self.draw()
 
@@ -17,13 +17,13 @@ class WeekDayChart(QAnalysisDialog):
         return self.data
 
     def refresh_data(self):
-        self.data = WeekDays.by_professor(self.program.professor,
-                                          groups=[i for i in self.groups.keys() if self.groups[i]],
-                                          disciplines=[i for i in self.disciplines.keys() if self.disciplines[i]])
+        self.data = WeekDaysAggregation.by_professor(self.program.professor,
+                                                     groups=[i for i in self.groups.keys() if self.groups[i]],
+                                                     disciplines=[i for i in self.disciplines.keys() if self.disciplines[i]])
 
     def _draw(self, plot_type, ax, **kwargs):
-        # if plot_type == 'line':
-        #     kwargs['xticks'] = ['Пн', 'Вт', "Ср", "Чт", "Пт", "Сб", "Вс"]
+        if plot_type == 'line':
+            kwargs['xticks'] = ['Пн', 'Вт', "Ср", "Чт", "Пт", "Сб", "Вс"]
         if plot_type == 'bar':
             self.get_data().plot.bar(
                 x=Column.date,
