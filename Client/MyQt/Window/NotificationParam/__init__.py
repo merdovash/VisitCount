@@ -6,8 +6,9 @@ from PyQt5.QtWidgets import QWidget
 from sqlalchemy import inspect
 
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
+from Client.MyQt.Window.UpdatesInfoWindow import UpdatesInfoWidget
 from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow, IDataBaseUser
-from DataBase2 import Administration, UserType, Parent, Student
+from DataBase2 import Administration, UserType, Parent, Student, Update
 from Domain import Action
 from Domain.Action import NetAction
 from Domain.functools.Dict import format_view, validate_new_user
@@ -30,6 +31,7 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
     def __init__(self, program, flags=None, *args, **kwargs):
         IParentWindow.__init__(self)
         IDataBaseUser.__init__(self, program.session)
+        IChildWindow.__init__(self)
         super(QWidget, self).__init__(flags)
         self.setupUi(self)
 
@@ -65,6 +67,10 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
                 on_error=program.window.error.emit,
                 on_finish=program.window.synch_finished.emit
             )
+        )
+
+        self.save_btn.clicked.connect(
+            lambda: self.setDialog(UpdatesInfoWidget(self.session.query(Update).all()))
         )
 
         self.run_btn.clicked.connect(lambda: NetAction.run_notification(

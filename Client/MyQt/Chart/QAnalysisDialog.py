@@ -81,7 +81,10 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow, Ui_PlotWidget):
 
         kwargs = {'ylim': [0, 100] if index == 0 else None}
         try:
-            self._draw(ax=self.ax(), plot_type=plot_legend['type'], color='#ff8000', **kwargs)
+            try:
+                self._draw(ax=self.ax(), plot_type=plot_legend['type'], color='#ff8000', **kwargs)
+            except TypeError:
+                self.ax().plot(x=0, y=0)
         except TypeError:
             self.program.window.error.emit('Пусто')
 
