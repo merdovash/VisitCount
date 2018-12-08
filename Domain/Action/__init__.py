@@ -1,7 +1,7 @@
 from sqlalchemy import inspect
 
 from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, Administration, \
-    NotificationParam, Parent
+    NotificationParam, Parent, UpdateType
 from Domain.Action import Updates
 from Domain.Action.Exceptions import InvalidLogin, InvalidPassword
 from Domain.Exception import UnnecessaryActionException
@@ -53,7 +53,12 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
         except:
             raise
 
-    Updates.New.row(Visitation, visit.id, professor_id)
+    Updates.New.row(
+        table=Visitation,
+        new_row_id=visit.id,
+        performer_id=professor_id,
+        update_type=UpdateType.visit_new
+    )
 
     return visit
 
@@ -77,7 +82,8 @@ def remove_visitation(visitation, professor_id):
         deleted_object=to_dict(visitation),
         deleted_object_table=type(visitation).__name__,
         performer_id=professor_id,
-        professors_affected=professors
+        professors_affected=professors,
+        update_type=UpdateType.visit_del
     )
 
 
@@ -109,7 +115,12 @@ def start_lesson(lesson, professor) -> None:
 
     lesson.completed = True
 
-    Updates.Changed.row(lesson.id, type(lesson).__name__, professor.id)
+    Updates.Changed.row(
+        changed_row_id=lesson.id,
+        table_name=type(lesson).__name__,
+        performer_id=professor.id,
+        update_type=UpdateType.lesson_completed
+    )
 
 
 def create_administration(performer_id, **kwargs) -> Administration:
@@ -123,14 +134,25 @@ def create_administration(performer_id, **kwargs) -> Administration:
 
     session.commit()
 
-    np = NotificationParam(admin_id=admin.id, professor_id=performer_id, active=True)
+    np = NotificationParam(
+        admin_id=admin.id,
+        professor_id=performer_id,
+        active=True)
 
     session.add(np)
 
     session.commit()
 
-    Updates.New.row(Administration, admin.id, performer_id)
-    Updates.New.row(NotificationParam, np.id, performer_id)
+    Updates.New.row(
+        table=Administration,
+        new_row_id=admin.id,
+        performer_id=performer_id,
+        update_type=UpdateType.contact_admin_new)
+    Updates.New.row(
+        table=NotificationParam,
+        new_row_id=np.id,
+        performer_id=performer_id,
+    )
 
     return admin
 
@@ -147,7 +169,12 @@ def delete_contact(contact, professor_id):
         nps = NotificationParam.of(contact)
 
         for np in nps:
-            Updates.Delete.row(to_dict(np), type(np).__name__, professor_id)
+            Updates.Delete.row(
+                deleted_object=to_dict(np),
+                deleted_object_table=type(np).__name__,
+                performer_id=professor_id,
+                update_type=UpdateType.contact_admin_del
+            )
 
     session.delete(contact)
 
@@ -167,4 +194,9 @@ def change_student_card_id(student, new_card_id, professor_id):
 
     session.commit()
 
-    Updates.Changed.row(changed_row_id=student.id, table_name=type(student).__name__, performer_id=professor_id)
+    Updates.Changed.row(
+        changed_row_id=student.id,
+        table_name=type(student).__name__,
+        performer_id=professor_id,
+        update_type=UpdateType.student_card_id_updated
+    )

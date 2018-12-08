@@ -132,7 +132,6 @@ class DisciplineAggregation:
         return df
 
 
-
 class Weeks:
     @staticmethod
     @memoize
@@ -156,21 +155,52 @@ class Weeks:
         return df
 
 
-class WeekDays:
+class WeekDaysAggregation:
     @staticmethod
     @memoize
     def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
-        df = Lessons.by_professor(professor, groups=groups, disciplines=disciplines)
+        data = {0: [0, 0, 0, 0, 'Пн'],
+                1: [0, 0, 0, 0, 'Вт'],
+                2: [0, 0, 0, 0, 'Ср'],
+                3: [0, 0, 0, 0, 'Чт'],
+                4: [0, 0, 0, 0, 'Пт'],
+                5: [0, 0, 0, 0, 'Сб'],
+                6: [0, 0, 0, 0, 'Вс']}
 
-        df[Column.date] = df[Column.date].apply(lambda date: ',Пн,Вт,Ср,Чт,Пт,Сб,Вс'.split(',')[date.isoweekday()])
+        lessons = Lesson.of(professor)
+        if groups is not None:
+            lessons = list(set(lessons).intersection(set(Lesson.of(groups))))
+        if disciplines is not None:
+            lessons = list(set(lessons).intersection(set(Lesson.of(disciplines))))
 
-        grouped: GroupBy = df.groupby(Column.date)
+        for lesson in lessons:
+            week_day = lesson.date.weekday()
+            # lesson count
+            data[week_day][3] += 1
 
-        grouped = grouped[Column.visit_count, Column.student_count].agg(np.sum)
+            if lesson.completed:
+                # visit count
+                visits = Visitation.of(lesson)
+                if groups is not None:
+                    visits = list(set(visits).intersection(set(Visitation.of(groups))))
+                data[week_day][0] += len(visits)
 
-        df = DataFrame(np.round(grouped[Column.visit_count] / grouped[Column.student_count], 2) * 100,
-                       columns=[Column.visit_rate]).reset_index()
+                # student count
+                students = Student.of(lesson)
+                if groups is not None:
+                    students = list(set(students).intersection(set(Student.of(groups))))
+                data[week_day][1] += len(students)
+
+                # completed lesson count
+                data[week_day][2] += 1
+
+        df = DataFrame(data).T
+        df[Column.visit_rate] = round(df[0].astype(float).divide(df[1].astype(float)) * 100)
+        df = df.rename(columns={2: 'Проведено занятий', 3: 'Всего занятий', 4: Column.date})
+        df = df.loc[:, [Column.date, 'Проведено занятий', Column.visit_rate, 'Всего занятий']]
+        df[Column.visit_rate] = df[Column.visit_rate].map(lambda x: 0 if x != x else x)
+        print(df)
 
         return df

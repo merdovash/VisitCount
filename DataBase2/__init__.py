@@ -482,13 +482,24 @@ class Parent(Base):
             raise NotImplementedError(type(obj))
 
 
-class UpdateType(int):
+class ActionType(int):
     """
     Update type
     """
     NEW = 2
     UPDATE = 0
     DELETE = 1
+
+
+class UpdateType(int):
+    lesson_completed = 30
+    lesson_uncompleted = 31
+    visit_new = 10
+    visit_del = 11
+    student_card_id_updated = 20
+    contact_admin_new = 40
+    contact_admin_del = 41
+    contact_admin_email_changed = 42
 
 
 class Update(Base):
@@ -503,6 +514,7 @@ class Update(Base):
     row_id = Column(Integer, nullable=False)
     action_type = Column(Integer, nullable=False)
     performer = Column(Integer)
+    update_type = Column(Integer)
     extra = Column(String(500))
 
     UniqueConstraint('row_id', 'table_name', name='update_UK')

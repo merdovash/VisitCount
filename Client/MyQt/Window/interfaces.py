@@ -7,6 +7,8 @@ class IChildWindow():
 
     def closeSelf(self):
         print('closing self')
+        if isinstance(self, IParentWindow) and self.child_window is not None:
+            self.child_window.closeSelf()
         self._parentWindow.closeDialog(self)
 
     def setParentWindow(self, window):

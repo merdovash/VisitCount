@@ -7,7 +7,7 @@ from premailer import transform
 
 from DataBase2 import Auth, Administration, Parent, Lesson
 from DataBase2.Types import format_name
-from Domain.Aggregation import GroupAggregation, DisciplineAggregation
+from Domain.Aggregation import GroupAggregation, DisciplineAggregation, WeekDaysAggregation
 from Domain.functools.List import flat
 from Modules import Module
 from Modules.NotificationModule import address
@@ -36,6 +36,8 @@ class MessageMaker:
 
         self.discipline_table = DisciplineAggregation.by_professor(self.user).to_html()
 
+        self.week_day_table = WeekDaysAggregation.by_professor(self.user).to_html()
+
         print(self.to_sender_name)
 
     def to(self, receiver):
@@ -51,7 +53,8 @@ class MessageMaker:
                 to_sender_name=self.to_sender_name,
                 visit_rate=self.total_rate,
                 group_table=self.group_table,
-                discipline_table=self.discipline_table
+                discipline_table=self.discipline_table,
+                week_day_table=self.week_day_table
             )
         )
 
