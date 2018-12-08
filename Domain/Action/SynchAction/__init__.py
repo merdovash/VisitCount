@@ -2,7 +2,7 @@ from collections import namedtuple, defaultdict
 from typing import Dict, List, Any
 
 from DataBase2 import Discipline, Student, StudentsGroups, Group, Professor, Lesson, Visitation, Parent, Administration, \
-    NotificationParam, Update, UpdateType, Session, LessonsGroups, Auth, StudentsParents
+    NotificationParam, Update, Session, LessonsGroups, Auth, StudentsParents, ActionType
 from Domain.Action import Updates
 from Domain.Data import get_db_object, select, select_by_id
 from Domain.Primitives import value_of
@@ -39,7 +39,7 @@ def add_new_administration(admin_mapping, param_mapping, session, performer_id):
 def get_updates_data(updates, session):
     data = {}
 
-    for action_type in [UpdateType.NEW, UpdateType.UPDATE]:
+    for action_type in [ActionType.NEW, ActionType.UPDATE]:
         action_updates = filter(lambda update: update.action_type == action_type, updates)
 
         group_by_tables = defaultdict(list)
@@ -49,9 +49,9 @@ def get_updates_data(updates, session):
 
         data[action_type] = group_by_tables
 
-    data[UpdateType.DELETE] = defaultdict(list)
-    for update in filter(lambda update: update.action_type == UpdateType.DELETE, updates):
-        data[UpdateType.DELETE][update.table_name].append(JsonParser.read(update.extra))
+    data[ActionType.DELETE] = defaultdict(list)
+    for update in filter(lambda update: update.action_type == ActionType.DELETE, updates):
+        data[ActionType.DELETE][update.table_name].append(JsonParser.read(update.extra))
 
     print('all updates', data)
     return data

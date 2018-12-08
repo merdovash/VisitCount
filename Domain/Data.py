@@ -10,6 +10,7 @@ from Domain.functools.Function import memoize
 
 def select_by_id(session, mapper, ID):
     assert isinstance(ID, int), f'ID is not a number'
+    assert mapper is not None
     if isinstance(mapper, str):
         return select_by_id(session, locate(f'DataBase2.{mapper}'), ID)
     else:

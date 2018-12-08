@@ -1,5 +1,3 @@
-import datetime
-
 from DataBase2 import Session, Update, ActionType, Professor, ProfessorsUpdates
 from Domain.Prepare import get_updated_object
 from Parser.JsonParser import JsonParser
@@ -21,8 +19,7 @@ class New:
             table_name=table,
             performer=performer_id,
             action_type=ActionType.NEW,
-            update_type=update_type,
-            date=datetime.datetime.now())
+            update_type=update_type)
 
         session.add(update)
 
@@ -75,8 +72,7 @@ class Delete:
                 performer=performer_id,
                 action_type=ActionType.DELETE,
                 extra=JsonParser.dump(deleted_object),
-                update_type=update_type,
-                date=datetime.datetime.now())
+                update_type=update_type)
 
             session.add(update)
 
@@ -118,8 +114,7 @@ class Changed:
                 table_name=table_name,
                 performer=performer_id,
                 action_type=ActionType.UPDATE,
-                update_type=update_type,
-                date=datetime.datetime.now())
+                update_type=update_type)
 
             session.add(update)
 

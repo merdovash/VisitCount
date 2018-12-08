@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMessageBox
 from Client.MyQt.Window.interfaces import IChildWindow
 
 
-class OkMessage(QMessageBox, IChildWindow):
+class QOkMsg(QMessageBox, IChildWindow):
     def __init__(self, text, *__args):
         super().__init__(*__args)
 
