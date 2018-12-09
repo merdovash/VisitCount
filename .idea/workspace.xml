@@ -4,11 +4,6 @@
     <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="Добавлена рассшифровка типов обновления">
       <change afterPath="$PROJECT_DIR$/Test/fonctool_url.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DataBase2/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/DataBase2/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Action/Updates/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Action/Updates/__init__.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -84,14 +79,14 @@
           <entry key="html" value="121" />
           <entry key="py" value="119522" />
           <entry key="pylintrc" value="50" />
-          <entry key="txt" value="2769" />
+          <entry key="txt" value="2852" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="CSS" value="2189" />
           <entry key="HTML" value="121" />
-          <entry key="PLAIN_TEXT" value="3053" />
+          <entry key="PLAIN_TEXT" value="3136" />
           <entry key="Python" value="119522" />
         </counts>
       </usages-collector>
@@ -184,14 +179,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="146">
-              <caret line="494" column="27" selection-start-line="494" selection-start-column="27" selection-end-line="494" selection-end-column="27" />
-              <folding>
-                <element signature="e#16#25#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="-748">
+              <caret line="4" selection-start-line="4" selection-end-line="4" />
             </state>
           </provider>
         </entry>
@@ -235,7 +227,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="269">
@@ -420,8 +412,8 @@
         <option value="$PROJECT_DIR$/Domain/functools/Url.py" />
         <option value="$PROJECT_DIR$/Client/Program.py" />
         <option value="$PROJECT_DIR$/Test/fonctool_url.py" />
-        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py" />
+        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
       </list>
     </option>
   </component>
@@ -741,20 +733,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529582063510</updated>
-    </task>
-    <task id="LOCAL-00026" summary="Переработан класс DataBaseWorker. Добавлены основные типы данных базы данных v2">
-      <created>1533672913131</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
-      <option name="project" value="LOCAL" />
-      <updated>1533672913131</updated>
-    </task>
-    <task id="LOCAL-00027" summary="Исправлена ошибка с запросом списка преподавателей по идентификатору студента">
-      <created>1533673821739</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
-      <option name="project" value="LOCAL" />
-      <updated>1533673821739</updated>
     </task>
     <task id="LOCAL-00028" summary="Добавлен класс аутентификации">
       <created>1534008492574</created>
@@ -1085,7 +1063,21 @@
       <option name="project" value="LOCAL" />
       <updated>1544364271295</updated>
     </task>
-    <option name="localTasksCounter" value="75" />
+    <task id="LOCAL-00075" summary="Добавлено поле даты в таблице Update">
+      <created>1544364644652</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1544364644652</updated>
+    </task>
+    <task id="LOCAL-00076" summary="Изменено окно вывода ошибки">
+      <created>1544364699418</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1544364699418</updated>
+    </task>
+    <option name="localTasksCounter" value="77" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -1215,7 +1207,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="hotfix&#10;исправлена ошибка импорта модулей&#10;исправлены сообщения об ошибке при неудачной аутентификации&#10;лейблы помещены ближе к спискам" />
     <MESSAGE value="Добавлена возможность преподавателю зарегистривать свою карту" />
     <MESSAGE value="исправлена ошибка аутентификации по карте и паролю" />
     <MESSAGE value="исправлен запуск клиентского приложения&#10;добавлен новый парментр в конфигурации, отвечающий за наличие модулей в ОС" />
@@ -1234,13 +1225,14 @@
     <MESSAGE value="Восстановлены функции элементов управления" />
     <MESSAGE value="Обновлено отображение графика посещений по дням недели&#10;Добавлено отображение посещений по дням недели для администрации" />
     <MESSAGE value="Добавлен табличный виджет" />
-    <MESSAGE value="Добавлено поле даты в таблице Update" />
     <MESSAGE value="Переименованы кастомные классы сообщений" />
     <MESSAGE value="Добавлено окно информации об ожидающих отправки обновлениях" />
     <MESSAGE value="Добавлено окно отображения ожидающих синхронизации данных" />
     <MESSAGE value="Добавлена рассшифровка типов обновления" />
     <MESSAGE value="Добавлена возможность указать в параметрах запуска host через ['-host {url}', '-H {url}']" />
-    <option name="LAST_COMMIT_MESSAGE" value="Добавлена возможность указать в параметрах запуска host через ['-host {url}', '-H {url}']" />
+    <MESSAGE value="Добавлено поле даты в таблице Update" />
+    <MESSAGE value="Изменено окно вывода ошибки" />
+    <option name="LAST_COMMIT_MESSAGE" value="Изменено окно вывода ошибки" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
@@ -1911,20 +1903,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="146">
-          <caret line="494" column="27" selection-start-line="494" selection-start-column="27" selection-end-line="494" selection-end-column="27" />
-          <folding>
-            <element signature="e#16#25#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="269">
           <caret line="63" column="36" lean-forward="true" selection-start-line="63" selection-start-column="36" selection-end-line="63" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-748">
+          <caret line="4" selection-start-line="4" selection-end-line="4" />
         </state>
       </provider>
     </entry>
