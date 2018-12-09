@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="Добавлено окно отображения ожидающих синхронизации данных">
+    <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="Добавлена рассшифровка типов обновления">
+      <change afterPath="$PROJECT_DIR$/Test/fonctool_url.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DataBase2/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/DataBase2/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Domain/Action/Updates/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Action/Updates/__init__.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -52,7 +58,7 @@
           <entry key="html" value="1" />
           <entry key="json" value="1" />
           <entry key="png" value="2" />
-          <entry key="py" value="1046" />
+          <entry key="py" value="1056" />
           <entry key="pyi" value="6" />
           <entry key="pylintrc" value="2" />
           <entry key="svg" value="1" />
@@ -65,7 +71,7 @@
           <entry key="Image" value="2" />
           <entry key="JSON" value="1" />
           <entry key="PLAIN_TEXT" value="7" />
-          <entry key="Python" value="1046" />
+          <entry key="Python" value="1056" />
           <entry key="PythonStub" value="6" />
           <entry key="SVG" value="1" />
         </counts>
@@ -76,17 +82,17 @@
           <entry key="css" value="2189" />
           <entry key="dummy" value="233" />
           <entry key="html" value="121" />
-          <entry key="py" value="118390" />
+          <entry key="py" value="119522" />
           <entry key="pylintrc" value="50" />
-          <entry key="txt" value="2587" />
+          <entry key="txt" value="2769" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="CSS" value="2189" />
           <entry key="HTML" value="121" />
-          <entry key="PLAIN_TEXT" value="2871" />
-          <entry key="Python" value="118390" />
+          <entry key="PLAIN_TEXT" value="3053" />
+          <entry key="Python" value="119522" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages">
@@ -181,8 +187,41 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="8585">
-              <caret line="517" column="31" selection-start-line="517" selection-start-column="31" selection-end-line="517" selection-end-column="31" />
+            <state relative-caret-position="146">
+              <caret line="494" column="27" selection-start-line="494" selection-start-column="27" selection-end-line="494" selection-end-column="27" />
+              <folding>
+                <element signature="e#16#25#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/run_client.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="190">
+              <caret line="99" column="29" selection-start-line="99" selection-start-column="29" selection-end-line="99" selection-end-column="29" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Client/Program.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="391">
+              <caret line="35" column="32" lean-forward="true" selection-start-line="35" selection-start-column="32" selection-end-line="35" selection-end-column="32" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Domain/functools/Url.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="204">
+              <caret line="12" selection-start-line="12" selection-end-line="12" />
+              <folding>
+                <marker date="1544364267515" expanded="true" signature="188:189" ph="..." />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -190,8 +229,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Domain/Action/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
-              <caret line="18" selection-start-line="18" selection-end-line="18" />
+            <state relative-caret-position="170">
+              <caret line="89" column="7" selection-start-line="89" selection-start-column="7" selection-end-line="89" selection-end-column="7" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="269">
+              <caret line="63" column="36" lean-forward="true" selection-start-line="63" selection-start-column="36" selection-end-line="63" selection-end-column="36" />
             </state>
           </provider>
         </entry>
@@ -199,10 +247,10 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/interfaces.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="986">
-              <caret line="58" column="52" selection-start-line="58" selection-start-column="52" selection-end-line="58" selection-end-column="52" />
+            <state relative-caret-position="1105">
+              <caret line="65" selection-start-line="65" selection-end-line="65" />
               <folding>
-                <marker date="1544287520836" expanded="true" signature="570:579" ph="..." />
+                <marker date="1544362757860" expanded="true" signature="570:579" ph="..." />
               </folding>
             </state>
           </provider>
@@ -211,23 +259,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="408">
-              <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
+            <state relative-caret-position="153">
+              <caret line="13" column="30" selection-start-line="13" selection-start-column="30" selection-end-line="13" selection-end-column="30" />
               <folding>
                 <marker date="1544285793553" expanded="true" signature="287:288" ph="..." />
                 <marker date="1544285793553" expanded="true" signature="287:292" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/Ui_UpdatesInfoWidget.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="272">
-              <caret line="19" column="29" selection-start-line="19" selection-start-column="29" selection-end-line="19" selection-end-column="29" />
-              <folding>
-                <marker date="1544285793448" expanded="true" signature="160:165" ph="..." />
               </folding>
             </state>
           </provider>
@@ -238,45 +274,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="238">
               <caret line="17" column="8" selection-start-line="17" selection-start-column="8" selection-end-line="17" selection-end-column="8" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="901">
-              <caret line="66" column="44" selection-start-line="66" selection-start-column="44" selection-end-line="66" selection-end-column="44" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="425">
-              <caret line="30" column="24" selection-start-line="30" selection-start-column="24" selection-end-line="30" selection-end-column="24" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Dialogs/QOkMsg.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="51">
-              <caret line="5" column="9" selection-start-line="5" selection-start-column="9" selection-end-line="5" selection-end-column="9" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Client/MyQt/Dialogs/QErrorMsg.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="232">
-              <caret line="25" column="26" selection-start-line="25" selection-start-column="26" selection-end-line="25" selection-end-column="26" />
-              <folding>
-                <element signature="e#0#27#0" expanded="true" />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -374,9 +371,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/DataBase2/Types.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/utils/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/PercentHeader/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/PercentItem.py" />
         <option value="$PROJECT_DIR$/Domain/functools/List.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/ColorScheme.py" />
@@ -394,7 +388,6 @@
         <option value="$PROJECT_DIR$/Client/MyQt/QAction/DataAction.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/UiTableWindow.py" />
-        <option value="$PROJECT_DIR$/Client/Program.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Widgets/ComboBox.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/Selector.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Control.py" />
@@ -402,7 +395,6 @@
         <option value="$PROJECT_DIR$/Domain/Exception/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/ExcelLoadingWindow/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" />
-        <option value="$PROJECT_DIR$/run_client.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Action/__init__.py" />
         <option value="$PROJECT_DIR$/Modules/NotificationModule/ServerSIde.py" />
@@ -412,19 +404,24 @@
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/Ui_QPlotWidget.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/WeekAnalysis.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/QAnalysisDialog.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Action/SynchAction/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Data.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" />
-        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
-        <option value="$PROJECT_DIR$/Domain/Action/Updates/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/Ui_UpdatesInfoWidget.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Widgets/QEasyTable.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Dialogs/QErrorMessage.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Dialogs/QOkMessage.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Dialogs/QErrorMsg.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/Ui_UpdatesInfoWidget.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py" />
+        <option value="$PROJECT_DIR$/Domain/Action/Updates/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" />
+        <option value="$PROJECT_DIR$/run_client.py" />
+        <option value="$PROJECT_DIR$/Domain/functools/Url.py" />
+        <option value="$PROJECT_DIR$/Client/Program.py" />
+        <option value="$PROJECT_DIR$/Test/fonctool_url.py" />
+        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py" />
       </list>
     </option>
   </component>
@@ -541,7 +538,15 @@
               <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
               <item name="Client" type="462c0819:PsiDirectoryNode" />
               <item name="MyQt" type="462c0819:PsiDirectoryNode" />
-              <item name="Dialogs" type="462c0819:PsiDirectoryNode" />
+              <item name="Window" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
+              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
+              <item name="Client" type="462c0819:PsiDirectoryNode" />
+              <item name="MyQt" type="462c0819:PsiDirectoryNode" />
+              <item name="Window" type="462c0819:PsiDirectoryNode" />
+              <item name="Auth" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
@@ -551,15 +556,7 @@
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
               <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Domain" type="462c0819:PsiDirectoryNode" />
-              <item name="Action" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Domain" type="462c0819:PsiDirectoryNode" />
-              <item name="Action" type="462c0819:PsiDirectoryNode" />
-              <item name="Updates" type="462c0819:PsiDirectoryNode" />
+              <item name="Test" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
@@ -675,7 +672,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_client.py" />
-      <option name="PARAMETERS" value="" />
+      <option name="PARAMETERS" value="-host 127.0.0.1" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -683,25 +680,19 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="Nosetests for fonctool_url.UrlTest" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
       <module name="VisitCount" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Domain" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Test" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Domain/test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="_new_regexPattern" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;fonctool_url.UrlTest&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <configuration name="Nosetests for test" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
@@ -721,18 +712,18 @@
     </configuration>
     <list>
       <item itemvalue="Python.run_client" />
-      <item itemvalue="Python.test" />
       <item itemvalue="Python.__init__" />
-      <item itemvalue="Python tests.Nosetests for test" />
       <item itemvalue="Python.ServerSIde" />
+      <item itemvalue="Python tests.Nosetests for test" />
+      <item itemvalue="Python tests.Nosetests for fonctool_url.UrlTest" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.run_client" />
+        <item itemvalue="Python tests.Nosetests for fonctool_url.UrlTest" />
         <item itemvalue="Python.ServerSIde" />
         <item itemvalue="Python tests.Nosetests for test" />
         <item itemvalue="Python.__init__" />
-        <item itemvalue="Python.test" />
       </list>
     </recent_temporary>
   </component>
@@ -750,27 +741,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1529582063510</updated>
-    </task>
-    <task id="LOCAL-00023" summary="Добавлена вспомогательная информация во время процесса рассылки оповещений.">
-      <created>1533583357027</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
-      <option name="project" value="LOCAL" />
-      <updated>1533583357027</updated>
-    </task>
-    <task id="LOCAL-00024" summary="Переработан класс DataBaseWorker. Добавлены основные типы данных базы данных">
-      <created>1533669978065</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1533669978065</updated>
-    </task>
-    <task id="LOCAL-00025" summary="Переработан класс DataBaseWorker. Добавлены основные типы данных базы данных v2">
-      <created>1533670521488</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1533670521488</updated>
     </task>
     <task id="LOCAL-00026" summary="Переработан класс DataBaseWorker. Добавлены основные типы данных базы данных v2">
       <created>1533672913131</created>
@@ -1094,28 +1064,31 @@
       <option name="project" value="LOCAL" />
       <updated>1544287533670</updated>
     </task>
-    <option name="localTasksCounter" value="72" />
+    <task id="LOCAL-00072" summary="Добавлено окно отображения ожидающих синхронизации данных">
+      <created>1544361803091</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1544361803091</updated>
+    </task>
+    <task id="LOCAL-00073" summary="Добавлена рассшифровка типов обновления">
+      <created>1544362259327</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1544362259327</updated>
+    </task>
+    <task id="LOCAL-00074" summary="Добавлена возможность указать в параметрах запуска host через ['-host {url}', '-H {url}']">
+      <created>1544364271295</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1544364271295</updated>
+    </task>
+    <option name="localTasksCounter" value="75" />
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Nosetests_in_CompleteTest_py - 2018.08.30 at 10h 07m 24s.xml">
-      <configuration name="Nosetests in CompleteTest.py" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Nosetests_in_CompleteTest_py - 2018.08.30 at 10h 08m 30s.xml">
-      <configuration name="Nosetests in CompleteTest.py" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Nosetests_in_CompleteTest_py - 2018.08.30 at 10h 09m 10s.xml">
-      <configuration name="Nosetests in CompleteTest.py" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Nosetests_in_CompleteTest_py - 2018.08.30 at 10h 11m 31s.xml">
-      <configuration name="Nosetests in CompleteTest.py" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Nosetests_in_CompleteTest_py - 2018.08.30 at 10h 25m 29s.xml">
-      <configuration name="Nosetests in CompleteTest.py" configurationId="tests" />
-    </history-entry>
-    <history-entry file="Nosetests_in_CompleteTest_py - 2018.08.30 at 19h 20m 58s.xml">
-      <configuration name="Nosetests in CompleteTest.py" configurationId="tests" />
-    </history-entry>
     <history-entry file="Nosetests_in_CompleteTest_py - 2018.08.31 at 16h 30m 46s.xml">
       <configuration name="Nosetests in CompleteTest.py" configurationId="tests" />
     </history-entry>
@@ -1127,6 +1100,24 @@
     </history-entry>
     <history-entry file="Nosetests_for_ClientSide_test - 2018.10.19 at 11h 48m 03s.xml">
       <configuration name="Nosetests for ClientSide.test" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Nosetests_for_fonctool_url_UrlTest - 2018.12.09 at 16h 57m 25s.xml">
+      <configuration name="Nosetests for fonctool_url.UrlTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Nosetests_for_fonctool_url_UrlTest - 2018.12.09 at 16h 57m 53s.xml">
+      <configuration name="Nosetests for fonctool_url.UrlTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Nosetests_for_fonctool_url_UrlTest - 2018.12.09 at 16h 58m 17s.xml">
+      <configuration name="Nosetests for fonctool_url.UrlTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Nosetests_for_fonctool_url_UrlTest - 2018.12.09 at 16h 59m 30s.xml">
+      <configuration name="Nosetests for fonctool_url.UrlTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Nosetests_for_fonctool_url_UrlTest - 2018.12.09 at 17h 01m 06s.xml">
+      <configuration name="Nosetests for fonctool_url.UrlTest" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Nosetests_for_fonctool_url_UrlTest - 2018.12.09 at 17h 01m 20s.xml">
+      <configuration name="Nosetests for fonctool_url.UrlTest" configurationId="tests" />
     </history-entry>
   </component>
   <component name="TodoView" selected-index="4">
@@ -1147,26 +1138,6 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.48363096" weight="0.32786885" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4642857" weight="0.36885247" />
-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.6376702" weight="0.43278688" />
-      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.34868422" />
-      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.2953869" side_tool="true" weight="0.3295082" />
-      <window_info anchor="bottom" id="Python Console" order="8" sideWeight="0.49925596" weight="0.32786885" />
-      <window_info anchor="bottom" id="Terminal" order="9" sideWeight="0.7046131" weight="0.49016392" />
-      <window_info active="true" anchor="bottom" id="Version Control" order="10" sideWeight="0.49925596" visible="true" weight="0.3180328" />
-      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" id="Data View" order="3" weight="0.32980332" />
-    </layout>
-    <layout-to-restore>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23958333" />
-      <window_info id="Structure" order="1" weight="0.24851191" />
-      <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.48363096" weight="0.32786885" />
       <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.4642857" visible="true" weight="0.36885247" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.6376702" weight="0.43278688" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
@@ -1174,13 +1145,13 @@
       <window_info anchor="bottom" id="TODO" order="6" weight="0.34868422" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.2953869" side_tool="true" weight="0.3295082" />
       <window_info anchor="bottom" id="Python Console" order="8" sideWeight="0.49925596" weight="0.32786885" />
-      <window_info anchor="bottom" id="Terminal" order="9" sideWeight="0.7046131" weight="0.3295082" />
-      <window_info anchor="bottom" id="Version Control" order="10" sideWeight="0.49925596" weight="0.32786885" />
+      <window_info anchor="bottom" id="Terminal" order="9" sideWeight="0.7046131" weight="0.49016392" />
+      <window_info anchor="bottom" id="Version Control" order="10" sideWeight="0.49925596" weight="0.3180328" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Data View" order="3" weight="0.32980332" />
-    </layout-to-restore>
+    </layout>
   </component>
   <component name="UnknownFeatures">
     <option featureType="com.intellij.fileTypeFactory" implementationName="*.js" />
@@ -1244,8 +1215,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Элементы управления вынесены в отдельный виджет Selector&#10;Студенты без записанного идентификатора карточки теперь обозначаются желтым" />
-    <MESSAGE value="Добавлен интерфейс считывателя IReader&#10;Исправлена работа конфигурации пользовательской среды&#10;Добавлена возможность скрыть/показать номер недели в таблице" />
     <MESSAGE value="hotfix&#10;исправлена ошибка импорта модулей&#10;исправлены сообщения об ошибке при неудачной аутентификации&#10;лейблы помещены ближе к спискам" />
     <MESSAGE value="Добавлена возможность преподавателю зарегистривать свою карту" />
     <MESSAGE value="исправлена ошибка аутентификации по карте и паролю" />
@@ -1269,7 +1238,9 @@
     <MESSAGE value="Переименованы кастомные классы сообщений" />
     <MESSAGE value="Добавлено окно информации об ожидающих отправки обновлениях" />
     <MESSAGE value="Добавлено окно отображения ожидающих синхронизации данных" />
-    <option name="LAST_COMMIT_MESSAGE" value="Добавлено окно отображения ожидающих синхронизации данных" />
+    <MESSAGE value="Добавлена рассшифровка типов обновления" />
+    <MESSAGE value="Добавлена возможность указать в параметрах запуска host через ['-host {url}', '-H {url}']" />
+    <option name="LAST_COMMIT_MESSAGE" value="Добавлена возможность указать в параметрах запуска host через ['-host {url}', '-H {url}']" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
@@ -1453,22 +1424,22 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/Domain/Action/Updates/__init__.py</url>
-          <line>96</line>
+          <line>100</line>
           <option name="timeStamp" value="802" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/Domain/Action/Updates/__init__.py</url>
-          <line>97</line>
+          <line>101</line>
           <option name="timeStamp" value="803" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/Domain/Action/Updates/__init__.py</url>
-          <line>98</line>
+          <line>102</line>
           <option name="timeStamp" value="804" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/Domain/Action/Updates/__init__.py</url>
-          <line>124</line>
+          <line>129</line>
           <option name="timeStamp" value="812" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
@@ -1572,20 +1543,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/Client/Reader/Functor/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="4" column="19" lean-forward="true" selection-start-line="4" selection-start-column="19" selection-end-line="4" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/Requests/ClientConnection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="242">
-          <caret line="86" selection-start-line="86" selection-end-line="86" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Modules/Synch/ClientSide.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="51">
@@ -1640,24 +1597,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="28" column="22" selection-start-line="28" selection-start-column="22" selection-end-line="28" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Main/UiTableWindow.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="170">
           <caret line="17" column="41" selection-start-line="17" selection-start-column="41" selection-end-line="17" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/Program.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-30">
-          <caret line="86" selection-start-line="86" selection-end-line="86" />
         </state>
       </provider>
     </entry>
@@ -1743,13 +1686,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/run_client.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1105">
-          <caret line="74" column="17" selection-start-line="74" selection-start-column="17" selection-end-line="74" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Domain/Exception/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="102">
@@ -1819,27 +1755,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Domain/Action/Updates/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="592">
-          <caret line="121" column="38" lean-forward="true" selection-start-line="121" selection-start-column="38" selection-end-line="121" selection-end-column="38" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Domain/Action/SynchAction/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="112">
           <caret line="47" column="58" selection-start-line="47" selection-start-column="58" selection-end-line="47" selection-end-column="58" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/QEasyTable.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="850">
-          <caret line="50" column="42" selection-start-line="50" selection-start-column="42" selection-end-line="50" selection-end-column="42" />
         </state>
       </provider>
     </entry>
@@ -1860,47 +1779,75 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/Ui_UpdatesInfoWidget.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="8585">
-          <caret line="517" column="31" selection-start-line="517" selection-start-column="31" selection-end-line="517" selection-end-column="31" />
+        <state relative-caret-position="357">
+          <caret line="21" column="10" lean-forward="true" selection-start-line="21" selection-start-column="10" selection-end-line="21" selection-end-column="10" />
+          <folding>
+            <element signature="e#0#39#0" expanded="true" />
+            <marker date="1544285793448" expanded="true" signature="160:165" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Domain/Action/__init__.py">
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
+        <state relative-caret-position="136">
+          <caret line="66" column="47" selection-start-line="66" selection-start-column="47" selection-end-line="66" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="116">
+          <caret line="35" column="8" selection-start-line="35" selection-start-column="8" selection-end-line="35" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/Action/Updates/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-88">
+          <caret line="24" column="12" selection-start-line="24" selection-start-column="12" selection-end-line="24" selection-end-column="12" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/QEasyTable.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="269">
+          <caret line="46" column="44" lean-forward="true" selection-start-line="46" selection-start-column="44" selection-end-line="46" selection-end-column="44" />
+          <folding>
+            <marker date="1544280280753" expanded="true" signature="92:97" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Dialogs/QOkMsg.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
           <caret line="18" selection-start-line="18" selection-end-line="18" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/interfaces.py">
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Dialogs/QErrorMsg.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="986">
-          <caret line="58" column="52" selection-start-line="58" selection-start-column="52" selection-end-line="58" selection-end-column="52" />
+        <state relative-caret-position="442">
+          <caret line="26" column="24" lean-forward="true" selection-start-line="26" selection-start-column="24" selection-end-line="26" selection-end-column="24" />
           <folding>
-            <marker date="1544287520836" expanded="true" signature="570:579" ph="..." />
+            <element signature="e#0#27#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="28" column="11" selection-start-line="28" selection-start-column="11" selection-end-line="28" selection-end-column="11" />
+        <state relative-caret-position="153">
+          <caret line="13" column="30" selection-start-line="13" selection-start-column="30" selection-end-line="13" selection-end-column="30" />
           <folding>
             <marker date="1544285793553" expanded="true" signature="287:288" ph="..." />
             <marker date="1544285793553" expanded="true" signature="287:292" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/Ui_UpdatesInfoWidget.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="19" column="29" selection-start-line="19" selection-start-column="29" selection-end-line="19" selection-end-column="29" />
-          <folding>
-            <marker date="1544285793448" expanded="true" signature="160:165" ph="..." />
           </folding>
         </state>
       </provider>
@@ -1912,34 +1859,72 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/NotificationParam/__init__.py">
+    <entry file="file://$PROJECT_DIR$/Domain/Action/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="901">
-          <caret line="66" column="44" selection-start-line="66" selection-start-column="44" selection-end-line="66" selection-end-column="44" />
+        <state relative-caret-position="170">
+          <caret line="89" column="7" selection-start-line="89" selection-start-column="7" selection-end-line="89" selection-end-column="7" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/__init__.py">
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/interfaces.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="30" column="24" selection-start-line="30" selection-start-column="24" selection-end-line="30" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Dialogs/QOkMsg.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="5" column="9" selection-start-line="5" selection-start-column="9" selection-end-line="5" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Dialogs/QErrorMsg.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="232">
-          <caret line="25" column="26" selection-start-line="25" selection-start-column="26" selection-end-line="25" selection-end-column="26" />
+        <state relative-caret-position="1105">
+          <caret line="65" selection-start-line="65" selection-end-line="65" />
           <folding>
-            <element signature="e#0#27#0" expanded="true" />
+            <marker date="1544362757860" expanded="true" signature="570:579" ph="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run_client.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="99" column="29" selection-start-line="99" selection-start-column="29" selection-end-line="99" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/Program.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="391">
+          <caret line="35" column="32" lean-forward="true" selection-start-line="35" selection-start-column="32" selection-end-line="35" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Test/fonctool_url.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="459">
+          <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+            <marker date="1544364079763" expanded="true" signature="106:111" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/functools/Url.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="12" selection-start-line="12" selection-end-line="12" />
+          <folding>
+            <marker date="1544364267515" expanded="true" signature="188:189" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="146">
+          <caret line="494" column="27" selection-start-line="494" selection-start-column="27" selection-end-line="494" selection-end-column="27" />
+          <folding>
+            <element signature="e#16#25#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Window/Auth/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="269">
+          <caret line="63" column="36" lean-forward="true" selection-start-line="63" selection-start-column="36" selection-end-line="63" selection-end-column="36" />
         </state>
       </provider>
     </entry>

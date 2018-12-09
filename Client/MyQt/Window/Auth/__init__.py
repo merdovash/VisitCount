@@ -60,9 +60,9 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
         except InvalidLogin:
             NetAction.first_load(login, password, self.program.host,
                                  on_finish=self.auth_success.emit,
-                                 on_error=self.program.window.error.emit)
+                                 on_error=self.ok_message.emit)
         except InvalidPassword as e:
-            self.error.emit(str(e))
+            self.ok_message.emit(str(e))
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         print("keypressEvent", a0.key(), QtCore.Qt.Key_Enter)
