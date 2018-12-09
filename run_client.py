@@ -88,6 +88,11 @@ if __name__ == "__main__":
     if 'no-css' in sys.argv:
         kwargs['css'] = False
 
+    if '-host' in sys.argv:
+        kwargs['host'] = sys.argv[sys.argv.index('-host') + 1]
+    elif '-H' in sys.argv:
+        kwargs['host'] = sys.argv[sys.argv.index('-H') + 1]
+
     app = QApplication(sys.argv)
     # app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
