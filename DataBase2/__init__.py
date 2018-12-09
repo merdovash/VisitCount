@@ -501,6 +501,20 @@ class UpdateType(int):
     contact_admin_del = 41
     contact_admin_email_changed = 42
 
+    @staticmethod
+    def of(val):
+        if isinstance(val, int):
+            return {
+                UpdateType.lesson_completed: 'Проведен урок',
+                UpdateType.lesson_uncompleted: 'Отменен статуст проведения урока',
+                UpdateType.contact_admin_email_changed: 'Изменен контакт (email) администрации',
+                UpdateType.student_card_id_updated: 'Изменены данные студента (card_id)',
+                UpdateType.contact_admin_del: 'Удален контакт администрации',
+                UpdateType.contact_admin_new: 'Добавлен контакт администрации',
+                UpdateType.visit_del: 'Удалено посещение студентом занятия',
+                UpdateType.visit_new: 'Новое посещение студентом занятия',
+            }
+
 
 class Update(Base):
     """
