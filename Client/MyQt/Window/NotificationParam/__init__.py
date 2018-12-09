@@ -64,7 +64,7 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
                 host=program.host,
                 professor_id=self.professor.id,
                 session=program.session,
-                on_error=program.window.error.emit,
+                on_error=program.window.ok_message.emit,
                 on_finish=program.window.synch_finished.emit
             )
         )

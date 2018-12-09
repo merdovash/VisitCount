@@ -54,7 +54,7 @@ class IParentWindow:
                     if len(self.child_window) == 1:
                         self.child_window = self.child_window[0]
                 else:
-                    raise AttributeError('no such child')
+                    raise AttributeError(f'no such child ({dialog}) in {self.child_window}')
 
             elif isinstance(self.child_window, IChildWindow):
                 if self.child_window == dialog:
