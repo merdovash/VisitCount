@@ -513,7 +513,7 @@ class UpdateType(int):
                 UpdateType.contact_admin_new: 'Добавлен контакт администрации',
                 UpdateType.visit_del: 'Удалено посещение студентом занятия',
                 UpdateType.visit_new: 'Новое посещение студентом занятия',
-            }
+            }[val]
 
 
 class Update(Base):
@@ -530,6 +530,7 @@ class Update(Base):
     performer = Column(Integer)
     update_type = Column(Integer)
     extra = Column(String(500))
+    date = Column(DateTime)
 
     UniqueConstraint('row_id', 'table_name', name='update_UK')
 
