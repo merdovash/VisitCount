@@ -13,6 +13,7 @@ from Client.Reader import IReader
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
 from DataBase2 import Session
 from Domain import Action
+from Domain.functools.Url import to_standart_http
 
 
 class MyProgram(IProgram):
@@ -23,7 +24,7 @@ class MyProgram(IProgram):
 
     def __init__(self, widget: AbstractWindow = None,
                  win_config: Config = WindowConfig.load(), test=False,
-                 css=True):
+                 css=True, host='http://bisitor.itut.ru'):
         self._state = {'marking_visits': False,
                        'host': 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%f'}
@@ -32,7 +33,7 @@ class MyProgram(IProgram):
 
         self.test = test
 
-        self.host = 'http://bisitor.itut.ru'
+        self.host = to_standart_http(host)
 
         self.session = Session()
 
