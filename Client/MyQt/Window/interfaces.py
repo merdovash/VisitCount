@@ -10,6 +10,7 @@ class IChildWindow():
         if isinstance(self, IParentWindow) and self.child_window is not None:
             self.child_window.closeSelf()
         self._parentWindow.closeDialog(self)
+        self.close()
 
     def setParentWindow(self, window):
         self._parentWindow = window
@@ -33,7 +34,7 @@ class IParentWindow:
                 self.child_window.append(dialog)
 
             elif isinstance(self.child_window, list):
-                dialog.setParent(self)
+                dialog.setParentWindow(self)
                 dialog.showAsChild(*args)
                 self.child_window.append(dialog)
 
@@ -54,7 +55,8 @@ class IParentWindow:
                     if len(self.child_window) == 1:
                         self.child_window = self.child_window[0]
                 else:
-                    raise AttributeError(f'no such child ({dialog}) in {self.child_window}')
+                    # raise AttributeError(f'no such child ({dialog}) in {self.child_window}')
+                    pass
 
             elif isinstance(self.child_window, IChildWindow):
                 if self.child_window == dialog:

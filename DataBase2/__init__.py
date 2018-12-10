@@ -4,6 +4,7 @@ safsdf
 """
 import os
 import sys
+from threading import Lock
 from typing import List
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
@@ -82,6 +83,20 @@ def create():
 
 
 Session, Base, metadata, engine, _new = create()
+
+lock = Lock()
+
+
+def session_user(func):
+    def f(*args, **kwargs):
+        lock.acquire()
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            lock.release()
+        return res
+
+    return f
 
 
 def ProfessorSession(professor_id, session):
@@ -339,14 +354,18 @@ class Professor(Base):
 
     @staticmethod
     def of(obj) -> list:
-        if isinstance(obj, list):
-            return flat([Professor.of(o) for o in obj])
+        if isinstance(obj, (list, _AssociationList, set)):
+            return unique(flat([Professor.of(o) for o in obj]))
         elif isinstance(obj, (Lesson, NotificationParam)):
             return [obj.professor]
         elif isinstance(obj, Visitation):
             return Professor.of(obj.lesson)
         elif isinstance(obj, Administration):
             return obj.professors
+        elif isinstance(obj, Student):
+            return Professor.of(obj.groups)
+        elif isinstance(obj, Group):
+            return Professor.of(obj.lessons)
         else:
             raise NotImplementedError(type(obj))
 

@@ -1,13 +1,14 @@
 from sqlalchemy import inspect
 
 from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, Administration, \
-    NotificationParam, Parent, UpdateType
+    NotificationParam, Parent, UpdateType, session_user
 from Domain.Action import Updates
 from Domain.Action.Exceptions import InvalidLogin, InvalidPassword
 from Domain.Exception import UnnecessaryActionException
 from Domain.functools.Dict import to_dict
 
 
+@session_user
 def changes_ids(items, new_ids, session=None):
     assert len(items) == len(new_ids), f'{len(items)}!={len(new_ids)}'
 
@@ -23,6 +24,7 @@ def changes_ids(items, new_ids, session=None):
     session.commit()
 
 
+@session_user
 def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
     assert isinstance(student, Student), f'object {student} is not Student'
     assert isinstance(lesson, Lesson), f'object {lesson} is not Lesson'
@@ -37,7 +39,7 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
         .filter(Visitation.student_id == student.id) \
         .first()
     if old_visit is not None:
-        raise UnnecessaryActionException
+        raise UnnecessaryActionException()
 
     visit = Visitation(student_id=student.id, lesson_id=lesson.id)
 
@@ -63,6 +65,7 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
     return visit
 
 
+@session_user
 def remove_visitation(visitation, professor_id):
     assert isinstance(visitation, Visitation), f'object {visitation} is not Visitation'
     assert isinstance(professor_id, int), f'object {professor_id} is not id (int)'
@@ -87,6 +90,7 @@ def remove_visitation(visitation, professor_id):
     )
 
 
+@session_user
 def log_in(login, password, session=None) -> Auth:
     assert isinstance(login, str), f'object {login} is not str'
     assert isinstance(password, str), f'object {password} is not str'
@@ -106,6 +110,7 @@ def log_in(login, password, session=None) -> Auth:
             return auth
 
 
+@session_user
 def start_lesson(lesson, professor) -> None:
     assert isinstance(lesson, Lesson), f'object {lesson} is not Lesson'
     assert isinstance(professor, Professor), f'object {professor} is not Professor'
@@ -123,6 +128,7 @@ def start_lesson(lesson, professor) -> None:
     )
 
 
+@session_user
 def create_administration(performer_id, **kwargs) -> Administration:
     assert isinstance(performer_id, int), f'object {performer_id} is not id (int)'
 
@@ -157,6 +163,7 @@ def create_administration(performer_id, **kwargs) -> Administration:
     return admin
 
 
+@session_user
 def delete_contact(contact, professor_id):
     assert isinstance(contact, (Administration, Parent)), f'object {contact} is not Administration or Parent'
     assert isinstance(professor_id, int), f'object {professor_id} is not id (int)'
@@ -181,6 +188,7 @@ def delete_contact(contact, professor_id):
     session.commit()
 
 
+@session_user
 def change_student_card_id(student, new_card_id, professor_id):
     assert isinstance(student, Student)
     assert isinstance(new_card_id, (str, int)), f'card_id {new_card_id} is not id'

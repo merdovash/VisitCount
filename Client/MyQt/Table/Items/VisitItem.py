@@ -7,7 +7,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem, IDraw
 from Client.MyQt.utils import Signaler
-from DataBase2 import Visitation, Student, Lesson
+from DataBase2 import Visitation, Student, Lesson, session_user
 from DataBase2.Types import format_name
 from Domain import Action
 from Domain.functools.List import find
@@ -21,6 +21,7 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
     select_border_pen.setWidthF(1.3)
     image = {}
 
+    @session_user
     def draw(self, painter, rect: QRect, highlighted=False, selected=False):
         code = (highlighted, selected, self.isVisit(), self.lesson.completed, rect.width(), rect.height())
         if code not in VisitItem.image.keys():

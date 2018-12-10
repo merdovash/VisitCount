@@ -26,7 +26,7 @@ class AbstractWindow(QMainWindow, IParentWindow):
 
     @pyqtSlot(str)
     def on_error(self, msg):
-        self.setDialog(QErrorMsg(self, msg=msg))
+        self.setDialog(QErrorMsg(msg=msg))
 
     @pyqtSlot(str, bool)
     def on_show_message(self, text, is_red):
