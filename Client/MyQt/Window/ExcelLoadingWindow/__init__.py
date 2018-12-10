@@ -1,20 +1,24 @@
 from typing import List, Dict
 
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushButton
 
 from Client.MyQt.Window.interfaces import IChildWindow
-from Domain.ExcelLoader import ExcelVisitationLoader
+from Domain.ExcelLoader.ExcelTableReader import Reader
 
 
 class ExcelLoadingWidget(QWidget, IChildWindow):
+    exit = pyqtSignal()
+
     def __init__(self, files: List[QUrl], program, parent=None, *args, **kwargs):
         QWidget.__init__(self, parent, *args, **kwargs)
         IChildWindow.__init__(self)
 
+        self.setMinimumSize(300, 300)
+
         self.files = files
 
-        self.excel_loader = ExcelVisitationLoader(program)
+        self.program = program
 
         layout = QVBoxLayout(self)
 
@@ -32,6 +36,7 @@ class ExcelLoadingWidget(QWidget, IChildWindow):
         self.end_button = QPushButton('Завершить')
         self.end_button.clicked.connect(self.closeSelf)
         self.end_button.setVisible(False)
+        self.exit.connect(lambda: self.end_button.setVisible(True))
 
         layout.addWidget(self.end_button)
 
@@ -39,7 +44,14 @@ class ExcelLoadingWidget(QWidget, IChildWindow):
 
     def run(self):
         for file in self.files:
-            self.excel_loader.read(file, progress_bar=self.loading[file])
+            r = Reader(
+                file=file,
+                professor=self.program.professor,
+                progress_bar=self.loading[file],
+                on_error=self.program.window.ok_message.emit,
+                on_finish=self.program.window.ok_message.emit)
+            print('hi')
+            r.start.emit()
 
     def on_change(self, value, file):
         self.loading_status[file] = value >= 100
