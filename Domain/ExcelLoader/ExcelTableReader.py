@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 import xlrd
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, QCoreApplication
 from PyQt5.QtCore import pyqtSignal
 
 from Client.MyQt.Window.interfaces import IDataBaseUser
@@ -177,6 +177,7 @@ class Reader(IDataBaseUser, QObject):
         self.total = len(lessons) * (1 + len(self.students()))
 
         for lesson in lessons:
+            QCoreApplication.sendPostedEvents()
             try:
                 if lesson.real_lesson is not None:
                     Action.start_lesson(lesson.real_lesson, self.professor)
@@ -189,6 +190,7 @@ class Reader(IDataBaseUser, QObject):
             self.progress += 1
 
         for student in self.students():
+            QCoreApplication.sendPostedEvents()
             try:
                 if student.real_student is not None:
                     Action.change_student_card_id(student.real_student, student.card_id, self.professor.id)
