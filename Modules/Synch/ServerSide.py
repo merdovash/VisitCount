@@ -1,5 +1,5 @@
-from DataBase2 import Auth, UpdateType, Discipline, StudentsGroups, Student, Group, Professor, Visitation, Lesson, \
-    Parent, NotificationParam, Administration
+from DataBase2 import Auth, Discipline, StudentsGroups, Student, Group, Professor, Visitation, Lesson, \
+    Parent, NotificationParam, Administration, ActionType
 from Domain.Action.SynchAction import add_new_rows, sync_rows, delete_rows
 from Domain.functools.Dict import fix_keys
 from Modules import Module
@@ -22,9 +22,9 @@ class Sycnh(Module):
         updates_dict = fix_keys(data)
         print(updates_dict)
         with self.session.no_autoflush:
-            new_id_map = add_new_rows(updates_dict[UpdateType.NEW], self.session, auth.user.id)
-            sync_rows(updates_dict[UpdateType.UPDATE], self.session, auth.user.id)
-            delete_rows(updates_dict[UpdateType.DELETE], self.session, auth.user.id)
+            new_id_map = add_new_rows(updates_dict[ActionType.NEW], self.session, auth.user.id)
+            sync_rows(updates_dict[ActionType.UPDATE], self.session, auth.user.id)
+            delete_rows(updates_dict[ActionType.DELETE], self.session, auth.user.id)
 
         self.session.commit()
         self.session.flush()
