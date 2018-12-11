@@ -1,5 +1,5 @@
 from Client.Requests.ClientConnection import ServerConnection
-from DataBase2 import UpdateType, Session
+from DataBase2 import Session, ActionType
 from Domain.Action import SynchAction
 from Domain.functools.Dict import to_dict
 from Modules.Synch import address
@@ -20,7 +20,7 @@ class Synch(ServerConnection):
     def on_response(self, data):
         print('news_mappings', data)
 
-        SynchAction.apply_new_indexes(new=data, old=self.data[UpdateType.NEW], session=self.session)
+        SynchAction.apply_new_indexes(new=data, old=self.data[ActionType.NEW], session=self.session)
 
         SynchAction.delete_synchronized_updates(self.updates)
 
