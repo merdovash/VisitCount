@@ -92,6 +92,8 @@ def session_user(func):
         lock.acquire()
         try:
             res = func(*args, **kwargs)
+        except:
+            raise
         finally:
             lock.release()
         return res

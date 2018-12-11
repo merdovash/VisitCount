@@ -12,8 +12,5 @@ class QOkMsg(QMessageBox, IChildWindow):
 
         self.setText(text)
 
-    def closeEvent(self, QCloseEvent):
-        self.closeSelf()
-
     def showAsChild(self, *args):
         self.exec_()
