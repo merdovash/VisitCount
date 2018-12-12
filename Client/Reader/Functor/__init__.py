@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
-from PyQt5.QtCore.QObject import QObject
-from PyQt5.QtCore.__init__ import pyqtSignal
+from PyQt5.QtCore import QObject
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QTableWidget
 
 from Client.IProgram import IProgram
@@ -19,7 +19,7 @@ class OnRead(QObject):
     session: Session
 
     error = pyqtSignal(str)
-    message = pyqtSignal(str)
+    message = pyqtSignal(str, bool)
     warning = pyqtSignal(str)
 
     _prepared = False
@@ -32,7 +32,7 @@ class OnRead(QObject):
 
         OnRead.on_error = program.window.on_error
         OnRead.on_warning = program.window.on_ok_message
-        OnRead.on_silent_message = program.window.on_show_message
+        OnRead.on_message = program.window.on_show_message
 
         OnRead._prepared = True
 
@@ -50,5 +50,5 @@ class OnRead(QObject):
         super().__init__()
 
         self.error.connect(OnRead.on_error)
-        self.warning.connect(OnRead.on_warnin)
+        self.warning.connect(OnRead.on_warning)
         self.message.connect(OnRead.on_message)
