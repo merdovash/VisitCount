@@ -1,15 +1,15 @@
 from collections import namedtuple
 
 import xlrd
-from PyQt5.QtCore import QObject, QCoreApplication
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QObject
+from PyQt5.QtWidgets import QMessageBox, QApplication
 
-from Client.MyQt.Threading.SimpleRunnable import SimpleRunnable
 from Client.MyQt.Window.interfaces import IDataBaseUser
 from Client.test import safe
 from DataBase2 import Group, Lesson, Professor, LessonsGroups, Student
 from Domain import Action
 from Domain.Exception import UnnecessaryActionException
+from Domain.functools.Function import memoize
 from Domain.functools.List import find
 
 student_info = namedtuple('student_info', 'row card_id name visitations real_student')
@@ -28,8 +28,6 @@ class Reader(IDataBaseUser, QObject):
     body_start_col = 3
 
     group_name_index = (0, 2)
-
-    start = pyqtSignal()
 
     def __init__(self, file, professor, progress_bar=None,
                  on_warning=lambda x: None,
@@ -65,11 +63,19 @@ class Reader(IDataBaseUser, QObject):
 
         self.current = 0
 
-        self.start.connect(self.run)
-
     def cell(self, row, col):
         return self.sheet.cell(row, col).value
 
+    def on_error(self, msg):
+        QMessageBox.critical(QWidget=self, p_str=msg)
+
+    def on_warning(self, msg):
+        QMessageBox.information(QWidget=self, p_str=msg)
+
+    def on_finish(self, msg):
+        QMessageBox.information(QWidget=self, p_str=msg)
+
+    @memoize
     def students(self):
         def real_student_finder(name):
             name = name.split(' ')
@@ -88,6 +94,7 @@ class Reader(IDataBaseUser, QObject):
 
         l = []
         for row in range(Reader.students_row, self.sheet.nrows):
+            QApplication.processEvents()
             if self.sheet.cell(row, 0).value is not None and self.sheet.cell(row, 0).value != "":
                 name = self.cell(row, Reader.name_col)
 
@@ -117,9 +124,11 @@ class Reader(IDataBaseUser, QObject):
 
         return l
 
+    @memoize
     def lessons(self):
         l = []
         for col in range(Reader.body_start_col, self.sheet.ncols):
+            QApplication.processEvents()
             if self.cell(self.date_row, col) not in [None, ''] and self.cell(self.time_row, col) not in [None, '']:
                 try:
                     minute = int(self.cell(self.time_row, col).split(':')[1])
@@ -172,14 +181,13 @@ class Reader(IDataBaseUser, QObject):
             self.progress_bar.setValue(self.current / self.total * 100)
 
     @safe
-    @SimpleRunnable
     def run(self):
         lessons = self.lessons()
 
         self.total = len(lessons) * (1 + len(self.students()))
 
         for lesson in lessons:
-            QCoreApplication.sendPostedEvents()
+            QApplication.processEvents()
             try:
                 if lesson.real_lesson is not None:
                     Action.start_lesson(lesson.real_lesson, self.professor)
@@ -192,7 +200,7 @@ class Reader(IDataBaseUser, QObject):
             self.progress += 1
 
         for student in self.students():
-            QCoreApplication.sendPostedEvents()
+            QApplication.processEvents()
 
             if student.real_student is not None:
                 try:
@@ -201,6 +209,7 @@ class Reader(IDataBaseUser, QObject):
                     pass
 
                 for visit in student.visitations:
+                    QApplication.processEvents()
                     if visit.status:
                         lesson = find(lambda x: x.col == visit.col, lessons)
                         if lesson is not None:
