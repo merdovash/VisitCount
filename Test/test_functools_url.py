@@ -3,7 +3,7 @@ from unittest import TestCase
 from Domain.functools.Url import to_standart_http
 
 
-class UrlTest(TestCase):
+class TestUrl(TestCase):
     def test_case_with_www(self):
         url = 'www.google.com'
 
