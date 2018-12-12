@@ -9,6 +9,16 @@ import pymorphy2
 from DataBase2 import Professor, Student, Administration, Parent
 
 
+class ConstraintDictNameException(KeyError):
+    def __init__(self):
+        super().__init__('Dict must contain keys: "last_name", "first_name", [Optional: "middle_name"]')
+
+
+class ConstraintBasenameException(KeyError):
+    def __init__(self):
+        super().__init__('Base must contains fields: last_name, first_name, [Optional: middle_name]')
+
+
 def format_name(user: Dict[str, str] or Professor or Student, case=None):
     """
     Do format user data to readable string
@@ -17,15 +27,30 @@ def format_name(user: Dict[str, str] or Professor or Student, case=None):
     """
     fio: List = []
     if isinstance(user, dict):
-        middle_name_len = len(user['middle_name'])
-        if middle_name_len > 0:
-            fio = [user["last_name"], user["first_name"], user["middle_name"]]
-        else:
-            fio = [user["last_name"], user["first_name"]]
+        try:
+            if 'middle_name' in user.keys():
+                middle_name_len = len(user['middle_name'])
+                if middle_name_len > 0:
+                    fio = [user["last_name"], user["first_name"], user["middle_name"]]
+                else:
+                    fio = [user["last_name"], user["first_name"]]
+            else:
+                fio = [user["last_name"], user["first_name"]]
+        except KeyError:
+            raise ConstraintDictNameException()
     elif isinstance(user, (Student, Professor, Administration, Parent)):
-        fio = [user.last_name, user.first_name, user.middle_name]
+        if len(user.middle_name) > 0:
+            fio = [user.last_name, user.first_name, user.middle_name]
+        else:
+            fio = [user.last_name, user.first_name]
     else:
-        raise NotImplementedError(type(user))
+        try:
+            if hasattr(user, 'middle_name') and len(user.middle_name) > 0:
+                fio = [user.last_name, user.first_name, user.middle_name]
+            else:
+                fio = [user.last_name, user.first_name]
+        except KeyError:
+            raise ConstraintBasenameException()
 
     if case is not None:
         morph = pymorphy2.MorphAnalyzer()
