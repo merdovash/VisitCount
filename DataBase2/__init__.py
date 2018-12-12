@@ -14,7 +14,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool
 
-from DataBase2.config2 import DataBaseConfig
+from DataBase2.config2 import Config
 from Domain.functools.List import flat, unique
 
 try:
@@ -53,7 +53,7 @@ def create_threaded():
 def create():
     _new = False
     if root == 'run_server.py':
-        engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8",
+        engine = create_engine(Config.connection_string,
                                pool_pre_ping=True,
                                poolclass=NullPool)
 
