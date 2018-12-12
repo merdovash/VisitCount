@@ -6,6 +6,7 @@ from DataBase2 import Discipline, Student, StudentsGroups, Group, Professor, Les
 from Domain.Action import Updates
 from Domain.Data import get_db_object, select, select_by_id
 from Domain.Primitives import value_of
+from Domain.Validation import Values
 from Domain.functools.Dict import without, to_dict, fix_values
 from Domain.functools.List import find
 from Parser.JsonParser import to_db_object, JsonParser
@@ -177,7 +178,7 @@ def sync_row(obj, new_data, performer_id):
             setattr(obj, col, new_value)
     else:
         if changed:
-            Updates.Changed.row(obj.id, type(object).__name__, performer_id)
+            Updates.Changed.row(obj.id, Values.Get.table_name(obj), performer_id)
 
 
 def sync_rows(data: Dict[str, List[Dict[str, Any]]], session, performer_id):

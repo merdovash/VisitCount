@@ -16,6 +16,7 @@ class New:
 
         session = Session()
 
+        assert table != 'type'
         update = Update(
             row_id=new_row_id,
             table_name=table,
@@ -69,6 +70,7 @@ class Delete:
         print(old_update)
         if old_update is None:
 
+            assert deleted_object_table != 'type'
             update = Update(
                 table_name=deleted_object_table,
                 row_id=deleted_object['id'],
@@ -112,7 +114,7 @@ class Changed:
         if old is not None:
             return old
         else:
-
+            assert table_name != 'type'
             update = Update(
                 row_id=changed_row_id,
                 table_name=table_name,
