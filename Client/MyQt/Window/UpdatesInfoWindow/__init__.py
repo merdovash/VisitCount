@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QApplication
 
 from Client.MyQt.Window.UpdatesInfoWindow.Ui_UpdatesInfoWidget import Ui_UpdatesInfoWidget
 from Client.MyQt.Window.interfaces import IChildWindow
@@ -12,6 +12,7 @@ class UpdatesInfoWidget(QWidget, Ui_UpdatesInfoWidget, IChildWindow):
         IChildWindow.__init__(self)
 
         for update in updates:
+            QApplication.processEvents()
             self.table.insertRowData({
                 'table': update.table_name,
                 'id': str(update.row_id),
