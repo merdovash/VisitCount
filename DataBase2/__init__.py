@@ -5,7 +5,7 @@ safsdf
 import os
 import sys
 from threading import Lock
-from typing import List
+from typing import List, Union
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
     DateTime, Boolean
@@ -199,7 +199,7 @@ class Auth(Base):
     _user = None
 
     @property
-    def user(self):
+    def user(self) -> Union['Student', 'Professor']:
         """
 
         :return: Professor or Student
@@ -238,7 +238,7 @@ class Discipline(Base):
                f" name={self.name})>"
 
     @staticmethod
-    def of(obj) -> list:
+    def of(obj) -> List['Discipline']:
         if isinstance(obj, Lesson):
             return [obj.discipline]
         elif isinstance(obj, Professor):
@@ -273,7 +273,7 @@ class Lesson(Base):
                f" completed={self.completed})>"
 
     @staticmethod
-    def of(obj, intersect=False):
+    def of(obj, intersect=False) -> List['Lesson']:
         if isinstance(obj, (list, _AssociationList)):
             if intersect:
                 lessons = None
@@ -310,7 +310,7 @@ class Administration(Base):
                f"middle_name={self.middle_name})>"
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['Administration']:
         if isinstance(obj, (list, _AssociationList)):
             return flat([Administration.of(o) for o in obj])
         elif isinstance(obj, Professor):
@@ -355,7 +355,7 @@ class Professor(Base):
                f"middle_name={self.middle_name})>"
 
     @staticmethod
-    def of(obj) -> list:
+    def of(obj) -> List['Professor']:
         if isinstance(obj, (list, _AssociationList, set)):
             return unique(flat([Professor.of(o) for o in obj]))
         elif isinstance(obj, (Lesson, NotificationParam)):
@@ -387,7 +387,7 @@ class NotificationParam(Base):
     UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK')
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['NotificationParam']:
         if isinstance(obj, (list, _AssociationList)):
             return flat([NotificationParam.of(o) for o in obj])
         elif isinstance(obj, Professor):
@@ -492,7 +492,7 @@ class Parent(Base):
     students = association_proxy('_students', 'student')
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['Parent']:
         if isinstance(obj, (list, _AssociationList)):
             return unique(flat([Parent.of(o) for o in obj]))
         elif isinstance(obj, Student):
@@ -523,7 +523,7 @@ class UpdateType(int):
     contact_admin_email_changed = 42
 
     @staticmethod
-    def of(val):
+    def of(val) -> str:
         if isinstance(val, int):
             return {
                 UpdateType.lesson_completed: 'Проведен урок',
@@ -574,7 +574,7 @@ class Update(Base):
         )
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['Update']:
         if isinstance(obj, Professor):
             return obj.updates
         else:
