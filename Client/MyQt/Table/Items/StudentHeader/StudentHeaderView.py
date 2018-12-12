@@ -85,7 +85,7 @@ class StudentHeaderView(QHeaderView):
                             self.parent().rowHeight(row)
                         )
                     )
-                    item.draw(p, rect, self.isHighlighted(row))
+                    item.draw(p, rect, self.isHighlighted(row), )
                 elif item is None:
                     pass
                 else:

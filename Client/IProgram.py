@@ -1,12 +1,16 @@
 # TODO
+from Client.MyQt.Window import AbstractWindow
 from Client.Reader.SerialReader import RFIDReader
 from DataBase2 import Auth as Authentication
 
 
 class IProgram:
     __slots__ = (
-    'window', 'win_config', '_reader', '_state', 'auth', 'professor',
-    'session', 'host', 'css', 'test',)
+        'window', 'win_config', '_reader', '_state', 'auth', 'professor',
+        'session', 'host', 'css', 'test',
+    )
+
+    window: AbstractWindow
 
     def __getitem__(self, item):
         raise NotImplementedError()

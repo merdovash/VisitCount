@@ -10,6 +10,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main import MainWindow
 from Client.Reader import IReader
+from Client.Reader.Functor import OnRead
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
 from DataBase2 import Session
 from Domain import Action
@@ -64,6 +65,7 @@ class MyProgram(IProgram):
         self.window: AbstractWindow = widget
         self.window.setStyleSheet(self.css)
         self.window.show()
+        OnRead.prepare(self, self.window.central_widget.table, self.session)
 
     def reader(self) -> IReader:
         """

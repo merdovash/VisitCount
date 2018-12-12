@@ -199,7 +199,7 @@ class LessonHeaderView(QHeaderView):
                             width,
                             self.height()
                         ))
-                    item.draw(p, rect, self.isHighlighted(col))
+                    item.draw(p, rect, self.isHighlighted(col), )
         except (TypeError, NotImplementedError):
             pass
 

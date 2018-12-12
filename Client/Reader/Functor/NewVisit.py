@@ -24,9 +24,9 @@ class NewVisitOnRead(OnRead):
             self.table.force_repaint()
 
             # выводим сообщение
-            self.on_silent_message(f'{format_name(student)} отмечен', False)
+            self.message.emit(f'{format_name(student)} отмечен', False)
         else:
-            self.on_silent_message('Студент не обнаружен', False)
+            self.message.emit('Студент не обнаружен', False)
 
     def __init__(self, groups, lesson):
         OnRead.__init__(self)
