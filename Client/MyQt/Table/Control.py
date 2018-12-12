@@ -1,4 +1,6 @@
 from Client.MyQt.Window import AbstractWindow
+from Client.Reader.Functor import OnRead
+from Client.Reader.Functor.NewVisit import NewVisitOnRead
 from DataBase2 import Lesson, Discipline
 from DataBase2.Types import format_name
 from Domain import Action
@@ -36,6 +38,8 @@ class VisitTableControl(IControl):
         self.reader: function = reader
         self.session = session
 
+        OnRead.prepare(window.program, table, session)
+
     def change_discipline(self, discipline):
         assert isinstance(discipline, Discipline)
         self.current_discipline = discipline
@@ -68,7 +72,7 @@ class VisitTableControl(IControl):
         print('Control start lesson')
         if self.reader() is not None:
             self._is_lesson_started = True
-            self.reader().on_read(self._new_visit)
+            self.reader().on_read(NewVisitOnRead(self.current_groups, self.current_lesson))
             self.selector.setEnabledControl(False)
             self.selector.switchBtnAction(False)
             Action.start_lesson(self.current_lesson, self.professor)
