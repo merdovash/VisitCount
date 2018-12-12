@@ -1,5 +1,7 @@
 from abc import abstractmethod
 
+from PyQt5.QtCore.QObject import QObject
+from PyQt5.QtCore.__init__ import pyqtSignal
 from PyQt5.QtWidgets import QTableWidget
 
 from Client.IProgram import IProgram
@@ -11,15 +13,14 @@ class ReaderIsNotPrepared(Exception):
         super().__init__('OnRead is not prepared. Please call OnRead.prepare first')
 
 
-class OnRead:
+class OnRead(QObject):
     professor: Professor
     table: QTableWidget
     session: Session
 
-    on_error: callable
-    on_warning: callable
-    on_finish: callable
-    on_silent_message: callable
+    error = pyqtSignal(str)
+    message = pyqtSignal(str)
+    warning = pyqtSignal(str)
 
     _prepared = False
 
@@ -29,9 +30,9 @@ class OnRead:
         OnRead.table = table
         OnRead.session = session
 
-        OnRead.on_error = program.window.error.emit
-        OnRead.on_warning = program.window.ok_message.emit
-        OnRead.on_silent_message = program.window.message.emit
+        OnRead.on_error = program.window.on_error
+        OnRead.on_warning = program.window.on_ok_message
+        OnRead.on_silent_message = program.window.on_show_message
 
         OnRead._prepared = True
 
@@ -44,3 +45,10 @@ class OnRead:
     @abstractmethod
     def __call__(self, card_id):
         raise NotImplementedError()
+
+    def __init__(self):
+        super().__init__()
+
+        self.error.connect(OnRead.on_error)
+        self.warning.connect(OnRead.on_warnin)
+        self.message.connect(OnRead.on_message)

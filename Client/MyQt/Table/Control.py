@@ -4,6 +4,7 @@ from Client.Reader.Functor.NewVisit import NewVisitOnRead
 from DataBase2 import Lesson, Discipline
 from DataBase2.Types import format_name
 from Domain import Action
+from Domain.Exception import UnnecessaryActionException
 from Domain.functools.List import find
 
 
@@ -75,8 +76,11 @@ class VisitTableControl(IControl):
             self.reader().on_read(NewVisitOnRead(self.current_groups, self.current_lesson))
             self.selector.setEnabledControl(False)
             self.selector.switchBtnAction(False)
-            Action.start_lesson(self.current_lesson, self.professor)
-            self.table.force_repaint()
+            try:
+                Action.start_lesson(self.current_lesson, self.professor)
+                self.table.force_repaint()
+            except UnnecessaryActionException:
+                pass
         else:
             self.window.ok_message.emit('Считыватель не обнаружен. Ведение учёта невозможно.')
 
