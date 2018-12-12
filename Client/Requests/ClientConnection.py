@@ -41,12 +41,13 @@ class ServerConnection(Thread):
                            data=self.dump_data(data))
             try:
                 res = self.read_data(request.text)
+
+                if res["status"] == "OK":
+                    self.on_response(res["data"])
+                else:
+                    self.on_error(f"Неудачная удаленная аутентификациия: {res}")
             except json.decoder.JSONDecodeError:
                 self.on_error(request.text)
-            if res["status"] == "OK":
-                self.on_response(res["data"])
-            else:
-                self.on_error(f"Неудачная удаленная аутентификациия: {res}")
         except requests.exceptions.ConnectionError as connection_error:
             self.on_error(f"""Отсутсвует возможность аутентификации так как: <br>
                 1. Не удалось аутентифицировать локально (возможно неверно введен логин или пароль) <br>

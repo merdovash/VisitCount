@@ -58,6 +58,9 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         program.window.synch_finished.connect(self.on_synch_finished)
 
         self.save_btn.clicked.connect(
+            lambda: self.setDialog(UpdatesInfoWidget(self.session.query(Update).all()))
+        )
+        self.save_btn.clicked.connect(
             lambda: NetAction.send_updates(
                 login=program.auth.login,
                 password=program.auth.password,
@@ -67,10 +70,6 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
                 on_error=program.window.ok_message.emit,
                 on_finish=program.window.synch_finished.emit
             )
-        )
-
-        self.save_btn.clicked.connect(
-            lambda: self.setDialog(UpdatesInfoWidget(self.session.query(Update).all()))
         )
 
         self.run_btn.clicked.connect(lambda: NetAction.run_notification(
