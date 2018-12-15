@@ -1,7 +1,6 @@
 """
 This module contains all Structures, Classes and Functions needed in DataBase.
 """
-from collections import namedtuple
 from typing import Dict, List
 
 import pymorphy2
@@ -57,55 +56,3 @@ def format_name(user: Dict[str, str] or Professor or Student, case=None):
         fio = [morph.parse(name)[0].inflect(case).word for name in fio]
 
     return ' '.join([f.capitalize() for f in fio])
-
-
-Table = namedtuple('Table', 'name columns extra')
-column = namedtuple('Column', 'name type primary_key unique')
-
-
-def Column(name, field_type, primary_key=False, unique=False) -> column:
-    if primary_key == '':
-        primary_key = False
-    return column(name=name, type=field_type, primary_key=primary_key, unique=unique)
-
-
-class AtrDict(dict):
-    """
-    This class is dictionary wrapper to looks like a object
-    """
-
-    def __init__(self, d: dict, **kwargs):
-        super().__init__(d, **kwargs)
-
-        for key in d.keys():
-            if isinstance(d[key], dict):
-                self[key] = AtrDict(d[key])
-
-    def __getattr__(self, name) -> column:
-        if name in self:
-            return self[name]
-        else:
-            raise AttributeError("No such attribute: " + name)
-
-    def __setattr__(self, name, value):
-        self[name] = value
-
-    def __delattr__(self, name):
-        if name in self:
-            del self[name]
-        else:
-            raise AttributeError("No such attribute: " + name)
-
-
-def cached(func):
-    cache = {}
-
-    def __wrapper__(*args, **kwargs):
-        args_hash = hash((args[1:], tuple(sorted(kwargs.items()))))
-        print('cache: ', (args[1:], tuple(sorted(kwargs.items()))), args_hash in cache.keys())
-        if args_hash not in cache.keys():
-            res = func(*args, **kwargs)
-            cache[args_hash] = res
-        return cache[args_hash]
-
-    return __wrapper__
