@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QMenu, QTableWidgetItem, QStyledItemDelegate
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import AbstractContextItem
 from DataBase2 import Student
-from DataBase2.Types import format_name
 from Domain.Validation.Values import Validate
+from Domain.functools.Format import format_name
 
 
 class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
