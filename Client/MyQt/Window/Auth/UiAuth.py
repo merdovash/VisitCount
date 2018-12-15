@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 
-from Client.MyQt.Widgets.LoginInput import LoginInput
+from Client.MyQt.Widgets.LoginInput import QLoginInput
 
 
 class Ui_AuthWindow(object):
@@ -27,7 +27,7 @@ class Ui_AuthWindow(object):
         self.label.setSizePolicy(sizePolicy)
         self.label.setObjectName("label")
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label)
-        self.login_input = LoginInput(self.centralwidget)
+        self.login_input = QLoginInput(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(2)
         sizePolicy.setVerticalStretch(0)

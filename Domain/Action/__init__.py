@@ -3,7 +3,7 @@ from sqlalchemy import inspect
 from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, Administration, \
     NotificationParam, Parent, UpdateType, session_user
 from Domain.Action import Updates
-from Domain.Action.Exceptions import InvalidLogin, InvalidPassword
+from Domain.Action.Exceptions import InvalidPasswordException, InvalidLoginException
 from Domain.Exception import UnnecessaryActionException
 from Domain.functools.Dict import to_dict
 
@@ -101,11 +101,11 @@ def log_in(login, password, session=None) -> Auth:
     query = session.query(Auth).filter_by(login=login)
 
     if query.first() is None:
-        raise InvalidLogin()
+        raise InvalidLoginException()
     else:
         auth = query.filter_by(password=password).first()
         if auth is None:
-            raise InvalidPassword()
+            raise InvalidPasswordException()
         else:
             return auth
 
