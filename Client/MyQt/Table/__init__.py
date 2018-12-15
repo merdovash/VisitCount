@@ -18,7 +18,7 @@ from Client.MyQt.Table.Section.QtMyHomeworkSection import HomeworkSection
 from Client.MyQt.Table.Section.QtMyPercentSection import PercentSection
 from Client.MyQt.Table.Section.QtMyVisitSection import VisitSection
 from DataBase2 import Student, Lesson
-from DataBase2.Types import format_name
+from Domain.functools.Format import format_name
 
 
 class VisitTable(QWidget, Configurable):

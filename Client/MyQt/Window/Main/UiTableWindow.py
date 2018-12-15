@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
 from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Table import VisitSection
 from Client.MyQt.Window.Main import Selector
-from DataBase2.Types import format_name
+from Domain.functools.Format import format_name
 
 
 class UI_TableWindow:

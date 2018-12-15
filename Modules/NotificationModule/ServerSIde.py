@@ -6,8 +6,8 @@ from flask import render_template
 from premailer import transform
 
 from DataBase2 import Auth, Administration, Parent, Lesson
-from DataBase2.Types import format_name
 from Domain.Aggregation import GroupAggregation, DisciplineAggregation, WeekDaysAggregation
+from Domain.functools.Format import format_name
 from Domain.functools.List import flat
 from Modules import Module
 from Modules.NotificationModule import address

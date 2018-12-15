@@ -8,8 +8,8 @@ from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Table.Items import MyTableItem, AbstractContextItem, IDraw
 from Client.MyQt.utils import Signaler
 from DataBase2 import Visitation, Student, Lesson, session_user
-from DataBase2.Types import format_name
 from Domain import Action
+from Domain.functools.Format import format_name
 from Domain.functools.List import find
 
 
