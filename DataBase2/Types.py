@@ -18,7 +18,7 @@ class ConstraintBasenameException(KeyError):
         super().__init__('Base must contains fields: last_name, first_name, [Optional: middle_name]')
 
 
-def format_name(user: Dict[str, str] or Professor or Student, case=None):
+def format_name(user: Dict[str, str] or Professor or Student, case=None) -> str:
     """
     Do format user data to readable string
     :param user: dictionary that contains keys: [last_name, first_name, middle_name]
