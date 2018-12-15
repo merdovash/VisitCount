@@ -30,7 +30,7 @@ class AbstractWindow(QMainWindow, IParentWindow):
 
     @pyqtSlot(str, bool)
     def on_show_message(self, text, is_red):
-        self.centralWidget().show_message(text, is_red)
+        self.central_widget.show_message(text, is_red)
 
     @pyqtSlot(str, name='on_ok_message')
     def on_ok_message(self, text):
