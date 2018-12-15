@@ -5,6 +5,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QTableWidget
 
 from Client.IProgram import IProgram
+from Client.MyQt.Window.interfaces import IDataBaseUser
 from DataBase2 import Professor, Session
 
 
@@ -13,9 +14,9 @@ class ReaderIsNotPrepared(Exception):
         super().__init__('OnRead is not prepared. Please call OnRead.prepare first')
 
 
-class OnRead(QObject):
+class OnRead(QObject, IDataBaseUser):
     professor: Professor
-    table: QTableWidget
+    widget: QTableWidget
     session: Session
 
     error = pyqtSignal(str)
@@ -25,14 +26,16 @@ class OnRead(QObject):
     _prepared = False
 
     @staticmethod
-    def prepare(program: IProgram, table, session: Session):
-        OnRead.professor = program.professor
-        OnRead.table = table
+    def prepare(program: IProgram, widget, session: Session, window=None):
+        OnRead.professor = program.professor if hasattr(program, 'professor') else None
+        OnRead.widget = widget
         OnRead.session = session
 
-        OnRead.on_error = program.window.on_error
-        OnRead.on_warning = program.window.on_ok_message
-        OnRead.on_message = program.window.on_show_message
+        window = window if window is not None else program.window
+
+        OnRead.on_error = window.on_error
+        OnRead.on_warning = window.on_ok_message
+        OnRead.on_message = window.on_show_message
 
         OnRead._prepared = True
 
@@ -47,7 +50,10 @@ class OnRead(QObject):
         raise NotImplementedError()
 
     def __init__(self):
-        super().__init__()
+        if not OnRead._prepared:
+            raise ReaderIsNotPrepared()
+        QObject.__init__(self)
+        IDataBaseUser.__init__(self, OnRead.session)
 
         self.error.connect(OnRead.on_error)
         self.warning.connect(OnRead.on_warning)
