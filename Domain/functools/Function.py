@@ -1,6 +1,10 @@
 import functools
 
 
+def None_or_empty(val):
+    return val is None or val == ''
+
+
 def memoize(obj):
     cache = obj.cache = {}
 

@@ -1,7 +1,8 @@
 from unittest import TestCase
 
-from DataBase2 import Professor
-from DataBase2.Types import format_name
+from DataBase2 import Professor, Student
+from Domain.Exception.Constraint import ConstraintDictNameException, ConstraintNotEmptyException
+from Domain.functools.Format import format_name, Case
 
 
 class TestFormat_name(TestCase):
@@ -52,3 +53,49 @@ class TestFormat_name(TestCase):
 
         self.assertEqual('Иванов Иван',
                          format_name(custom_class()))
+
+    def test_lower_case_dict(self):
+        self.assertEqual('Иванов Иван',
+                         format_name({'last_name': 'иванов', 'first_name': 'иван'}))
+
+
+class TestFormatNameWithCase(TestCase):
+    def test_datv_case_student(self):
+        self.assertEqual('Иванову Ивану Ивановичу',
+                         format_name(Student(**{'last_name': 'Иванов',
+                                                'first_name': 'Иван',
+                                                'middle_name': 'Иванович',
+                                                'card_id': ''}),
+                                     case=Case.datv))
+
+    def test_datv_case_student_without_middle_name(self):
+        self.assertEqual('Иванову Ивану',
+                         format_name(Student(**{'last_name': 'Иванов',
+                                                'first_name': 'Иван',
+                                                'middle_name': '',
+                                                'card_id': ''}),
+                                     case=Case.datv))
+
+
+class TestFormatNameException(TestCase):
+    def test_no_first_name(self):
+        with self.assertRaises(ConstraintDictNameException):
+            format_name({'last_name': 'Иванов',
+                         'middle_name': 'Иванович',
+                         'card_id': ''})
+
+    def test_empty_first_name(self):
+        with self.assertRaises(ConstraintNotEmptyException):
+            format_name({'last_name': 'Иванов',
+                         'first_name': '',
+                         'middle_name': 'Иванович',
+                         'card_id': ''})
+
+    def test_empty_student_first_name(self):
+        with self.assertRaises(ConstraintNotEmptyException):
+            format_name(Student(**{
+                'last_name': 'Иванов',
+                'first_name': '',
+                'middle_name': '',
+                'card_id': ''
+            }))
