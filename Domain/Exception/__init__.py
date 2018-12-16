@@ -1,6 +1,2 @@
-class ActionException(Exception):
-    pass
-
-
-class UnnecessaryActionException(ActionException):
+class BisitorException(Exception):
     pass
