@@ -10,9 +10,9 @@ from xlrd.sheet import Sheet
 from Client.IProgram import IProgram
 from DataBase2 import Group, Student, Lesson
 from Domain import Action
-from Domain.Exception import UnnecessaryActionException
+from Domain.Exception.Action import UnnecessaryActionException
 from Domain.Validation import ExcelValidation
-from Domain.functools.Function import memoize
+from Domain.functools.Decorator import memoize
 from Domain.functools.List import find
 
 student = namedtuple('student', 'real_student visitations new_card_id')

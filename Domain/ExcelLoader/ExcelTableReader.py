@@ -5,11 +5,10 @@ from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QMessageBox, QApplication
 
 from Client.MyQt.Window.interfaces import IDataBaseUser
-from Client.test import safe
 from DataBase2 import Group, Lesson, Professor, LessonsGroups, Student
 from Domain import Action
-from Domain.Exception import UnnecessaryActionException
-from Domain.functools.Function import memoize
+from Domain.Exception.Action import UnnecessaryActionException
+from Domain.functools.Decorator import memoize, safe
 from Domain.functools.List import find
 
 student_info = namedtuple('student_info', 'row card_id name visitations real_student')
@@ -193,8 +192,8 @@ class Reader(IDataBaseUser, QObject):
                     Action.start_lesson(lesson.real_lesson, self.professor)
                 else:
                     self.on_warning(f'Для столбца {lesson.col} не найдено занятияе в БД. Столбец будет пропущен при '
-                                  f'записи.\nИзмените дату занятия в программе или в файле и повторите попытку ('
-                                  f'дупликаты записей будут проигнорированы).')
+                                    f'записи.\nИзмените дату занятия в программе или в файле и повторите попытку ('
+                                    f'дупликаты записей будут проигнорированы).')
             except UnnecessaryActionException:
                 pass
             self.progress += 1

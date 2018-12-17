@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QToolButton, QMessageBox
 
-from DataBase2.Types import format_name
 from Domain import Action
+from Domain.functools.Format import format_name
 
 
 class DeleteContactButton(QToolButton):

@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="Исключения">
-      <change afterPath="$PROJECT_DIR$/Domain/Exception/Action/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Domain/Exception/Authentication/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Domain/Exception/Net/__init__.py" afterDir="false" />
+    <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="Классы таблиц SqlAlchemy заменены на обертки из Domain/DataBase&#10;Исправлены указатели">
+      <change beforePath="$PROJECT_DIR$/.idea/VisitCount.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/VisitCount.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Action/Exceptions/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Action/Exceptions/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Authentication.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Exception/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Exception/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Exception/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parser/JsonParser.py" beforeDir="false" afterPath="$PROJECT_DIR$/Parser/JsonParser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Table/Control.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Table/Control.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/Reader/Functor/AuthProfessor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/Reader/Functor/AuthProfessor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/Reader/Functor/NewVisit.py" beforeDir="false" afterPath="$PROJECT_DIR$/Client/Reader/Functor/NewVisit.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DataBase2/Types.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Domain/Action/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Action/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Domain/Aggregation/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Aggregation/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Domain/Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -22,7 +25,7 @@
     <session id="-1692725436">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="49" />
+          <entry key="project.closed" value="50" />
           <entry key="project.open.time.1" value="1" />
           <entry key="project.open.time.10" value="2" />
           <entry key="project.open.time.11" value="1" />
@@ -46,13 +49,14 @@
           <entry key="project.open.time.45" value="1" />
           <entry key="project.open.time.48" value="1" />
           <entry key="project.open.time.52" value="1" />
+          <entry key="project.open.time.55" value="1" />
           <entry key="project.open.time.7" value="2" />
           <entry key="project.open.time.71" value="1" />
           <entry key="project.open.time.74" value="1" />
           <entry key="project.open.time.78" value="1" />
           <entry key="project.open.time.8" value="1" />
           <entry key="project.open.time.98" value="1" />
-          <entry key="project.opened" value="59" />
+          <entry key="project.opened" value="60" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -63,10 +67,11 @@
           <entry key="html" value="1" />
           <entry key="json" value="1" />
           <entry key="png" value="2" />
-          <entry key="py" value="1162" />
+          <entry key="py" value="1171" />
           <entry key="pyi" value="6" />
           <entry key="pylintrc" value="2" />
           <entry key="svg" value="1" />
+          <entry key="txt" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
@@ -75,8 +80,8 @@
           <entry key="HTML" value="1" />
           <entry key="Image" value="2" />
           <entry key="JSON" value="1" />
-          <entry key="PLAIN_TEXT" value="7" />
-          <entry key="Python" value="1162" />
+          <entry key="PLAIN_TEXT" value="8" />
+          <entry key="Python" value="1171" />
           <entry key="PythonStub" value="6" />
           <entry key="SVG" value="1" />
         </counts>
@@ -88,7 +93,7 @@
           <entry key="css" value="2189" />
           <entry key="dummy" value="274" />
           <entry key="html" value="121" />
-          <entry key="py" value="131763" />
+          <entry key="py" value="131783" />
           <entry key="pylintrc" value="50" />
           <entry key="txt" value="3825" />
         </counts>
@@ -98,7 +103,7 @@
           <entry key="CSS" value="2189" />
           <entry key="HTML" value="121" />
           <entry key="PLAIN_TEXT" value="4122" />
-          <entry key="Python" value="131806" />
+          <entry key="Python" value="131826" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages">
@@ -188,90 +193,87 @@
       </usages-collector>
     </session>
   </component>
+  <component name="FavoritesManager">
+    <favorites_list name="VisitCount" />
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Test/test_format_name.py">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Control.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="290">
-              <caret line="91" column="40" selection-start-line="91" selection-start-column="40" selection-end-line="91" selection-end-column="40" />
+            <state relative-caret-position="1700">
+              <caret line="107" column="48" selection-start-line="107" selection-start-column="48" selection-end-line="107" selection-end-column="48" />
               <folding>
-                <element signature="e#0#29#0" expanded="true" />
+                <element signature="e#0#45#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Domain/Exception/__init__.py">
+        <entry file="file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="34">
-              <caret line="2" selection-start-line="2" selection-end-line="2" />
+            <state relative-caret-position="3094">
+              <caret line="197" column="30" selection-start-line="197" selection-start-column="30" selection-end-line="197" selection-end-column="30" />
               <folding>
-                <marker date="1544956939283" expanded="true" signature="34:44" ph="..." />
+                <element signature="e#0#34#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3111">
+              <caret line="194" column="40" selection-start-line="194" selection-start-column="40" selection-end-line="194" selection-end-column="40" />
+              <folding>
+                <element signature="e#0#34#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Domain/Exception/Action/__init__.py">
+        <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
-              <caret line="8" column="4" selection-start-line="8" selection-start-column="4" selection-end-line="8" selection-end-column="8" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Domain/functools/Decorator.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="504">
-              <caret line="46" column="17" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
+            <state relative-caret-position="231">
+              <caret line="25" column="44" lean-forward="true" selection-start-line="25" selection-start-column="44" selection-end-line="25" selection-end-column="44" />
               <folding>
-                <element signature="e#0#16#0" expanded="true" />
+                <element signature="e#0#52#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Domain/Action/Exceptions/__init__.py">
-          <provider selected="true" editor-type-id="text-editor" />
+        <entry file="file://$PROJECT_DIR$/run_client.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Domain/Exception/Authentication/__init__.py">
+        <entry file="file://$PROJECT_DIR$/Domain/Data.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="119">
-              <caret line="7" column="33" lean-forward="true" selection-start-line="7" selection-start-column="33" selection-end-line="7" selection-end-column="33" />
+              <caret line="14" column="25" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
               <folding>
-                <marker date="1544956566389" expanded="true" signature="105:108" ph="..." />
+                <element signature="e#0#24#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Domain/Exception/Net/__init__.py">
+        <entry file="file://$PROJECT_DIR$/Domain/Aggregation/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="204">
-              <caret line="12" selection-start-line="12" selection-end-line="12" />
-              <folding>
-                <marker date="1544956939451" expanded="true" signature="85:97" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Domain/functools/Function.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="34">
-              <caret line="2" selection-start-line="2" selection-end-line="2" />
-              <folding>
-                <marker date="1544955903145" expanded="true" signature="23:60" ph="..." />
-              </folding>
+            <state relative-caret-position="102">
+              <caret line="6" column="31" selection-start-line="6" selection-start-column="31" selection-end-line="6" selection-end-column="31" />
             </state>
           </provider>
         </entry>
@@ -279,10 +281,22 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Client/Reader/Functor/NewVisit.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="374">
-              <caret line="26" column="38" selection-start-line="26" selection-start-column="38" selection-end-line="26" selection-end-column="38" />
+            <state relative-caret-position="136">
+              <caret line="12" column="14" selection-start-line="12" selection-start-column="14" selection-end-line="12" selection-end-column="14" />
               <folding>
                 <element signature="e#0#40#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Domain/Action/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1700">
+              <caret line="107" column="28" selection-start-line="107" selection-start-column="28" selection-end-line="107" selection-end-column="28" />
+              <folding>
+                <element signature="e#0#30#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -300,7 +314,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>students_of</find>
       <find>class Pro</find>
       <find>class Les</find>
       <find>class Admi</find>
@@ -330,6 +343,7 @@
       <find>lessons</find>
       <find>Map</find>
       <find>error_handler</find>
+      <find>offset_changed</find>
     </findStrings>
     <replaceStrings>
       <replace>self.config</replace>
@@ -361,6 +375,7 @@
       <dir>$PROJECT_DIR$/DataBase2</dir>
       <dir>$PROJECT_DIR$</dir>
       <dir>$PROJECT_DIR$/Client</dir>
+      <dir>C:\Users\MERDovashkinar\PycharmProjects\VisitCount\</dir>
     </dirStrings>
   </component>
   <component name="Git.Settings">
@@ -381,22 +396,14 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/Client/MyQt/Table/Section/QtMyVisitSection.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" />
-        <option value="$PROJECT_DIR$/Modules/NotificationModule/ServerSIde.py" />
-        <option value="$PROJECT_DIR$/Server/templates/admin_email.html" />
-        <option value="$PROJECT_DIR$/Domain/Aggregation/__init__.py" />
-        <option value="$PROJECT_DIR$/Client/MyQt/Chart/WeekDayAnalysis.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/Ui_QPlotWidget.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/WeekAnalysis.py" />
-        <option value="$PROJECT_DIR$/Domain/Data.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Widgets/QEasyTable.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Dialogs/QErrorMessage.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Dialogs/QOkMessage.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Dialogs/QErrorMsg.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/Ui_UpdatesInfoWidget.py" />
         <option value="$PROJECT_DIR$/Domain/functools/Url.py" />
-        <option value="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" />
         <option value="$PROJECT_DIR$/run_client.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" />
@@ -407,7 +414,6 @@
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/StudentHeader/StudentHeaderItem.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Threading/SimpleRunnable.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Threading/SimpleThread.py" />
-        <option value="$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/ExcelLoadingWindow/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Window/UpdatesInfoWindow/__init__.py" />
         <option value="$PROJECT_DIR$/Client/Requests/ClientConnection.py" />
@@ -432,6 +438,15 @@
         <option value="$PROJECT_DIR$/Exception/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Exception/Net/__init__.py" />
         <option value="$PROJECT_DIR$/Domain/Exception/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/Reader/Functor/AuthProfessor.py" />
+        <option value="$PROJECT_DIR$/Domain/Data.py" />
+        <option value="$PROJECT_DIR$/Domain/Aggregation/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/Reader/Functor/NewVisit.py" />
+        <option value="$PROJECT_DIR$/Domain/Action/__init__.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Table/Control.py" />
+        <option value="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" />
+        <option value="$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py" />
+        <option value="$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py" />
       </list>
     </option>
   </component>
@@ -534,16 +549,6 @@
             </path>
             <path>
               <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Domain" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
-              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
-              <item name="Test" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
               <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
             </path>
           </expand>
@@ -556,7 +561,8 @@
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="SearchEverywhereHistoryKey" value="visitation.id&#9;null&#9;null&#10;todate&#9;FILE&#9;file://C:/Users/MERDovashkinar/PycharmProjects/VisitCount/Test/to_normal_date.py&#10;hello3&#9;null&#9;null" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/Domain/Exception/Action/__init__.py" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -573,19 +579,19 @@
     <option name="isSearchForTextOccurrences" value="true" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Test" />
-      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\testing" />
-      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount" />
-      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Freezing" />
-      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Domain\ExcelLoader" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Client\MyQt\Window\Main\icons" />
       <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\DataBase2" />
       <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\UnitTest" />
       <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Server" />
       <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Main\Configuartion" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Test" />
+      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\testing" />
+      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount" />
+      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Freezing" />
+      <recent name="C:\Users\MERDovashkinar\PycharmProjects\VisitCount\Domain\ExcelLoader" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -600,7 +606,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.Nosetests in Test">
+  <component name="RunManager" selected="Python.run_client">
     <configuration name="__init__ (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="VisitCount" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -622,19 +628,25 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Nosetests for Test.test_functools_url" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
+    <configuration name="run_client" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="VisitCount" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Test" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_regexPattern" value="&quot;&quot;" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;Test.test_functools_url&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run_client.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
     <configuration name="Nosetests for Test.test_valid_get" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
@@ -683,19 +695,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python tests.Nosetests for Test.test_functools_url" />
       <item itemvalue="Python tests.Nosetests for Test.test_valid_get" />
       <item itemvalue="Python.__init__ (1)" />
       <item itemvalue="Python tests.Nosetests in Test" />
       <item itemvalue="Python tests.Nosetests for Test.test_validate.TestValidate" />
+      <item itemvalue="Python.run_client" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.run_client" />
         <item itemvalue="Python tests.Nosetests in Test" />
         <item itemvalue="Python tests.Nosetests for Test.test_validate.TestValidate" />
         <item itemvalue="Python tests.Nosetests in Test" />
         <item itemvalue="Python.__init__ (1)" />
-        <item itemvalue="Python tests.Nosetests for Test.test_valid_get" />
       </list>
     </recent_temporary>
   </component>
@@ -1092,7 +1104,7 @@
       <configuration name="Nosetests in Test" configurationId="tests" />
     </history-entry>
   </component>
-  <component name="TodoView">
+  <component name="TodoView" selected-index="3">
     <todo-panel id="selected-file">
       <is-autoscroll-to-source value="true" />
     </todo-panel>
@@ -1103,21 +1115,22 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.23363096" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49748743" visible="true" weight="0.23363096" />
       <window_info id="Structure" order="1" weight="0.24851191" />
-      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info id="Favorites" order="2" sideWeight="0.5025126" side_tool="true" weight="0.23363096" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.48363096" weight="0.32786885" />
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.61011904" weight="0.36885247" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.6376702" weight="0.40655738" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.34754097" />
-      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.38988096" side_tool="true" weight="0.36885247" />
+      <window_info active="true" anchor="bottom" id="TODO" order="6" sideWeight="0.56026787" visible="true" weight="0.34754097" />
+      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.43973213" side_tool="true" visible="true" weight="0.34754097" />
       <window_info anchor="bottom" id="Python Console" order="8" sideWeight="0.49925596" weight="0.32786885" />
       <window_info anchor="bottom" id="Terminal" order="9" sideWeight="0.7046131" weight="0.3295082" />
-      <window_info anchor="bottom" id="Version Control" order="10" sideWeight="0.49925596" visible="true" weight="0.3180328" />
+      <window_info anchor="bottom" id="Version Control" order="10" sideWeight="0.49925596" weight="0.3180328" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -1348,39 +1361,9 @@
           <option name="timeStamp" value="731" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/Client/MyQt/Table/Control.py</url>
-          <line>52</line>
-          <option name="timeStamp" value="747" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py</url>
-          <line>187</line>
-          <option name="timeStamp" value="757" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py</url>
-          <line>189</line>
-          <option name="timeStamp" value="758" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/Client/MyQt/Chart/QAnalysisDialog.py</url>
           <line>99</line>
           <option name="timeStamp" value="843" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py</url>
-          <line>200</line>
-          <option name="timeStamp" value="845" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py</url>
-          <line>103</line>
-          <option name="timeStamp" value="847" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py</url>
-          <line>222</line>
-          <option name="timeStamp" value="862" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-defaults>
@@ -1408,65 +1391,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/Modules/Synch/ClientSide.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="675" selection-start-line="675" selection-end-line="675" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Domain/Validation/Values.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="11" column="20" selection-start-line="11" selection-start-column="20" selection-end-line="11" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/testing/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="22" column="57" lean-forward="true" selection-start-line="22" selection-start-column="57" selection-end-line="22" selection-end-column="57" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Freezing/setup.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Test/test_valid_get.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="8" column="14" selection-start-line="8" selection-start-column="14" selection-end-line="8" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Test/test_functools_url.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="5" column="10" selection-start-line="5" selection-start-column="10" selection-end-line="5" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Test/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret selection-end-line="7" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Test/test_validate.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="19" column="57" selection-start-line="19" selection-start-column="57" selection-end-line="19" selection-end-column="57" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/utils/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="35" selection-start-line="9" selection-start-column="35" selection-end-line="9" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Threading/SimpleRunnable.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="187">
@@ -1534,9 +1458,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Items/LessonHeader/LessonHeaderView.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="60" column="39" selection-start-line="60" selection-start-column="39" selection-end-line="60" selection-end-column="39" />
-        </state>
+        <state relative-caret-position="-34" />
       </provider>
     </entry>
     <entry file="file://$USER_HOME$/BisitorProject/Lib/site-packages/matplotlib/backends/backend_agg.py">
@@ -1591,78 +1513,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Domain/Action/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-135">
-          <caret line="831" selection-start-line="831" selection-end-line="831" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Date/__init__.py" />
     <entry file="file://$PROJECT_DIR$/Client/Reader/Functor/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="595">
-          <caret line="37" column="50" selection-start-line="37" selection-start-column="50" selection-end-line="37" selection-end-column="50" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/DataBase2/Types.py">
       <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Control.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1700">
-          <caret line="107" column="46" selection-start-line="107" selection-start-column="46" selection-end-line="107" selection-end-column="46" />
-        </state>
-      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Domain/Exception/Constraint/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="221">
           <caret line="13" selection-start-line="13" selection-end-line="13" />
-          <folding>
-            <marker date="1544911902132" expanded="true" signature="37:49" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Domain/functools/Format.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="765">
-          <caret line="52" column="63" selection-start-line="52" selection-start-column="63" selection-end-line="52" selection-end-column="63" />
-          <folding>
-            <marker date="1544912411210" expanded="true" signature="319:442" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Domain/Aggregation/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="24" column="26" selection-start-line="24" selection-start-column="26" selection-end-line="24" selection-end-column="26" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1751">
           <caret line="116" column="55" selection-start-line="116" selection-start-column="55" selection-end-line="116" selection-end-column="55" />
-          <folding>
-            <element signature="e#16#25#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client/Reader/Functor/NewVisit.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="26" column="38" selection-start-line="26" selection-start-column="38" selection-end-line="26" selection-end-column="38" />
-          <folding>
-            <element signature="e#0#40#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1677,9 +1545,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="290">
           <caret line="91" column="40" selection-start-line="91" selection-start-column="40" selection-end-line="91" selection-end-column="40" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1687,49 +1552,24 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="34">
           <caret line="2" selection-start-line="2" selection-end-line="2" />
-          <folding>
-            <marker date="1544955903145" expanded="true" signature="23:60" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Client/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" lean-forward="true" selection-start-line="3" selection-end-line="3" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/test.py" />
     <entry file="file://$PROJECT_DIR$/Domain/functools/Decorator.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="504">
           <caret line="46" column="17" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Domain/Action/Exceptions/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Domain/Authentication.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="4" column="12" lean-forward="true" selection-start-line="4" selection-start-column="12" selection-end-line="4" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Exception/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/Action/Exceptions/__init__.py" />
+    <entry file="file://$PROJECT_DIR$/Domain/Authentication.py" />
+    <entry file="file://$PROJECT_DIR$/Exception/__init__.py" />
     <entry file="file://$PROJECT_DIR$/Domain/Exception/Authentication/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="119">
           <caret line="7" column="33" lean-forward="true" selection-start-line="7" selection-start-column="33" selection-end-line="7" selection-end-column="33" />
-          <folding>
-            <marker date="1544956566389" expanded="true" signature="105:108" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1737,9 +1577,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="204">
           <caret line="12" selection-start-line="12" selection-end-line="12" />
-          <folding>
-            <marker date="1544956939451" expanded="true" signature="85:97" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1747,9 +1584,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="34">
           <caret line="2" selection-start-line="2" selection-end-line="2" />
-          <folding>
-            <marker date="1544956939283" expanded="true" signature="34:44" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1757,6 +1591,113 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="136">
           <caret line="8" column="4" selection-start-line="8" selection-start-column="4" selection-end-line="8" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/LessonDateChanger.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/Reader/Functor/AuthProfessor.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="476">
+          <caret line="28" column="65" lean-forward="true" selection-start-line="28" selection-start-column="65" selection-end-line="28" selection-end-column="65" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/requirements.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/Action/SynchAction/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="9" column="17" selection-start-line="9" selection-start-column="17" selection-end-line="9" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DataBase2/Types.py" />
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Control.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1700">
+          <caret line="107" column="48" selection-start-line="107" selection-start-column="48" selection-end-line="107" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#45#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3094">
+          <caret line="197" column="30" selection-start-line="197" selection-start-column="30" selection-end-line="197" selection-end-column="30" />
+          <folding>
+            <element signature="e#0#34#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3111">
+          <caret line="194" column="40" selection-start-line="194" selection-start-column="40" selection-end-line="194" selection-end-column="40" />
+          <folding>
+            <element signature="e#0#34#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run_client.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/Data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="14" column="25" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
+          <folding>
+            <element signature="e#0#24#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/Aggregation/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="31" selection-start-line="6" selection-start-column="31" selection-end-line="6" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/Reader/Functor/NewVisit.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="12" column="14" selection-start-line="12" selection-start-column="14" selection-end-line="12" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#40#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Domain/Action/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1700">
+          <caret line="107" column="28" selection-start-line="107" selection-start-column="28" selection-end-line="107" selection-end-column="28" />
+          <folding>
+            <element signature="e#0#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="231">
+          <caret line="25" column="44" lean-forward="true" selection-start-line="25" selection-start-column="44" selection-end-line="25" selection-end-column="44" />
+          <folding>
+            <element signature="e#0#52#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
