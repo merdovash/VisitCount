@@ -1,11 +1,13 @@
-from DataBase2 import Session, Update, UpdateType, Professor, ProfessorsUpdates
+import datetime
+
+from DataBase2 import Session, Update, ActionType, Professor, ProfessorsUpdates
 from Domain.Prepare import get_updated_object
 from Parser.JsonParser import JsonParser
 
 
 class New:
     @staticmethod
-    def row(table, new_row_id, performer_id):
+    def row(table, new_row_id, performer_id, update_type=None):
         assert isinstance(performer_id, int), f'object {performer_id} is not id (int)'
         assert isinstance(new_row_id, int), f'new_row_id {new_row_id} is not id (int)'
 
@@ -14,10 +16,14 @@ class New:
 
         session = Session()
 
-        update = Update(row_id=new_row_id,
-                        table_name=table,
-                        performer=performer_id,
-                        action_type=UpdateType.NEW)
+        assert table != 'type'
+        update = Update(
+            row_id=new_row_id,
+            table_name=table,
+            performer=performer_id,
+            action_type=ActionType.NEW,
+            update_type=update_type,
+            date=datetime.datetime.now())
 
         session.add(update)
 
@@ -49,7 +55,7 @@ class New:
 
 class Delete:
     @staticmethod
-    def row(deleted_object: dict, deleted_object_table, performer_id, professors_affected=None):
+    def row(deleted_object: dict, deleted_object_table, performer_id, update_type=None, professors_affected=None):
         assert isinstance(deleted_object, dict), f'deleted_object {deleted_object} is not a dict'
         assert 'id' in deleted_object.keys(), f'deleted_object {deleted_object} has no "id" key'
         assert isinstance(performer_id, int), f'object {performer_id} is not id (int)'
@@ -64,11 +70,15 @@ class Delete:
         print(old_update)
         if old_update is None:
 
-            update = Update(table_name=deleted_object_table,
-                            row_id=deleted_object['id'],
-                            performer=performer_id,
-                            action_type=UpdateType.DELETE,
-                            extra=JsonParser.dump(deleted_object))
+            assert deleted_object_table != 'type'
+            update = Update(
+                table_name=deleted_object_table,
+                row_id=deleted_object['id'],
+                performer=performer_id,
+                action_type=ActionType.DELETE,
+                extra=JsonParser.dump(deleted_object),
+                update_type=update_type,
+                date=datetime.datetime.now())
 
             session.add(update)
 
@@ -79,12 +89,12 @@ class Delete:
             return update
 
         else:
-            if old_update.action_type == UpdateType.NEW:
+            if old_update.action_type == ActionType.NEW:
                 session.delete(old_update)
 
                 session.commit()
             else:
-                old_update.action_type = UpdateType.DELETE
+                old_update.action_type = ActionType.DELETE
 
                 session.commit()
 
@@ -93,7 +103,7 @@ class Delete:
 
 class Changed:
     @staticmethod
-    def row(changed_row_id, table_name, performer_id):
+    def row(changed_row_id, table_name, performer_id, update_type=None):
         assert isinstance(changed_row_id, int), f'object changed_row_id {changed_row_id} should be id (int)'
         assert isinstance(performer_id, int), f'object performer_id {performer_id} should be id (int)'
         assert isinstance(table_name, str), f'table_name ({table_name}) should be str'
@@ -104,11 +114,14 @@ class Changed:
         if old is not None:
             return old
         else:
-
-            update = Update(row_id=changed_row_id,
-                            table_name=table_name,
-                            performer=performer_id,
-                            action_type=UpdateType.UPDATE)
+            assert table_name != 'type'
+            update = Update(
+                row_id=changed_row_id,
+                table_name=table_name,
+                performer=performer_id,
+                action_type=ActionType.UPDATE,
+                update_type=update_type,
+                date=datetime.datetime.now())
 
             session.add(update)
 

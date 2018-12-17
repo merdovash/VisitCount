@@ -7,7 +7,10 @@ class IChildWindow():
 
     def closeSelf(self):
         print('closing self')
+        if isinstance(self, IParentWindow) and self.child_window is not None:
+            self.child_window.closeSelf()
         self._parentWindow.closeDialog(self)
+        self.close()
 
     def setParentWindow(self, window):
         self._parentWindow = window
@@ -22,31 +25,47 @@ class IParentWindow:
         if dialog == self:
             dialog.showNormal()
             dialog.activateWindow()
+
         elif self.child_window is not None:
-            if isinstance(self.child_window, IParentWindow):
-                self.child_window.setDialog(dialog, *args)
-            else:
-                self.child_pool.append((dialog, args))
+            if isinstance(self.child_window, IChildWindow):
+                self.child_window = [self.child_window]
+                dialog.setParentWindow(self)
+                dialog.showAsChild(*args)
+                self.child_window.append(dialog)
+
+            elif isinstance(self.child_window, list):
+                dialog.setParentWindow(self)
+                dialog.showAsChild(*args)
+                self.child_window.append(dialog)
+
         else:
             if isinstance(dialog, IChildWindow):
                 self.child_window = dialog
                 self.child_window.setParentWindow(self)
                 self.child_window.showAsChild(*args)
+
             else:
                 raise NotImplementedError(type(dialog))
 
     def closeDialog(self, dialog):
         if self.child_window is not None:
-            if dialog == self.child_window:
-                self.child_window.close()
-                self.child_window = None
+            if isinstance(self.child_window, list):
+                if dialog in self.child_window:
+                    self.child_window.remove(dialog)
+                    if len(self.child_window) == 1:
+                        self.child_window = self.child_window[0]
+                else:
+                    # raise AttributeError(f'no such child ({dialog}) in {self.child_window}')
+                    pass
+
+            elif isinstance(self.child_window, IChildWindow):
+                if self.child_window == dialog:
+                    self.child_window = None
+
             else:
-                raise Exception(f'dialog {dialog} closing different dialog {self.child_window}')
+                raise Exception('idk')
         else:
             raise Warning('no dialog to close (already None)')
-
-        if len(self.child_pool) > 0:
-            self.setDialog(*self.child_pool.pop(0))
 
         self.raise_()
 

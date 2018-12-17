@@ -4,7 +4,8 @@ safsdf
 """
 import os
 import sys
-from typing import List
+from threading import Lock
+from typing import List, Union
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
     DateTime, Boolean
@@ -13,7 +14,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool
 
-from DataBase2.config2 import DataBaseConfig
+from DataBase2.config2 import Config
 from Domain.functools.List import flat, unique
 
 try:
@@ -51,8 +52,8 @@ def create_threaded():
 
 def create():
     _new = False
-    if root == 'run_server2.py':
-        engine = create_engine(f"mysql://root:|Oe23zk45|@localhost/bisitor?charset=utf8",
+    if root == 'run_server.py':
+        engine = create_engine(Config.connection_string,
                                pool_pre_ping=True,
                                poolclass=NullPool)
 
@@ -82,6 +83,22 @@ def create():
 
 
 Session, Base, metadata, engine, _new = create()
+
+lock = Lock()
+
+
+def session_user(func):
+    def f(*args, **kwargs):
+        lock.acquire()
+        try:
+            res = func(*args, **kwargs)
+        except:
+            raise
+        finally:
+            lock.release()
+        return res
+
+    return f
 
 
 def ProfessorSession(professor_id, session):
@@ -182,7 +199,7 @@ class Auth(Base):
     _user = None
 
     @property
-    def user(self):
+    def user(self) -> Union['Student', 'Professor']:
         """
 
         :return: Professor or Student
@@ -221,7 +238,7 @@ class Discipline(Base):
                f" name={self.name})>"
 
     @staticmethod
-    def of(obj) -> list:
+    def of(obj) -> List['Discipline']:
         if isinstance(obj, Lesson):
             return [obj.discipline]
         elif isinstance(obj, Professor):
@@ -256,7 +273,7 @@ class Lesson(Base):
                f" completed={self.completed})>"
 
     @staticmethod
-    def of(obj, intersect=False):
+    def of(obj, intersect=False) -> List['Lesson']:
         if isinstance(obj, (list, _AssociationList)):
             if intersect:
                 lessons = None
@@ -293,7 +310,7 @@ class Administration(Base):
                f"middle_name={self.middle_name})>"
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['Administration']:
         if isinstance(obj, (list, _AssociationList)):
             return flat([Administration.of(o) for o in obj])
         elif isinstance(obj, Professor):
@@ -338,15 +355,19 @@ class Professor(Base):
                f"middle_name={self.middle_name})>"
 
     @staticmethod
-    def of(obj) -> list:
-        if isinstance(obj, list):
-            return flat([Professor.of(o) for o in obj])
+    def of(obj) -> List['Professor']:
+        if isinstance(obj, (list, _AssociationList, set)):
+            return unique(flat([Professor.of(o) for o in obj]))
         elif isinstance(obj, (Lesson, NotificationParam)):
             return [obj.professor]
         elif isinstance(obj, Visitation):
             return Professor.of(obj.lesson)
         elif isinstance(obj, Administration):
             return obj.professors
+        elif isinstance(obj, Student):
+            return Professor.of(obj.groups)
+        elif isinstance(obj, Group):
+            return Professor.of(obj.lessons)
         else:
             raise NotImplementedError(type(obj))
 
@@ -366,7 +387,7 @@ class NotificationParam(Base):
     UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK')
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['NotificationParam']:
         if isinstance(obj, (list, _AssociationList)):
             return flat([NotificationParam.of(o) for o in obj])
         elif isinstance(obj, Professor):
@@ -471,7 +492,7 @@ class Parent(Base):
     students = association_proxy('_students', 'student')
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['Parent']:
         if isinstance(obj, (list, _AssociationList)):
             return unique(flat([Parent.of(o) for o in obj]))
         elif isinstance(obj, Student):
@@ -482,13 +503,38 @@ class Parent(Base):
             raise NotImplementedError(type(obj))
 
 
-class UpdateType(int):
+class ActionType(int):
     """
     Update type
     """
     NEW = 2
     UPDATE = 0
     DELETE = 1
+
+
+class UpdateType(int):
+    lesson_completed = 30
+    lesson_uncompleted = 31
+    visit_new = 10
+    visit_del = 11
+    student_card_id_updated = 20
+    contact_admin_new = 40
+    contact_admin_del = 41
+    contact_admin_email_changed = 42
+
+    @staticmethod
+    def of(val) -> str:
+        if isinstance(val, int):
+            return {
+                UpdateType.lesson_completed: 'Проведен урок',
+                UpdateType.lesson_uncompleted: 'Отменен статуст проведения урока',
+                UpdateType.contact_admin_email_changed: 'Изменен контакт (email) администрации',
+                UpdateType.student_card_id_updated: 'Изменены данные студента (card_id)',
+                UpdateType.contact_admin_del: 'Удален контакт администрации',
+                UpdateType.contact_admin_new: 'Добавлен контакт администрации',
+                UpdateType.visit_del: 'Удалено посещение студентом занятия',
+                UpdateType.visit_new: 'Новое посещение студентом занятия',
+            }[val]
 
 
 class Update(Base):
@@ -503,7 +549,9 @@ class Update(Base):
     row_id = Column(Integer, nullable=False)
     action_type = Column(Integer, nullable=False)
     performer = Column(Integer)
+    update_type = Column(Integer)
     extra = Column(String(500))
+    date = Column(DateTime)
 
     UniqueConstraint('row_id', 'table_name', name='update_UK')
 
@@ -526,7 +574,7 @@ class Update(Base):
         )
 
     @staticmethod
-    def of(obj):
+    def of(obj) -> List['Update']:
         if isinstance(obj, Professor):
             return obj.updates
         else:

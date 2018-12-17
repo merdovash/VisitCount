@@ -4,7 +4,6 @@ from PyQt5.QtCore import Qt, QRectF, QPoint, QEvent, QSizeF
 from PyQt5.QtGui import QPainter, QColor, QPen, QHelpEvent, QMouseEvent
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QMenu, QToolTip
 
-import Date
 from Client import IProgram
 from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Table.Control import VisitTableControl
@@ -13,6 +12,7 @@ from Client.MyQt.Table.Section import Markup
 from Client.MyQt.Time import from_time_to_index
 from Client.MyQt.Widgets.LessonDateChanger import LessonDateChanger
 from DataBase2 import Lesson
+from Domain.Date import study_week
 
 
 class PercentHeaderItem(IDraw, QTableWidgetItem):
@@ -57,7 +57,7 @@ class LessonHeaderItem(QTableWidgetItem):
         self.month = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(',')[
             dt.month]
         self.day = str(dt.day)
-        self.week = str(dt.isocalendar()[1] - Date.start_week())
+        self.week = str(study_week(dt))
         self.weekday = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"][dt.weekday()]
         self.number = str(from_time_to_index(dt))
         self.type = ['Л', 'лр', 'п'][lesson.type]
@@ -199,7 +199,7 @@ class LessonHeaderView(QHeaderView):
                             width,
                             self.height()
                         ))
-                    item.draw(p, rect, self.isHighlighted(col))
+                    item.draw(p, rect, self.isHighlighted(col), )
         except (TypeError, NotImplementedError):
             pass
 

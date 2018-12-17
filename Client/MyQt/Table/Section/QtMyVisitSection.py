@@ -11,8 +11,8 @@ from Client.MyQt.Table.Items import AbstractContextItem, IDraw
 from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderView, LessonHeaderItem, PercentHeaderItem
 from Client.MyQt.Table.Section import Markup
 from DataBase2 import Group, Student, Lesson, Discipline
-from DataBase2.Types import format_name
 from Domain import Data
+from Domain.functools.Format import format_name
 from Domain.functools.List import empty
 
 

@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import QMenu, QTableWidgetItem, QStyledItemDelegate
 from Client.IProgram import IProgram
 from Client.MyQt.Table.Items import AbstractContextItem
 from DataBase2 import Student
-from DataBase2.Types import format_name
+from Domain.Validation.Values import Validate
+from Domain.functools.Format import format_name
 
 
 class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
@@ -16,7 +17,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         self.setText(self.student_name)
         self.student = student
 
-        if student.card_id is None or student.card_id == 'None':
+        if not Validate.card_id(self.student.card_id):
             self.setBackground(QColor(220, 180, 0))
 
         self.register_process = False
@@ -69,7 +70,7 @@ class StudentHeaderItem(QTableWidgetItem, AbstractContextItem):
         self.program.reader().remove_temporary_function()
 
     def have_card(self):
-        return self.student.card_id is None or self.student.card_id == 'None'
+        return Validate.card_id(self.student.card_id)
 
 
 class StudentHeaderItemDelegate(QStyledItemDelegate):

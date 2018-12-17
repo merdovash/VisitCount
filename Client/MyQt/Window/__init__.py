@@ -1,8 +1,8 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow
 
-from Client.MyQt.Dialogs.ErrorMessage import ErrorMessage
-from Client.MyQt.Dialogs.OkMessage import OkMessage
+from Client.MyQt.Dialogs.QErrorMsg import QErrorMsg
+from Client.MyQt.Dialogs.QOkMsg import QOkMsg
 from Client.MyQt.Window.interfaces import IParentWindow
 
 
@@ -26,15 +26,15 @@ class AbstractWindow(QMainWindow, IParentWindow):
 
     @pyqtSlot(str)
     def on_error(self, msg):
-        self.setDialog(ErrorMessage(self, msg=msg))
+        self.setDialog(QErrorMsg(msg=msg))
 
     @pyqtSlot(str, bool)
     def on_show_message(self, text, is_red):
-        self.centralWidget().show_message(text, is_red)
+        self.central_widget.show_message(text, is_red)
 
     @pyqtSlot(str, name='on_ok_message')
     def on_ok_message(self, text):
-        self.setDialog(OkMessage(text))
+        self.setDialog(QOkMsg(text))
 
     @pyqtSlot(name='on_finish')
     def on_finish(self):

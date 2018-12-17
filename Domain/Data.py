@@ -5,11 +5,12 @@ from sqlalchemy.ext.associationproxy import _AssociationList
 
 from DataBase2 import Student, Group, Lesson, Visitation, Administration, Discipline, Professor, NotificationParam, \
     StudentsGroups, LessonsGroups, Update
-from Domain.functools.Function import memoize
+from Domain.functools.Decorator import memoize
 
 
 def select_by_id(session, mapper, ID):
     assert isinstance(ID, int), f'ID is not a number'
+    assert mapper is not None
     if isinstance(mapper, str):
         return select_by_id(session, locate(f'DataBase2.{mapper}'), ID)
     else:

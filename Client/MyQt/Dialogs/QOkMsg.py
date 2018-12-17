@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMessageBox
 from Client.MyQt.Window.interfaces import IChildWindow
 
 
-class OkMessage(QMessageBox, IChildWindow):
+class QOkMsg(QMessageBox, IChildWindow):
     def __init__(self, text, *__args):
         super().__init__(*__args)
 
@@ -11,9 +11,6 @@ class OkMessage(QMessageBox, IChildWindow):
         self.button(QMessageBox.Ok).clicked.connect(self.closeSelf)
 
         self.setText(text)
-
-    def closeEvent(self, QCloseEvent):
-        self.closeSelf()
 
     def showAsChild(self, *args):
         self.exec_()

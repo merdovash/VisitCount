@@ -1,6 +1,6 @@
 from DataBase2 import Auth, Session, ProfessorSession
 from Domain import Action
-from Domain.Action import InvalidLogin, InvalidPassword
+from Domain.Action import InvalidLoginException, InvalidPasswordException
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
@@ -38,9 +38,9 @@ class Module:
                             self.post(data=data.get('data'), response=response,
                                       auth=authentication, **kwargs)
 
-                        except InvalidLogin as e:
+                        except InvalidLoginException as e:
                             response.set_error(str(e))
-                        except InvalidPassword as e:
+                        except InvalidPasswordException as e:
                             response.set_error(str(e))
                     else:
                         response.set_error(

@@ -1,13 +1,14 @@
 from sqlalchemy import inspect
 
 from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, Administration, \
-    NotificationParam, Parent
+    NotificationParam, Parent, UpdateType, session_user
 from Domain.Action import Updates
-from Domain.Action.Exceptions import InvalidLogin, InvalidPassword
-from Domain.Exception import UnnecessaryActionException
+from Domain.Exception.Action import UnnecessaryActionException
+from Domain.Exception.Authentication import InvalidLoginException, InvalidPasswordException
 from Domain.functools.Dict import to_dict
 
 
+@session_user
 def changes_ids(items, new_ids, session=None):
     assert len(items) == len(new_ids), f'{len(items)}!={len(new_ids)}'
 
@@ -23,6 +24,7 @@ def changes_ids(items, new_ids, session=None):
     session.commit()
 
 
+@session_user
 def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
     assert isinstance(student, Student), f'object {student} is not Student'
     assert isinstance(lesson, Lesson), f'object {lesson} is not Lesson'
@@ -37,7 +39,7 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
         .filter(Visitation.student_id == student.id) \
         .first()
     if old_visit is not None:
-        raise UnnecessaryActionException
+        raise UnnecessaryActionException()
 
     visit = Visitation(student_id=student.id, lesson_id=lesson.id)
 
@@ -53,11 +55,17 @@ def new_visitation(student, lesson, professor_id, session=None) -> Visitation:
         except:
             raise
 
-    Updates.New.row(Visitation, visit.id, professor_id)
+    Updates.New.row(
+        table=Visitation,
+        new_row_id=visit.id,
+        performer_id=professor_id,
+        update_type=UpdateType.visit_new
+    )
 
     return visit
 
 
+@session_user
 def remove_visitation(visitation, professor_id):
     assert isinstance(visitation, Visitation), f'object {visitation} is not Visitation'
     assert isinstance(professor_id, int), f'object {professor_id} is not id (int)'
@@ -77,10 +85,12 @@ def remove_visitation(visitation, professor_id):
         deleted_object=to_dict(visitation),
         deleted_object_table=type(visitation).__name__,
         performer_id=professor_id,
-        professors_affected=professors
+        professors_affected=professors,
+        update_type=UpdateType.visit_del
     )
 
 
+@session_user
 def log_in(login, password, session=None) -> Auth:
     assert isinstance(login, str), f'object {login} is not str'
     assert isinstance(password, str), f'object {password} is not str'
@@ -91,15 +101,16 @@ def log_in(login, password, session=None) -> Auth:
     query = session.query(Auth).filter_by(login=login)
 
     if query.first() is None:
-        raise InvalidLogin()
+        raise InvalidLoginException()
     else:
         auth = query.filter_by(password=password).first()
         if auth is None:
-            raise InvalidPassword()
+            raise InvalidPasswordException()
         else:
             return auth
 
 
+@session_user
 def start_lesson(lesson, professor) -> None:
     assert isinstance(lesson, Lesson), f'object {lesson} is not Lesson'
     assert isinstance(professor, Professor), f'object {professor} is not Professor'
@@ -109,9 +120,15 @@ def start_lesson(lesson, professor) -> None:
 
     lesson.completed = True
 
-    Updates.Changed.row(lesson.id, type(lesson).__name__, professor.id)
+    Updates.Changed.row(
+        changed_row_id=lesson.id,
+        table_name=type(lesson).__name__,
+        performer_id=professor.id,
+        update_type=UpdateType.lesson_completed
+    )
 
 
+@session_user
 def create_administration(performer_id, **kwargs) -> Administration:
     assert isinstance(performer_id, int), f'object {performer_id} is not id (int)'
 
@@ -123,18 +140,30 @@ def create_administration(performer_id, **kwargs) -> Administration:
 
     session.commit()
 
-    np = NotificationParam(admin_id=admin.id, professor_id=performer_id, active=True)
+    np = NotificationParam(
+        admin_id=admin.id,
+        professor_id=performer_id,
+        active=True)
 
     session.add(np)
 
     session.commit()
 
-    Updates.New.row(Administration, admin.id, performer_id)
-    Updates.New.row(NotificationParam, np.id, performer_id)
+    Updates.New.row(
+        table=Administration,
+        new_row_id=admin.id,
+        performer_id=performer_id,
+        update_type=UpdateType.contact_admin_new)
+    Updates.New.row(
+        table=NotificationParam,
+        new_row_id=np.id,
+        performer_id=performer_id,
+    )
 
     return admin
 
 
+@session_user
 def delete_contact(contact, professor_id):
     assert isinstance(contact, (Administration, Parent)), f'object {contact} is not Administration or Parent'
     assert isinstance(professor_id, int), f'object {professor_id} is not id (int)'
@@ -147,13 +176,19 @@ def delete_contact(contact, professor_id):
         nps = NotificationParam.of(contact)
 
         for np in nps:
-            Updates.Delete.row(to_dict(np), type(np).__name__, professor_id)
+            Updates.Delete.row(
+                deleted_object=to_dict(np),
+                deleted_object_table=type(np).__name__,
+                performer_id=professor_id,
+                update_type=UpdateType.contact_admin_del
+            )
 
     session.delete(contact)
 
     session.commit()
 
 
+@session_user
 def change_student_card_id(student, new_card_id, professor_id):
     assert isinstance(student, Student)
     assert isinstance(new_card_id, (str, int)), f'card_id {new_card_id} is not id'
@@ -167,4 +202,9 @@ def change_student_card_id(student, new_card_id, professor_id):
 
     session.commit()
 
-    Updates.Changed.row(changed_row_id=student.id, table_name=type(student).__name__, performer_id=professor_id)
+    Updates.Changed.row(
+        changed_row_id=student.id,
+        table_name=type(student).__name__,
+        performer_id=professor_id,
+        update_type=UpdateType.student_card_id_updated
+    )

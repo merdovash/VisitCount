@@ -20,14 +20,11 @@ class WeekChart(QAnalysisDialog):
         return self.data
 
     def _draw(self, plot_type, ax, **kwargs):
-        try:
-            self.get_data().plot(
-                x=Column.date,
-                y=Column.visit_rate,
-                ax=ax,
-                kind=plot_type,
-                title='Посещения',
+        self.get_data().plot(
+            x=Column.date,
+            y=Column.visit_rate,
+            ax=ax,
+            kind=plot_type,
+            title='Посещения',
 
-                **kwargs)
-        except TypeError as e:
-            self.program.window.error.emit('Ошибка гарфика: ' + str(e))
+            **kwargs)

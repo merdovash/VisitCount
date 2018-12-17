@@ -1,5 +1,6 @@
 import os
 import sys
+import traceback
 
 import PyQt5
 from PyQt5 import QtWidgets
@@ -64,14 +65,18 @@ def check_modules():
 
 
 if __name__ == "__main__":
+    old_hook = sys.excepthook
+
+
     def catch_exceptions(t, val, tb):
         QtWidgets.QMessageBox.critical(None,
                                        "An exception was raised",
-                                       "Exception type: {}".format(t))
+                                       "Exception type: {},\n"
+                                       "value: {},\n"
+                                       "tb: {}".format(t, val, traceback.format_tb(tb)))
         old_hook(t, val, tb)
 
 
-    old_hook = sys.excepthook
     sys.excepthook = catch_exceptions
 
     window_config = WindowConfig.load()
@@ -87,6 +92,11 @@ if __name__ == "__main__":
 
     if 'no-css' in sys.argv:
         kwargs['css'] = False
+
+    if '-host' in sys.argv:
+        kwargs['host'] = sys.argv[sys.argv.index('-host') + 1]
+    elif '-H' in sys.argv:
+        kwargs['host'] = sys.argv[sys.argv.index('-H') + 1]
 
     app = QApplication(sys.argv)
     # app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
