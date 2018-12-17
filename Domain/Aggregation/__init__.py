@@ -4,7 +4,7 @@ from pandas import DataFrame, np
 from pandas.core.groupby import GroupBy
 
 from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline
-from Domain.functools.Function import memoize
+from Domain.functools.Decorator import memoize
 from Domain.functools.List import unique
 
 

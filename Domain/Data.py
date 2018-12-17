@@ -5,7 +5,7 @@ from sqlalchemy.ext.associationproxy import _AssociationList
 
 from DataBase2 import Student, Group, Lesson, Visitation, Administration, Discipline, Professor, NotificationParam, \
     StudentsGroups, LessonsGroups, Update
-from Domain.functools.Function import memoize
+from Domain.functools.Decorator import memoize
 
 
 def select_by_id(session, mapper, ID):

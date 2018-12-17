@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 
 from Client.Reader.Functor import OnRead
 from DataBase2 import Professor, Auth, UserType
-from DataBase2.Types import format_name
+from Domain.functools.Format import format_name
 from Domain.functools.List import find
 
 

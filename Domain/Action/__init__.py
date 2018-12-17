@@ -3,8 +3,8 @@ from sqlalchemy import inspect
 from DataBase2 import Visitation, Student, Lesson, Auth, Session, Professor, Administration, \
     NotificationParam, Parent, UpdateType, session_user
 from Domain.Action import Updates
-from Domain.Action.Exceptions import InvalidPasswordException, InvalidLoginException
-from Domain.Exception import UnnecessaryActionException
+from Domain.Exception.Action import UnnecessaryActionException
+from Domain.Exception.Authentication import InvalidLoginException, InvalidPasswordException
 from Domain.functools.Dict import to_dict
 
 

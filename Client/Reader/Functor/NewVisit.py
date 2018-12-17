@@ -1,7 +1,7 @@
 from Client.Reader.Functor import OnRead
 from DataBase2 import Student
-from DataBase2.Types import format_name
 from Domain import Action
+from Domain.functools.Format import format_name
 from Domain.functools.List import find
 
 
