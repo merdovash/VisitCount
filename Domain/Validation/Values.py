@@ -22,3 +22,9 @@ class Get:
             return type(val).__name__
         else:
             raise NotImplementedError()
+
+    @classmethod
+    def email(cls, user):
+        return ''
+
+

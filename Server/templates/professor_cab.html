@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Информационная панель преподавателя</title>
+    {% extends "material/base.html" %}
+    {% import "material/utils.html" as util %}
+    {% import "material/wtf.html" as wtf %}
+    {% import "BJheader.html" as BJ %}
+
+</head>
+<body>
+    {% block content %}
+    {{ BJ.header(breadcrumbs, professor_name, current_week, mobile) }}
+    <section>
+        <div>
+            <a href="#">Home</a>
+        </div>
+        <div>
+            <a href="#">2</a>
+        </div>
+    </section>
+    <main>
+
+    </main>
+    {% endblock %}
+</body>
+</html>
