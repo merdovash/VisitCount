@@ -4,7 +4,7 @@ var data = [{
         btnName: "Перейти к проекту",
         author: "Щекочихин В.П.",
         professor: "Евстигнеев В.А.",
-        url: "/visit",
+        url: "/cabinet",
     },
     {
         title: "система2",

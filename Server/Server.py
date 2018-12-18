@@ -3,10 +3,10 @@
 """
 import os
 
-from flask import Flask, make_response, request, render_template
+from flask import Flask, make_response, request, send_file
+from flask_material import Material
+from flask_wtf.csrf import CSRFProtect
 
-from Modules.Cabinet.ServerSide import CabinetModule
-from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.NotificationModule.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import Sycnh
@@ -15,12 +15,14 @@ path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static", template_folder=path + '/templates')
+app.config.update(SECRET_KEY='you-will-never-guess')
+csrf = CSRFProtect(app)
+Material(app)
 
 # load modules
-CabinetModule(app, request)
+
 FirstLoadModule(app, request)
 Sycnh(app, request)
-CabinetLogInModule(app, request)
 NotificationModule(app, request)
 
 print(path)
@@ -35,13 +37,15 @@ def related(a):
     return os.path.join(path, a)
 
 
-def page(path):
+def page(path, encoding='utf-8'):
     """
 
+    :param encoding:
     :param path:
     :return: complete html page
     """
-    return open(path, encoding='utf-8').read()
+    with open(path, encoding=encoding) as file:
+        return file.read()
 
 
 @app.route('/file/<path:file_name>')
@@ -65,13 +69,13 @@ def get_resource(file_name):  # pragma: no cover
     file_type = file_extension[1:]
     content = ""
     if file_type in ["js"]:
-        content = page(path + "/javascript/" + file_name)
+        content = page(path + "/javascript/" + file_name, encoding='utf-8')
     elif file_type in ["css"]:
-        content = page(path + "/css/" + file_name)
+        content = page(path + "/css/" + file_name, encoding='utf-8')
     elif file_type in ["html", "htm"]:
-        content = page(path + "/templates/" + file_name)
+        content = page(path + "/templates/" + file_name, encoding='utf-8')
     elif file_type in ["gif", "png", "img"]:
-        content = page(path + "/resources/" + file_name)
+        content = send_file(path + "/resources/" + file_name, mimetype='image/gif')
 
     response = make_response(content)
     response.headers['Content-Type'] = mimetypes.get(file_extension)
@@ -97,16 +101,6 @@ def visit():
     """
     if request.method == 'GET':
         return page(f'{path}/templates/login2.htm')
-
-
-@app.route('/cabinet', methods=['GET'])
-def cabinet():
-    """
-
-    :return:
-    """
-    if request.method == 'GET':
-        return render_template('cabs.html')
 
 
 # def fix_request_args(args, user_type, user_id):
@@ -221,4 +215,4 @@ def run():
     run server
     """
 
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="0.0.0.0", port=5000)

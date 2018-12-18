@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
+<<<<<<< Updated upstream
     <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="Классы таблиц SqlAlchemy заменены на обертки из Domain/DataBase&#10;Исправлены указатели">
       <change beforePath="$PROJECT_DIR$/.idea/VisitCount.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/VisitCount.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
@@ -14,6 +15,11 @@
       <change beforePath="$PROJECT_DIR$/Domain/Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/Data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" afterDir="false" />
+=======
+    <list default="true" id="0d6aa962-fefc-47fc-b4f8-e0af7215774b" name="Default" comment="___">
+      <change afterPath="$PROJECT_DIR$/Server/templates/professor_cab.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/templates/login2.htm" beforeDir="false" afterPath="$PROJECT_DIR$/Server/templates/login2.htm" afterDir="false" />
+>>>>>>> Stashed changes
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -25,7 +31,12 @@
     <session id="-1692725436">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
+<<<<<<< Updated upstream
           <entry key="project.closed" value="50" />
+=======
+          <entry key="project.closed" value="44" />
+          <entry key="project.open.time.0" value="1" />
+>>>>>>> Stashed changes
           <entry key="project.open.time.1" value="1" />
           <entry key="project.open.time.10" value="2" />
           <entry key="project.open.time.11" value="1" />
@@ -56,7 +67,11 @@
           <entry key="project.open.time.78" value="1" />
           <entry key="project.open.time.8" value="1" />
           <entry key="project.open.time.98" value="1" />
+<<<<<<< Updated upstream
           <entry key="project.opened" value="60" />
+=======
+          <entry key="project.opened" value="54" />
+>>>>>>> Stashed changes
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -64,10 +79,15 @@
           <entry key="conf" value="1" />
           <entry key="css" value="6" />
           <entry key="db" value="4" />
-          <entry key="html" value="1" />
+          <entry key="htm" value="2" />
+          <entry key="html" value="3" />
           <entry key="json" value="1" />
           <entry key="png" value="2" />
+<<<<<<< Updated upstream
           <entry key="py" value="1171" />
+=======
+          <entry key="py" value="1012" />
+>>>>>>> Stashed changes
           <entry key="pyi" value="6" />
           <entry key="pylintrc" value="2" />
           <entry key="svg" value="1" />
@@ -76,12 +96,21 @@
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
+<<<<<<< Updated upstream
           <entry key="CSS" value="6" />
           <entry key="HTML" value="1" />
           <entry key="Image" value="2" />
           <entry key="JSON" value="1" />
           <entry key="PLAIN_TEXT" value="8" />
           <entry key="Python" value="1171" />
+=======
+          <entry key="CSS" value="7" />
+          <entry key="HTML" value="5" />
+          <entry key="Image" value="2" />
+          <entry key="JSON" value="1" />
+          <entry key="PLAIN_TEXT" value="7" />
+          <entry key="Python" value="1012" />
+>>>>>>> Stashed changes
           <entry key="PythonStub" value="6" />
           <entry key="SVG" value="1" />
         </counts>
@@ -90,20 +119,35 @@
         <counts>
           <entry key="Python Console" value="43" />
           <entry key="conf" value="1" />
+<<<<<<< Updated upstream
           <entry key="css" value="2189" />
           <entry key="dummy" value="274" />
           <entry key="html" value="121" />
           <entry key="py" value="131783" />
+=======
+          <entry key="css" value="2191" />
+          <entry key="dummy" value="198" />
+          <entry key="htm" value="14" />
+          <entry key="html" value="337" />
+          <entry key="py" value="112562" />
+>>>>>>> Stashed changes
           <entry key="pylintrc" value="50" />
           <entry key="txt" value="3825" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
+<<<<<<< Updated upstream
           <entry key="CSS" value="2189" />
           <entry key="HTML" value="121" />
           <entry key="PLAIN_TEXT" value="4122" />
           <entry key="Python" value="131826" />
+=======
+          <entry key="CSS" value="2191" />
+          <entry key="HTML" value="351" />
+          <entry key="PLAIN_TEXT" value="2391" />
+          <entry key="Python" value="112562" />
+>>>>>>> Stashed changes
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages">
@@ -199,6 +243,7 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
+<<<<<<< Updated upstream
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Table/Control.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="1700">
@@ -206,11 +251,18 @@
               <folding>
                 <element signature="e#0#45#0" expanded="true" />
               </folding>
+=======
+        <entry file="file://$PROJECT_DIR$/Server/templates/cabs.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="255">
+              <caret line="15" column="18" lean-forward="true" selection-start-line="15" selection-start-column="18" selection-end-line="15" selection-end-column="18" />
+>>>>>>> Stashed changes
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+<<<<<<< Updated upstream
         <entry file="file://$PROJECT_DIR$/Domain/ExcelLoader/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="3094">
@@ -230,10 +282,22 @@
               <folding>
                 <element signature="e#0#34#0" expanded="true" />
               </folding>
+=======
+        <entry file="file://$PROJECT_DIR$/Server/templates/login.htm">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Server/templates/login2.htm">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="170">
+              <caret line="28" column="32" selection-start-line="28" selection-start-column="32" selection-end-line="28" selection-end-column="32" />
+>>>>>>> Stashed changes
             </state>
           </provider>
         </entry>
       </file>
+<<<<<<< Updated upstream
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -241,18 +305,53 @@
               <caret line="25" column="44" lean-forward="true" selection-start-line="25" selection-start-column="44" selection-end-line="25" selection-end-column="44" />
               <folding>
                 <element signature="e#0#52#0" expanded="true" />
+=======
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Modules/CabinetLogIn/ServerSide.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="204">
+              <caret line="21" column="9" lean-forward="true" selection-start-line="21" selection-start-column="9" selection-end-line="21" selection-end-column="9" />
+              <folding>
+                <element signature="e#0#11#0" expanded="true" />
+>>>>>>> Stashed changes
               </folding>
             </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Server/templates/professor_cab.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="170">
+              <caret line="10" column="5" lean-forward="true" selection-start-line="10" selection-start-column="5" selection-end-line="10" selection-end-column="5" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Modules/CabinetLogIn/__init__.py">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Server/templates/cabinet.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-969" />
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/run_client.py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
             <state>
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
+=======
+            <state relative-caret-position="34">
+              <caret line="2" column="17" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
+>>>>>>> Stashed changes
             </state>
           </provider>
         </entry>
@@ -396,6 +495,7 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
+<<<<<<< Updated upstream
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/Ui_QPlotWidget.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Chart/WeekAnalysis.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Widgets/QEasyTable.py" />
@@ -406,6 +506,8 @@
         <option value="$PROJECT_DIR$/Domain/functools/Url.py" />
         <option value="$PROJECT_DIR$/run_client.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Items/VisitItem.py" />
+=======
+>>>>>>> Stashed changes
         <option value="$PROJECT_DIR$/Client/MyQt/Window/interfaces.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Dialogs/QOkMsg.py" />
         <option value="$PROJECT_DIR$/Modules/Synch/ServerSide.py" />
@@ -445,8 +547,21 @@
         <option value="$PROJECT_DIR$/Domain/Action/__init__.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Table/Control.py" />
         <option value="$PROJECT_DIR$/Domain/ExcelLoader/__init__.py" />
+<<<<<<< Updated upstream
         <option value="$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py" />
         <option value="$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py" />
+=======
+        <option value="$PROJECT_DIR$/Client/MyQt/Window/Main/__init__.py" />
+        <option value="$PROJECT_DIR$/run_client.py" />
+        <option value="$PROJECT_DIR$/DataBase2/__init__.py" />
+        <option value="$PROJECT_DIR$/Server/__init__.py" />
+        <option value="$PROJECT_DIR$/Modules/NotificationModule/ServerSIde.py" />
+        <option value="$PROJECT_DIR$/Server/Server.py" />
+        <option value="$PROJECT_DIR$/Server/css/cabs.css" />
+        <option value="$PROJECT_DIR$/Server/templates/cabs.html" />
+        <option value="$PROJECT_DIR$/Server/templates/login2.htm" />
+        <option value="$PROJECT_DIR$/Server/templates/professor_cab.html" />
+>>>>>>> Stashed changes
       </list>
     </option>
   </component>
@@ -477,6 +592,43 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
+              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
+              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
+              <item name="Modules" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
+              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
+              <item name="Modules" type="462c0819:PsiDirectoryNode" />
+              <item name="CabinetLogIn" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
+              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
+              <item name="Server" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
+              <item name="VisitCount" type="462c0819:PsiDirectoryNode" />
+              <item name="Server" type="462c0819:PsiDirectoryNode" />
+              <item name="templates" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="VisitCount" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
       <pane id="Scope">
         <subPane subId="Scope 'Default'; set:Default; class com.intellij.packageDependencies.ChangeListScope">
           <expand>
@@ -540,6 +692,7 @@
           <select />
         </subPane>
       </pane>
+<<<<<<< Updated upstream
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -555,6 +708,8 @@
           <select />
         </subPane>
       </pane>
+=======
+>>>>>>> Stashed changes
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -1117,13 +1272,22 @@
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
     <editor active="true" />
     <layout>
+<<<<<<< Updated upstream
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49748743" visible="true" weight="0.23363096" />
+=======
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.23958333" />
+>>>>>>> Stashed changes
       <window_info id="Structure" order="1" weight="0.24851191" />
       <window_info id="Favorites" order="2" sideWeight="0.5025126" side_tool="true" weight="0.23363096" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.48363096" weight="0.32786885" />
+<<<<<<< Updated upstream
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.61011904" weight="0.36885247" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.6376702" weight="0.40655738" />
+=======
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4642857" visible="true" weight="0.36885247" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.6376702" weight="0.43278688" />
+>>>>>>> Stashed changes
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info active="true" anchor="bottom" id="TODO" order="6" sideWeight="0.56026787" visible="true" weight="0.34754097" />
@@ -1391,6 +1555,7 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Threading/SimpleRunnable.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="187">
@@ -1420,6 +1585,9 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/winVenv/Lib/site-packages/pip-10.0.1-py3.6.egg/pip/_vendor/progress/helpers.py">
+=======
+    <entry file="file://$PROJECT_DIR$/winVenv/Lib/site-packages/flask/helpers.py">
+>>>>>>> Stashed changes
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="128">
           <caret line="28" column="17" selection-start-line="28" selection-start-column="17" selection-end-line="28" selection-end-column="17" />
@@ -1536,8 +1704,13 @@
     </entry>
     <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36-32/Lib/typing.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
         <state relative-caret-position="14008">
           <caret line="831" selection-start-line="831" selection-end-line="831" />
+=======
+        <state relative-caret-position="242">
+          <caret line="96" column="33" selection-start-line="96" selection-start-column="33" selection-end-line="96" selection-end-column="33" />
+>>>>>>> Stashed changes
         </state>
       </provider>
     </entry>
@@ -1568,8 +1741,13 @@
     <entry file="file://$PROJECT_DIR$/Exception/__init__.py" />
     <entry file="file://$PROJECT_DIR$/Domain/Exception/Authentication/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
         <state relative-caret-position="119">
           <caret line="7" column="33" lean-forward="true" selection-start-line="7" selection-start-column="33" selection-end-line="7" selection-end-column="33" />
+=======
+        <state relative-caret-position="1156">
+          <caret line="83" column="27" selection-start-line="83" selection-start-column="27" selection-end-line="83" selection-end-column="27" />
+>>>>>>> Stashed changes
         </state>
       </provider>
     </entry>
@@ -1635,7 +1813,18 @@
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/Domain/ExcelLoader/ExcelTableReader.py">
+=======
+    <entry file="file://$PROJECT_DIR$/Server/Server.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="629">
+          <caret line="45" selection-start-line="45" selection-end-line="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DataBase2/__init__.py">
+>>>>>>> Stashed changes
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3111">
           <caret line="194" column="40" selection-start-line="194" selection-start-column="40" selection-end-line="194" selection-end-column="40" />
@@ -1647,7 +1836,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/run_client.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
         <state>
+=======
+        <state relative-caret-position="1411">
+          <caret line="83" column="46" selection-start-line="83" selection-start-column="46" selection-end-line="83" selection-end-column="46" />
+>>>>>>> Stashed changes
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
@@ -1656,11 +1850,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Domain/Data.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
         <state relative-caret-position="119">
           <caret line="14" column="25" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
           <folding>
             <element signature="e#0#24#0" expanded="true" />
           </folding>
+=======
+        <state relative-caret-position="34">
+          <caret line="2" column="17" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
+>>>>>>> Stashed changes
         </state>
       </provider>
     </entry>
@@ -1671,6 +1870,7 @@
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/Client/Reader/Functor/NewVisit.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="136">
@@ -1682,6 +1882,9 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Domain/Action/__init__.py">
+=======
+    <entry file="file://$PROJECT_DIR$/Server/css/cabs.css">
+>>>>>>> Stashed changes
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1700">
           <caret line="107" column="28" selection-start-line="107" selection-start-column="28" selection-end-line="107" selection-end-column="28" />
@@ -1691,6 +1894,7 @@
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/Client/MyQt/Widgets/Buttons/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="231">
@@ -1698,6 +1902,47 @@
           <folding>
             <element signature="e#0#52#0" expanded="true" />
           </folding>
+=======
+    <entry file="file://$PROJECT_DIR$/Server/templates/cabinet.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-969" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Server/templates/cabs.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="15" column="18" lean-forward="true" selection-start-line="15" selection-start-column="18" selection-end-line="15" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Server/templates/login.htm">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Server/templates/login2.htm">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="28" column="32" selection-start-line="28" selection-start-column="32" selection-end-line="28" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Modules/CabinetLogIn/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Modules/CabinetLogIn/ServerSide.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="21" column="9" lean-forward="true" selection-start-line="21" selection-start-column="9" selection-end-line="21" selection-end-column="9" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Server/templates/professor_cab.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="10" column="5" lean-forward="true" selection-start-line="10" selection-start-column="5" selection-end-line="10" selection-end-column="5" />
+>>>>>>> Stashed changes
         </state>
       </provider>
     </entry>
