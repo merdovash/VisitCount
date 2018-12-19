@@ -4,11 +4,15 @@ from pandas import DataFrame, np
 from pandas.core.groupby import GroupBy
 
 from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline
+from Domain.Data import names_of_groups
 from Domain.functools.Decorator import memoize
+from Domain.functools.Format import format_name
 from Domain.functools.List import unique
 
 
 class Column(object):
+    group_name = 'Группа'
+    student_name = 'ФИО'
     date = 'Дата'
     type = 'Тип'
     discipline = 'Дисциплина'
@@ -150,8 +154,6 @@ class Weeks:
         df = DataFrame(np.round(grouped[Column.visit_count] / grouped[Column.student_count], 2) * 100,
                        columns=[Column.visit_rate]).reset_index()
 
-        print(df)
-
         return df
 
 
@@ -201,6 +203,32 @@ class WeekDaysAggregation:
         df = df.rename(columns={2: 'Проведено занятий', 3: 'Всего занятий', 4: Column.date})
         df = df.loc[:, [Column.date, 'Проведено занятий', Column.visit_rate, 'Всего занятий']]
         df[Column.visit_rate] = df[Column.visit_rate].map(lambda x: 0 if x != x else x)
-        print(df)
+
+        return df
+
+
+class StudentAggregator:
+    @staticmethod
+    def by_professor(professor):
+        assert isinstance(professor, Professor)
+
+        students = Student.of(professor)
+
+        data = {
+            Column.student_name: [],
+            Column.group_name: [],
+            Column.visit_rate: []
+        }
+
+        for student in students:
+            data[Column.student_name].append(format_name(student))
+
+            data[Column.group_name].append(names_of_groups(Group.of(student)))
+
+            lesson_count = len(set(filter(lambda lesson:lesson.completed, Lesson.of(student))) & set(Lesson.of(professor)))
+            visit_count = len(set(Visitation.of(student)) & set(Visitation.of(professor)))
+            data[Column.visit_rate].append(round(visit_count/lesson_count*100))
+
+        df = DataFrame(data)
 
         return df
