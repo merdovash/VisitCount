@@ -17,7 +17,7 @@ class Case(object):
     loct = {'loct'}
 
 
-def format_name(user: Dict[str, str] or Professor or Student, case=None) -> str:
+def format_name(user: Dict[str, str] or Professor or Student, case=None, small=False) -> str:
     """
     Do format user data to readable string
     :param user: dictionary that contains keys: [last_name, first_name, middle_name]
@@ -64,4 +64,13 @@ def format_name(user: Dict[str, str] or Professor or Student, case=None) -> str:
         morph = pymorphy2.MorphAnalyzer()
         fio = [morph.parse(name)[0].inflect(case).word for name in fio]
 
+    if small:
+        return ' '.join([f.capitalize() if i == 0 else f.capitalize()[0] + '.' for i, f in enumerate(fio)])
     return ' '.join([f.capitalize() for f in fio])
+
+
+def js_format(js: str, **kwargs):
+    for key, val in kwargs.items():
+        js = js.replace('{' + key + '}', str(val))
+
+    return js

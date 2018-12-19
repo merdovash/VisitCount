@@ -56,3 +56,7 @@ def find(func, list_, default=None):
         if func(item):
             return item
     return default
+
+
+def without_None(l: list or tuple) -> list:
+    return list(filter(lambda x: x is not None, l))
