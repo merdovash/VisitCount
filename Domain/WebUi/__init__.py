@@ -3,8 +3,6 @@ from abc import abstractmethod
 from random import randint
 from typing import List, Any
 
-from matplotlib.pyplot import plot
-
 from Domain.Validation.Values import Get
 from Domain.functools.Format import format_name, js_format
 from Domain.functools.List import without_None
@@ -340,7 +338,8 @@ class MLink(WebContainer):
         self.text = address if text is None else text
 
         self.kwargs = dict()
-        self.kwargs['text_color'] = kwargs.get('text_color', None)+'-text' if kwargs.get('text_color') is not None else ''
+        self.kwargs['text_color'] = kwargs.get('text_color', None) + '-text' if kwargs.get(
+            'text_color') is not None else ''
 
 
 class Card(WebContainer):
@@ -502,8 +501,7 @@ class DataFrameColumnChart(WebComponent):
 
     @property
     def js_end(self):
-        return js_format("""
-        <script>
+        return js_format("""<script>
 Chart.defaults.global.defaultColor = 'rgba(255,128,0,0.4)'        
 
 function beforePrintHandler () {
@@ -610,6 +608,113 @@ class Footer(WebContainer):
 
         self._copyright = kwargs.get('copyright', '')
         self._copyright_links = kwargs.get('copyright_links', '')
+
+
+class DataFrameSmartTable2(WebComponent):
+    def __render__(self) -> str:
+        return self.main.format(id=self.id)
+
+    main = """
+    <div id='{id}'></div>
+    """
+
+    js_begin = """<script src='file/table.js'></script>"""
+
+    @property
+    def js_end(self):
+        return js_format("""<script>
+    init_table('{id}', {data}, {params});
+    </script>""",
+                         id=self.id,
+                         data=self.data(),
+                         params=self.params)
+
+    def __init__(self, df, id='smart_table' + str(randint(0, 100000)), params='{}'):
+        self.df = df
+        self.id = id
+        self.params = params
+
+    def data(self):
+        d = {}
+
+        df_dict = self.df.to_dict('split')
+        for i, col in enumerate(df_dict['columns']):
+            d[col] = list(map(lambda x: x[i], df_dict['data']))
+
+        return d
+
+
+class CardReveal(WebContainer):
+    def __render__(self) -> str:
+        return self.main.format(title=self.title,
+                                img=self.img,
+                                body=self.body,
+                                links=''.join([str(l) for l in self.links]))
+
+    main = """
+    <div class="card">
+    <div class="card-image waves-effect waves-block waves-light">
+      <img class="activator" src="{img}">
+    </div>
+    <div class="card-content">
+      <span class="card-title activator grey-text text-darken-4">{title}<i class="material-icons 
+      right">more_vert</i></span>
+      <p>{links}</p>
+    </div>
+    <div class="card-reveal">
+      <span class="card-title grey-text text-darken-4">{title}<i class="material-icons right">close</i></span>
+      {body}
+    </div>
+  </div>
+    """
+
+    def __init__(self, title, body, *links, img=''):
+        super().__init__(*links)
+        self.title = title
+        self.body = body
+        self.links = links
+        self.img = img
+
+
+class CollapsibleBlock(WebContainer):
+    def __render__(self) -> str:
+        return self.main.format(body=''.join([str(c) for c in self.container]))
+
+    main = """
+    <ul class="collapsible">
+    {body}
+    </ul>
+    """
+
+    js_end = """<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('.collapsible');
+    var instances = M.Collapsible.init(elems, {});
+});
+</script>"""
+
+    def __init__(self, *items):
+        super().__init__(*items)
+
+
+class Collapsible(WebContainer):
+    def __render__(self) -> str:
+        return self.main.format(title=self.tittle,
+                                body=self.body,
+                                icon=self.icon)
+
+    main = """
+    <li>
+      <div class="collapsible-header"><i class="material-icons">{icon}</i>{title}</div>
+      <div class="collapsible-body"><span>{body}</span></div>
+    </li>
+    """
+
+    def __init__(self, body, title='', icon='bar_chart'):
+        super().__init__()
+        self.tittle = title
+        self.body = body
+        self.icon=icon
 
 
 if __name__ == '__main__':
