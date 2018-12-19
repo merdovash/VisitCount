@@ -5,11 +5,12 @@ import os
 
 from flask import Flask, make_response, request, send_file
 from flask_material import Material
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.NotificationModule.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import Sycnh
+from Modules.CabinetLogIn import ServerSide as Cabinet
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -20,6 +21,8 @@ csrf = CSRFProtect(app)
 Material(app)
 
 # load modules
+
+Cabinet.init(app)
 
 FirstLoadModule(app, request)
 Sycnh(app, request)
@@ -46,6 +49,11 @@ def page(path, encoding='utf-8'):
     """
     with open(path, encoding=encoding) as file:
         return file.read()
+
+
+@app.route('/TableFilter/<path:file_name>')
+def get_TableFilter_lib(file_name):
+    return send_file(path+'/TableFilter/'+file_name)
 
 
 @app.route('/file/<path:file_name>')
