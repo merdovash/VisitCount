@@ -170,7 +170,7 @@ class Visitation(Base):
             return obj.visitations
         elif isinstance(obj, Group):
             return flat(Visitation.of(Student.of(obj)))
-        elif isinstance(obj, Professor):
+        elif isinstance(obj, (Professor, Discipline)):
             return Visitation.of(Lesson.of(obj))
         else:
             raise NotImplementedError(type(obj))
@@ -284,6 +284,8 @@ class Lesson(Base):
                 return unique(flat([Lesson.of(o) for o in obj]))
         elif isinstance(obj, (Professor, Discipline, Group)):
             return obj.lessons
+        elif isinstance(obj, Student):
+            return Lesson.of(obj.groups)
         else:
             raise NotImplementedError(type(obj))
 
@@ -434,6 +436,8 @@ class Group(Base):
                 raise NotImplementedError(f'{type(obj)}, flat_list=True')
             else:
                 return unique([Group.of(lesson) for lesson in obj.lessons])
+        elif isinstance(obj, Student):
+            return obj.groups
         else:
             raise NotImplementedError(type(obj))
 
@@ -466,14 +470,14 @@ class Student(Base):
 
     @staticmethod
     def of(obj) -> List['Student']:
-        if isinstance(obj, list):
+        if isinstance(obj, (list, _AssociationList)):
             return flat([Student.of(o) for o in unique(obj)])
         elif isinstance(obj, Group):
             return sorted(obj.students, key=lambda student: student.last_name)
         elif isinstance(obj, Lesson):
-            return flat(map(lambda group: Student.of(group), obj.groups))
-        elif isinstance(obj, Professor):
-            return flat(map(lambda lesson: Student.of(lesson), obj.lessons))
+            return unique(flat(map(lambda group: Student.of(group), obj.groups)))
+        elif isinstance(obj, (Professor, Discipline)):
+            return unique(flat(map(lambda lesson: Student.of(lesson.groups), obj.lessons)))
         else:
             raise NotImplementedError(type(obj))
 

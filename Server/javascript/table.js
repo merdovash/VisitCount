@@ -3,10 +3,10 @@ function init_table(container_id, data, params) {
 
     var container = document.getElementById(container_id);
 
-    var table = new Table(container);
+    var table = new Table(container, params['table']);
 
     var header_names = Object.keys(data);
-    table.setHeader(header_names, params['header']);
+    table.setHeader(header_names, 'header' in params ? params['header'] : {});
 
     var row_index = 0;
     while (row_index < data[header_names[0]].length) {
@@ -62,33 +62,50 @@ class Row {
 class Filter {
     constructor(parent, params) {
         this.filter_row = parent;
+        this.dom = document.createElement('td');
+        this.dom.className = "row";
+        this.dom.setAttribute('style', 'margin: auto;')
         this.cache_rule = x => true;
-
-        if (params == null || params['type'] == null) {
-            this.type = 'input';
-        } else {
-            this.type = params['type'];
+        this.icons = {
+            0: "vertical_align_center",
+            1: "vertical_align_bottom",
+            2: "vertical_align_top"
         }
 
-        this.make_dom(this.type);
-        this.filter_row = parent;
+        if (params) {
+            if (params['type']) this.type = params['type'];
+            if (params['order']) this.order_as = params['order'];
+        }
+        if (!this.type) this.type = 'input';
+        if (!this.order_as) this.order_as = 'string';
+
+        this.order_direction = 0;
+
+        this.init_order()
+        this.init_filter();
     }
 
-    make_dom() {
+    init_filter() {
+        this.filter_box = document.createElement('div');
+        this.filter_box.className = 'select-wrapper'
+        this.filter_box.setAttribute('style', 'margin-right:30px;');
+        this.dom.appendChild(this.filter_box);
         if (this.type == 'input') {
-            this.dom = document.createElement('input');
-            this.dom.setAttribute('type', 'text');
-            this.dom.oninput = e => {
-                this.dom = e.target
+            this.filter_el = document.createElement('input');
+            this.filter_box.appendChild(this.filter_el);
+            this.filter_el.setAttribute('type', 'text');
+            this.filter_el.oninput = e => {
+                this.filter_el = e.target
                 this._rule = e.target.value;
                 this.cache_rule = this.input_rules()
                 this.filter_row.change();
                 e.target.focus();
             };
         } else if (this.type == 'select') {
-            this.dom = document.createElement('select');
-            this.dom.onchange = e => {
-                this.dom = e.target;
+            this.filter_el = document.createElement('select');
+            this.filter_box.appendChild(this.filter_el);
+            this.filter_el.onchange = e => {
+                this.filter_el = e.target;
                 this._rule = e.target.value;
                 this.cache_rule = this.select_rule();
                 this.filter_row.change();
@@ -97,6 +114,56 @@ class Filter {
             this.items = [];
             this.new_option('Все');
         }
+    }
+
+    init_order() {
+        this.order_box = document.createElement('div');
+        this.order_box.setAttribute('style', 'float: right; vertical-align: center;');
+        this.dom.appendChild(this.order_box);
+        var icon = document.createElement('i');
+        this.order_box.appendChild(icon);
+
+        icon.className = "material-icons";
+        icon.innerHTML = this.icons[this.order_direction];
+        icon.onclick = e => {
+            this.order_direction = (this.order_direction + 1) % 3;
+            icon.innerHTML = this.icons[this.order_direction];
+            this.selectOrder();
+            this.filter_row.sortUpdated(this)
+        }
+        this.icon = icon;
+        this.selectOrder();
+    }
+
+    selectOrder() {
+        var col = this.filter_row.items.indexOf(this);
+        if (this.order_as == 'string') {
+            if (this.order_direction == 1) {
+                this.cache_order = (a, b) => a.data[col] < b.data[col] ? 1 : -1;
+            } else if (this.order_direction == 2) {
+                this.cache_order = (a, b) => a.data[col] > b.data[col] ? 1 : -1;
+            } else {
+                this.cache_order = (a, b) => 0;
+            }
+        } else if (this.order_as == 'number') {
+            if (this.order_direction == 1) {
+                this.cache_order = (a, b) => a.data[col] < b.data[col];
+            } else if (this.order_direction == 2) {
+                this.cache_order = (a, b) => a.data[col] > b.data[col];
+            } else {
+                this.cache_order = (a, b) => 0;
+            }
+        }
+
+    }
+
+    order() {
+        return this.cache_order;
+    }
+
+    resetOrder() {
+        this.order_direction = 0;
+        this.icon.innerHTML = this.icons[0];
     }
 
     select_rule() {
@@ -142,7 +209,7 @@ class Filter {
         var option = document.createElement('option');
         option.setAttribute('value', val);
         option.innerHTML = val;
-        this.dom.appendChild(option);
+        this.filter_el.appendChild(option);
     }
 
     render() {
@@ -160,6 +227,8 @@ class FilterRow {
         this.count = count;
         this.dom = document.createElement('tr');
 
+        this.sortedColumn = -1;
+
         this.items = [];
         for (var i = 0; i < count; i++) {
             this.items.push(new Filter(this, params[i.toString()]));
@@ -174,6 +243,27 @@ class FilterRow {
         return this.items.map(x => x.rule());
     }
 
+    sortUpdated(item) {
+        for (var i = 0; i < this.items.length; i++) {
+            if (this.items[i] != item) {
+                this.items[i].resetOrder();
+            } else {
+                this.sortedColumn = i;
+            }
+        }
+        this.change();
+    }
+
+    getSort() {
+        var items = this.items;
+        var sortedColumn = this.sortedColumn;
+        if (sortedColumn >= 0) {
+            return items[sortedColumn].order();
+        } else {
+            return (a, b) => 0;
+        }
+    }
+
     rowAdded(row) {
         this.items.forEach((item, index) => {
             item.rowAdded(row.data[index]);
@@ -183,19 +273,26 @@ class FilterRow {
     render() {
         this.dom.innerHTML = "";
         for (var i = 0; i < this.items.length; i++) {
-            var filter_el = document.createElement('td');
-            filter_el.appendChild(this.items[i].render());
-
-            this.dom.appendChild(filter_el);
+            this.dom.appendChild(this.items[i].render());
         }
         return this.dom;
     }
 }
 
 class Table {
-    constructor(parent) {
+    constructor(parent, params) {
         this.container = parent
         this.dom = document.createElement('table');
+        this.header = document.createElement('thead');
+        this.body = document.createElement('tbody');
+
+        this.dom.appendChild(this.header);
+        this.dom.appendChild(this.body)
+        if (params) {
+            if (params['style']) {
+                this.dom.className = params['style']
+            }
+        }
         this.header_row_items = [];
         this.columns = [];
         this.rows = [];
@@ -203,7 +300,7 @@ class Table {
     }
 
     setHeader(names, params) {
-        this.filterRow = new FilterRow(this, names.length, params['filter']);
+        this.filterRow = new FilterRow(this, names.length, 'filter' in params ? params['filter'] : {});
         this.headerRow = new Row(names, 'th');
     }
 
@@ -222,26 +319,27 @@ class Table {
 
     render() {
         if (!this.rendered) {
-            this.container.innerHTML = "";
-            this.dom.innerHTML = "";
-
-            this.dom.appendChild(this.headerRow.render());
-            this.dom.appendChild(this.filterRow.render());
+            this.header.appendChild(this.headerRow.render());
+            this.header.appendChild(this.filterRow.render());
             this.rendered = true;
         } else {
-            var count = this.dom.getElementsByTagName('tr').length;
-            for (var i = 2; i < count; i++) {
-                this.dom.removeChild(this.dom.getElementsByTagName('tr')[2]);
-            }
+            this.body.innerHTML = "";
         }
 
         var rules = this.filterRow.get_rules();
 
+        var rows_afet_filter = []
         for (var i = 0; i < this.rows.length; i++) {
             var row = this.rows[i];
             if (row.check(rules)) {
-                this.dom.appendChild(row.render())
+                rows_afet_filter.push(row)
             }
+        }
+
+        var comparer = this.filterRow.getSort()
+        var rows_after_sorting = rows_afet_filter.sort(comparer);
+        for (var i = 0; i < rows_after_sorting.length; i++) {
+            this.body.appendChild(rows_after_sorting[i].render())
         }
 
         this.container.appendChild(this.dom)

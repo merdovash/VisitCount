@@ -107,7 +107,7 @@ class GroupAggregation:
             return total, df
 
 
-class DisciplineAggregation:
+class DisciplineAggregator:
     @staticmethod
     def by_professor(professor: Professor) -> DataFrame:
         disciplines = {disc.name: {
@@ -133,7 +133,9 @@ class DisciplineAggregation:
 
         df = df.drop(['visit', 'total'], axis=1)
 
-        return df
+        df[Column.discipline] = df.index
+
+        return df[[Column.discipline, 'Посещения, %', 'Всего занятий', 'Проведено занятий']]
 
 
 class Weeks:
@@ -232,3 +234,25 @@ class StudentAggregator:
         df = DataFrame(data)
 
         return df
+
+    @staticmethod
+    def by_discipline(disc):
+        assert isinstance(disc, Discipline)
+
+        data = {
+            Column.student_name: [],
+            Column.group_name: [],
+            Column.visit_rate: []
+        }
+
+        for student in Student.of(disc):
+            data[Column.student_name].append(format_name(student))
+            data[Column.group_name].append(names_of_groups(Group.of(student)))
+
+            lesson_count = len(set(filter(lambda lesson: lesson.completed, Lesson.of(student))) & set(Lesson.of(disc)))
+            visit_count = len(set(Visitation.of(student)) & set(Visitation.of(disc)))
+
+            data[Column.visit_rate].append(round(visit_count/lesson_count*100))
+
+        return DataFrame(data)
+

@@ -6,7 +6,7 @@ from flask import render_template
 from premailer import transform
 
 from DataBase2 import Auth, Administration, Parent, Lesson
-from Domain.Aggregation import GroupAggregation, DisciplineAggregation, WeekDaysAggregation
+from Domain.Aggregation import GroupAggregation, DisciplineAggregator, WeekDaysAggregation
 from Domain.functools.Format import format_name
 from Domain.functools.List import flat
 from Modules import Module
@@ -34,7 +34,7 @@ class MessageMaker:
 
         self.total_rate, self.group_table = GroupAggregation.by_professor(self.user, html=True)
 
-        self.discipline_table = DisciplineAggregation.by_professor(self.user).to_html()
+        self.discipline_table = DisciplineAggregator.by_professor(self.user).to_html()
 
         self.week_day_table = WeekDaysAggregation.by_professor(self.user).to_html()
 
