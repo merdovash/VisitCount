@@ -13,7 +13,6 @@ from Modules.Synch.ServerSide import Sycnh
 from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.Index import ServerSide as Index
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
-from Modules.CabinetLogIn import ServerSide as Cabinet
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -208,4 +207,4 @@ def run():
     run server
     """
 
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="0.0.0.0", port=5000)
