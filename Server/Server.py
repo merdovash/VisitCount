@@ -11,6 +11,8 @@ from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.NotificationModule.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import Sycnh
 from Modules.CabinetLogIn import ServerSide as Cabinet
+from Modules.Index import ServerSide as Index
+from Modules.VisitLandingPage import ServerSide as VisitLandingPage
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -23,6 +25,8 @@ Material(app)
 # load modules
 
 Cabinet.init(app)
+Index.init(app)
+VisitLandingPage.init(app)
 
 FirstLoadModule(app, request)
 Sycnh(app, request)
@@ -82,33 +86,13 @@ def get_resource(file_name):  # pragma: no cover
         content = page(path + "/css/" + file_name, encoding='utf-8')
     elif file_type in ["html", "htm"]:
         content = page(path + "/templates/" + file_name, encoding='utf-8')
-    elif file_type in ["gif", "png", "img"]:
+    elif file_type in ["gif", "png", "img", 'jpg']:
         content = send_file(path + "/resources/" + file_name, mimetype='image/gif')
 
     response = make_response(content)
     response.headers['Content-Type'] = mimetypes.get(file_extension)
 
     return response
-
-
-@app.route("/", methods=['GET'])
-def index():
-    """
-
-    :return: index.html
-    """
-    if request.method == "GET":
-        return page(path + "/templates/index.html")
-
-
-@app.route("/visit", methods=['GET', 'POST'])
-def visit():
-    """
-
-    :return:
-    """
-    if request.method == 'GET':
-        return page(f'{path}/templates/login2.htm')
 
 
 # def fix_request_args(args, user_type, user_id):

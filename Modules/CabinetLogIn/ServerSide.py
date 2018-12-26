@@ -7,11 +7,12 @@ from flask_wtf.csrf import CSRFError
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired
 
-from DataBase2 import Auth, Session
-from Domain.Aggregation import Weeks, Column, StudentAggregator
+from DataBase2 import Auth, Session, Discipline
+from Domain.Aggregation import Weeks, Column, StudentAggregator, DisciplineAggregator
 from Domain.Date import study_week
 from Domain.WebUi import WebPage, Header, Card, Grid, s, m, MLink, DataFrameColumnChart, \
-    Section, Row, Footer, MList, Col, offset, MText, DataFrameSmartTable2, CardReveal, CollapsibleBlock, Collapsible
+    Section, Row, Footer, MList, Col, offset, MText, DataFrameSmartTable2, CardReveal, CollapsibleBlock, Collapsible, \
+    TabContainer, Tab
 from Domain.functools.Format import format_name
 
 
@@ -90,6 +91,44 @@ def admin_cabinet(form: CabinetForm):
                     }
                 ),
                 icon='format_list_numbered'
+            ),
+            Collapsible(
+                title='Подробная информация по дисциплинам',
+                body=TabContainer(
+                    Tab(
+                        title='Общее',
+                        body=DataFrameSmartTable2(
+                            DisciplineAggregator.by_professor(auth.user),
+                            params={
+                                'header': {
+                                    'filter': {
+                                        '0': {
+                                            'type': 'select'
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    ),
+                    *(Tab(
+                        title=disc.name,
+                        body=DataFrameSmartTable2(
+                            StudentAggregator.by_discipline(disc),
+                            params={
+                                'header': {
+                                    'filter': {
+                                        '1': {
+                                            'type': 'select'
+                                        }
+                                    }
+                                },
+                                'table': {
+                                    'style': 'highlight'
+                                }
+                            }
+                        )
+                    ) for disc in Discipline.of(auth.user))
+                )
             )
         ),
         header=Header(
