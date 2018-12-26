@@ -80,6 +80,9 @@ class Grid:
         else:
             return ''
 
+    def __str__(self):
+        return self.col
+
 
 class WebPage:
     main = """
@@ -88,7 +91,7 @@ class WebPage:
 <head>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="file/materialize{main_color}.css">
     <link rel="stylesheet" href="file/row_height_fix.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,7 +106,7 @@ class WebPage:
 </header>
 {nav}
 <main>
-    <div class="container">
+    <div class="{in_container}">
     {components}
     </div>
 </main>
@@ -116,12 +119,16 @@ class WebPage:
 </html>
 """
 
-    def __init__(self, *components, header=None, nav=None, footer=None, title='Информационная панель преподавателя'):
+    def __init__(self, *components, header=None, nav=None, footer=None, title='Информационная панель преподавателя',
+                 main_color='',
+                 in_container=True):
         self.header = header
         self.nav = nav
         self.components: List[WebComponent] = [] if components is None else list(components)
         self.title = title
         self.footer = footer
+        self.main_color = main_color
+        self.in_container = in_container
 
     def insert(self, component, index=None):
         if isinstance(component, WebComponent):
@@ -132,7 +139,7 @@ class WebPage:
         else:
             raise Exception()
 
-    def show(self, **future):
+    def show(self, main_color='', **future):
         def _set_future(obj):
             for item_name in dir(obj):
                 item = getattr(obj, item_name)
@@ -148,6 +155,9 @@ class WebPage:
                     for sub_item in item:
                         _set_future(sub_item)
 
+        if self.main_color is '':
+            self.main_color = main_color
+
         if future is not None:
             _set_future(self)
 
@@ -161,16 +171,25 @@ class WebPage:
             js=self._get_all('js'),
             js_end=self._get_all('js_end'),
             js_source=self._get_all('js_source'),
-            js_begin=self._get_all('js_begin'))
+            js_begin=self._get_all('js_begin'),
+            main_color='-' + self.main_color if self.main_color != '' else '',
+            in_container='container' if self.in_container else '')
 
     def _get_all(self, key):
-        f = ""
+        f = set()
         for item in without_None((*self.components, self.header, self.nav)):
             if isinstance(item, WebComponent):
-                f += item.get(key)
+                value = item.get(key)
+                if isinstance(value, (str, int)):
+                    f.add(value)
+                elif isinstance(value, (set, list)):
+                    f.update(value)
+                else:
+                    print(type(value), value)
             else:
                 raise Exception(type(item), item)
-        return f
+        print(''.join(f))
+        return ''.join(f)
 
     def _compile_components(self):
         return ''.join([component.__render__() for component in self.components])
@@ -205,18 +224,30 @@ class WebComponent:
                 pass
         return l
 
+    def params(self):
+        if hasattr(self, '_params'):
+            return ' '.join([f'{key}="{value}"' for key, value in self._params.items()])
+        else:
+            return ''
+
 
 class WebContainer(WebComponent):
     def __init__(self, *components):
         self.container = list(components)
 
     def get(self, key):
-        f = WebComponent.get(self, key)
+        f = [WebComponent.get(self, key)]
         for item in self._items():
             try:
-                f += item.get(key)
+                value = item.get(key)
+                if isinstance(value, str):
+                    f.append(value)
+                elif isinstance(value, list):
+                    f.extend(value)
             except TypeError:
                 raise TypeError(f'must be str in get {repr(item)} on key={key}')
+            except AttributeError:
+                pass
         return f
 
     def _items(self):
@@ -230,20 +261,31 @@ class WebContainer(WebComponent):
 
 
 class Row(WebContainer):
-    main = "<div class='row grid'>{components}</div>"
+    main = "<div class='row{is_flex}'>{components}</div>"
 
     def __render__(self) -> str:
-        return self.main.format(components=''.join(map(str, self._items())))
+        return self.main.format(
+            components=''.join(map(str, self._items())),
+            is_flex=' flex' if self.flex else '')
+
+    def __init__(self, *components, flex=False):
+        super().__init__(*components)
+        self.flex = flex
 
 
 class Col(WebContainer):
-    main = """<div class="col {grid} cell">{components}</div>"""
+    main = """<div class="col {grid}{is_flex}">{components}</div>"""
 
     def __render__(self) -> str:
-        return self.main.format(grid=self.grid.col, components=''.join(map(str, self.container)))
+        return self.main.format(
+            grid=self.grid.col,
+            components=''.join(map(str, self.container)),
+            is_flex=' flex' if self.flex else '')
 
-    def __init__(self, *components, grid=None):
+    def __init__(self, *components, grid=None, flex=False):
         super().__init__(*components)
+
+        self.flex = flex
         if isinstance(grid, Grid):
             self.grid = grid
         elif isinstance(grid, _grid_measure):
@@ -258,13 +300,13 @@ class Col(WebContainer):
 
 class MList(WebContainer):
     main = """
-    <ul>
+    <ul class="collection">
       {components}
     </ul>"""
 
     def __render__(self):
         def element(c: WebComponent):
-            return """<li>{}</li>""".format(str(c))
+            return """<li class="collection-item">{}</li>""".format(str(c))
 
         return self.main.format(components=''.join(map(element, self.container)))
 
@@ -281,11 +323,26 @@ class MText(WebComponent):
         return self.main.format(text=self.text)
 
 
-class Image(WebComponent):
+class P(WebComponent):
+    def __render__(self) -> str:
+        return self.main.format(p=self.text,
+                                params=self.params())
+
+    main = """
+    <p {params}>{p}</p>"""
+
+    def __init__(self, text, **style):
+        self.text = text
+        self._style = style
+
+
+class MImage(WebComponent):
     def __render__(self) -> str:
         return self.main.format(address=self.address)
 
-    main = '<image src="{address}">'
+    main = """<div class="material-placeholder">
+<image class="responsive-img" src="{address}">
+</div>"""
 
     def __init__(self, address):
         self.address = address
@@ -347,11 +404,12 @@ class Card(WebContainer):
         self.position.__set_monitor__(is_mobile)
 
     main = """
+    {page_link}
     <div class="col {col_pos} cell">
       <div class="card {bg_color} darken-1">
         <div class="card-content {text_color}-text">
           <span class="card-title">{title}</span>
-          <p>{text}</p>
+          {body}
         </div>
         <div class="card-action">
           {links}
@@ -359,24 +417,26 @@ class Card(WebContainer):
       </div>
     </div>"""
 
-    def __init__(self, title, text, *links, bg_color='blue-grey', text_color='white',
-                 grid=Grid(s(12))):
+    def __init__(self, title, body, *links, bg_color='white', text_color='black',
+                 grid=Grid(s(12)), page_link=None):
         super().__init__()
         self.title = title
-        self.text = text
+        self.body = body
         self.links = list(links)
         self.bg_color = bg_color
         self.text_color = text_color
         self.position: Grid = grid
+        self.page_link = page_link
 
     def __render__(self) -> str:
         return self.main.format(
             title=self.title,
-            text=self.text,
+            body=self.body,
             links=self._prepare_links(),
             bg_color=self.bg_color,
             text_color=self.text_color,
-            col_pos=self.position.col
+            col_pos=self.position.col,
+            page_link=f'<a name="{self.page_link}"></a>' if self.page_link is not None else ''
         )
 
     def _prepare_links(self):
@@ -441,7 +501,7 @@ class SideNav(WebComponent):
         self.user_contact = Get.email(user)
 
     def _background(self):
-        if isinstance(self.bg, Image):
+        if isinstance(self.bg, MImage):
             return self.bg.address
         elif self.bg is None:
             return ""
@@ -629,7 +689,9 @@ class DataFrameSmartTable2(WebComponent):
                          data=self.data(),
                          params=self.params)
 
-    def __init__(self, df, id='smart_table' + str(randint(0, 100000)), params='{}'):
+    def __init__(self, df, id=None, params='{}'):
+        if id is None:
+            id = 'smart_table' + str(randint(0, 100000))
         self.df = df
         self.id = id
         self.params = params
@@ -668,12 +730,33 @@ class CardReveal(WebContainer):
   </div>
     """
 
-    def __init__(self, title, body, *links, img=''):
+    def __init__(self, title, body, links, img=''):
         super().__init__(*links)
         self.title = title
         self.body = body
         self.links = links
         self.img = img
+
+
+class MButton(WebContainer):
+    def __render__(self) -> str:
+        return self.main.format(text=self.text,
+                                img_before=self.img_before,
+                                img_after=self.img_after,
+                                params=self.params())
+
+    main = """
+    <a class="waves-effect waves-light btn" {params}>{img_before}{text}{img_after}</a>"""
+
+    def __init__(self, text, img_before='', img_after='', **params):
+        super().__init__()
+
+        self.text = text
+        self.img_before = img_before
+        self.img_after = img_after
+        self._params = params
+
+        params.get('href')
 
 
 class CollapsibleBlock(WebContainer):
@@ -705,7 +788,8 @@ class Collapsible(WebContainer):
 
     main = """
     <li>
-      <div class="collapsible-header"><i class="material-icons">{icon}</i>{title}</div>
+      <div class="collapsible-header"><i class="material-icons">expand_more</i><i 
+      class="material-icons">{icon}</i>{title}</div>
       <div class="collapsible-body"><span>{body}</span></div>
     </li>
     """
@@ -714,7 +798,67 @@ class Collapsible(WebContainer):
         super().__init__()
         self.tittle = title
         self.body = body
-        self.icon=icon
+        self.icon = icon
+
+
+class TabContainer(WebContainer):
+    main = """
+    <div class="row">
+    <div class="col s12">
+      <ul class="tabs">
+        {titles}
+      </ul>
+    </div>
+    {bodies}
+  </div>
+    """
+
+    js_end = """
+<script>
+var instance = M.Tabs.init(document.querySelector('.tabs'), {});
+</script>"""
+
+    def __render__(self) -> str:
+        return self.main.format(
+            titles=self.titels(),
+            bodies=self.bodies()
+        )
+
+    def __init__(self, *tabs, id=None):
+        super().__init__(*tabs)
+
+        if id is None:
+            id = f's{randint(0, 100000000)}'
+        self.id = id
+
+    def titels(self):
+        return ''.join(f'<li class="tab col {self.id}">{t.title()}</li>' for t in self.container)
+
+    def bodies(self):
+        return ''.join(f'<div id="{t.id}" class="col s12">{t.body()}</div>' for t in self.container)
+
+
+class Tab(WebContainer):
+    def __init__(self, title, body, id=None):
+        super().__init__(body)
+        if id is None:
+            id = f'tab_item{randint(1, 1000000)}'
+
+        self.id = id
+
+        if isinstance(title, MLink):
+            self._title = title
+        elif isinstance(title, (int, str)):
+            self._title = MLink(address=f'#{id}', text=title)
+
+        self._body = body
+
+    def title(self):
+        return self._title
+
+    def body(self):
+        print(self._body)
+        return self._body
 
 
 if __name__ == '__main__':
