@@ -4,17 +4,22 @@ safsdf
 """
 import os
 import sys
+from collections import defaultdict
+from datetime import datetime
 from threading import Lock
-from typing import List, Union
+from typing import List, Union, Tuple, Dict
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
-    DateTime, Boolean
+    DateTime, Boolean, event
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool
 
 from DataBase2.config2 import Config
+from Domain.Date import study_week
+from Domain.functools.Decorator import memoize, timeit
 from Domain.functools.List import flat, unique
 
 try:
@@ -52,13 +57,13 @@ def create_threaded():
 
 def create():
     _new = False
-    if root == 'run_server.py':
+    if root == 'run_server2.py':
         engine = create_engine(Config.connection_string,
                                pool_pre_ping=True,
                                poolclass=NullPool)
 
     else:
-        db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
+        db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db2.db'))
 
         engine = create_engine(db_path,
                                echo=False,
@@ -101,58 +106,99 @@ def session_user(func):
     return f
 
 
-def ProfessorSession(professor_id, session):
+def UserSession(user, session=None):
     if session is None:
         s = Session()
     else:
         s = session
-    setattr(s, 'professor_id', professor_id)
+
+    if isinstance(user, _DBPerson):
+        setattr(s, 'user', user)
+
     return s
 
 
-class StudentsGroups(Base):
+class _DBObject:
+    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
+
+    def __repr__(self):
+        return "<{type}({fields})>".format(
+            type=type(self).__name__,
+            fields=', '.join("{name}={value}".format(name=name, value=getattr(self, name))
+                             for name in dir(self.__class__)
+                             if isinstance(getattr(self.__class__, name), InstrumentedAttribute))
+        )
+
+
+class _DBTrackedObject(_DBObject):
+    _created = Column(DateTime, default=datetime.now)
+    _updated = Column(DateTime, onupdate=datetime.now)
+    _is_deleted = Column(Boolean, default=False)
+    _deleted = Column(DateTime)
+
+    def delete(self):
+        self._is_deleted = True
+        self._deleted = datetime.now()
+
+    def restore(self):
+        self._deleted = None
+        self._is_deleted = False
+
+
+class _DBPerson(_DBTrackedObject):
+    last_name = Column(String(50), nullable=False)
+    first_name = Column(String(50), nullable=False)
+    middle_name = Column(String(50), default="")
+    sex = Column(Boolean, default=True)
+    email = Column(String(200))
+
+    session = None
+
+    @classmethod
+    def get_by_id(cls, id):
+        user_session = Session()
+
+        user = user_session.query(cls).filter(cls.id == id).first()
+
+        if user is not None:
+            return UserSession(user, user_session)
+        else:
+            raise ValueError('user of {id} not found'.format(id=id))
+
+
+class StudentsGroups(Base, _DBTrackedObject):
     __tablename__ = 'students_groups'
-    id = Column(Integer, primary_key=True)
     student_id = Column(Integer, ForeignKey('students.id'))
     group_id = Column(Integer, ForeignKey('groups.id'))
 
     UniqueConstraint('student_id', 'group_id', name='students_groups_UK')
 
 
-class ProfessorsUpdates(Base):
-    __tablename__ = 'professors_updates'
-    id = Column(Integer, primary_key=True)
-    professor_id = Column(Integer, ForeignKey('professors.id'))
-    update_id = Column(Integer, ForeignKey('updates.id'))
-
-    UniqueConstraint('professor_id', 'update_id', name='professor_update_UK')
-
-
-class LessonsGroups(Base):
+class LessonsGroups(Base, _DBTrackedObject):
     __tablename__ = 'lessons_groups'
 
-    id = Column(Integer, primary_key=True)
     lesson_id = Column(Integer, ForeignKey('lessons.id'))
     group_id = Column(Integer, ForeignKey('groups.id'))
 
     UniqueConstraint('lesson_id', 'group_id', name='lesson_groups_UK')
 
 
-class StudentsParents(Base):
+class StudentsParents(Base, _DBTrackedObject):
     __tablename__ = 'students_parents'
 
-    parent_id = Column(Integer, ForeignKey('parents.id'), primary_key=True)
-    student_id = Column(Integer, ForeignKey('students.id'), primary_key=True)
+    parent_id = Column(Integer, ForeignKey('parents.id'))
+    student_id = Column(Integer, ForeignKey('students.id'))
+
+    UniqueConstraint('parent_id', 'student_id', name='student_parent_UK')
 
 
-class Visitation(Base):
+class Visitation(Base, _DBTrackedObject):
     """
     Visitation
     """
 
     __tablename__ = 'visitations'
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     student_id = Column(Integer, ForeignKey('students.id'))
     lesson_id = Column(Integer, ForeignKey('lessons.id'))
 
@@ -160,7 +206,7 @@ class Visitation(Base):
 
     def __repr__(self):
         return f'<Visitation(id={self.id}, student_id={self.student_id},' \
-               f' lesson_id={self.lesson_id})>'
+            f' lesson_id={self.lesson_id})>'
 
     @staticmethod
     def of(obj):
@@ -183,13 +229,12 @@ class UserType(int):
     ADMIN = 3
 
 
-class Auth(Base):
+class Auth(Base, _DBTrackedObject):
     """
     Authentication table
     """
     __tablename__ = 'auth5'
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     login = Column(String(40), unique=True)
     password = Column(String(40))
     uid = Column(String(40), unique=True)
@@ -217,17 +262,16 @@ class Auth(Base):
 
     def __repr__(self):
         return f"<Auth(id={self.id}," \
-               f" user_type={self.user_type}," \
-               f" user_id={self.user_id})>"
+            f" user_type={self.user_type}," \
+            f" user_id={self.user_id})>"
 
 
-class Discipline(Base):
+class Discipline(Base, _DBTrackedObject):
     """
     Discipline
     """
     __tablename__ = 'disciplines'
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     name = Column(String(40), nullable=False)
     full_name = Column(String(200))
 
@@ -235,7 +279,7 @@ class Discipline(Base):
 
     def __repr__(self):
         return f"<Discipline(id={self.id}," \
-               f" name={self.name})>"
+            f" name={self.name})>"
 
     @staticmethod
     def of(obj) -> List['Discipline']:
@@ -247,13 +291,12 @@ class Discipline(Base):
             raise NotImplementedError(type(obj))
 
 
-class Lesson(Base):
+class Lesson(Base, _DBTrackedObject):
     """
     Lesson
     """
     __tablename__ = 'lessons'
 
-    id = Column(Integer, primary_key=True)
     professor_id = Column(Integer, ForeignKey('professors.id'), nullable=False)
     discipline_id = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
     type = Column(Integer, nullable=False)
@@ -268,9 +311,13 @@ class Lesson(Base):
 
     def __repr__(self):
         return f"<Lesson(id={self.id}, professor_id={self.professor_id}," \
-               f" discipline_id={self.discipline_id}, " \
-               f"date={self.date}, type={self.type}," \
-               f" completed={self.completed})>"
+            f" discipline_id={self.discipline_id}, " \
+            f"date={self.date}, type={self.type}," \
+            f" completed={self.completed})>"
+
+    @property
+    def week(self):
+        return study_week(self.date)
 
     @staticmethod
     def of(obj, intersect=False) -> List['Lesson']:
@@ -290,17 +337,11 @@ class Lesson(Base):
             raise NotImplementedError(type(obj))
 
 
-class Administration(Base):
+class Administration(Base, _DBPerson):
     """
     Administration user
     """
     __tablename__ = 'administrations'
-
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    first_name = Column(String(40))
-    last_name = Column(String(40))
-    middle_name = Column(String(40))
-    email = Column(String(40))
 
     notification = relationship('NotificationParam', backref=backref("admin", cascade="all,delete"),
                                 passive_updates=False)
@@ -308,8 +349,8 @@ class Administration(Base):
 
     def __repr__(self):
         return f"<Administration(id={self.id}, card_id={self.email}, " \
-               f"last_name={self.last_name}, first_name={self.first_name}, " \
-               f"middle_name={self.middle_name})>"
+            f"last_name={self.last_name}, first_name={self.first_name}, " \
+            f"middle_name={self.middle_name})>"
 
     @staticmethod
     def of(obj) -> List['Administration']:
@@ -331,32 +372,26 @@ class Administration(Base):
             raise NotImplementedError(type(obj))
 
 
-class Professor(Base):
+class Professor(_DBPerson, Base):
     """
     Professor
     """
     __tablename__ = 'professors'
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    first_name = Column(String(40))
-    last_name = Column(String(40))
-    middle_name = Column(String(40))
     card_id = Column('card_id', String(40), unique=True)
+
+    _last_update_in = Column(DateTime)
+    _last_update_out = Column(DateTime)
 
     lessons: List[Lesson] = relationship("Lesson", backref=backref('professor'), order_by="Lesson.date")
 
     _admins = relationship('NotificationParam', backref="professor")
     admins = association_proxy('_admins', 'admin')
 
-    _updates = relationship('ProfessorsUpdates', backref=backref('professor'))
-    updates = association_proxy('_updates', 'update')
-
-    def __repr__(self):
-        return f"<Professor(id={self.id}, card_id={self.card_id}, " \
-               f"last_name={self.last_name}, first_name={self.first_name}, " \
-               f"middle_name={self.middle_name})>"
+    session: Session = None
 
     @staticmethod
+    @memoize
     def of(obj) -> List['Professor']:
         if isinstance(obj, (list, _AssociationList, set)):
             return unique(flat([Professor.of(o) for o in obj]))
@@ -373,15 +408,51 @@ class Professor(Base):
         else:
             raise NotImplementedError(type(obj))
 
+    @staticmethod
+    def get(professor_id):
+        ps = UserSession(professor_id)
 
-class NotificationParam(Base):
+        professor = ps.query(Professor).filter(Professor.id == professor_id).first()
+        if professor is not None:
+            professor.session = ps
+        else:
+            raise ValueError('professor not found')
+
+    def updates(self)->Tuple[Dict[str, List], Dict[str, List], Dict[str, List]]:
+        created = defaultdict(list)
+        updated = defaultdict(list)
+        deleted = defaultdict(list)
+
+        if self._last_update_out is None:
+            self._last_update_out = datetime(2008, 1, 1)
+
+        for class_ in _DBTrackedObject.__subclasses__():
+            created[class_.__name__].extend(self.session
+                                            .query(class_)
+                                            .filter(class_._created >= self._last_update_out)
+                                            .filter(class_._is_deleted == False)
+                                            .all())
+            updated[class_.__name__].extend(self.session
+                                            .query(class_)
+                                            .filter(class_._updated >= self._last_update_out)
+                                            .filter(class_._created < self._last_update_out)
+                                            .all())
+            deleted[class_.__name__].extend(self.session
+                                            .query(class_)
+                                            .filter(class_._is_deleted == True)
+                                            .filter(class_._deleted >= self._last_update_out)
+                                            .all())
+
+        return created, updated, deleted
+
+
+class NotificationParam(Base, _DBTrackedObject):
     """
     Notification
     """
 
     __tablename__ = 'notifications'
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     professor_id = Column(Integer, ForeignKey('professors.id'))
     admin_id = Column(Integer, ForeignKey('administrations.id'))
     active = Column(Boolean)
@@ -401,16 +472,15 @@ class NotificationParam(Base):
 
     def __repr__(self):
         return f"<NotificationParam (id={self.id}, professor_id={self.professor_id}, admin_id={self.admin_id}, " \
-               f"active={self.active})>"
+            f"active={self.active})>"
 
 
-class Group(Base):
+class Group(Base, _DBTrackedObject):
     """
     Group
     """
     __tablename__ = 'groups'
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     name = Column(String(40))
 
     _students = relationship('StudentsGroups', backref=backref('group'))
@@ -442,17 +512,13 @@ class Group(Base):
             raise NotImplementedError(type(obj))
 
 
-class Student(Base):
+class Student(Base, _DBPerson):
     """
     Student
     """
 
     __tablename__ = 'students'
 
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    first_name = Column(String(40))
-    last_name = Column(String(40))
-    middle_name = Column(String(40))
     card_id = Column(String(40))
 
     _parents = relationship('StudentsParents', backref=backref('student'))
@@ -465,8 +531,8 @@ class Student(Base):
 
     def __repr__(self):
         return f"<Student(id={self.id}, card_id={self.card_id}," \
-               f" last_name={self.last_name}, first_name={self.first_name}, " \
-               f"middle_name={self.middle_name})>"
+            f" last_name={self.last_name}, first_name={self.first_name}, " \
+            f"middle_name={self.middle_name})>"
 
     @staticmethod
     def of(obj) -> List['Student']:
@@ -482,13 +548,9 @@ class Student(Base):
             raise NotImplementedError(type(obj))
 
 
-class Parent(Base):
+class Parent(Base, _DBPerson):
     __tablename__ = "parents"
 
-    id = Column(Integer, primary_key=True)
-    first_name = Column(String(40))
-    last_name = Column(String(40))
-    middle_name = Column(String(40))
     sex = Column(Integer)
     email = Column(String(100))
 
@@ -507,118 +569,37 @@ class Parent(Base):
             raise NotImplementedError(type(obj))
 
 
-class ActionType(int):
-    """
-    Update type
-    """
-    NEW = 2
-    UPDATE = 0
-    DELETE = 1
-
-
-class UpdateType(int):
-    lesson_completed = 30
-    lesson_uncompleted = 31
-    visit_new = 10
-    visit_del = 11
-    student_card_id_updated = 20
-    contact_admin_new = 40
-    contact_admin_del = 41
-    contact_admin_email_changed = 42
-
-    @staticmethod
-    def of(val) -> str:
-        if isinstance(val, int):
-            return {
-                UpdateType.lesson_completed: 'Проведен урок',
-                UpdateType.lesson_uncompleted: 'Отменен статуст проведения урока',
-                UpdateType.contact_admin_email_changed: 'Изменен контакт (email) администрации',
-                UpdateType.student_card_id_updated: 'Изменены данные студента (card_id)',
-                UpdateType.contact_admin_del: 'Удален контакт администрации',
-                UpdateType.contact_admin_new: 'Добавлен контакт администрации',
-                UpdateType.visit_del: 'Удалено посещение студентом занятия',
-                UpdateType.visit_new: 'Новое посещение студентом занятия',
-            }[val]
-
-
-class Update(Base):
-    """
-    Update
-    """
-
-    __tablename__ = 'updates'
-
-    id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    table_name = Column(String(40), nullable=False)
-    row_id = Column(Integer, nullable=False)
-    action_type = Column(Integer, nullable=False)
-    performer = Column(Integer)
-    update_type = Column(Integer)
-    extra = Column(String(500))
-    date = Column(DateTime)
-
-    UniqueConstraint('row_id', 'table_name', name='update_UK')
-
-    _professors = relationship("ProfessorsUpdates", backref=backref('update'))
-    professors = association_proxy('_professors', 'professor')
-
-    def __repr__(self):
-        return f"<Update(id={self.id}, table_name={self.table_name}, " \
-               f"row_id={self.row_id})>"
-
-    def to_json(self):
-        return str(
-            {
-                'id': self.id,
-                'table_name': self.table_name,
-                'row_id': self.row_id,
-                'action_type': self.action_type,
-                'performer': self.performer
-            }
-        )
-
-    @staticmethod
-    def of(obj) -> List['Update']:
-        if isinstance(obj, Professor):
-            return obj.updates
-        else:
-            raise NotImplementedError(type(obj))
-
-
 if _new:
     Base.metadata.create_all(engine)
 
-# def on_update(target, initiator):
-#     print(f"target: {target}, initiator: {initiator}")
-#     inner_session = Session()
-#     Update.new(target, action_type=Update.ActionType.UPDATE,
-#                session=inner_session)
-#     inner_session.flush()
-#     inner_session.commit()
-#
-#
-# event.listens_for(Student.card_id, 'modified', on_update)
-# event.listens_for(Lesson.date, 'modified', on_update)
-# event.listens_for(Lesson.completed, 'modified', on_update)
-# event.listens_for(Professor.card_id, 'modified', on_update)
+# events
 
+# for class_ in _DBTrackedObject.__subclasses__():
+#     if Base in class_.__bases__:
+#         for atr in dir(class_):
+#             if atr != 'id' and atr[0] != '_':
+#                 if isinstance(getattr(class_, atr), InstrumentedAttribute):
+#                     print(eval(f"{class_.__name__}.{atr}"))
+#
+#
+#                     @event.listens_for(eval(f"{class_.__name__}.{atr}"), 'set')
+#                     def receive_set(target, value, oldvalue, initiator):
+#                         print('fdsgdghfh')
+#                         target._updated = datetime.now()
 
-# @event.listens_for(Lesson.completed, 'set')
-# @event.listens_for(Lesson.date, 'set')
-# @event.listens_for(Student.card_id, 'set')
-# def on_update(target: Union[Lesson, Student], value, oldvalue, initiator):
-#    print(f"update action: value:{value}, old_value: {oldvalue} ,"
-#          f"target: {target}, initiator: {initiator}")
-#
-#    Update.new(target,
-#               action_type=Update.ActionType.UPDATE,
-#               session=Session.object_session(target),
-#               performer=getattr(Session.object_session(target), 'professor_id', None))
-#
-#
-# @event.listens_for(Visitation, 'before_insert')
-# def on_add(mapper, session, target):
-#    print(f"session:{session}, mapper: {mapper}, target: {target}")
-#    Update.new(target, action_type=Update.ActionType.NEW,
-#               session=Session())
-#
+if __name__ == '__main__':
+    sess = Session()
+    print(type(Professor._admins))
+    prof = Professor(last_name="Иванво", first_name="Иван")
+
+    sess.add(prof)
+
+    sess.commit()
+
+    prof.middle_name = "Георг"
+
+    sess.commit()
+
+    print(prof)
+
+    pass
