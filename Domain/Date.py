@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+START_STUDY = datetime(2008, 9, 1)
+
 
 def week(date: datetime = datetime.now()) -> int:
     return date.isocalendar()[1]
@@ -22,3 +24,13 @@ def study_week(date: datetime = datetime.now()) -> int:
             return week(date) - week(start_date) + 1
         else:
             return week(date) - week(start_date)
+
+
+def study_semester(date: datetime):
+    days = (date - START_STUDY).days
+    semester = 1
+    while days > 0:
+        days -= 212.25 if semester % 2 else 153
+        semester += 1
+
+    return semester

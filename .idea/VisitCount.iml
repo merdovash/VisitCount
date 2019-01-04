@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv3.6.3" />
       <excludeFolder url="file://$MODULE_DIR$/winVenv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.6.3 virtualenv at C:\Users\MERDovashkinar\BisitorProject" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.6 (VisitCount)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

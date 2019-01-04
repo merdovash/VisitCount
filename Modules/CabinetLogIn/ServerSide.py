@@ -1,18 +1,17 @@
 import _md5
 import random
 
-from flask import render_template
-from flask_wtf import FlaskForm
-from flask_wtf.csrf import CSRFError
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired
+import flask
+from flask import render_template, request
 
 from DataBase2 import Auth, Session, Discipline
 from Domain.Aggregation import Weeks, Column, StudentAggregator, DisciplineAggregator
 from Domain.Date import study_week
+from Domain.Exception.Authentication import InvalidLoginException, InvalidPasswordException, AuthenticationException, \
+    InvalidUidException
 from Domain.WebUi import WebPage, Header, Card, Grid, s, m, MLink, DataFrameColumnChart, \
-    Section, Row, Footer, MList, Col, offset, MText, DataFrameSmartTable2, CardReveal, CollapsibleBlock, Collapsible, \
-    TabContainer, Tab
+    Row, Footer, MList, Col, offset, MText, DataFrameSmartTable2, CollapsibleBlock, Collapsible, \
+    TabContainer, Tab, MForm, MTextInput, MButton, MSubmitButton
 from Domain.functools.Format import format_name
 
 
@@ -29,34 +28,57 @@ def new_uid(session):
     return value
 
 
-class ValidateLogin():
-    def __call__(self, form, field):
-        session = Session()
-        return len(session.query(Auth.login).filter(Auth.login == field.data).all())
-
-
-class ValidatePassword():
-    def __call__(self, form, field):
-        return len(
-            Session().query(Auth).filter(Auth.login == form.login.data).filter(Auth.password == field.data).all())
-
-
-class CabinetForm(FlaskForm):
-    login = StringField('Логин', validators=[DataRequired(), ValidateLogin()])
-    password = PasswordField('Пароль', validators=[DataRequired(), ValidatePassword()])
-
-    submit_button = SubmitField('Вход')
-
-
 def is_mobile(user_agent: str):
     return any([target in user_agent.lower() for target in ('iphone', 'android', 'blackberry''')])
 
 
-def admin_cabinet(form: CabinetForm):
-    session = Session()
+def login(func):
+    def wrapper(*args, **kwargs):
+        if request.method == 'POST':
+            try:
+                auth = Auth.log_in(login=request.form.get('login', None), password=request.form.get('password'))
+                auth.uid = new_uid(auth.session)
+                auth.session.commit()
 
-    auth = session.query(Auth).filter(Auth.login == form.login.data).filter(Auth.password == form.password.data).first()
+                res = flask.make_response()
+                res.set_cookie('uid', auth.uid)
 
+                return func(*args, **kwargs, response=res, auth=auth)
+
+            except AuthenticationException as e:
+                try:
+                    if 'uid' in request.cookies:
+                        try:
+                            auth = Auth.log_in_by_uid(request.cookies['uid'])
+                            return func(*args, **kwargs, auth=auth, response=flask.make_response())
+                        except InvalidUidException:
+                            res = flask.make_response(flask.redirect('/cabinet'))
+                            return res
+                    else:
+                        raise e
+
+                except InvalidLoginException:
+                    return WebPage(
+                        Card(
+                            "Ошибка аутентификации",
+                            "Вы указали невеврный логин",
+                            MLink('/cabinet', text='Назад')
+                        )
+                    ).show()
+                except InvalidPasswordException:
+                    return WebPage(
+                        Card(
+                            "Ошибка аутентифкации",
+                            "Вы указали неверный пароль",
+                            MLink('/cabinet', text='Назад')
+                        )
+                    ).show()
+        elif request.method == 'GET':
+            return func(*args, **kwargs)
+    return wrapper
+
+
+def admin_cabinet(auth):
     return WebPage(
         Row(
             Card(
@@ -151,18 +173,50 @@ def admin_cabinet(form: CabinetForm):
     ).show()
 
 
+def auth_form():
+    return WebPage(
+        Card(
+            title="Вход в информационную панель",
+            body=MForm(
+                elements=(
+                    Row(
+                        MTextInput(
+                            label="Логин",
+                            placeholder="Логин",
+                            name="login",
+                        ),
+                    ),
+                    Row(
+                        MTextInput(
+                            label="Пароль",
+                            type="password",
+                            name="password"
+                        )
+                    )),
+                submit=MSubmitButton(
+                    text="Вход"
+                ),
+                action="/cabinet",
+                method="POST"
+            ),
+            grid=Grid(s(12), m(4))
+        )
+    ).show()
+
+
 def init(app):
     @app.route('/cabinet', methods=['GET', 'POST'])
-    def cabinet():
-        try:
-            form = CabinetForm()
+    @login
+    def cabinet(auth=None, response=None):
+        if request.method == 'GET':
+            return auth_form()
+        elif request.method == 'POST':
+            response.set_data(admin_cabinet(auth))
+            return response
 
-            if form.validate_on_submit():
-                return admin_cabinet(form)
 
-            return render_template('login2.htm', form=form)
-        except Exception as e:
-            print(e)
-            raise
-            form = CabinetForm()
-            render_template('login2.htm', form=form)
+    # @app.route('/panel', methods=['GET'])
+    # @login
+    # def panel(auth):
+
+

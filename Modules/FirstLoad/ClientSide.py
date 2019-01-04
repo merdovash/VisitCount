@@ -2,8 +2,7 @@ from datetime import datetime
 from pydoc import locate
 
 from Client.Requests.ClientConnection import ServerConnection
-from DataBase2 import Session
-from Domain.Action.SynchAction import table_order
+from DataBase2 import Session, NotificationParam, Lesson
 from Modules.FirstLoad import address
 
 
@@ -21,18 +20,25 @@ class FirstLoad(ServerConnection):
     def on_response(self, data):
 
         session = Session()
-        for class_name in table_order:
+        for class_name in data.keys():
             if class_name in data.keys():
                 mapper = locate(f'DataBase2.{class_name}')
                 mappings = data[class_name]
                 print(class_name, mapper)
 
-                if class_name == 'Lesson':
-                    for i, item in enumerate(mappings):
-                        mappings[i]['date'] = datetime.strptime(item['date'], "%Y-%m-%dT%H:%M:%S")
-                if class_name == 'NotificationParam':
-                    for i, item in enumerate(mappings):
-                        mappings[i]['active'] = eval(mappings[i]['active'])
+                for item in mappings:
+                    for key in ['_created', '_updated', '_deleted', 'date', '_last_update_in', '_last_update_out']:
+                        if key in item.keys():
+                            if item[key] not in (None, 'None'):
+                                item[key] = datetime.strptime(item[key], "%Y-%m-%dT%H:%M:%S")
+                            else:
+                                item[key] = None
+                    for key in ['completed', 'active', '_is_deleted', 'sex']:
+                        if key in item.keys():
+                            if item[key] == 'None':
+                                item[key] = False
+                            else:
+                                item[key] = bool(int(item[key]))
 
                 session.bulk_insert_mappings(mapper, mappings)
 

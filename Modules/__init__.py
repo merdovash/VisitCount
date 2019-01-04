@@ -1,6 +1,5 @@
-from DataBase2 import Auth, Session, ProfessorSession
-from Domain import Action
-from Domain.Action import InvalidLoginException, InvalidPasswordException
+from DataBase2 import Auth, Session
+from Domain.Exception.Authentication import InvalidLoginException, InvalidPasswordException
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
@@ -32,9 +31,9 @@ class Module:
                     if data is not None:
                         try:
                             print(data['user'])
-                            authentication = Action.log_in(**data['user'], session=self.session)
+                            authentication = Auth.log_in(**data['user'])
 
-                            self.session = ProfessorSession(authentication.user.id, self.session)
+                            self.session = authentication.session
                             self.post(data=data.get('data'), response=response,
                                       auth=authentication, **kwargs)
 

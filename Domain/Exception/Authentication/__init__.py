@@ -13,3 +13,8 @@ class InvalidLoginException(AuthenticationException):
 class InvalidPasswordException(AuthenticationException):
     def __init__(self, msg=None):
         super().__init__(f'Invalid password {msg}')
+
+
+class InvalidUidException(AuthenticationException):
+    def __init__(self, msg=None):
+        super().__init__(f'Invalid uid token {msg}')

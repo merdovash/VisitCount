@@ -7,7 +7,6 @@ from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline
 from Domain.Data import names_of_groups
 from Domain.functools.Decorator import memoize
 from Domain.functools.Format import format_name
-from Domain.functools.List import unique
 
 
 class Column(object):
@@ -63,7 +62,7 @@ class GroupAggregation:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
         # список групп
-        groups: List[Group] = unique(Group.of(professor, flat_list=True))
+        groups: List[Group] = Group.of(professor, flat_list=True).to_unique()
 
         # список занятий по группам
         lessons: List[List[Lesson]] = list(map(lambda group: Lesson.of(group), groups))
@@ -227,9 +226,13 @@ class StudentAggregator:
 
             data[Column.group_name].append(names_of_groups(Group.of(student)))
 
-            lesson_count = len(set(filter(lambda lesson:lesson.completed, Lesson.of(student))) & set(Lesson.of(professor)))
+            lesson_count = len(
+                set(filter(lambda lesson: lesson.completed, Lesson.of(student))) & set(Lesson.of(professor)))
             visit_count = len(set(Visitation.of(student)) & set(Visitation.of(professor)))
-            data[Column.visit_rate].append(round(visit_count/lesson_count*100))
+            if lesson_count == 0:
+                data[Column.visit_rate].append(0)
+            else:
+                data[Column.visit_rate].append(round(visit_count / lesson_count * 100))
 
         df = DataFrame(data)
 
@@ -252,7 +255,9 @@ class StudentAggregator:
             lesson_count = len(set(filter(lambda lesson: lesson.completed, Lesson.of(student))) & set(Lesson.of(disc)))
             visit_count = len(set(Visitation.of(student)) & set(Visitation.of(disc)))
 
-            data[Column.visit_rate].append(round(visit_count/lesson_count*100))
+            if lesson_count:
+                data[Column.visit_rate].append(round(visit_count / lesson_count * 100))
+            else:
+                data[Column.visit_rate].append(0)
 
         return DataFrame(data)
-

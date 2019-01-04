@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 from DataBase2 import Student, Group, Lesson, Visitation, Administration, Discipline, Professor, NotificationParam, \
-    StudentsGroups, LessonsGroups, Update
+    StudentsGroups, LessonsGroups
 from Domain.functools.Decorator import memoize
 
 
@@ -24,7 +24,7 @@ def select(session, mapper, mapping):
             .filter(Visitation.lesson_id == mapping['lesson_id'],
                     Visitation.student_id == mapping['student_id']) \
             .first()
-    elif mapper in [Update, Administration, NotificationParam]:
+    elif mapper in [Administration, NotificationParam]:
         return session \
             .query(mapper) \
             .filter(mapper.id == mapping['id']) \
@@ -98,12 +98,6 @@ def get_db_object(base, object_, session):
     elif isinstance(object_, LessonsGroups):
         old = session.query(LessonsGroups) \
             .filter(LessonsGroups.lesson_id == object_.lesson_id, LessonsGroups.group_id == object_.group_id) \
-            .first()
-        return old is not None, old
-    elif isinstance(object_, Update):
-        old = session.query(Update) \
-            .filter(Update.table_name == object_.table_name,
-                    Update.row_id == Update.row_id) \
             .first()
         return old is not None, old
     else:

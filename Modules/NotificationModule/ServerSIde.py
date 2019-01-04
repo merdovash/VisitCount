@@ -8,7 +8,6 @@ from premailer import transform
 from DataBase2 import Auth, Administration, Parent, Lesson
 from Domain.Aggregation import GroupAggregation, DisciplineAggregator, WeekDaysAggregation
 from Domain.functools.Format import format_name
-from Domain.functools.List import flat
 from Modules import Module
 from Modules.NotificationModule import address
 from Server import config, Response
@@ -92,7 +91,7 @@ class NotificationModule(Module):
 
         message = MessageMaker(auth.user)
 
-        for receiver in flat([admins, parents]):
+        for receiver in sum([admins, parents], []):
             assert receiver is not None, f'receiver is None'
             assert receiver.email is not None, f'receiver {receiver} email is None'
             print(receiver, receiver.email)

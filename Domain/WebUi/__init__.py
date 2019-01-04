@@ -298,6 +298,58 @@ class Col(WebContainer):
             raise Exception(f'grid can not be {grid}')
 
 
+class MForm(WebContainer):
+    def __render__(self) -> str:
+        return self.main.format(
+            items=self.items(),
+            submit=self.submit,
+            method=self.method,
+            action=self.action
+        )
+
+    main = """
+<form action="{action}" method="{method}">
+{items}
+{submit}
+</form>
+"""
+
+    def __init__(self, submit, elements, method="POST", action="/"):
+        super().__init__(*elements)
+        self.submit = submit
+        self.method = method
+        self.action = action
+
+    def items(self):
+        return '\n'.join(str(i) for i in self.container)
+
+
+class MTextInput(WebComponent):
+    def __render__(self) -> str:
+        return self.main.format(
+            label=self.label,
+            name=self.name,
+            placeholder=self.placeholder,
+            type=self.type,
+            id=self.id
+        )
+
+    main = """
+    <input placeholder="{placeholder}" name="{name}" id="{id}" type="{type}" class="validate">
+    <label for="{id}">{label}</label>
+"""
+
+    def __init__(self, label, placeholder='', name=None, id=None, type='text'):
+        if id is None:
+            id = f'input{randint(1, 1000000)}'
+
+        self.id = id
+        self.name = name
+        self.placeholder = placeholder
+        self.label = label
+        self.type = type
+
+
 class MList(WebContainer):
     main = """
     <ul class="collection">
@@ -757,6 +809,27 @@ class MButton(WebContainer):
         self._params = params
 
         params.get('href')
+
+
+class MSubmitButton(WebComponent):
+    def __render__(self) -> str:
+        return self.main.format(
+            text=self.text,
+            icon_before=self.icon_before,
+            icon_after=self.icon_after
+        )
+
+    main = """
+<button class="btn waves-effect waves-light" type="submit" name="action">
+{icon_before}
+{text}
+{icon_after}
+</button>"""
+
+    def __init__(self, text, icon_before='', icon_after=''):
+        self.text = text
+        self.icon_before = icon_before
+        self.icon_after = icon_after
 
 
 class CollapsibleBlock(WebContainer):

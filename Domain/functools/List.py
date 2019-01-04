@@ -1,62 +1,150 @@
+from typing import List, TypeVar
+
 from sqlalchemy.ext.associationproxy import _AssociationList
 
-
-def empty(l: list or set) -> bool:
-    if l is None:
-        return True
-    if len(l) == 0:
-        return True
-    return False
+T = TypeVar('T')
 
 
-def intersect(l: list):
-    total = None
-    for item in l:
-        assert isinstance(item, (list, set, _AssociationList)), f'items of l should be lists, but its {item}'
+class DBList(list):
+    is_flat = False
+    is_unique = False
+    with_deleted = True
 
-        if total is None:
-            total = set(item)
+    def __init__(self, l=None, flat=False, unique=False, with_deleted=True):
+        if l is None:
+            super().__init__()
         else:
-            total = total.intersection(set(item))
+            super().__init__(l)
 
-    return list(total)
+        if flat:
+            self.to_flat()
+        if unique:
+            self.to_unique()
+        if not with_deleted:
+            self.remove_deleted()
 
+    def unique(self) -> 'DBList':
+        new_list = DBList()
+        for item in self:
+            if isinstance(item, (list, _AssociationList)):
+                item = frozenset(item)
+            if item not in new_list:
+                new_list.append(item)
 
-def flat(l: list or map) -> list:
-    if isinstance(l, map):
-        l = list(l)
+        for i, item in enumerate(new_list):
+            if isinstance(item, frozenset):
+                new_list[i] = list(item)
 
-    new_list = []
-    for item in l:
-        if isinstance(item, (list, _AssociationList)):
-            new_list.extend(flat(item))
+        new_list.is_unique = True
+        return new_list
+
+    def is_empty(self) -> bool:
+        return len(self) == 0
+
+    def without_deleted(self: List[T] or T) -> 'DBList':
+        return DBList(filter(lambda x: not x._is_deleted, self))
+
+    def remove_deleted(self) -> 'DBList':
+        i = 0
+        while i < len(self):
+            if isinstance(self[i], DBList):
+                self[i].remove_deleted()
+                if len(self[i]) == 0:
+                    self.pop(i)
+                    i -= 1
+            else:
+                if self[i]._is_deleted:
+                    self.pop(i)
+                    i -= 1
+            i += 1
+
+        self.with_deleted = False
+        return self
+
+    def __and__(self, other) -> 'DBList':
+        return DBList(set(self) & set(other))
+
+    def find(self, func, default=None):
+        res = list(filter(func, self))
+        if len(res) > 0:
+            return res[0]
         else:
-            new_list.append(item)
+            return default
 
-    return new_list
+    def without_None(self) -> 'DBList':
+        new = DBList()
+        for item in self:
+            if item is not None:
+                new.append(item)
+        return new
+
+    def remove_None(self) -> 'DBList':
+        i = 0
+        while i < len(self):
+            if self[i] is None:
+                self.pop(i)
+                i -= 1
+            i += 1
+        return self
+
+    def flat(self) -> 'DBList':
+        new_list = DBList()
+        for item in self:
+            if isinstance(item, (list, _AssociationList)):
+                new_list.extend(DBList(item).flat())
+            else:
+                new_list.append(item)
+
+        new_list.is_flat = True
+        return new_list
+
+    def to_flat(self):
+        i = 0
+        while i < len(self):
+            if isinstance(self[i], list):
+                item = DBList(self[i]).flat()
+                self.pop(i)
+                for index in range(len(item)):
+                    self.insert(i, item[index])
+                    i += 1
+                i -= 1
+            i += 1
+
+        self.is_flat = True
+        return self
+
+    def to_unique(self):
+        packed = False
+        if any([isinstance(o, list) for o in self]):
+            for index, item in enumerate(self):
+                if isinstance(item, list):
+                    self[index] = frozenset(item)
+            packed = True
+
+        temp = set(self)
+        self.clear()
+        self.extend(temp)
+        self.is_unique = True
+
+        if packed:
+            for index, item in enumerate(self):
+                if isinstance(item, frozenset):
+                    self[index] = DBList(item)
+
+        return self
 
 
-def unique(l: list) -> list:
-    new_list = []
+def without_None(l) -> List:
+    new = DBList()
     for item in l:
-        if isinstance(item, (list, _AssociationList)):
-            item = frozenset(item)
-        if item not in new_list:
-            new_list.append(item)
-
-    for i, item in enumerate(new_list):
-        if isinstance(item, frozenset):
-            new_list[i] = list(item)
-
-    return new_list
+        if item is not None:
+            new.append(item)
+    return new
 
 
-def find(func, list_, default=None):
-    for item in list_:
-        if func(item):
-            return item
-    return default
-
-
-def without_None(l: list or tuple) -> list:
-    return list(filter(lambda x: x is not None, l))
+def find(func, l, default=None):
+    res = list(filter(func, l))
+    if len(res) > 0:
+        return res[0]
+    else:
+        return default
