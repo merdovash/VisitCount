@@ -8,8 +8,7 @@ from sqlalchemy import inspect
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
 from Client.MyQt.Window.UpdatesInfoWindow import UpdatesInfoWidget
 from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow, IDataBaseUser
-from DataBase2 import Administration, UserType, Parent, Student, Update
-from Domain import Action
+from DataBase2 import Administration, UserType, Parent, Student, NotificationParam
 from Domain.Action import NetAction
 from Domain.functools.Dict import format_view, validate_new_user
 
@@ -58,7 +57,7 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         program.window.synch_finished.connect(self.on_synch_finished)
 
         self.save_btn.clicked.connect(
-            lambda: self.setDialog(UpdatesInfoWidget(self.session.query(Update).all()))
+            lambda: self.setDialog(UpdatesInfoWidget(program.professor.updates()))
         )
         self.save_btn.clicked.connect(
             lambda: NetAction.send_updates(
@@ -92,8 +91,14 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
 
             if validate_new_user(admin_data):
                 admin_data = format_view(admin_data)
-                Action.create_administration(performer_id=self.professor.id,
-                                             **admin_data)
+
+                admin = Administration(**admin_data)
+                np = NotificationParam()
+                np.admin = admin
+                np.professor = self.professor
+
+                self.professor.session.add_all([admin, np])
+                self.professor.session.commit()
 
                 self.program.window.ok_message.emit('Контакт добавлен')
                 self.tabWidget.setCurrentIndex(NotificationWindow.Tabs.ADMIN_TABLE)

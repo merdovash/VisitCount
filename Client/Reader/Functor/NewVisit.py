@@ -2,7 +2,6 @@ from Client.Reader.Functor import OnRead
 from DataBase2 import Student
 from Domain import Action
 from Domain.functools.Format import format_name
-from Domain.functools.List import find
 
 
 class NewVisitOnRead(OnRead):

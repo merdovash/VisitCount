@@ -9,7 +9,6 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.NotificationModule.ServerSIde import NotificationModule
-from Modules.Synch.ServerSide import Sycnh
 from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.Index import ServerSide as Index
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
@@ -18,8 +17,6 @@ path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static", template_folder=path + '/templates')
-app.config.update(SECRET_KEY='you-will-never-guess')
-csrf = CSRFProtect(app)
 Material(app)
 
 # load modules
@@ -29,7 +26,6 @@ Index.init(app)
 VisitLandingPage.init(app)
 
 FirstLoadModule(app, request)
-Sycnh(app, request)
 NotificationModule(app, request)
 
 print(path)
@@ -93,6 +89,16 @@ def get_resource(file_name):  # pragma: no cover
     response.headers['Content-Type'] = mimetypes.get(file_extension)
 
     return response
+
+
+@app.route("/visit", methods=['GET', 'POST'])
+def visit():
+    """
+
+    :return:
+    """
+    if request.method == 'GET':
+        return page(f'{path}/templates/login2.htm')
 
 
 # def fix_request_args(args, user_type, user_id):

@@ -178,7 +178,10 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
 
     def _set_visited_by_professor_onReadCard(self, card_id):
         def create():
-            visitation = Action.new_visitation(self.student, self.lesson, self.program.professor.id)
+            visitation = Visitation(student_id=self.student.id, lesson_id=self.lesson.id)
+            self.program.professor.session.add(visitation)
+            self.program.professor.session.commit()
+
             self.set_visitation(visitation)
             self.program.window.message.emit("Подтвеждено", False)
 
@@ -199,7 +202,8 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
     def _del_visit_by_professor(self):
         assert isinstance(self.visitation, Visitation), f"self.visitation is {type(self.visit_data)}"
         try:
-            Action.remove_visitation(self.visitation, self.program.professor.id)
+            self.visitation.delete()
+            self.program.professor.session.commit()
             self.remove_visitation()
         except ObjectDeletedError:
             self.visitation = find(lambda x: x.student_id == self.student.id, Visitation.of(self.lesson))

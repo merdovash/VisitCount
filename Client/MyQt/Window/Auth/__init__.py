@@ -6,13 +6,15 @@ from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
 from Client.Reader.Functor import OnRead
 from Client.Reader.Functor.AuthProfessor import AuthProfessorOnRead
+from DataBase2 import Auth
 from Domain import Action
-from Domain.Action import NetAction, InvalidLoginException, InvalidPasswordException
+from Domain.Action import NetAction
 
 
 # from DataBase.Authentication import Authentication
 # from DataBase.ClentDataBase import ClientDataBase
 # from Modules.FirstLoad.ClientSide import FirstLoad
+from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException
 
 
 class AuthWindow(AbstractWindow, Ui_AuthWindow):
@@ -48,7 +50,7 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
         login = self.login_input.login()
         password = self.password_input.text()
         try:
-            a = Action.log_in(login, password)
+            a = Auth.log_in(login, password)
 
             self.auth_success.emit(dict(login=login, password=password))
         except InvalidLoginException:

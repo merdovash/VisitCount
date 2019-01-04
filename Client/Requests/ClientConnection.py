@@ -5,6 +5,7 @@ You need to override class ServerConnection and override methods _run, on_respon
 """
 import json
 from threading import Thread
+from urllib.parse import urlparse
 
 import requests
 from requests import post
@@ -25,6 +26,8 @@ class ServerConnection(Thread):
         self.login = login
         self.password = password
         self.url = url
+        url_ = urlparse(url)
+        self.host = url_.scheme+'://'+url_.netloc
 
         self.on_error = kwargs.get("on_error", self.on_error)
         self.on_finish = kwargs.get("on_finish", self.on_finish)
@@ -33,11 +36,24 @@ class ServerConnection(Thread):
     def _send(self, data: dict):
         print('sending ', self.url)
         try:
+            client = requests.session()
+            client.get(f"{self.host}/cabinet")
+
+            if 'csrftoken' in client.cookies:
+                # Django 1.6 and up
+                csrftoken = client.cookies['csrftoken']
+            else:
+                # older versions
+                csrftoken = client.cookies.get('csrf', None)
+
             if ServerConnection.UserBlock not in data.keys():
                 data[ServerConnection.UserBlock] = dict(login=self.login, password=self.password)
+            data['csrfmiddlewaretoken'] = csrftoken
+            data['next'] = '/'
 
             request = post(url=self.url,
-                           headers={"Content-Type": "application/json"},
+                           headers={"Content-Type": "application/json",
+                                    "Referer": self.url},
                            data=self.dump_data(data))
             try:
                 res = self.read_data(request.text)

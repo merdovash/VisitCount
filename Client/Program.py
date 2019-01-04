@@ -12,7 +12,7 @@ from Client.MyQt.Window.Main import MainWindow
 from Client.Reader import IReader
 from Client.Reader.Functor import OnRead
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
-from DataBase2 import Session
+from DataBase2 import Session, Auth
 from Domain import Action
 from Domain.functools.Url import to_standart_http
 
@@ -85,7 +85,7 @@ class MyProgram(IProgram):
         Switch to MainWindow
         :param auth: you have to pass Authentication to switch to MainWindow
         """
-        self.auth = Action.log_in(**auth)
+        self.auth = Auth.log_in(**auth)
         self.professor = self.auth.user
         self.win_config.set_professor_id(self.auth.user.id)
         self.set_window(MainWindow(program=self, professor=self.professor))

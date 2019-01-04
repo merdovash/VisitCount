@@ -13,7 +13,6 @@ from Client.MyQt.Table.Section import Markup
 from DataBase2 import Group, Student, Lesson, Discipline
 from Domain import Data
 from Domain.functools.Format import format_name
-from Domain.functools.List import empty
 
 
 class CornerWidget(QPushButton):
@@ -313,7 +312,7 @@ class VisitSection(QTableWidget):
 
         if self.groups is not None:
             self.find_lessons()
-            if not empty(self.lessons):
+            if self.lessons is not None or len(self.lessons)>0:
                 self.on_ready()
 
     @pyqtSlot('PyQt_PyObject', name='set_lesson')
