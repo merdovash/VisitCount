@@ -5,7 +5,6 @@ from sqlalchemy.ext.associationproxy import _AssociationList
 
 from DataBase2 import Student, Group, Lesson, Visitation, Administration, Discipline, Professor, NotificationParam, \
     StudentsGroups, LessonsGroups
-from Domain.functools.Decorator import memoize
 
 
 def select_by_id(session, mapper, ID):
@@ -57,14 +56,17 @@ def student_info(student: Student) -> str:
     return f'{student.last_name} {student.first_name} {student.middle_name}, {names_of_groups(student.groups)}'
 
 
-@memoize
-def lessons_of(professor, groups, discipline):
-    discipline_lessons = set(Lesson.of(discipline))
-    groups_lessons = set(Lesson.of(groups, intersect=True))
-    professor_lessons = set(Lesson.of(professor))
+def lessons_of(professor, groups=None, discipline=None, semester=None):
+    total = set(Lesson.of(professor))
 
-    return sorted(discipline_lessons.intersection(groups_lessons.intersection(professor_lessons)),
-                  key=lambda lesson: lesson.date)
+    if discipline is not None:
+        total &= set(Lesson.of(discipline))
+    if groups is not None:
+        total &= set(Lesson.of(groups, intersect=True))
+    if semester is not None:
+        total = list(filter(lambda x: x.semester == semester, total))
+
+    return sorted(total, key=lambda x: x.date)
 
 
 def get_db_object(base, object_, session):

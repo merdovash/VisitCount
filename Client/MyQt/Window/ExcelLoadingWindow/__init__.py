@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from PyQt5.QtCore import QUrl, pyqtSignal, Qt, pyqtSlot
+from PyQt5.QtCore import QUrl, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushButton
 
 from Client.MyQt.Window.interfaces import IChildWindow
@@ -14,7 +14,7 @@ class ExcelLoadingWidget(QWidget, IChildWindow):
         QWidget.__init__(self, parent, *args, **kwargs)
         IChildWindow.__init__(self)
 
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        # self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         self.setMinimumSize(300, 300)
 
@@ -56,7 +56,7 @@ class ExcelLoadingWidget(QWidget, IChildWindow):
                 on_warning=self.program.window.ok_message.emit
             )
             print('hi')
-            r.run()
+            r.run(callback=lambda x: self.loading[file].setValue(x))
 
     def on_change(self, value, file):
         self.loading_status[file] = value >= 100

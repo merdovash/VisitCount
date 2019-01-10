@@ -6,10 +6,13 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QCursor
 from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton
 
 from Client.MyQt.ColorScheme import Color
-from Client.MyQt.Table import StudentHeaderView, VisitItem, PercentItem, HorizontalSum, VerticalSum, StudentHeaderItem
-from Client.MyQt.Table.Items import AbstractContextItem, IDraw
-from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderView, LessonHeaderItem, PercentHeaderItem
-from Client.MyQt.Table.Section import Markup
+from Client.MyQt.Widgets.Table import VisitItem, HorizontalSum, VerticalSum, StudentHeaderItem
+from Client.MyQt.Widgets.Table.Items import AbstractContextItem, IDraw
+from Client.MyQt.Widgets.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderView, LessonHeaderItem, \
+    PercentHeaderItem
+from Client.MyQt.Widgets.Table.Items.PercentItem import PercentItem
+from Client.MyQt.Widgets.Table.Items.StudentHeader.StudentHeaderView import StudentHeaderView
+from Client.MyQt.Widgets.Table.Section import Markup
 from DataBase2 import Group, Student, Lesson, Discipline
 from Domain import Data
 from Domain.functools.Format import format_name
@@ -159,6 +162,8 @@ class VisitSection(QTableWidget):
         self.show_cross = True
 
         self.ready = False
+
+        self.current_lesson = None
 
     @pyqtSlot(name='on_offset_changed')
     def on_offset_changed(self):
@@ -324,6 +329,14 @@ class VisitSection(QTableWidget):
         if self.lessons is not None and lesson in self.lessons:
             self.horizontalScrollBar().setValue(self.lessons.index(lesson))
 
+    def end_lesson(self):
+        self.current_lesson.completed = True
+        self.parent().switchBtnAction()
+        self.parent().setEnabledControl(True)
+
+    def set_semester(self, semester):
+        self.current_semester = semester
+
     def getControl(self):
         control = self.parent().getControl()
         return control
@@ -331,11 +344,14 @@ class VisitSection(QTableWidget):
     def find_lessons(self):
         assert self.groups is not None
         assert self.discipline is not None
+        assert self.current_semester is not None
 
         self.lessons = Data.lessons_of(
             professor=self.program.professor,
             discipline=self.discipline,
-            groups=self.groups)
+            groups=self.groups,
+            semester=self.current_semester
+        )
 
     def resizeEvent(self, QResizeEvent):
         super().resizeEvent(QResizeEvent)
@@ -463,7 +479,9 @@ class VisitSection(QTableWidget):
         #         pass
 
     def isCurrentLesson(self, lesson):
-        return self.current_lesson == lesson
+        if self.current_lesson:
+            return self.current_lesson == lesson
+        return False
 
     def cell_changed(self):
         self.model().dataChanged.emit(self.model().index(0, 0),

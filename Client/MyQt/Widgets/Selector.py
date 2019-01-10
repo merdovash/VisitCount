@@ -2,10 +2,11 @@ import datetime
 from collections import namedtuple
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QTabWidget, QVBoxLayout
 
 from Client.IProgram import IProgram
 from Client.MyQt.Widgets.ComboBox import MComboBox
+from Client.MyQt.Widgets.Table import VisitSection
 from DataBase2 import Discipline, Group, Lesson
 from Domain import Data
 from Domain.Data import lessons_of
@@ -45,7 +46,27 @@ class Selector(QWidget):
         self.program: IProgram = program
         self.professor = program.professor
 
+        main_layout = QVBoxLayout()
+
+        self.tabs = QTabWidget()
+
+        self.table = VisitSection(self.program)
+        self.tabs.addTab(self.table, "Таблица посещений")
+        self.tabs.addTab(QWidget(), 'Задания (TODO)')
+
         selector_layout = QHBoxLayout()
+
+        main_layout.addLayout(selector_layout, stretch=1)
+        main_layout.addWidget(self.tabs, stretch=95)
+
+        # semester
+        self.semester = MComboBox(int)
+        self.semester.currentIndexChanged.connect(self.on_semester_changed)
+        sem_label = QLabel('Семестр')
+        sem_label.setAlignment(Qt.AlignRight)
+
+        selector_layout.addWidget(sem_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
+        selector_layout.addWidget(self.semester, 2)
 
         # discipline
         self.discipline = MComboBox(Discipline)
@@ -85,28 +106,51 @@ class Selector(QWidget):
 
         selector_layout.addWidget(self.start_button, 2)
 
-        self.setLayout(selector_layout)
+        self.setLayout(main_layout)
 
         selector_layout.setContentsMargins(0, 0, 0, 0)
 
         self.last_lesson = 0
+
+        semesters = list(set([o.semester for o in Lesson.of(self.professor)]))
+        print(semesters)
+        self.semester.addItems(semesters)
+
+    def on_semester_changed(self, new_semester_index):
+        lessons = lessons_of(professor=self.professor, semester=self.semester.current())
+        disciplines = Discipline.of(lessons)
+
+        self.discipline.blockSignals(True)
+        self.discipline.clear()
+        self.discipline.addItems(disciplines)
+        self.discipline.blockSignals(False)
+
+        self.table.set_semester(self.semester.current())
+
+        self.discipline.currentIndexChanged.emit(0)
 
     def _discipline_changed(self, new_discipline_index):
         print('discipline_changed')
 
         professor = self.program.professor
 
-        groups = Group.of(self.discipline.current())
+        lessons = Data.lessons_of(
+            professor=professor,
+            discipline=self.discipline.current(),
+            semester=self.semester.current())
+
+        self.table.set_dicipline(self.discipline.current())
+
+        groups = Group.of(lessons)
+        print(groups)
 
         current_lesson = closest_lesson(professor.lessons,
                                         self.program['date_format'])
 
         current_group = current_lesson.groups
 
-        self.group.blockSignals(True)
-        self.group.clear()
-        self.group.addItems(groups)
-        self.group.blockSignals(False)
+        self.group.set_items(groups)
+
         index_before = self.group.currentIndex()
         self.group.setCurrent(current_group)
         if self.group.currentIndex() == index_before:
@@ -122,21 +166,33 @@ class Selector(QWidget):
         groups = self.group.current()
         discipline = self.discipline.current()
 
-        lessons = Data.lessons_of(professor=self.professor, discipline=discipline, groups=groups)
+        lessons = Data.lessons_of(
+            professor=self.professor,
+            discipline=discipline,
+            groups=groups,
+            semester=self.semester.current()
+        )
+        current_semester = self.semester.current()
+        lessons = list(filter(lambda x: x.semester == current_semester, lessons))
         assert len(lessons) > 0, lessons
 
         current_lesson = closest_lesson(lessons, self.program['date_format'])
 
         start_index = self.lesson.currentIndex() if self.lesson.currentIndex() >= 0 else 0
+
+        self.table.clear()
+        self.table.set_group(self.group.current())
+
         self.lesson.blockSignals(True)
         self.lesson.clear()
         self.lesson.addItems(lessons)
         self.lesson.blockSignals(False)
         self.lesson.setCurrent(current_lesson)
+
         if self.lesson.currentIndex() == start_index:
             self._lesson_changed(self.lesson.currentIndex())
 
-        self.group_changed.emit(groups)
+        # self.group_changed.emit(groups)
 
     def _lesson_changed(self, new_index=None):
         column = new_index

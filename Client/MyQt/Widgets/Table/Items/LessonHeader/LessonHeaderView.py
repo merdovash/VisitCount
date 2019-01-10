@@ -6,11 +6,10 @@ from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QMenu, QToolTip
 
 from Client import IProgram
 from Client.MyQt.ColorScheme import Color
-from Client.MyQt.Table.Control import VisitTableControl
-from Client.MyQt.Table.Items import IDraw
-from Client.MyQt.Table.Section import Markup
 from Client.MyQt.Time import from_time_to_index
 from Client.MyQt.Widgets.LessonDateChanger import LessonDateChanger
+from Client.MyQt.Widgets.Table.Items import IDraw
+from Client.MyQt.Widgets.Table.Section import Markup
 from DataBase2 import Lesson
 from Domain.Date import study_week
 
@@ -223,15 +222,16 @@ class LessonHeaderView(QHeaderView):
         # pos = point.pos
 
         item, _, _ = self.find_item(point)
-        control: VisitTableControl = self.parent().getControl()
         if isinstance(item, LessonHeaderItem):
             if item.lesson.completed:
                 menu.addAction("Отменить факт проведения занятия", item.unstart)
             menu.addAction("Перенести занятие", item.move_lesson)
-            if control.isLessonStarted():
-                menu.addAction('Завершить учет', lambda: control.end_lesson())
-            elif control.currentLesson() != item.lesson:
-                menu.addAction('Выбрать занятие', lambda: control.select_lesson(item.lesson))
+            if self.parent().current_lesson:
+                current_lesson = self.parent().current_lesson
+                if self.parent().in_progress():
+                    menu.addAction('Завершить учет', self.parent().end_lesson)
+                elif current_lesson != item.lesson:
+                    menu.addAction('Выбрать занятие', lambda: self.parent().select_lesson(item.lesson))
             menu.exec(self.mapToGlobal(point))
 
     def mouseMoveEvent(self, event: QMouseEvent):

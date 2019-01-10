@@ -4,10 +4,9 @@ from PyQt5.QtGui import QPainter, QColor, QMouseEvent, QPen
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem
 
 from Client.MyQt.ColorScheme import Color
-from Client.MyQt.Table import PercentHeaderItem
-from Client.MyQt.Table.Items import AbstractContextItem
-from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
-from Client.MyQt.Table.Section import Markup
+from Client.MyQt.Widgets.Table import PercentHeaderItem, StudentHeaderItem
+from Client.MyQt.Widgets.Table.Items import AbstractContextItem
+from Client.MyQt.Widgets.Table.Section import Markup
 
 
 class NoItemException(Exception):

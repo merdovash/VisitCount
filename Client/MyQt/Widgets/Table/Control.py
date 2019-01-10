@@ -1,3 +1,5 @@
+from typing import Callable
+
 from Client.MyQt.Window import AbstractWindow
 from Client.Reader.Functor import OnRead
 from Client.Reader.Functor.NewVisit import NewVisitOnRead
@@ -36,7 +38,7 @@ class VisitTableControl(IControl):
         self.current_groups = None
         self._is_lesson_started = False
         self.table = table
-        self.reader: function = reader
+        self.reader: Callable = reader
         self.session = session
 
         OnRead.prepare(window.program, table, session)

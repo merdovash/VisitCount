@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import pymorphy2
 
-from DataBase2 import Professor, Student, Administration, Parent
+from DataBase2 import Professor, Student, _DBPerson
 from Domain.Exception.Constraint import ConstraintBasenameException, ConstraintDictNameException, \
     ConstraintNotEmptyException
 from Domain.functools.Function import None_or_empty
@@ -40,7 +40,7 @@ def format_name(user: Dict[str, str] or Professor or Student, case=None, small=F
             for key, val in user.items():
                 if val in fio and None_or_empty(user[key]):
                     raise ConstraintNotEmptyException(key)
-    elif isinstance(user, (Student, Professor, Administration, Parent)):
+    elif isinstance(user, _DBPerson):
         if not None_or_empty(user.last_name) and not None_or_empty(user.first_name):
             if not None_or_empty(user.middle_name):
                 fio = [user.last_name, user.first_name, user.middle_name]

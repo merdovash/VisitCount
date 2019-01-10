@@ -1,54 +1,36 @@
 from datetime import datetime
-from pydoc import locate
+from typing import Type, Dict
 
-from Client.Requests.ClientConnection import ServerConnection
-from DataBase2 import Session, NotificationParam, Lesson
-from Modules.FirstLoad import address
+from DataBase2 import Session, _DBObject, Auth, Professor
+from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
+from Domain.Validation.Dict import Map
 
 
-class FirstLoad(ServerConnection):
-    class AuthType(int):
-        ByLogin = 0
-        ByCard = 1
+class ApplyFirstLoadData:
+    def __init__(self):
+        pass
 
-    def __init__(self, host, login, password, **kwargs):
-        super().__init__(login, password, host + address, **kwargs)
-
-    def _run(self):
-        self._send({})
-
-    def on_response(self, data):
+    def __call__(self, received_data, progress_bar):
+        def create_row(item_data: Dict, class_: Type[_DBObject]):
+            class_.new(session, **item_data)
+            progress_bar.increment()
 
         session = Session()
-        for class_name in data.keys():
-            if class_name in data.keys():
-                mapper = locate(f'DataBase2.{class_name}')
-                mappings = data[class_name]
-                print(class_name, mapper)
+        received_data = ServerFirstLoadData(**received_data)
+        print(received_data.data['Lesson'])
 
-                for item in mappings:
-                    for key in ['_created', '_updated', '_deleted', 'date', '_last_update_in', '_last_update_out']:
-                        if key in item.keys():
-                            if item[key] not in (None, 'None'):
-                                item[key] = datetime.strptime(item[key], "%Y-%m-%dT%H:%M:%S")
-                            else:
-                                item[key] = None
-                    for key in ['completed', 'active', '_is_deleted', 'sex']:
-                        if key in item.keys():
-                            if item[key] == 'None':
-                                item[key] = False
-                            else:
-                                item[key] = bool(int(item[key]))
+        TOTAL_LENGTH = progress_bar.last()
+        progress_bar.set_part(TOTAL_LENGTH, len(received_data.data), "Загрузка данных")
 
-                session.bulk_insert_mappings(mapper, mappings)
+        received_data.data.foreach(create_row)
 
-        session.flush()
+        Auth.new(session, **received_data.auth)
+        professor = Professor.new(session, **Map.item_type(received_data.professor, Professor))
+        professor._last_update_in = datetime.now()
+        professor._last_update_out = datetime.now()
+
         session.commit()
 
-        session.expire_all()
-        session.close()
-
-        self.on_finish(dict(login=self.login, password=self.password))
 
 # if __name__ == "__main__":
 #     f = FirstLoad(card_id="61157", password="123456")

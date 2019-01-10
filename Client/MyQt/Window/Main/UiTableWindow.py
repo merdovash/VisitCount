@@ -3,8 +3,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
 
 from Client.MyQt.QtMyStatusBar import QStatusMessage
-from Client.MyQt.Table import VisitSection
-from Client.MyQt.Window.Main import Selector
+from Client.MyQt.Widgets.Selector import Selector
 from Domain.functools.Format import format_name
 
 
@@ -26,11 +25,8 @@ class UI_TableWindow:
 
         layout.addLayout(info_layout, stretch=1)
 
-        self.table = VisitSection(widget.program)
         self.selector = Selector(widget.program)
 
-        layout.addWidget(self.selector, alignment=Qt.AlignTop, stretch=1)
-
-        layout.addWidget(self.table, stretch=90)
+        layout.addWidget(self.selector, stretch=9999)
 
         widget.setLayout(layout)

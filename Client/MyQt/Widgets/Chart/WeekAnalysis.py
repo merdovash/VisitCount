@@ -1,4 +1,4 @@
-from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog
+from Client.MyQt.Widgets.Chart import QAnalysisDialog
 from Domain.Aggregation import Weeks, Column
 
 

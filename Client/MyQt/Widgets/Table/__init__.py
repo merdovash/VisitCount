@@ -7,16 +7,11 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout
 from Client.Configuartion.Configurable import Configurable
 from Client.Configuartion.WindowConfig import Config
 from Client.IProgram import IProgram
-from Client.MyQt.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderItem, PercentHeaderItem
-from Client.MyQt.Table.Items.PercentItem import PercentItem, HorizontalSum, VerticalSum
-from Client.MyQt.Table.Items.StudentHeader.StudentHeaderItem import \
-    StudentHeaderItem
-from Client.MyQt.Table.Items.StudentHeader.StudentHeaderView import \
-    StudentHeaderView
-from Client.MyQt.Table.Items.VisitItem import VisitItem, VisitItemFactory
-from Client.MyQt.Table.Section.QtMyHomeworkSection import HomeworkSection
-from Client.MyQt.Table.Section.QtMyPercentSection import PercentSection
-from Client.MyQt.Table.Section.QtMyVisitSection import VisitSection
+from Client.MyQt.Widgets.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderItem, PercentHeaderItem
+from Client.MyQt.Widgets.Table.Items.PercentItem import HorizontalSum, VerticalSum
+from Client.MyQt.Widgets.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
+from Client.MyQt.Widgets.Table.Items.VisitItem import VisitItemFactory, VisitItem
+from Client.MyQt.Widgets.Table.Section.QtMyVisitSection import VisitSection
 from DataBase2 import Student, Lesson
 from Domain.functools.Format import format_name
 
@@ -336,7 +331,7 @@ class VisitTable(QWidget, Configurable):
         row = self.row(student)
 
         item = self.visit_table.item(row, col)
-        if item.status == VisitItem.Status.Visited:
+        if item.isVisit():
             self.show_visitation_msg.emit("Студент уже отмечен")
         else:
             self.show_visitation_msg.emit(

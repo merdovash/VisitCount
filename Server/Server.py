@@ -5,12 +5,12 @@ import os
 
 from flask import Flask, make_response, request, send_file
 from flask_material import Material
-from flask_wtf.csrf import CSRFProtect, CSRFError
 
-from Modules.FirstLoad.ServerSide import FirstLoadModule
-from Modules.NotificationModule.ServerSIde import NotificationModule
 from Modules.CabinetLogIn import ServerSide as Cabinet
+from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.Index import ServerSide as Index
+from Modules.NotificationModule.ServerSIde import NotificationModule
+from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
 
 path, file = os.path.split(os.path.abspath(__file__))
@@ -24,6 +24,7 @@ Material(app)
 Cabinet.init(app)
 Index.init(app)
 VisitLandingPage.init(app)
+SynchModule(app, request)
 
 FirstLoadModule(app, request)
 NotificationModule(app, request)

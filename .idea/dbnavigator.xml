@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DBNavigator.Project.DataEditorManager">
     <record-view-column-sorting-type value="BY_INDEX" />
-    <value-preview-text-wrapping value="true" />
+    <value-preview-text-wrapping value="false" />
     <value-preview-pinned value="false" />
   </component>
   <component name="DBNavigator.Project.DataExportManager">
@@ -25,8 +25,10 @@
     <show-object-properties value="true" />
     <loaded-nodes>
       <connection connection-id="355ef8f6-d083-457e-a733-79a364567d66">
-        <schema name="bisitor" object-types="table, view, procedure, function, constraint, index, column, dataset trigger" />
-        <schema name="bisitor_update" object-types="table, view, procedure, function" />
+        <schema name="bisitor_update" object-types="table, view, procedure, function, constraint, index, column, dataset trigger" />
+      </connection>
+      <connection connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456">
+        <schema name="main" object-types="table, view, constraint, index, column, dataset trigger" />
       </connection>
     </loaded-nodes>
   </component>
@@ -45,16 +47,61 @@ ALTER TABLE students CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE students_groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE students_parents CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE visitations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;]]></console>
+      <console name="bisitor_update 1" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[update visitations set _is_deleted=0;]]></console>
+      <console name="clear" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[delete from visitations;
+update lessons set completed=0 WHERE completed=1;
+update lessons set _is_deleted=0 WHERE _is_deleted=1;]]></console>
+      <console name="lesson_bug" type="STANDARD" schema="bisitor_update" session="Main" />
+      <console name="local_server" type="STANDARD" schema="bisitor_update" session="Main" />
+    </connection>
+    <connection id="51da6549-4b3f-41b1-9f5e-14c30caad456">
+      <console name="1" type="STANDARD" schema="main" session="Main"><![CDATA[select count(id) from visitations group by lesson_id, student_id having count(id)>1;]]></console>
+      <console name="client" type="STANDARD" schema="main" session="Main" />
     </connection>
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
     <connection id="355ef8f6-d083-457e-a733-79a364567d66" />
+    <connection id="51da6549-4b3f-41b1-9f5e-14c30caad456" />
   </component>
   <component name="DBNavigator.Project.DatasetFilterManager">
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.visitations" active-filter-id="EMPTY_FILTER">
+      <filter id="c21b0516-b2cb-49d5-a2b7-d2fbc83ea084" name="Filter 1" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="_updated" operator="is null" value="" active="true" />
+      </filter>
+    </filter-list>
     <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor.administrations" active-filter-id="" />
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.students" active-filter-id="EMPTY_FILTER" />
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.notifications" active-filter-id="0ef2148b-cb89-4601-b40e-1a417d46f35d">
+      <filter id="0ef2148b-cb89-4601-b40e-1a417d46f35d" name="Filter 1" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="_updated" operator="is null" value="" active="true" />
+      </filter>
+    </filter-list>
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.professors" active-filter-id="88c89c65-faaa-4676-b9bd-c68485252e71">
+      <filter id="88c89c65-faaa-4676-b9bd-c68485252e71" name="Filter 1" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="_updated" operator="is null" value="" active="true" />
+      </filter>
+    </filter-list>
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.lessons_groups" active-filter-id="EMPTY_FILTER" />
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.parents" active-filter-id="eca36ceb-2201-4dd6-9fe3-42f5a7a1e3b8">
+      <filter id="eca36ceb-2201-4dd6-9fe3-42f5a7a1e3b8" name="Filter 1" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="_updated" operator="is null" value="" active="true" />
+      </filter>
+    </filter-list>
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.lessons" active-filter-id="3f743d1d-a19a-4bb9-aa57-862e6e395e22">
+      <filter id="3f743d1d-a19a-4bb9-aa57-862e6e395e22" name="Filter 1" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="id" operator="is not null" value="" active="true" />
+      </filter>
+    </filter-list>
+    <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.professors" active-filter-id="EMPTY_FILTER" />
+    <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.visitations" active-filter-id="EMPTY_FILTER" />
+    <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.lessons" active-filter-id="EMPTY_FILTER" />
+    <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.students" active-filter-id="EMPTY_FILTER" />
   </component>
   <component name="DBNavigator.Project.EditorStateManager">
     <last-used-providers />
+  </component>
+  <component name="DBNavigator.Project.FileConnectionMappingManager">
+    <mapping file-url="file://$PROJECT_DIR$/DataBase2/SQL/bisitor_update.sql" connection-id="355ef8f6-d083-457e-a733-79a364567d66" session-id="MAIN" current-schema="bisitor_update" />
   </component>
   <component name="DBNavigator.Project.MethodExecutionManager">
     <method-browser />
@@ -80,7 +127,7 @@ ALTER TABLE visitations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;]]
     <connections>
       <connection id="355ef8f6-d083-457e-a733-79a364567d66" active="true">
         <database>
-          <name value="bisitor_update" />
+          <name value="local_server" />
           <description value="" />
           <database-type value="MYSQL" />
           <config-type value="BASIC" />
@@ -96,6 +143,93 @@ ALTER TABLE visitations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;]]
           <empty-password value="false" />
           <user value="root" />
           <password value="fE9lMjN6azQ1fA==" />
+        </database>
+        <properties>
+          <auto-commit value="false" />
+        </properties>
+        <ssh-settings>
+          <active value="false" />
+          <proxy-host value="" />
+          <proxy-port value="22" />
+          <proxy-user value="" />
+          <proxy-password value="" />
+          <auth-type value="PASSWORD" />
+          <key-file value="" />
+          <key-passphrase value="" />
+        </ssh-settings>
+        <ssl-settings>
+          <active value="false" />
+          <certificate-authority-file value="" />
+          <client-certificate-file value="" />
+          <client-key-file value="" />
+        </ssl-settings>
+        <details>
+          <charset value="UTF-8" />
+          <session-management value="true" />
+          <ddl-file-binding value="true" />
+          <database-logging value="false" />
+          <connect-automatically value="true" />
+          <restore-workspace value="true" />
+          <restore-workspace-deep value="true" />
+          <environment-type value="default" />
+          <idle-time-to-disconnect value="30" />
+          <idle-time-to-disconnect-pool value="5" />
+          <password-expiry-time value="10" />
+          <max-connection-pool-size value="7" />
+          <alternative-statement-delimiter value="" />
+        </details>
+        <object-filters hide-empty-schemas="false">
+          <object-type-filter use-master-settings="true">
+            <object-type name="SCHEMA" enabled="true" />
+            <object-type name="USER" enabled="true" />
+            <object-type name="ROLE" enabled="true" />
+            <object-type name="PRIVILEGE" enabled="true" />
+            <object-type name="CHARSET" enabled="true" />
+            <object-type name="TABLE" enabled="true" />
+            <object-type name="VIEW" enabled="true" />
+            <object-type name="MATERIALIZED_VIEW" enabled="true" />
+            <object-type name="NESTED_TABLE" enabled="true" />
+            <object-type name="COLUMN" enabled="true" />
+            <object-type name="INDEX" enabled="true" />
+            <object-type name="CONSTRAINT" enabled="true" />
+            <object-type name="DATASET_TRIGGER" enabled="true" />
+            <object-type name="DATABASE_TRIGGER" enabled="true" />
+            <object-type name="SYNONYM" enabled="true" />
+            <object-type name="SEQUENCE" enabled="true" />
+            <object-type name="PROCEDURE" enabled="true" />
+            <object-type name="FUNCTION" enabled="true" />
+            <object-type name="PACKAGE" enabled="true" />
+            <object-type name="TYPE" enabled="true" />
+            <object-type name="TYPE_ATTRIBUTE" enabled="true" />
+            <object-type name="ARGUMENT" enabled="true" />
+            <object-type name="DIMENSION" enabled="true" />
+            <object-type name="CLUSTER" enabled="true" />
+            <object-type name="DBLINK" enabled="true" />
+          </object-type-filter>
+          <object-name-filters />
+        </object-filters>
+      </connection>
+      <connection id="51da6549-4b3f-41b1-9f5e-14c30caad456" active="true">
+        <database>
+          <name value="client" />
+          <description value="" />
+          <database-type value="SQLITE" />
+          <config-type value="BASIC" />
+          <database-version value="3.21" />
+          <driver-source value="BUILTIN" />
+          <driver-library value="" />
+          <driver value="" />
+          <url-type value="FILE" />
+          <host value="" />
+          <port value="" />
+          <database value="" />
+          <files>
+            <file path="$PROJECT_DIR$/DataBase2/db2.db" schema="main" />
+          </files>
+          <os-authentication value="false" />
+          <empty-password value="false" />
+          <user value="" />
+          <password value="" />
         </database>
         <properties>
           <auto-commit value="false" />

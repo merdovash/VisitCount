@@ -4,8 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidgetItem
 
 from Client.MyQt.ColorScheme import Color
-from Client.MyQt.Table.Items import IDraw
-from Client.MyQt.Table.Items.VisitItem import VisitItem
+from Client.MyQt.Widgets.Table.Items import IDraw
 
 
 class PercentItem(IDraw, QTableWidgetItem):
@@ -32,12 +31,11 @@ class PercentItem(IDraw, QTableWidgetItem):
         ByLessons = 0
         ByStudents = 1
 
-    def __init__(self, items: List[VisitItem], orientation: int, absolute):
-        assert all(map(lambda x: isinstance(x, VisitItem), items)), "items is not a List[VisitItem]"
+    def __init__(self, items: List['VisitItem'], orientation: int, absolute):
         super().__init__()
         self.absolute = absolute
 
-        self.items: List[VisitItem] = items
+        self.items: List['VisitItem'] = items
         for visit_item in self.items:
             assert hasattr(visit_item, 'info_changed')
             visit_item.info_changed += self.calc
@@ -73,10 +71,10 @@ class PercentItem(IDraw, QTableWidgetItem):
 
 
 class HorizontalSum(PercentItem):
-    def __init__(self, items: List[VisitItem], absolute):
+    def __init__(self, items: List['VisitItem'], absolute):
         super().__init__(items, PercentItem.Orientation.ByLessons, absolute=absolute)
 
 
 class VerticalSum(PercentItem):
-    def __init__(self, items: List[VisitItem], absolute):
+    def __init__(self, items: List['VisitItem'], absolute):
         super().__init__(items, PercentItem.Orientation.ByStudents, absolute=absolute)

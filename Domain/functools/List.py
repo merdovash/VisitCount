@@ -23,6 +23,18 @@ class DBList(list):
         if not with_deleted:
             self.remove_deleted()
 
+    @staticmethod
+    def wrapper(func):
+        def __DBList_func_wrapper__(*args, **kwargs):
+            with_deleted = kwargs.get('with_deleted', False)
+            flat = kwargs.get('flat', False)
+            unique = kwargs.get('unique', False)
+
+            res = func(*args, **kwargs)
+
+            return DBList(res, with_deleted=with_deleted, flat=flat, unique=unique)
+        return __DBList_func_wrapper__
+
     def unique(self) -> 'DBList':
         new_list = DBList()
         for item in self:
@@ -52,8 +64,11 @@ class DBList(list):
                 if len(self[i]) == 0:
                     self.pop(i)
                     i -= 1
+            elif isinstance(self[i], frozenset):
+                temp = DBList(self[i], with_deleted=False)
+                self[i] = frozenset(temp)
             else:
-                if self[i]._is_deleted:
+                if self[i] is None or self[i]._is_deleted:
                     self.pop(i)
                     i -= 1
             i += 1
@@ -102,7 +117,7 @@ class DBList(list):
         i = 0
         while i < len(self):
             if isinstance(self[i], list):
-                item = DBList(self[i]).flat()
+                item = DBList(self[i], flat=True)
                 self.pop(i)
                 for index in range(len(item)):
                     self.insert(i, item[index])

@@ -2,18 +2,12 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from Client.IProgram import IProgram
+from Client.MyQt.Widgets.Network.Request import first_load
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
 from Client.Reader.Functor import OnRead
 from Client.Reader.Functor.AuthProfessor import AuthProfessorOnRead
 from DataBase2 import Auth
-from Domain import Action
-from Domain.Action import NetAction
-
-
-# from DataBase.Authentication import Authentication
-# from DataBase.ClentDataBase import ClientDataBase
-# from Modules.FirstLoad.ClientSide import FirstLoad
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException
 
 
@@ -54,9 +48,9 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
 
             self.auth_success.emit(dict(login=login, password=password))
         except InvalidLoginException:
-            NetAction.first_load(login, password, self.program.host,
-                                 on_finish=self.auth_success.emit,
-                                 on_error=self.ok_message.emit)
+            self.centralwidget.layout().addWidget(first_load(self.program, login, password,
+                                                             on_finish=lambda: self.auth_success.emit(dict(login=login, password=password)),
+                                                             on_error=lambda x: self.ok_message.emit(str(x))))
         except InvalidPasswordException as e:
             self.ok_message.emit(str(e))
 

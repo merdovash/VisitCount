@@ -30,7 +30,8 @@ class MComboBox(QComboBox):
         self.rule = {
             Discipline: lambda x: x.name,
             Group: lambda x: ', '.join(list(map(lambda y: y.name, x))),
-            Lesson: lambda x: x.date.strftime('%d.%m.%Y %H:%M')
+            Lesson: lambda x: x.date.strftime('%d.%m.%Y %H:%M'),
+            int: lambda x: str(x)
         }[self.type]
 
         self.items: Dict[int, type_] = {}
@@ -52,7 +53,7 @@ class MComboBox(QComboBox):
 
     def _format_name(self, value):
         if self.image_name == 'date':
-            val = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%f')
+            val = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
             return val.strftime('%d.%m.%Y %H:%M')
         else:
             return value
@@ -91,3 +92,9 @@ class MComboBox(QComboBox):
         p.drawText(rect, Qt.AlignCenter, self.currentText())
 
         p.drawImage(rect.width() - self.image.width(), self.height() // 2 - self.image.height() // 2, self.image)
+
+    def set_items(self, items):
+        self.blockSignals(True)
+        self.clear()
+        self.addItems(items)
+        self.blockSignals(False)

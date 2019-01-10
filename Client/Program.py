@@ -10,10 +10,8 @@ from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main import MainWindow
 from Client.Reader import IReader
-from Client.Reader.Functor import OnRead
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
 from DataBase2 import Session, Auth
-from Domain import Action
 from Domain.functools.Url import to_standart_http
 
 
@@ -28,7 +26,7 @@ class MyProgram(IProgram):
                  css=True, host='http://bisitor.itut.ru'):
         self._state = {'marking_visits': False,
                        'host': 'http://bisitor.itut.ru',
-                       'date_format': '%Y-%m-%d %H:%M:%f'}
+                       'date_format': '%Y-%m-%d %H:%M:%S'}
 
         self._reader: IReader = None
 
@@ -65,7 +63,7 @@ class MyProgram(IProgram):
         self.window: AbstractWindow = widget
         self.window.setStyleSheet(self.css)
         self.window.show()
-        OnRead.prepare(self, self.window.central_widget.table, self.session)
+        # OnRead.prepare(self, self.window.central_widget.table, self.session)
 
     def reader(self) -> IReader:
         """

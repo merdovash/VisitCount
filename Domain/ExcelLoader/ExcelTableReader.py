@@ -1,12 +1,12 @@
 from collections import namedtuple
+from typing import Callable
 
 import xlrd
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QMessageBox, QApplication
 
 from Client.MyQt.Window.interfaces import IDataBaseUser
-from DataBase2 import Group, Lesson, Professor, LessonsGroups, Student
-from Domain import Action
+from DataBase2 import Group, Lesson, Professor, LessonsGroups, Student, Visitation
 from Domain.Exception.Action import UnnecessaryActionException
 from Domain.functools.Decorator import memoize, safe
 from Domain.functools.List import find
@@ -41,9 +41,10 @@ class Reader(IDataBaseUser, QObject):
         self.progress_bar = progress_bar
 
         self.professor = professor
+        print(self.cell(*Reader.group_name_index).split('. ')[1].split(', '))
         self.group = self.session \
             .query(Group) \
-            .filter(Group.name.in_(self.cell(*Reader.group_name_index).split('. ')[1].split(', '))) \
+            .filter(Group.name.in_(self.cell(*Reader.group_name_index).split('. ')[1].replace(' ', '').split(','))) \
             .all()
 
         self.lesson = self.session \
@@ -100,7 +101,8 @@ class Reader(IDataBaseUser, QObject):
                 try:
                     card_id = int(self.cell(row, Reader.card_id_col))
                 except ValueError:
-                    self.on_error(f'В строке {row+1} невозможно прочитать идентификтаор карты. Строка будет пропущена.')
+                    self.on_error(
+                        f'В строке {row + 1} невозможно прочитать идентификтаор карты. Строка будет пропущена.')
                     continue
 
                 l.append(
@@ -132,25 +134,25 @@ class Reader(IDataBaseUser, QObject):
                 try:
                     minute = int(self.cell(self.time_row, col).split(':')[1])
                 except IndexError:
-                    self.on_warning(f'В столбце {col+1}, строке {self.time_row+1} неправильный формат времени')
+                    self.on_warning(f'В столбце {col + 1}, строке {self.time_row + 1} неправильный формат времени')
                     continue
 
                 try:
                     hour = int(self.cell(self.time_row, col).split(':')[0])
                 except IndexError:
-                    self.on_warning(f'В столбце {col+1}, строке {self.time_row+1} неправильный формат времени')
+                    self.on_warning(f'В столбце {col + 1}, строке {self.time_row + 1} неправильный формат времени')
                     continue
 
                 try:
                     day = int(self.cell(self.date_row, col).split('.')[0])
                 except IndexError:
-                    self.on_warning(f'В столбце {col+1}, строке {self.date_row+1} неправильный формат даты')
+                    self.on_warning(f'В столбце {col + 1}, строке {self.date_row + 1} неправильный формат даты')
                     continue
 
                 try:
                     month = int(self.cell(self.date_row, col).split('.')[1])
                 except IndexError:
-                    self.on_warning(f'В столбце {col+1}, строке {self.date_row+1} неправильный формат даты')
+                    self.on_warning(f'В столбце {col + 1}, строке {self.date_row + 1} неправильный формат даты')
                     continue
 
                 l.append(
@@ -168,42 +170,42 @@ class Reader(IDataBaseUser, QObject):
                 break
         return l
 
-    @property
-    def progress(self):
-        return self.current
-
-    @progress.setter
-    def progress(self, val):
-        self.current = val
-
-        if self.progress_bar is not None:
-            self.progress_bar.setValue(self.current / self.total * 100)
-
     @safe
-    def run(self):
+    def run(self, callback: Callable[[int], None]):
+        STAGE = 0
+
+        STAGE_RATE = [0.25, 0.75]
+        assert sum(STAGE_RATE) == 1
+
+        # LESSON STAGE
         lessons = self.lessons()
-
-        self.total = len(lessons) * (1 + len(self.students()))
-
-        for lesson in lessons:
+        count = len(lessons)
+        for index, lesson in enumerate(lessons):
             QApplication.processEvents()
+            callback(int(100 * (sum(STAGE_RATE[:STAGE]) + STAGE_RATE[STAGE] * (index / count))))
+
             try:
                 if lesson.real_lesson is not None:
-                    Action.start_lesson(lesson.real_lesson, self.professor)
+                    lesson.real_lesson.completed = True
                 else:
                     self.on_warning(f'Для столбца {lesson.col} не найдено занятияе в БД. Столбец будет пропущен при '
                                     f'записи.\nИзмените дату занятия в программе или в файле и повторите попытку ('
                                     f'дупликаты записей будут проигнорированы).')
             except UnnecessaryActionException:
                 pass
-            self.progress += 1
+        else:
+            STAGE += 1
 
-        for student in self.students():
+        # STUDENT STAGE
+        visitations = []
+        count = len(self.students())
+        for index, student in enumerate(self.students()):
             QApplication.processEvents()
+            callback(int(100 * (sum(STAGE_RATE[:STAGE]) + STAGE_RATE[STAGE] * (index / count))))
 
             if student.real_student is not None:
                 try:
-                    Action.change_student_card_id(student.real_student, student.card_id, self.professor.id)
+                    student.real_student.card_id = student.card_id
                 except UnnecessaryActionException:
                     pass
 
@@ -214,19 +216,17 @@ class Reader(IDataBaseUser, QObject):
                         if lesson is not None:
                             real_lesson = lesson.real_lesson
                             if real_lesson is not None:
-                                try:
-                                    Action.new_visitation(student=student.real_student,
-                                                          lesson=real_lesson,
-                                                          professor_id=self.professor.id)
-                                except UnnecessaryActionException:
-                                    pass
+                                Visitation.get_or_create(
+                                    session=self.professor.session,
+                                    student_id=student.real_student.id,
+                                    lesson_id=lesson.real_lesson.id)
                         else:
                             n = '\n'
                             self.on_warning(f"Не удалось найти {visit} в {n.join([str(l) for l in lessons])}")
 
-                    self.progress += 1
-
             else:
                 self.on_error(f'Студент {student.name} не обнаружен в БД.')
 
+        self.professor.session.commit()
+        self.session.expire_all()
         self.on_finish(f'Успешно загружены данные')

@@ -29,11 +29,11 @@ class Module:
                     response = Response(request_type)
                     data = self._read(request)
                     if data is not None:
+                        authentication = None
                         try:
                             print(data['user'])
                             authentication = Auth.log_in(**data['user'])
 
-                            self.session = authentication.session
                             self.post(data=data.get('data'), response=response,
                                       auth=authentication, **kwargs)
 
@@ -41,6 +41,9 @@ class Module:
                             response.set_error(str(e))
                         except InvalidPasswordException as e:
                             response.set_error(str(e))
+                        finally:
+                            if authentication is not None:
+                                authentication.user.session.close()
                     else:
                         response.set_error(
                             "you send no data: {}".format(request.value))
@@ -64,5 +67,5 @@ class Module:
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
         pass
 
-    def read_data(self, data: str):
+    def read_data(self, data: bytearray):
         return JsonParser.read(data.decode('utf8').replace("'", '"'))

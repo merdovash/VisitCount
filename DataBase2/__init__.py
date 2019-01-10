@@ -4,25 +4,25 @@ safsdf
 """
 import os
 import sys
-from abc import ABCMeta
-from collections import defaultdict
 from datetime import datetime
 from threading import Lock
-from typing import List, Union, Tuple, Dict
+from typing import List, Union, Dict, Any, Type
 
-from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, \
-    DateTime, Boolean
+from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool
+from sqlalchemy.sql import ClauseElement
 
 from DataBase2.config2 import Config
+from Domain.ArgPars import get_argv
 from Domain.Date import study_week, study_semester
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException
-from Domain.functools.Decorator import memoize
+from Domain.Validation.Values import Get
 from Domain.functools.List import DBList
+from Parser import IJSON
+from Parser.JsonParser import JsonParser
 
 try:
     root = sys.modules['__main__'].__file__
@@ -32,6 +32,8 @@ except AttributeError:
 
 print(os.path.basename(root))
 root = os.path.basename(root)
+
+datetime_format = "%Y-%m-%d %H:%M:%S"
 
 
 def create_threaded():
@@ -62,13 +64,14 @@ def create():
     if root == 'run_server.py':
         engine = create_engine(Config.connection_string,
                                pool_pre_ping=True,
-                               poolclass=NullPool)
+                               poolclass=NullPool,
+                               pool_recycle=3600)
 
     else:
         db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db2.db'))
 
         engine = create_engine(db_path,
-                               echo=False,
+                               echo=True if get_argv('--db-echo') else False,
                                poolclass=StaticPool,
                                connect_args={'check_same_thread': False})
 
@@ -82,7 +85,7 @@ def create():
 
     Base = declarative_base(bind=engine)
 
-    Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
+    Session = scoped_session(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
 
     metadata = Base.metadata
 
@@ -120,7 +123,7 @@ def UserSession(user, session=None):
     return s
 
 
-class _DBObject:
+class _DBObject(IJSON):
     __table_args__ = {
         'mysql_engine': 'InnoDB',
         'mysql_charset': 'utf8',
@@ -130,31 +133,96 @@ class _DBObject:
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
 
     def __init__(self, **kwargs):
-        pass
+        Base.__init__(self, id=kwargs.pop('id', None), **kwargs)
 
     def __repr__(self):
         return "<{type}({fields})>".format(
             type=type(self).__name__,
-            fields=', '.join("{name}={value}".format(name=name, value=getattr(self, name))
-                             for name in dir(self.__class__)
-                             if isinstance(getattr(self.__class__, name), InstrumentedAttribute))
+            fields=', '.join("{name}={value}".format(name=name, value=value)
+                             for name, value in self._dict().items())
         )
 
-    def to_json(self):
-        return '{' \
-               + ', '.join("'{name}':'{value}'".format(name=name, value=getattr(self, name))
-                           for name in dir(self.__class__)
-                           if isinstance(getattr(self.__class__, name), InstrumentedAttribute)) \
-               + '}'
+    def __hash__(self):
+        return hash(f'{type(self).__name__}:{self.id}')
+
+    @classmethod
+    def column_type(cls, name):
+        python_type = cls.table().c[name].type.python_type
+        if python_type == datetime:
+            return Get.datetime
+        if python_type == bool:
+            return Get.bool
+        return python_type
+
+    def _dict(self) -> dict:
+        return {
+            name: getattr(self, name)
+            for name in self.table().c.keys()
+        }
+
+    def dict(self):
+        return {key: item for key, item in self._dict() if key[0] != '_'}
+
+    def to_json(self) -> str:
+        r = self._dict()
+        return JsonParser.dump(r)
 
     @classmethod
     def of(cls, obj, with_deleted=False):
-        raise NotImplementedError()
+        raise NotImplementedError(cls)
+
+    @classmethod
+    def new(cls, session=None, **kwargs):
+        obj = cls(**kwargs)
+        if session is not None:
+            session.add(obj)
+        return obj
+
+    @classmethod
+    def table(cls):
+        return cls.__table__
+
+    @classmethod
+    def insert_or_ignore(cls, data: List[Dict[str, Any]]):
+        cls.table().insert(
+            prefixes=['OR IGNORE']
+        ).execute(data)
+
+    @classmethod
+    def get(cls, session, **kwargs) -> '_DBObject':
+        return session.query(cls).filter_by(**kwargs).first()
+
+    @classmethod
+    def get_or_create(cls, session, **kwargs):
+        instance = cls.get(session, **kwargs)
+        if instance:
+            return instance
+        else:
+            params = dict((k, v) for k, v in kwargs.items() if not isinstance(v, ClauseElement))
+            instance = cls(**params)
+            session.add(instance)
+            return instance
+
+    @staticmethod
+    def class_(name) -> Type['_DBObject']:
+        return eval(name)
+
+    def __getitem__(self, item):
+        return self._dict()[item]
+
+    def __eq__(self, other):
+        if isinstance(other, _DBObject):
+            return super().__eq__(other)
+
+        if isinstance(other, dict):
+            return self._dict() == other
+
+        super().__eq__(other)
 
 
 class _DBTrackedObject(_DBObject):
     _created = Column(DateTime, default=datetime.now)
-    _updated = Column(DateTime, onupdate=datetime.now)
+    _updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     _is_deleted = Column(Boolean, default=False)
     _deleted = Column(DateTime)
 
@@ -166,6 +234,9 @@ class _DBTrackedObject(_DBObject):
         self._deleted = None
         self._is_deleted = False
 
+    def is_deleted(self):
+        return self._is_deleted
+
 
 class _DBPerson(_DBTrackedObject):
     last_name = Column(String(50), nullable=False)
@@ -173,6 +244,15 @@ class _DBPerson(_DBTrackedObject):
     middle_name = Column(String(50), default="")
     sex = Column(Boolean, default=True)
     email = Column(String(200))
+
+    def __init__(self, **kwargs):
+        super().__init__(
+            last_name=kwargs.pop('last_name', ''),
+            first_name=kwargs.pop('first_name', ''),
+            middle_name=kwargs.pop('middle_name', ''),
+            sex=kwargs.pop('sex', True),
+            email=kwargs.pop('email', ''),
+            **kwargs)
 
     session = None
 
@@ -199,10 +279,28 @@ class StudentsGroups(Base, _DBTrackedObject):
     Ассоциативная таблица Студентов - Групп
     """
     __tablename__ = 'students_groups'
+    __table_args__ = (
+        UniqueConstraint('student_id', 'group_id', name='students_groups_UK'),
+        _DBObject.__table_args__
+    )
     student_id = Column(Integer, ForeignKey('students.id'))
     group_id = Column(Integer, ForeignKey('groups.id'))
 
-    UniqueConstraint('student_id', 'group_id', name='students_groups_UK')
+    @classmethod
+    def of(cls, obj, with_deleted=False):
+        if isinstance(obj, Professor):
+            return DBList(
+                obj.session \
+                    .query(StudentsGroups)
+                    .distinct(StudentsGroups.id) \
+                    .join(Group) \
+                    .join(LessonsGroups) \
+                    .join(Lesson) \
+                    .join(Professor) \
+                    .filter(Professor.id == obj.id) \
+                    .all(),
+                with_deleted=with_deleted)
+        raise NotImplementedError(type(obj), obj)
 
 
 class LessonsGroups(Base, _DBTrackedObject):
@@ -210,11 +308,27 @@ class LessonsGroups(Base, _DBTrackedObject):
     Ассоциативная таблица Занятий - Групп
     """
     __tablename__ = 'lessons_groups'
+    __table_args__ = (
+        UniqueConstraint('lesson_id', 'group_id', name='lesson_groups_UK'),
+        _DBObject.__table_args__
+    )
 
     lesson_id = Column(Integer, ForeignKey('lessons.id'))
     group_id = Column(Integer, ForeignKey('groups.id'))
 
-    UniqueConstraint('lesson_id', 'group_id', name='lesson_groups_UK')
+    @classmethod
+    def of(cls, obj, with_deleted=False):
+        if isinstance(obj, Professor):
+            return DBList(
+                obj.session
+                    .query(LessonsGroups)
+                    .distinct(LessonsGroups.id)
+                    .join(Lesson)
+                    .join(Professor)
+                    .filter(Professor.id == obj.id).
+                    all(),
+                with_deleted=with_deleted)
+        raise NotImplementedError(type(obj))
 
 
 class StudentsParents(Base, _DBTrackedObject):
@@ -222,11 +336,30 @@ class StudentsParents(Base, _DBTrackedObject):
     Ассоциативная таблица Студентов - Родителей
     """
     __tablename__ = 'students_parents'
+    __table_args__ = (
+        UniqueConstraint('parent_id', 'student_id', name='student_parent_UK'),
+        _DBObject.__table_args__
+    )
 
     parent_id = Column(Integer, ForeignKey('parents.id'))
     student_id = Column(Integer, ForeignKey('students.id'))
 
-    UniqueConstraint('parent_id', 'student_id', name='student_parent_UK')
+    @classmethod
+    @DBList.wrapper
+    def of(cls, obj, with_deleted=False):
+        if isinstance(obj, Professor):
+            return obj.session \
+                .query(StudentsParents) \
+                .distinct(StudentsParents.id) \
+                .join(Student) \
+                .join(StudentsGroups) \
+                .join(Group) \
+                .join(LessonsGroups) \
+                .join(Lesson) \
+                .join(Professor) \
+                .filter(Professor.id == obj.id) \
+                .all()
+        raise NotImplementedError(obj)
 
 
 class Visitation(Base, _DBTrackedObject):
@@ -235,11 +368,13 @@ class Visitation(Base, _DBTrackedObject):
     """
 
     __tablename__ = 'visitations'
+    __table_args__ = (
+        UniqueConstraint('student_id', 'lesson_id', name='visitation_UK'),
+        _DBObject.__table_args__
+    )
 
     student_id = Column(Integer, ForeignKey('students.id'))
     lesson_id = Column(Integer, ForeignKey('lessons.id'))
-
-    UniqueConstraint('student_id', 'lesson_id', 'visitation_UK')
 
     def __repr__(self):
         return f'<Visitation(id={self.id}, student_id={self.student_id},' \
@@ -254,20 +389,32 @@ class Visitation(Base, _DBTrackedObject):
         :return: список посещений объекта
         """
         if isinstance(obj, (list, _AssociationList)):
-            res = DBList([Visitation.of(o) for o in obj]).flat().unique()
-        elif isinstance(obj, (Student, Lesson)):
-            res = DBList(obj.visitations)
-        elif isinstance(obj, Group):
-            res = DBList(Visitation.of(obj.students)).flat()
-        elif isinstance(obj, (Professor, Discipline)):
-            res = DBList([o.visitations for o in obj.lessons]).flat()
-        else:
-            raise NotImplementedError(type(obj))
+            return DBList([Visitation.of(o) for o in obj], flat=True, unique=True, with_deleted=with_deleted)
 
-        if with_deleted:
-            return res.without_deleted()
-        else:
-            return res
+        if isinstance(obj, (Student, Lesson)):
+            return DBList(obj.visitations, with_deleted=with_deleted)
+
+        if isinstance(obj, Group):
+            return DBList(Visitation.of(obj.students), flat=True, with_deleted=with_deleted)
+
+        if isinstance(obj, (Professor, Discipline)):
+            return DBList([o.visitations for o in obj.lessons], flat=True, with_deleted=with_deleted)
+
+        raise NotImplementedError(type(obj))
+
+    @classmethod
+    def get(cls, session, student_id=None, lesson_id=None, **kwargs):
+        if student_id is None or lesson_id is None:
+            if lesson_id is not None:
+                kwargs['lesson_id'] = lesson_id
+            if student_id is not None:
+                kwargs['student_id'] = student_id
+            return super().get(session, **kwargs)
+        return session \
+            .query(Visitation) \
+            .filter(Visitation.student_id == student_id) \
+            .filter(Visitation.lesson_id == lesson_id) \
+            .first()
 
 
 class UserType(int):
@@ -277,7 +424,7 @@ class UserType(int):
     ADMIN = 3
 
 
-class Auth(Base, _DBTrackedObject):
+class Auth(Base, _DBObject):
     """
     Таблица пользователей
     """
@@ -289,7 +436,7 @@ class Auth(Base, _DBTrackedObject):
     user_type = Column(Integer)
     user_id = Column(Integer)
 
-    _user = None
+    __user = None
     session: Session = None
 
     @property
@@ -298,20 +445,21 @@ class Auth(Base, _DBTrackedObject):
 
         :return: Professor or Student
         """
-        if self._user is None:
+        if self.__user is None:
             if self.user_type == UserType.STUDENT:
-                self._user: Student = self.session \
+                self.__user: Student = self.session \
                     .query(Student) \
                     .filter(Student.id == self.user_id) \
                     .first()
             elif self.user_type == UserType.PROFESSOR:
-                self._user: Professor = self.session \
+                self.__user: Professor = self.session \
                     .query(Professor) \
                     .filter(Professor.id == self.user_id) \
                     .first()
-                self._user.session = self.session
+                self.__user.session = self.session
+                self.__user.auth = self
 
-        return self._user
+        return self.__user
 
     @staticmethod
     def log_in(login=None, password=None) -> 'Auth':
@@ -376,7 +524,9 @@ class Discipline(Base, _DBTrackedObject):
         :param with_deleted: включать ли удаленные объекты в список
         :return: список дисциплин объекта
         """
-        if isinstance(obj, Lesson):
+        if isinstance(obj, (list, _AssociationList)):
+            return DBList([Discipline.of(o) for o in obj], flat=True, unique=True)
+        elif isinstance(obj, Lesson):
             return DBList([obj.discipline], with_deleted=with_deleted)
         elif isinstance(obj, Professor):
             return DBList([lesson.discipline for lesson in obj.lessons], flat=True, unique=True,
@@ -390,12 +540,16 @@ class Lesson(Base, _DBTrackedObject):
     Lesson
     """
     __tablename__ = 'lessons'
+    __table_args__ = (
+        UniqueConstraint('professor_id', 'date', name='lesson_UK'),
+        _DBObject.__table_args__
+    )
 
     professor_id = Column(Integer, ForeignKey('professors.id'), nullable=False)
     discipline_id = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
     type = Column(Integer, nullable=False)
     date = Column(DateTime, nullable=False)
-    completed = Column(Integer, nullable=False)
+    completed = Column(Boolean, nullable=False)
     room_id = Column(String(40), nullable=False)
 
     _groups = relationship('LessonsGroups', backref=backref('lesson'))
@@ -409,13 +563,15 @@ class Lesson(Base, _DBTrackedObject):
             f"date={self.date}, type={self.type}," \
             f" completed={self.completed})>"
 
+    _week = None
+
     @property
     def week(self):
-        """
+        if self._week is None:
+            self._week = study_week(self.date)
+        return self._week
 
-        :return: номер недели этого занятия
-        """
-        return study_week(self.date)
+    _semester = None
 
     @property
     def semester(self):
@@ -423,10 +579,12 @@ class Lesson(Base, _DBTrackedObject):
 
         :return: номер семестра этого занятия
         """
-        return study_semester(self.date)
+        if self._semester is None:
+            self._semester = study_semester(self.date)
+        return self._semester
 
     @classmethod
-    def of(cls, obj, intersect=False, with_deleted=False, semester=None) -> List['Lesson']:
+    def of(cls, obj, intersect=False, with_deleted=False) -> List['Lesson']:
         """
 
         :param semester:
@@ -435,37 +593,25 @@ class Lesson(Base, _DBTrackedObject):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список родителей, отоносящихся к объекту
         """
-
-        def sem_checker(lesson):
-            """
-
-            :param lesson: занятие
-            :return: определяет находится ли занятие в семестре
-            """
-            if semester is None:
-                return True
-            else:
-                return lesson.semester == semester
-
         if isinstance(obj, (list, _AssociationList)):
             if intersect:
                 lessons = None
                 for o in obj:
-                    lessons = Lesson.of(o, semester=semester) \
+                    lessons = Lesson.of(o) \
                         if lessons is None \
-                        else list(set(lessons).intersection(Lesson.of(o, semester=semester)))
+                        else list(set(lessons).intersection(Lesson.of(o)))
                 return DBList(lessons,
                               with_deleted=with_deleted,
                               flat=True)
 
             else:
-                return DBList([Lesson.of(o, semester=semester) for o in obj],
+                return DBList([Lesson.of(o) for o in obj],
                               flat=True,
                               unique=True,
                               with_deleted=with_deleted)
 
         elif isinstance(obj, (Professor, Discipline, Group)):
-            return DBList(filter(sem_checker, obj.lessons),
+            return DBList(obj.lessons,
                           with_deleted=with_deleted)
 
         elif isinstance(obj, Student):
@@ -531,7 +677,7 @@ class Professor(_DBPerson, Base):
 
     card_id = Column('card_id', String(40), unique=True)
 
-    _last_update_in = Column(DateTime)
+    _last_update_in = Column(DateTime, default=datetime.now)
     _last_update_out = Column(DateTime)
 
     lessons: List[Lesson] = relationship("Lesson", backref=backref('professor'), order_by="Lesson.date")
@@ -540,9 +686,9 @@ class Professor(_DBPerson, Base):
     admins = association_proxy('_admins', 'admin')
 
     session: Session = None
+    auth: Auth = None
 
     @classmethod
-    @memoize
     def of(cls, obj, with_deleted=False) -> List['Professor']:
         """
 
@@ -574,7 +720,7 @@ class Professor(_DBPerson, Base):
         else:
             raise NotImplementedError(type(obj))
 
-    def updates(self) -> Tuple[Dict[str, List], Dict[str, List], Dict[str, List]]:
+    def updates(self, last_in: datetime = None) -> Dict[str, Dict[str, List]]:
         """
 
         :return: кортеж из трех словарей:
@@ -582,31 +728,31 @@ class Professor(_DBPerson, Base):
             измененные объекты этим преподавтелем с момента последней отправки,
             удаленные объекты этим преподавтелем с момента последней отправки
         """
-        created = defaultdict(list)
-        updated = defaultdict(list)
-        deleted = defaultdict(list)
+
+        if last_in is None:
+            created_cond = lambda item: item._created and item._created >= self._last_update_out
+            updated_cond = lambda item: item._updated and item._updated >= self._last_update_out
+            deleted_cond = lambda item: item._deleted and item._is_deleted and item._deleted >= self._last_update_out
+        else:
+            created_cond = lambda item: item._created and item._created >= last_in
+            updated_cond = lambda item: item._updated and item._updated >= last_in
+            deleted_cond = lambda item: item._deleted and item._is_deleted and item._deleted >= last_in
+
+        created = {}
+        updated = {}
+        deleted = {}
 
         if self._last_update_out is None:
             self._last_update_out = datetime(2008, 1, 1)
 
-        for class_ in _DBTrackedObject.__subclasses__():
-            created[class_.__name__].extend(self.session
-                                            .query(class_)
-                                            .filter(class_._created >= self._last_update_out)
-                                            .filter(class_._is_deleted == 0)
-                                            .all())
-            updated[class_.__name__].extend(self.session
-                                            .query(class_)
-                                            .filter(class_._updated >= self._last_update_out)
-                                            .filter(class_._created < self._last_update_out)
-                                            .all())
-            deleted[class_.__name__].extend(self.session
-                                            .query(class_)
-                                            .filter(class_._is_deleted == 1)
-                                            .filter(class_._deleted >= self._last_update_out)
-                                            .all())
+        for class_ in [class_ for class_ in _DBTrackedObject.__subclasses__() if class_.__name__[0] != '_']:
+            data: List[_DBTrackedObject] = DBList(class_.of(self, with_deleted=True), flat=True, unique=True)
 
-        return created, updated, deleted
+            created[class_.__name__] = [data.pop(i) for i in range(len(data) - 1, -1, -1) if created_cond(data[i])]
+            updated[class_.__name__] = [data.pop(i) for i in range(len(data) - 1, -1, -1) if updated_cond(data[i])]
+            deleted[class_.__name__] = [data.pop(i) for i in range(len(data) - 1, -1, -1) if deleted_cond(data[i])]
+
+        return dict(created=created, updated=updated, deleted=deleted)
 
 
 class NotificationParam(Base, _DBTrackedObject):
@@ -615,12 +761,14 @@ class NotificationParam(Base, _DBTrackedObject):
     """
 
     __tablename__ = 'notifications'
+    __table_args__ = (
+        UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK'),
+        _DBObject.__table_args__
+    )
 
     professor_id = Column(Integer, ForeignKey('professors.id'))
     admin_id = Column(Integer, ForeignKey('administrations.id'))
     active = Column(Boolean)
-
-    UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK')
 
     @classmethod
     def of(cls, obj, with_deleted=False) -> List['NotificationParam']:
@@ -677,10 +825,13 @@ class Group(Base, _DBTrackedObject):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список групп, отоносящихся к объекту
         """
-        if isinstance(obj, Lesson):
+        if isinstance(obj, (list, _AssociationList)):
+            return DBList([Group.of(o) for o in obj], unique=True, with_deleted=with_deleted, flat=flat_list)
+        elif isinstance(obj, Lesson):
             return DBList(obj.groups, flat=flat_list)
         elif isinstance(obj, Professor):
-            return DBList([lesson.groups for lesson in obj.lessons],
+            return DBList([frozenset(lesson.groups) if len(lesson.groups) > 1 else DBList(lesson.groups)
+                           for lesson in obj.lessons],
                           flat=flat_list,
                           unique=True,
                           with_deleted=with_deleted)
@@ -805,18 +956,6 @@ if _new:
 #                         target._updated = datetime.now()
 
 if __name__ == '__main__':
-    sess = Session()
-    print(type(Professor._admins))
-    prof = Professor.get
+    d = Visitation.get(Session(), id=3161)
 
-    sess.add(prof)
-
-    sess.commit()
-
-    prof.middle_name = "Георг"
-
-    sess.commit()
-
-    print(prof)
-
-    pass
+    print(d._is_deleted)

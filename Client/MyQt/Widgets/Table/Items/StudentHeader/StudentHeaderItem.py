@@ -2,7 +2,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMenu, QTableWidgetItem, QStyledItemDelegate
 
 from Client.IProgram import IProgram
-from Client.MyQt.Table.Items import AbstractContextItem
+from Client.MyQt.Widgets.Table.Items import AbstractContextItem
 from DataBase2 import Student
 from Domain.Validation.Values import Validate
 from Domain.functools.Format import format_name

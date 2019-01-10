@@ -5,29 +5,27 @@ TODO:
     * fix error on relogin after changing user
 """
 import datetime
-from typing import List
+from typing import List, Callable
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QDropEvent
 from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar
 
 from Client.IProgram import IProgram
-from Client.MyQt.Chart.QAnalysisDialog import QAnalysisDialog
-from Client.MyQt.Chart.WeekAnalysis import WeekChart
-from Client.MyQt.Chart.WeekDayAnalysis import WeekDayChart
-from Client.MyQt.QAction.DataAction import DataAction
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
-from Client.MyQt.Table import VisitTable
-from Client.MyQt.Table.Control import VisitTableControl
+from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog
+from Client.MyQt.Widgets.Network.Request import send_updates
+from Client.MyQt.Widgets.Table import VisitTable
 from Client.MyQt.Window import AbstractWindow, IParentWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
-from Client.MyQt.Window.Main.Selector import Selector
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.MyQt.Window.NotificationParam import NotificationWindow
-from DataBase2 import Professor, Lesson
+from DataBase2 import Professor, Lesson, Group, Discipline
 from Domain import Action
 from Domain.Action import NetAction
 from Domain.Data import valid_card
+from Domain.Date import BisitorDateTime
+from Domain.Structures import Data
 from Domain.functools.List import find
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
@@ -112,7 +110,6 @@ class MainWindow(AbstractWindow, IParentWindow):
         else:
             event.ignore()
 
-
     def closeEvent(self, *args, **kwargs):
         if self.program.reader() is not None:
             self.program.reader().close()
@@ -130,15 +127,41 @@ class MainWindow(AbstractWindow, IParentWindow):
         self._init_notification()
 
     def _init_menu_analysis(self):
+        self.analysis = []
+
+        def show(data: Callable[[], Data]):
+            def _show():
+                d = QAnalysisDialog(
+                    data(),
+                    selector={'группы': Group.of(self.professor), 'дисциплины': Discipline.of(self.professor)})
+                self.analysis.append(d)
+
+                d.show()
+
+            return _show
+
         analysis = self.menu_bar.addMenu("Анализ")
 
         analysis_weeks = QAction("По неделям", self)
-        analysis_weeks.triggered.connect(QAnalysisDialog.loader(WeekChart, program=self.program))
+        semester = BisitorDateTime.now().semester
+        analysis_weeks.triggered.connect(
+            show(
+                lambda: Data(professor=self.professor)
+                    .filter(lambda x: x.lesson.semester == semester)
+                    .group_by(lambda x: x.lesson.week)
+            )
+        )
 
         analysis.addAction(analysis_weeks)
 
         analysis_week_days = QAction("По дням недели", self)
-        analysis_week_days.triggered.connect(QAnalysisDialog.loader(WeekDayChart, program=self.program))
+        analysis_week_days.triggered.connect(
+            show(
+                lambda: Data(professor=self.professor)
+                    .filter(lambda x: x.lesson.semester == semester)
+                    .group_by(group_by=lambda x: x.lesson.date.weekday())
+            )
+        )
 
         analysis.addAction(analysis_week_days)
 
@@ -180,65 +203,18 @@ class MainWindow(AbstractWindow, IParentWindow):
         data = QMenu('Заголовок таблицы')
         view.addMenu(data)
 
-        data_show_month_day = DataAction(
-            ["Отображать день", "Не отображать день"],
-            VisitTable.Header.DAY,
-            self
-        )
-        data.addAction(data_show_month_day)
-
-        data.addAction(
-            DataAction(
-                ["Отображать день недели", "Не отображать день недели"],
-                VisitTable.Header.WEEKDAY,
-                self
-            )
-        )
-        data.addAction(
-            DataAction(
-                ["Отображать месяц", "Не отображать месяц"],
-                VisitTable.Header.MONTH,
-                self
-            )
-        )
-        data.addAction(
-            DataAction(
-                ["Отображать номер занятия", "Не отображать номер занятия"],
-                VisitTable.Header.LESSON,
-                self
-            )
-        )
-        data.addAction(
-            DataAction(
-                ["Отображать тип занятия", "Не отображать тип занятия"],
-                VisitTable.Header.LESSONTYPE,
-                self
-            )
-        )
-
-        data.addAction(
-            DataAction(
-                ["Отображать номер недели", "Не отображать номер недели"],
-                VisitTable.Header.WEEK_NUMBER,
-                self
-            )
-        )
-
         view.addSeparator()
         view.addAction('Отображать перекрестие', self.centralWidget().switch_show_table_cross)
 
     def _init_menu_updates(self):
+        def update_db_action():
+            self.update_action_dialog = send_updates(self.program)
+            self.update_action_dialog.show()
+
         updates = self.menu_bar.addMenu("Синхронизация")
 
         updates_action = QAction("Обновить локальную базу данных", self)
-        updates_action.triggered.connect(
-            lambda x: NetAction.send_updates(
-                login=self.program.auth.login,
-                password=self.program.auth.password,
-                host=self.program.host,
-                professor_id=self.professor.id,
-                session=self.program.session)
-        )
+        updates_action.triggered.connect(update_db_action)
 
         updates.addAction(updates_action)
 
@@ -270,25 +246,7 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
         self.setupUi(self)
 
-        self.control = VisitTableControl(
-            window=self.parent(),
-            table=self.table,
-            selector=self.selector,
-            reader=self.program.reader,
-            professor=self.professor,
-            session=self.program.session
-        )
-
         self.last_lesson = None
-
-        self.selector.discipline_changed.connect(self.control.change_discipline)
-        self.selector.group_changed.connect(self.control.change_group)
-        self.selector.lesson_changed.connect(self.control.select_lesson)
-        self.selector.lesson_started.connect(self.control.start_lesson)
-        self.selector.lesson_finished.connect(self.control.end_lesson)
-
-        self.table_changed.connect(self.table.on_table_change)
-        self.ready_draw_table.connect(self.table.on_ready)
 
         self.selector.start()
 
@@ -390,3 +348,11 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
     def hasDialog(self):
         return
+
+
+if __name__ == '__main__':
+    def d(a, b, c):
+        print(a+b+c)
+
+    d(4,5,6)
+    d(b=4, c=7, a=3)
