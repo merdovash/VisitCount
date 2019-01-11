@@ -1,11 +1,10 @@
-from typing import List, Dict
+from typing import List, Dict, Callable
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QFormLayout
+from PyQtPlot.BarWidget import QBarGraphWidget
 
 from Client.IProgram import IProgram
-from Client.MyQt.Widgets.Chart.Ui_QPlotWidget import Ui_PlotWidget
-from Client.MyQt.Widgets.Graph.BarWidget import QBarGraphWidget
 from Client.MyQt.Window.interfaces import IParentWindow, IChildWindow
 from DataBase2 import _DBObject
 # from Main.DataBase.GlobalStatistic import Statistic
@@ -25,7 +24,25 @@ def show(graph_window_constructor, program: IProgram):
     return x
 
 
-class QAnalysisDialog(QWidget, IParentWindow, IChildWindow, Ui_PlotWidget):
+class PlotType:
+    @staticmethod
+    def WEEK(w: QBarGraphWidget):
+        w.horizontal_ax.set_ticks(range(1, 19))
+        w.vertical_ax.set_ticks(range(0, 110, 10))
+        w.set_tooltip_func(lambda text, bar, name: f"{text}% посещений\n на {bar} неделе")
+        w.horizontal_ax.set_label("Неделя")
+        w.vertical_ax.set_label("Посещения, %")
+
+    @staticmethod
+    def WEEKDAY(w: QBarGraphWidget):
+        w.horizontal_ax.set_ticks(range(1,8))
+        w.horizontal_ax.set_label('День недели')
+        w.vertical_ax.set_ticks(range(0, 110, 10))
+        w.vertical_ax.set_label("Посещения, %")
+        w.set_tooltip_func(lambda value, bar, name:
+                           f"{value}% посещений\n {'в пн.во вт.в ср.в чт.в пт.в сб.в вс'.split('.')[int(bar)]}")
+
+class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
     """
     Базовый класс для отображения графиков
     """
@@ -45,7 +62,8 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow, Ui_PlotWidget):
 
         return f
 
-    def __init__(self, data: Data, selector: Dict[str, List[_DBObject]], flags=None, *args, **kwargs):
+    def __init__(self, data: Data, selector: Dict[str, List[_DBObject]], plot_styler: Callable[[QBarGraphWidget], None],
+                 flags=None, *args, **kwargs):
         QWidget.__init__(self, flags, *args, **kwargs)
         IParentWindow.__init__(self)
         IChildWindow.__init__(self)
@@ -59,6 +77,7 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow, Ui_PlotWidget):
             heights=[],
             flags=self
         )
+        plot_styler(self.graph)
 
         layout.addWidget(self.graph, stretch=90)
 
@@ -94,6 +113,3 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow, Ui_PlotWidget):
         heights = [int(data[key] * 100) for key in bars]
 
         self.graph.update_data(0, bars, heights)
-
-        self.graph.vertical_ax.set_ticks(range(0, 110, 10))
-        self.graph.horizontal_ax.set_ticks(range(1, 19))

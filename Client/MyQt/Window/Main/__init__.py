@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar
 
 from Client.IProgram import IProgram
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
-from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog
+from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
 from Client.MyQt.Widgets.Network.Request import send_updates
 from Client.MyQt.Widgets.Table import VisitTable
 from Client.MyQt.Window import AbstractWindow, IParentWindow
@@ -129,11 +129,12 @@ class MainWindow(AbstractWindow, IParentWindow):
     def _init_menu_analysis(self):
         self.analysis = []
 
-        def show(data: Callable[[], Data]):
+        def show(data: Callable[[], Data], type):
             def _show():
                 d = QAnalysisDialog(
                     data(),
-                    selector={'группы': Group.of(self.professor), 'дисциплины': Discipline.of(self.professor)})
+                    selector={'группы': Group.of(self.professor), 'дисциплины': Discipline.of(self.professor)},
+                    plot_styler=type)
                 self.analysis.append(d)
 
                 d.show()
@@ -148,7 +149,8 @@ class MainWindow(AbstractWindow, IParentWindow):
             show(
                 lambda: Data(professor=self.professor)
                     .filter(lambda x: x.lesson.semester == semester)
-                    .group_by(lambda x: x.lesson.week)
+                    .group_by(lambda x: x.lesson.week),
+                PlotType.WEEK
             )
         )
 
@@ -159,7 +161,8 @@ class MainWindow(AbstractWindow, IParentWindow):
             show(
                 lambda: Data(professor=self.professor)
                     .filter(lambda x: x.lesson.semester == semester)
-                    .group_by(group_by=lambda x: x.lesson.date.weekday())
+                    .group_by(group_by=lambda x: x.lesson.date.weekday()),
+                PlotType.WEEKDAY
             )
         )
 
@@ -352,7 +355,8 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
 if __name__ == '__main__':
     def d(a, b, c):
-        print(a+b+c)
+        print(a + b + c)
 
-    d(4,5,6)
+
+    d(4, 5, 6)
     d(b=4, c=7, a=3)

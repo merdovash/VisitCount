@@ -3,6 +3,7 @@
 safsdf
 """
 import os
+import pathlib
 import sys
 from datetime import datetime
 from threading import Lock
@@ -79,6 +80,7 @@ def create():
             fh = open(db_path.split('///')[1], 'r')
             fh.close()
         except FileNotFoundError:
+            pathlib.Path('DataBase2').mkdir(parents=True, exist_ok=True)
             fh = open(db_path.split('///')[1], 'w+')
             fh.close()
             _new = True
