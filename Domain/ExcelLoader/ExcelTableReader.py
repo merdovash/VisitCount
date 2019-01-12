@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QMessageBox, QApplication
 
 from Client.MyQt.Window.interfaces import IDataBaseUser
 from DataBase2 import Group, Lesson, Professor, LessonsGroups, Student, Visitation
-from Domain.Exception.Action import UnnecessaryActionException
 from Domain.functools.Decorator import memoize, safe
 from Domain.functools.List import find
 
@@ -184,15 +183,12 @@ class Reader(IDataBaseUser, QObject):
             QApplication.processEvents()
             callback(int(100 * (sum(STAGE_RATE[:STAGE]) + STAGE_RATE[STAGE] * (index / count))))
 
-            try:
-                if lesson.real_lesson is not None:
-                    lesson.real_lesson.completed = True
-                else:
-                    self.on_warning(f'Для столбца {lesson.col} не найдено занятияе в БД. Столбец будет пропущен при '
-                                    f'записи.\nИзмените дату занятия в программе или в файле и повторите попытку ('
-                                    f'дупликаты записей будут проигнорированы).')
-            except UnnecessaryActionException:
-                pass
+            if lesson.real_lesson is not None:
+                lesson.real_lesson.completed = True
+            else:
+                self.on_warning(f'Для столбца {lesson.col} не найдено занятияе в БД. Столбец будет пропущен при '
+                                f'записи.\nИзмените дату занятия в программе или в файле и повторите попытку ('
+                                f'дупликаты записей будут проигнорированы).')
         else:
             STAGE += 1
 
@@ -204,10 +200,9 @@ class Reader(IDataBaseUser, QObject):
             callback(int(100 * (sum(STAGE_RATE[:STAGE]) + STAGE_RATE[STAGE] * (index / count))))
 
             if student.real_student is not None:
-                try:
+
+                if student.real_student.card_id != student.card_id:
                     student.real_student.card_id = student.card_id
-                except UnnecessaryActionException:
-                    pass
 
                 for visit in student.visitations:
                     QApplication.processEvents()
@@ -227,6 +222,7 @@ class Reader(IDataBaseUser, QObject):
             else:
                 self.on_error(f'Студент {student.name} не обнаружен в БД.')
 
+        QApplication.processEvents()
         self.professor.session.commit()
         self.session.expire_all()
         self.on_finish(f'Успешно загружены данные')

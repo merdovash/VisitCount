@@ -29,18 +29,19 @@ class PlotType:
     def WEEK(w: QBarGraphWidget):
         w.horizontal_ax.set_ticks(range(1, 19))
         w.vertical_ax.set_ticks(range(0, 110, 10))
-        w.set_tooltip_func(lambda text, bar, name: f"{text}% посещений\n на {bar} неделе")
+        w.set_tooltip_func(lambda bar, value, name: f"{value}% посещений\n на {bar} неделе")
         w.horizontal_ax.set_label("Неделя")
         w.vertical_ax.set_label("Посещения, %")
 
     @staticmethod
     def WEEKDAY(w: QBarGraphWidget):
-        w.horizontal_ax.set_ticks(range(1,8))
+        w.horizontal_ax.set_ticks(range(1, 8))
         w.horizontal_ax.set_label('День недели')
         w.vertical_ax.set_ticks(range(0, 110, 10))
         w.vertical_ax.set_label("Посещения, %")
-        w.set_tooltip_func(lambda value, bar, name:
+        w.set_tooltip_func(lambda bar, value, name:
                            f"{value}% посещений\n {'в пн.во вт.в ср.в чт.в пт.в сб.в вс'.split('.')[int(bar)]}")
+
 
 class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
     """
@@ -75,6 +76,7 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
         self.graph = QBarGraphWidget(
             bars=[],
             heights=[],
+            name="1",
             flags=self
         )
         plot_styler(self.graph)
@@ -112,4 +114,4 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
         bars = sorted(data.keys())
         heights = [int(data[key] * 100) for key in bars]
 
-        self.graph.update_data(0, bars, heights)
+        self.graph.update_data({bars[i]: heights[i] for i in range(len(bars))}, name='1')

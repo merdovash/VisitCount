@@ -46,14 +46,22 @@ class ExcelLoadingWidget(QWidget, IChildWindow):
 
     @pyqtSlot(name='run')
     def run(self):
+        def special_warning_handler(msg):
+            self.program.window.ok_message.emit(msg)
+            self.raise_()
+
+        def special_finish_handler(msg):
+            self.program.window.ok_message.emit(msg)
+            self.raise_()
+
         for file in self.files:
             r = Reader(
                 file=file,
                 professor=self.program.professor,
                 progress_bar=self.loading[file],
                 on_error=self.program.window.ok_message.emit,
-                on_finish=self.program.window.ok_message.emit,
-                on_warning=self.program.window.ok_message.emit
+                on_finish=special_finish_handler,
+                on_warning=special_warning_handler
             )
             print('hi')
             r.run(callback=lambda x: self.loading[file].setValue(x))

@@ -1,3 +1,5 @@
+import warnings
+
 from DataBase2 import Session
 
 
@@ -65,7 +67,7 @@ class IParentWindow:
             else:
                 raise Exception('idk')
         else:
-            raise Warning('no dialog to close (already None)')
+            warnings.warn('no dialog to close (already None)')
 
         self.raise_()
 

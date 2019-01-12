@@ -59,7 +59,7 @@ class Data:
             for student in students:
                 visitation = Visitation.get(professor.session, student_id=student.id, lesson_id=lesson.id)
                 status = 0 if visitation is None or visitation.is_deleted() else 1
-                self.rows.append(row(Vector(status, 1), lesson, student))
+                self.rows.append(row(Vector(status, int(lesson.completed)), lesson, student))
 
         self.data: Dict[Any, List[row]] = {}
         self.ignored = []
