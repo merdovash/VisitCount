@@ -1,38 +1,20 @@
-import datetime
 from collections import namedtuple
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QTabWidget, QVBoxLayout
 
 from Client.IProgram import IProgram
-from Client.MyQt.Widgets.ComboBox import MComboBox
 from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox, DisciplineComboBox, GroupComboBox, \
     LessonComboBox
-from Client.MyQt.Widgets.Table import VisitSection
-from DataBase2 import Discipline, Group, Lesson, Professor
-from Domain import Data
-from Domain.Data import lessons_of
-
-
-def closest_lesson(lessons: list, date_format="%d-%m-%Y %I:%M%p") -> Lesson:
-    """
-
-    :param date_format:
-    :param lessons: list of lessons
-    :return: closest lesson in list to current datetime
-    """
-    if len(lessons) == 0:
-        return None
-    closest = min(
-        lessons,
-        key=lambda x: abs(datetime.datetime.now() - x.date))
-    return closest
-
+from Client.MyQt.Widgets.TableView import VisitTableWidget
+from DataBase2 import Professor
 
 CurrentData = namedtuple('CurrentData', 'discipline groups lesson')
 
 
 class Selector(QWidget):
+    reader_required = pyqtSignal('PyQt_PyObject')
+
     set_up = pyqtSignal('PyQt_PyObject')
 
     semester_changed = pyqtSignal('PyQt_PyObject')
@@ -57,7 +39,7 @@ class Selector(QWidget):
 
         self.tabs = QTabWidget()
 
-        self.table = VisitSection(self)
+        self.table = VisitTableWidget(self)
         self.tabs.addTab(self.table, "Таблица посещений")
         self.tabs.addTab(QWidget(), 'Задания (TODO)')
 
@@ -84,7 +66,6 @@ class Selector(QWidget):
 
         # group
         self.group = GroupComboBox(self)
-        self.group.setObjectName('custom-select')
         group_label = QLabel("Группа")
         group_label.setAlignment(Qt.AlignRight)
 
@@ -125,10 +106,10 @@ class Selector(QWidget):
         self.discipline.current_changed.connect(self.group.on_parent_change)
 
         self.group.current_changed.connect(self.lesson.on_parent_change)
-        self.group.current_changed.connect(self.table.update_data)
+        self.group.current_changed.connect(self.table.setData)
 
-        self.lesson.current_changed.connect(self.table.on_lesson_change)
-        self.table.horizontalHeader().change_lesson.connect(self.lesson.setCurrent)
+        self.lesson.current_changed.connect(self.table.set_current_lesson)
+        self.table.select_current_lesson.connect(self.lesson.setCurrent)
 
         self.start_button.clicked.connect(self.user_start_lesson)
         self.lesson_started.connect(self.start_lesson)
@@ -138,56 +119,16 @@ class Selector(QWidget):
         self.lesson_finished.connect(self.end_lesson)
         self.lesson_finished.connect(self.table.on_lesson_stop)
 
-    @pyqtSlot(int, name='user_change_lesson')
-    def user_change_lesson(self, new_lesson_index):
-        self.lesson_changed.emit(self.lesson.current())
-
     @pyqtSlot(bool, name='user_start_lesson')
     def user_start_lesson(self, status):
-        self.lesson_started.emit(self.lesson.current())
+        if self.program.reader() is not None:
+            self.lesson_started.emit(self.lesson.current())
+        else:
+            self.reader_required.emit('Считыватель не обнаружен.')
 
     @pyqtSlot(name='user_stop_lesson')
     def user_stop_lesson(self):
         self.lesson_finished.emit()
-
-    def update_disciplines(self, semester):
-        print('discipline_updated')
-        lessons = lessons_of(professor=self.professor, semester=semester)
-        current_lesson = closest_lesson(lessons)
-        disciplines = Discipline.of(lessons)
-
-        last_discipline_index = self.discipline.currentIndex()
-
-        self.discipline.set_items(disciplines)
-        self.discipline.setCurrent(current_lesson.discipline)
-
-        if last_discipline_index == self.discipline.currentIndex() or last_discipline_index == -1:
-            self.discipline_changed.emit(self.discipline.current())
-
-    def update_groups(self, discipline):
-        lessons = lessons_of(professor=self.professor, discipline=discipline, semester=self.semester.current())
-        groups = Group.of(lessons)
-        current_lesson = closest_lesson(lessons)
-
-        last_groups_index = self.group.currentIndex()
-
-        self.group.set_items(groups)
-        self.group.setCurrent(current_lesson.groups)
-
-        if last_groups_index == self.group.currentIndex() or last_groups_index == -1:
-            self.group_changed.emit(self.group.current())
-
-    def update_lessons(self, group):
-        lessons = lessons_of(
-            professor=self.professor,
-            discipline=self.discipline.current(),
-            groups=group,
-            semester=self.semester.current())
-
-        current_lesson = closest_lesson(lessons)
-
-        self.lesson.set_items(lessons)
-        self.lesson.setCurrent(current_lesson)
 
     def start_lesson(self):
         self.start_button.setVisible(False)
@@ -209,7 +150,3 @@ class Selector(QWidget):
         self.lesson.setEnabled(b)
         self.group.setEnabled(b)
         self.discipline.setEnabled(b)
-
-    @pyqtSlot()
-    def on_data_change(self):
-        self._group_changed(self.group.currentIndex())

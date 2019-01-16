@@ -8,6 +8,7 @@ from PyQt5.QtGui import QPainter, QImage, QPen, QColor
 from PyQt5.QtWidgets import QComboBox
 
 from Client.MyQt.ColorScheme import Color
+from Domain.functools.List import closest_lesson
 from DataBase2 import Discipline, Group, Lesson
 
 compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
@@ -46,6 +47,7 @@ class MComboBox(QComboBox):
 
         data = sorted(list(set([self.extractor(item) for item in self.lessons])), key=self.sorter)
         self.set_items(data)
+        self.setCurrent(self.extractor(closest_lesson(lessons)))
 
     def __init__(self, parent, type_: T):
         super().__init__()
@@ -77,6 +79,9 @@ class MComboBox(QComboBox):
 
     @pyqtSlot('PyQt_PyObject', name='setCurrent')
     def setCurrent(self, item: T):
+        if isinstance(item, list):
+            item = item[0]
+
         index = self.items.index(item)
         if index >= 0:
             self.setCurrentIndex(index)

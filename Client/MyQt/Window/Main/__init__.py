@@ -12,10 +12,10 @@ from PyQt5.QtGui import QDropEvent
 from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar
 
 from Client.IProgram import IProgram
+from Client.MyQt.Dialogs.QOkMsg import QOkMsg
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
 from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
-from Client.MyQt.Widgets.Table import VisitTable
 from Client.MyQt.Window import AbstractWindow, IParentWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
@@ -241,105 +241,18 @@ class MainWindowWidget(QWidget, UI_TableWindow):
         self.last_lesson = None
 
         self.selector.set_up.emit(self.professor)
+        self.selector.reader_required.connect(self.on_ok_message)
 
-    # slots
-    @pyqtSlot(name='run_synchronization')
-    def run_synchronization(self):
-        """
-        Slot!
-        Runs synchronization process
-        """
-
-        NetAction.send_updates(
-            self.program.auth.login,
-            self.program.auth.password,
-            self.program.host,
-            self.professor.id,
-            self.program.session)
-        pass
-
-    def getControl(self):
-        return self.control
-
-    def set_current_lesson(self, lesson=None):
-        """
-        Select a lesson close to the current time.
-        """
-        if lesson is None:
-            lessons = self.professor.lessons
-            closest = closest_lesson(lessons)
-            # self.lesson_selector.setCurrentId(getLessonIndex(self.lesson_selector.items, closest))
-            self.selector.select_current_lesson(closest)
-        else:
-            self.selector.select_current_lesson(lesson)
-
-    def set_current_lesson_of_current_group(self):
-        """
-        Select a lesson close to the current time for the currently selected group.
-        """
-        lessons = Lesson.filter(professor=self.professor,
-                                discipline=self.selector.discipline.current(),
-                                group=self.selector.group.current())
-        closest = closest_lesson(lessons)
-        self.lesson.setCurrent(closest['id'])
+    @pyqtSlot('PyQt_PyObject', name='on_ok_message')
+    def on_ok_message(self, text):
+        QOkMsg(text).exec_()
 
     def show_message(self, text, is_red):
         self.info_label.setText(text)
         self.info_label.setStyleSheet(f'color: {"red" if is_red else "black"}')
 
-    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name="mark_current_lesson")
-    def mark_current_lesson(self, column, last_lesson=None):
-        assert 0 <= column, f'wrong columns number: columns={column}'
-        self.table.visit_table.scrollTo(
-            self.table.visit_table.model().index(1, column))
-
-        table: VisitTable = self.table
-
-        if last_lesson is not None and last_lesson > -1:
-            for item in table.get_column(last_lesson):
-                item.set_current_lesson(False)
-
-        for item in table.get_column(column):
-            item.set_current_lesson(True)
-
-    @pyqtSlot('PyQt_PyObject', name='_start_lesson')
-    def _start_lesson(self, lesson):
-        try:
-            self.program.reader().on_read(self._new_visit)
-
-            Action.start_lesson(lesson, self.professor)
-
-            self.program.window.message.emit("Учет начался. Приложите карту студента к считывателю.", True)
-        except:
-            self.program.window.error.emit("Для учета посещений необходимо подключение считывателя.")
-
-    @pyqtSlot(name='_end_lesson')
-    def _end_lesson(self):
-        if self.program.reader() is not None:
-            self.program.reader().stop_read()
-        else:
-            self.program.window.error.emit(
-                'Во время учета было потеряно соединение со считывателем. Учет завершен.')
-
-    def _new_visit(self, card_id):
-        current_data = self.selector.get_current_data()
-
-        student = find(lambda student: student.card_id == card_id, self.students)
-
-        if student is None:
-            self.program.window.message.emit("Студента нет в списке.", False)
-        else:
-            lesson = current_data.lesson
-
-            Action.new_visitation(student, lesson, self.professor.id)
-
-            self.table.new_visit(student, lesson)
-
     def switch_show_table_cross(self):
         self.table.switch_show_table_cross()
-
-    def hasDialog(self):
-        return
 
 
 if __name__ == '__main__':

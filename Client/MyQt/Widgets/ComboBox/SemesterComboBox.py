@@ -67,9 +67,9 @@ class GroupComboBox(MComboBox):
 
 
 class LessonComboBox(MComboBox):
-    def filter_cond(self, item) -> Callable[[Any], bool]:
+    def filter_cond(self, lesson) -> Callable[[Any], bool]:
         def cond(item):
-            return True
+            return item==lesson
         return cond
 
     def extractor(self, lesson: Lesson) -> Any:

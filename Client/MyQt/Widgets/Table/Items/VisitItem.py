@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QRect, QPoint
+from PyQt5.QtCore import Qt, QRect, QPoint, QObject, pyqtSignal
 from PyQt5.QtGui import QColor, QPen, QPixmap, QPainter
 from PyQt5.QtWidgets import QMenu, QTableWidget
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -52,7 +52,7 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
         NotVisited = QColor("#ffffff")
         NoInfo = QColor("#ffffff")
 
-    def __init__(self, table: QTableWidget, program: IProgram,
+    def __init__(self, program: IProgram,
                  student: Student, lesson: Lesson):
         self.ready = False
         self.student = student
@@ -61,13 +61,14 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
             .query(Visitation) \
             .filter(Visitation.student_id == student.id) \
             .filter(Visitation.lesson_id == lesson.id)
-        self.visitation = self.visitation_query.first()
+
+        visits = [v for v in lesson.visitations if v.student_id == student.id]
+        self.visitation = visits[0] if len(visits) else None
 
         self.info_changed = Signaler()
 
         super().__init__()
         self.program: IProgram = program
-        self.table: QTableWidget = table
         self.setTextAlignment(Qt.AlignCenter)
         self.update()
 
@@ -212,15 +213,3 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
         except ObjectDeletedError:
             self.visitation = find(lambda x: x.student_id == self.student.id, Visitation.of(self.lesson))
             self.del_visit_by_professor()
-
-
-class VisitItemFactory:
-    def __init__(self, program: IProgram, table: QTableWidget):
-        self.program = program
-        self.table = table
-
-    def create(self, student, lesson) -> VisitItem:
-        visit_item = VisitItem(self.table, self.program, student, lesson)
-        visit_item.info_changed += self.table.cell_changed
-
-        return visit_item

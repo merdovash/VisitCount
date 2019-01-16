@@ -260,7 +260,7 @@ class AdministrationModel(QAbstractTableModel):
                 return str(p_int + 1)
 
 
-class AdministrationTable(QTableView):
+class QAdministrationTable(QTableView):
     LAST_NAME = 0
     FIRST_NAME = 1
     MIDDLE_NAME = 2
@@ -361,7 +361,7 @@ class ContactTable(QTableWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    w = AdministrationTable()
+    w = QAdministrationTable()
     auth = Auth.log_in('VAE', '123456')
 
     w.setModel(AdministrationModel(NotificationParam.of(auth.user)))

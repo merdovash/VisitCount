@@ -1,8 +1,8 @@
+/*
 MainWindow {
 background-color: #ededed;
 }
 
-/* combobox */
 
 QComboBox {
     height: 30px;
@@ -33,14 +33,14 @@ QComboBox::drop-down {
 
     border-left-width: 1px;
     border-left-color: darkgray;
-    border-left-style: solid; /* just a single line */
-    border-top-right-radius: 3px; /* same radius as the QComboBox */
+    border-left-style: solid;
+    border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
 
     background-color: #ff8000;
 }
 
-QComboBox::down-arrow:on { /* shift the arrow when popup is open */
+QComboBox::down-arrow:on {
     top: 1px;
     left: 1px;
 }
@@ -61,9 +61,6 @@ QComboBox QListView:hover {
 QComboBox QAbstractItemView:on {
     background-color: #ff8000;
 }
-
-
-/* push button */
 
 QPushButton {
     position: relative;
@@ -97,13 +94,10 @@ QPushButton:pressed {
     background-color: #c55100;
 }
 
-/* table */
 
 QTableWidget {
 
 }
-
-/* menu */
 
 QMenuBar {
     min-width: 100%;
@@ -122,8 +116,6 @@ QMenuBar {
 QMenuBar::item:selected{
     background-color: #ff8000;
 }
-
-/* label */
 
 QLabel {
     font-size:13px;
@@ -151,4 +143,4 @@ QTableCornerButton::section {
     color: #efefef;
 }
 
-
+*/

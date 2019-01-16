@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
 from Client.MyQt.Widgets.ExtendedComboBox import ExtendedCombo
-from Client.MyQt.Widgets.Table.Contacts import ContactTable, AdministrationTable
+from Client.MyQt.Widgets.Table.Contacts import ContactTable, QAdministrationTable
 from DataBase2 import Administration, Parent
 
 
@@ -101,7 +101,7 @@ class Ui_NotificationWindow(object):
         self.admins_last_note_date_textfield.setObjectName("admins_last_note_date_textfield")
         self.horizontalLayout_4.addWidget(self.admins_last_note_date_textfield)
         self.verticalLayout_7.addLayout(self.horizontalLayout_4)
-        self.administration_table_view = AdministrationTable(self.tab_4)
+        self.administration_table_view = QAdministrationTable(self.tab_4)
         self.administration_table_view.setObjectName("tableWidget")
         self.verticalLayout_7.addWidget(self.administration_table_view)
         self.tabWidget.addTab(self.tab_4, "")

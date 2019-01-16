@@ -7,17 +7,17 @@ from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton, QMenu
 
 from Client.IProgram import IProgram
 from Client.MyQt.ColorScheme import Color
-from Client.MyQt.Widgets.Table import VisitItem, HorizontalSum, VerticalSum, StudentHeaderItem
-from Client.MyQt.Widgets.Table.Items import AbstractContextItem, IDraw
+from Client.MyQt.Widgets.Table.Items import IDraw
 from Client.MyQt.Widgets.Table.Items.LessonHeader.LessonHeaderView import LessonHeaderView, LessonHeaderItem, \
     PercentHeaderItem
-from Client.MyQt.Widgets.Table.Items.PercentItem import PercentItem
+from Client.MyQt.Widgets.Table.Items.PercentItem import PercentItem, HorizontalSum, VerticalSum
+from Client.MyQt.Widgets.Table.Items.StudentHeader.StudentHeaderItem import StudentHeaderItem
 from Client.MyQt.Widgets.Table.Items.StudentHeader.StudentHeaderView import StudentHeaderView
+from Client.MyQt.Widgets.Table.Items.VisitItem import VisitItem
 from Client.MyQt.Widgets.Table.Section import Markup
 from Client.Reader.Functor.NewVisit import NewVisitOnRead
 from DataBase2 import Group, Student, Lesson, Discipline, Professor
 from Domain import Data
-from Domain.functools.Format import format_name
 
 
 class CornerWidget(QPushButton):
@@ -118,10 +118,11 @@ class VisitMap:
 
 
 class VisitSection(QTableWidget):
-    border_pen = QPen(Color.secondary_dark)
-    border_pen.setWidthF(0.5)
+    DEFAULT_BORDER_PEN = QPen(Color.secondary_dark)
+    DEFAULT_BORDER_PEN.setWidthF(0.5)
+    DEFAULT_TEXT_PEN = QPen(Color.text_color)
 
-    textPen = QPen(Color.text_color)
+    visitations_changed = pyqtSignal(int, int)
 
     current_semester: int = None
     current_lesson: Lesson = None
@@ -172,6 +173,8 @@ class VisitSection(QTableWidget):
 
         self.horizontalScrollBar().valueChanged.connect(self.on_offset_changed)
         self.horizontalScrollBar().valueChanged.connect(self.horizontalHeader().setOffset)
+
+        self.itemChanged.connect(print)
 
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='update_data')
     def update_data(self, lessons, group):
@@ -232,9 +235,9 @@ class VisitSection(QTableWidget):
                 self.lessons_header[lesson] = Column(col, lesson_header_item)
 
         # init visit items
-        self.visits = numpy.array([[VisitItem(self, self.program, student, lesson)
-                                    for lesson in self.lessons
-                                    ] for student in self.students
+        self.visits = numpy.array([[VisitItem(self.program, student, lesson)
+                                    for col, lesson in enumerate(self.lessons)
+                                    ] for row, student in enumerate(self.students)
                                    ])
 
         # set visit items to rows
@@ -462,10 +465,10 @@ class VisitSection(QTableWidget):
 
         p.fillRect(rect, self.get_color(item, row, col))
 
-        p.setPen(self.textPen)
+        p.setPen(self.DEFAULT_TEXT_PEN)
         p.drawText(rect, Qt.AlignCenter, item.text())
 
-        p.setPen(self.border_pen)
+        p.setPen(self.DEFAULT_BORDER_PEN)
         p.drawRect(rect)
 
     def get_color(self, item, row, col):
