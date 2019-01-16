@@ -147,9 +147,9 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
         menu.addAction("Информация", self._show_info)
         if not self.program['marking_visits']:
             if self.isVisit():
-                menu.addAction("Отменить запись", self._del_visit_by_professor)
+                menu.addAction("Отменить запись", self.del_visit_by_professor)
             else:
-                menu.addAction("Отметить посещение", self._set_visited_by_professor)
+                menu.addAction("Отметить посещение", self.set_visited_by_professor)
         menu.exec_()
 
     def _show_info(self):
@@ -159,7 +159,7 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
         self.program.window.message.emit(msg, False)
         # RFIDReader.instance()._method = nothing
 
-    def _set_visited_by_professor(self):
+    def set_visited_by_professor(self):
         if self.safe:
             if self.program.reader() is not None:
                 self.program.window.message.emit("Приложите карточку преподавателя для подтверждения", False)
@@ -203,7 +203,7 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
             elif self.visitation is None:
                 create()
 
-    def _del_visit_by_professor(self):
+    def del_visit_by_professor(self):
         assert isinstance(self.visitation, Visitation), f"self.visitation is {type(self.visit_data)}"
         try:
             self.visitation.delete()
@@ -211,7 +211,7 @@ class VisitItem(IDraw, MyTableItem, AbstractContextItem):
             self.program.professor.session.commit()
         except ObjectDeletedError:
             self.visitation = find(lambda x: x.student_id == self.student.id, Visitation.of(self.lesson))
-            self._del_visit_by_professor()
+            self.del_visit_by_professor()
 
 
 class VisitItemFactory:

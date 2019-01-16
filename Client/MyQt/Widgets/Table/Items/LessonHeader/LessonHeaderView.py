@@ -1,6 +1,6 @@
-from typing import Tuple
+from typing import Tuple, List
 
-from PyQt5.QtCore import Qt, QRectF, QPoint, QEvent, QSizeF
+from PyQt5.QtCore import Qt, QRectF, QPoint, QEvent, QSizeF, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QPen, QHelpEvent, QMouseEvent
 from PyQt5.QtWidgets import QHeaderView, QTableWidgetItem, QMenu, QToolTip
 
@@ -87,6 +87,10 @@ class LessonHeaderView(QHeaderView):
 
     background_color = QColor(234, 234, 234)
 
+    lessons: List[Lesson] = None
+
+    change_lesson = pyqtSignal('PyQt_PyObject')
+
     def __init__(self, parent=None):
         super().__init__(Qt.Horizontal, parent)
 
@@ -98,23 +102,23 @@ class LessonHeaderView(QHeaderView):
         self.setFixedHeight(self.item_height * 6)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.contextMenu)
-
-        self.hovered = -1
-
-        self.installEventFilter(self)
 
         self.setSectionResizeMode(QHeaderView.Fixed)
-        self.setMouseTracking(True)
 
         self._show = [True in range(LessonHeaderView.Header.COUNT)]
         self.show = [self.set_show_row(i, None) for i in range(LessonHeaderView.Header.COUNT)]
 
-        self.show_cross = True
+        self.customContextMenuRequested.connect(self.contextMenu)
 
-    def set_show_cross(self, b):
-        assert isinstance(b, bool), f'{b} is not a bool'
-        self.show_cross = b
+    def set_lessons(self, lessons):
+        self.lessons = lessons
+
+    def setOffset(self, p_int):
+        super().setOffset(p_int)
+        self.model().dataChanged.emit(self.model().index(0, 0),
+                                      self.model().index(len(self.lessons) - 1, 1))
+
+        self.viewport().update()
 
     def set_show_row(self, i, b):
         def _show_run(b):
@@ -144,7 +148,7 @@ class LessonHeaderView(QHeaderView):
             month_count = 0
             week_count = 1
 
-            for col in range(len(self.parent().lessons)):
+            for col in range(len(self.lessons)):
                 item = self.parent().horizontalHeaderItem(col)
                 item_width = self.parent().columnWidth(col)
                 if isinstance(item, LessonHeaderItem):
@@ -155,23 +159,21 @@ class LessonHeaderView(QHeaderView):
                         start = False
 
                     if current_month != item.month:
-                        self.draw_item(p, current_month, month_start, start_pixel - month_start[0], offset,
-                                       col - month_count <= self.hovered < col)
+                        self.draw_item(p, current_month, month_start, start_pixel - month_start[0], offset, False)
                         current_month = item.month
                         month_start = (start_pixel, 0)
                         month_count = 0
 
                     if current_week != item.week:
-                        self.draw_item(p, current_week, week_start, start_pixel - week_start[0], offset,
-                                       col - week_count <= self.hovered < col)
+                        self.draw_item(p, current_week, week_start, start_pixel - week_start[0], offset, False)
                         current_week = item.week
                         week_start = (start_pixel, 1)
                         week_count = 0
 
-                    self.draw_item(p, item.day, (start_pixel, 2), item_width, offset, self.hovered == col)
-                    self.draw_item(p, item.weekday, (start_pixel, 3), item_width, offset, self.hovered == col)
-                    self.draw_item(p, item.number, (start_pixel, 4), item_width, offset, self.hovered == col)
-                    self.draw_item(p, item.type, (start_pixel, 5), item_width, offset, self.hovered == col)
+                    self.draw_item(p, item.day, (start_pixel, 2), item_width, offset, False)
+                    self.draw_item(p, item.weekday, (start_pixel, 3), item_width, offset, False)
+                    self.draw_item(p, item.number, (start_pixel, 4), item_width, offset, False)
+                    self.draw_item(p, item.type, (start_pixel, 5), item_width, offset, False)
 
                     week_count += 1
                     month_count += 1
@@ -180,10 +182,8 @@ class LessonHeaderView(QHeaderView):
 
                 start_pixel += self.parent().columnWidth(col)
             else:
-                self.draw_item(p, current_month, month_start, start_pixel - month_start[0], offset,
-                               self.parent().columnCount() - month_count <= self.hovered < self.parent().columnCount())
-                self.draw_item(p, current_week, week_start, start_pixel - week_start[0], offset,
-                               self.parent().columnCount() - week_count <= self.hovered < self.parent().columnCount())
+                self.draw_item(p, current_month, month_start, start_pixel - month_start[0], offset, False)
+                self.draw_item(p, current_week, week_start, start_pixel - week_start[0], offset, False)
 
             for col in range(self.parent().columnCount() - 2, self.parent().columnCount()):
                 item = self.parent().horizontalHeaderItem(col)
@@ -198,18 +198,16 @@ class LessonHeaderView(QHeaderView):
                             width,
                             self.height()
                         ))
-                    item.draw(p, rect, self.isHighlighted(col), )
+                    item.draw(p, rect, False)
         except (TypeError, NotImplementedError):
             pass
 
-    def isHighlighted(self, col):
-        return col == self.hovered
 
     def draw_item(self, painter: QPainter, text: str, index: Tuple[int, int], width: int, offset: int, hovered: bool):
         x = index[0]
         y = index[1] * self.item_height
         rect = QRectF(x - offset, y, width, self.item_height)
-        painter.fillRect(rect, Color.secondary_accent if hovered and self.show_cross else self.background_color)
+        painter.fillRect(rect, Color.secondary_accent)
 
         painter.setPen(QPen(QColor(0, 0, 0), ))
         painter.drawText(rect, Qt.AlignCenter, text)
@@ -228,22 +226,11 @@ class LessonHeaderView(QHeaderView):
             menu.addAction("Перенести занятие", item.move_lesson)
             if self.parent().current_lesson:
                 current_lesson = self.parent().current_lesson
-                if self.parent().in_progress():
+                if self.parent().in_progress:
                     menu.addAction('Завершить учет', self.parent().end_lesson)
                 elif current_lesson != item.lesson:
-                    menu.addAction('Выбрать занятие', lambda: self.parent().select_lesson(item.lesson))
+                    menu.addAction('Выбрать занятие', lambda: self.change_lesson.emit(item.lesson))
             menu.exec(self.mapToGlobal(point))
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-        try:
-            _, col, _ = self.find_item(event.pos())
-
-            self.set_hovered(col, True)
-
-            QToolTip.hideText()
-
-        except:
-            self.set_hovered(-1, True)
 
     def eventFilter(self, object, event: QEvent, *args, **kwargs):
         if event.type() == QEvent.ToolTip:
@@ -276,10 +263,3 @@ class LessonHeaderView(QHeaderView):
         row = pos.y() // self.item_height
 
         return self.parent().horizontalHeaderItem(col), col, row
-
-    def set_hovered(self, index, pure=False):
-        if index != self.hovered:
-            self.hovered = index if index is not None else -1
-            self.model().headerDataChanged.emit(Qt.Horizontal, 0, self.parent().columnCount())
-        if pure:
-            self.parent().set_hover(-1, index)

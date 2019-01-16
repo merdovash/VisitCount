@@ -1,8 +1,8 @@
 import collections
 import datetime
-from typing import List, Dict, TypeVar
+from typing import List, Dict, TypeVar, Any, Callable
 
-from PyQt5.QtCore import QRectF
+from PyQt5.QtCore import QRectF, pyqtSignal, pyqtSlot
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QImage, QPen, QColor
 from PyQt5.QtWidgets import QComboBox
@@ -22,61 +22,66 @@ class MComboBox(QComboBox):
     hovered_pen = QPen(Color.primary)
     hovered_pen.setWidth(3)
 
-    def __init__(self, type_: T):
+    current_changed = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
+
+    def filter_cond(self, item)->Callable[[Any], bool]:
+        raise NotImplementedError()
+
+    def extractor(self, item)-> Any:
+        raise NotImplementedError()
+
+    def formater(self, item)-> str:
+        raise NotImplementedError()
+
+    def sorter(self, item) -> Any:
+        raise NotImplementedError()
+
+    @pyqtSlot(int, name='resignal')
+    def resignal(self):
+        self.current_changed.emit(list(filter(self.filter_cond(self.current()), self.lessons)), self.current())
+
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='on_parent_change')
+    def on_parent_change(self, lessons, parent_value):
+        self.lessons = lessons
+
+        data = sorted(list(set([self.extractor(item) for item in self.lessons])), key=self.sorter)
+        self.set_items(data)
+
+    def __init__(self, parent, type_: T):
         super().__init__()
-
+        self.setParent(parent)
         self.type = type_
+        self.lessons: List[Lesson] = None
 
-        self.rule = {
-            Discipline: lambda x: x.name,
-            Group: lambda x: ', '.join(list(map(lambda y: y.name, x))),
-            Lesson: lambda x: x.date.strftime('%d.%m.%Y %H:%M'),
-            int: lambda x: str(x)
-        }[self.type]
+        self.currentIndexChanged.connect(self.resignal)
 
-        self.items: Dict[int, type_] = {}
+        self.items: List[T] = []
 
         self.pending = None
 
     def addItems(self, iterable: List[T], p_str=None) -> None:
+        print(iterable)
         for i, value in enumerate(iterable):
             # print(i, value)
-            self.items[i] = value
+            self.items.append(value)
         else:
-            super().addItems([self.rule(i) for i in iterable])
+            super().addItems([self.formater(i) for i in iterable])
 
     def current(self) -> T:
         return self.items[self.currentIndex()]
 
-    def get_data(self):
-        return [self.items[key] for key in self.items]
-
-    def _format_name(self, value):
-        if self.image_name == 'date':
-            val = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
-            return val.strftime('%d.%m.%Y %H:%M')
-        else:
-            return value
-
     def clear(self):
+        print('clear', type(self))
         super().clear()
-        self.items = {}
+        self.items = []
 
+    @pyqtSlot('PyQt_PyObject', name='setCurrent')
     def setCurrent(self, item: T):
-        # print(self.items)
-        for i, value in enumerate(self.items):
-            if self.type == Group:
-                if compare(self.items[i], item):
-                    super().setCurrentIndex(i)
-                    return
-            else:
-                if self.items[i] == item:
-                    super().setCurrentIndex(i)
-                    return
-        if len(self.items) == 0:
-            self.pending = item
+        index = self.items.index(item)
+        if index >= 0:
+            self.setCurrentIndex(index)
         else:
-            raise IndexError('no such', item, 'in', self.items)
+            raise ValueError(f"{item} not in items")
 
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)
@@ -98,3 +103,4 @@ class MComboBox(QComboBox):
         self.clear()
         self.addItems(items)
         self.blockSignals(False)
+        self.resignal()

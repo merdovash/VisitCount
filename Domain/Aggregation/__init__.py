@@ -3,7 +3,7 @@ from typing import List
 from pandas import DataFrame, np
 from pandas.core.groupby import GroupBy
 
-from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline
+from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline, LessonsGroups
 from Domain.Data import names_of_groups
 from Domain.functools.Decorator import memoize
 from Domain.functools.Format import format_name
@@ -62,7 +62,12 @@ class GroupAggregation:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
         # список групп
-        groups: List[Group] = Group.of(professor, flat_list=True).to_unique()
+        groups: List[Group] = professor.session\
+            .query(Group)\
+            .join(LessonsGroups)\
+            .join(Lesson)\
+            .filter(Lesson.professor_id==professor.id)\
+            .all()
 
         # список занятий по группам
         lessons: List[List[Lesson]] = list(map(lambda group: Lesson.of(group), groups))
@@ -93,7 +98,7 @@ class GroupAggregation:
             else:
                 data[i] = [round(sum(map(lambda x: x[0], group_data)) / sum(map(lambda x: x[1], group_data)) * 100, 1)]
 
-        df = DataFrame(data, index=list(map(lambda group: group.name, groups)), columns=['Посещения. %'])
+        df = DataFrame(data, index=list(map(lambda group: names_of_groups(group), groups)), columns=['Посещения. %'])
 
         # итоговый процент посещений
         total = round(visits_count / total_count * 100, 2)

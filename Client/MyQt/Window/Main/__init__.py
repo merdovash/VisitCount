@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar
 from Client.IProgram import IProgram
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
 from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
-from Client.MyQt.Widgets.Network.Request import send_updates
+from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.Table import VisitTable
 from Client.MyQt.Window import AbstractWindow, IParentWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
@@ -39,11 +39,12 @@ def closest_lesson(lessons: List[Lesson]):
     :return: closest lesson in list to current datetime
     """
 
+    now = datetime.datetime.now()
     if len(lessons) == 0:
         return None
     closest = min(
         lessons,
-        key=lambda x: abs(datetime.datetime.now() - x.date))
+        key=lambda x: abs(now - x.date))
     return closest
 
 
@@ -171,18 +172,6 @@ class MainWindow(AbstractWindow, IParentWindow):
     def _init_menu_lessons(self):
         lessons = self.menu_bar.addMenu("Занятия")
 
-        lessons_current = QAction("Выбрать ближайщее занятие", self)
-        lessons_current.triggered.connect(
-            self.centralWidget().selector.select_current_lesson)
-
-        lessons_current_for_group = QAction(
-            "Выбрать ближайщее занятие для выбранной группы", self)
-        lessons_current_for_group.triggered.connect(
-            self.centralWidget().selector.select_current_group_current_lesson)
-
-        lessons.addAction(lessons_current)
-        lessons.addAction(lessons_current_for_group)
-
     def _init_menu_file(self):
         file = self.menu_bar.addMenu("Файл")
 
@@ -211,7 +200,7 @@ class MainWindow(AbstractWindow, IParentWindow):
 
     def _init_menu_updates(self):
         def update_db_action():
-            self.update_action_dialog = send_updates(self.program)
+            self.update_action_dialog = SendUpdatesWidget(self.program)
             self.update_action_dialog.show()
 
         updates = self.menu_bar.addMenu("Синхронизация")
@@ -251,7 +240,7 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
         self.last_lesson = None
 
-        self.selector.start()
+        self.selector.set_up.emit(self.professor)
 
     # slots
     @pyqtSlot(name='run_synchronization')

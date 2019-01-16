@@ -42,7 +42,7 @@ def valid_card(user):
 
 
 def names_of_groups(groups: List[Group]) -> str:
-    if isinstance(groups, (list, set, _AssociationList)):
+    if isinstance(groups, (list, set, _AssociationList, frozenset)):
         return ', '.join(list(map(lambda x: x.name, groups)))
     elif isinstance(groups, Group):
         return groups.name
@@ -57,14 +57,15 @@ def student_info(student: Student) -> str:
 
 
 def lessons_of(professor, groups=None, discipline=None, semester=None):
-    total = set(Lesson.of(professor))
+    total = Lesson.of(professor)
 
     if discipline is not None:
-        total &= set(Lesson.of(discipline))
+        total = [item for item in total if item.discipline == discipline]
     if groups is not None:
-        total &= set(Lesson.of(groups, intersect=True))
+        print([item for item in total if set(item.groups) == set(groups)])
+        total = [item for item in total if set(item.groups) == set(groups)]
     if semester is not None:
-        total = list(filter(lambda x: x.semester == semester, total))
+        total = [item for item in total if item.semester == semester]
 
     return sorted(total, key=lambda x: x.date)
 

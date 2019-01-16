@@ -1,10 +1,11 @@
 from typing import List, Dict, Any
 
 import numpy
-from PyQt5.QtCore import Qt, QPoint, QRectF, pyqtSlot, QSize, QRect
+from PyQt5.QtCore import Qt, QPoint, QRectF, pyqtSlot, QSize, QRect, pyqtSignal
 from PyQt5.QtGui import QPainter, QPen, QColor, QCursor
-from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton
+from PyQt5.QtWidgets import QTableWidget, QAbstractItemView, QPushButton, QMenu
 
+from Client.IProgram import IProgram
 from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Widgets.Table import VisitItem, HorizontalSum, VerticalSum, StudentHeaderItem
 from Client.MyQt.Widgets.Table.Items import AbstractContextItem, IDraw
@@ -13,7 +14,8 @@ from Client.MyQt.Widgets.Table.Items.LessonHeader.LessonHeaderView import Lesson
 from Client.MyQt.Widgets.Table.Items.PercentItem import PercentItem
 from Client.MyQt.Widgets.Table.Items.StudentHeader.StudentHeaderView import StudentHeaderView
 from Client.MyQt.Widgets.Table.Section import Markup
-from DataBase2 import Group, Student, Lesson, Discipline
+from Client.Reader.Functor.NewVisit import NewVisitOnRead
+from DataBase2 import Group, Student, Lesson, Discipline, Professor
 from Domain import Data
 from Domain.functools.Format import format_name
 
@@ -121,26 +123,35 @@ class VisitSection(QTableWidget):
 
     textPen = QPen(Color.text_color)
 
-    def __init__(self, program, *__args):
-        super().__init__(*__args)
-        self.program = program
+    current_semester: int = None
+    current_lesson: Lesson = None
+    discipline: Discipline = None
+    groups: List[Group] = None
+    lessons: List[Lesson] = None
+    students: List[Student] = None
 
-        self.discipline = None
-        self.groups = None
-        self.lessons: List[Lesson] = None
-        self.students = None
+    ready = False
+    in_progress = False
+
+    professor: Professor = None
+
+    def __init__(self, selector, *__args):
+        super().__init__(*__args)
+        self.setParent(selector)
+
+        self.program: IProgram = selector.program
 
         self.map = VisitMap()
 
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.verticalScrollBar().valueChanged.connect(self.on_offset_changed)
-        self.horizontalScrollBar().valueChanged.connect(self.on_offset_changed)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.table_right_click)
 
         self.setVerticalHeader(StudentHeaderView(self))
 
@@ -149,33 +160,53 @@ class VisitSection(QTableWidget):
 
         self.setCornerWidget(CornerWidget())
 
-        self.row_hovered = -1
-        self.col_hovered = -1
-
         self.row_height = 20
         self.col_width = 35
 
         self.installEventFilter(self)
 
-        self.setMouseTracking(True)
+        self.customContextMenuRequested.connect(self.on_table_right_click)
 
-        self.show_cross = True
+        self.verticalScrollBar().valueChanged.connect(self.on_offset_changed)
+        self.verticalScrollBar().valueChanged.connect(self.verticalHeader().setOffset)
 
-        self.ready = False
+        self.horizontalScrollBar().valueChanged.connect(self.on_offset_changed)
+        self.horizontalScrollBar().valueChanged.connect(self.horizontalHeader().setOffset)
 
-        self.current_lesson = None
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='update_data')
+    def update_data(self, lessons, group):
+        self.lessons = lessons
+        self.students = Student.of(group)
+
+        self.horizontalHeader().set_lessons(self.lessons)
+        self.verticalHeader().set_students(self.students)
+
+        self.on_ready()
+
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='set_lesson')
+    def on_lesson_change(self, lessons, current_lesson):
+        assert isinstance(current_lesson, Lesson)
+        print('lesson is set')
+
+        self.current_lesson = current_lesson
+        if self.lessons is not None and current_lesson in self.lessons:
+            self.horizontalScrollBar().setValue(self.lessons.index(current_lesson)*self.columnWidth(0))
+
+    @pyqtSlot('PyQt_PyObject', name='on_lesson_start')
+    def on_lesson_start(self, lesson):
+        assert self.current_lesson == lesson
+        self.in_progress = True
+        self.program.reader().on_read(NewVisitOnRead(lesson))
+
+    @pyqtSlot(name='on_lesson_stop')
+    def on_lesson_stop(self):
+        self.in_progress = False
+        self.current_lesson.completed = True
 
     @pyqtSlot(name='on_offset_changed')
     def on_offset_changed(self):
-        print('offset_changed')
         Markup.setup(self)
         self.map.offset_changed(self.verticalOffset(), self.horizontalOffset())
-
-    @pyqtSlot(name='on_table_change')
-    def on_table_change(self):
-        if self.lessons is not None and self.students is not None:
-            Markup.setup(self)
-        self.cell_changed()
 
     @pyqtSlot(name='on_ready')
     def on_ready(self):
@@ -289,76 +320,37 @@ class VisitSection(QTableWidget):
             PercentHeaderItem(orientation=Qt.Vertical, absolute=False))
         self.setColumnWidth(Markup.visit_rate_col_index, 45)
 
-    @pyqtSlot('PyQt_PyObject', name='set_group')
-    def set_group(self, groups: List[Group]):
-        """
-        Устанавливает группу/группы для таблицы
-        Если дисциплина установлена и список занятий не пустой, то отрисовывает таблицу
-
-        :param groups: List[Group]
-        """
-        assert all([isinstance(g, Group) for g in groups])
-        print('group set')
-
-        self.groups = groups
-        self.students = sorted(Student.of(groups), key=lambda student: format_name(student))
-
-        if self.discipline is not None:
-            self.find_lessons()
-            if self.lessons is not None:
-                self.on_ready()
-
-    @pyqtSlot('PyQt_PyObject', name='set_discipline')
-    def set_dicipline(self, discipline: Discipline):
-        assert isinstance(discipline, Discipline)
-        print('discipline set')
-
-        self.discipline = discipline
-
-        if self.groups is not None:
-            self.find_lessons()
-            if self.lessons is not None or len(self.lessons)>0:
-                self.on_ready()
-
-    @pyqtSlot('PyQt_PyObject', name='set_lesson')
-    def set_lesson(self, lesson):
-        assert isinstance(lesson, Lesson)
-        print('lesson is set')
-
-        self.current_lesson = lesson
-        if self.lessons is not None and lesson in self.lessons:
-            self.horizontalScrollBar().setValue(self.lessons.index(lesson))
-
     def end_lesson(self):
         self.current_lesson.completed = True
         self.parent().switchBtnAction()
         self.parent().setEnabledControl(True)
 
-    def set_semester(self, semester):
-        self.current_semester = semester
-
-    def getControl(self):
-        control = self.parent().getControl()
-        return control
+        self.professor.session.commit()
 
     def find_lessons(self):
-        assert self.groups is not None
-        assert self.discipline is not None
-        assert self.current_semester is not None
-
-        self.lessons = Data.lessons_of(
-            professor=self.program.professor,
-            discipline=self.discipline,
-            groups=self.groups,
-            semester=self.current_semester
-        )
+        if self.groups is not None:
+            if self.discipline is not None:
+                if self.current_semester is not None:
+                    self.lessons = Data.lessons_of(
+                        professor=self.program.professor,
+                        discipline=self.discipline,
+                        groups=self.groups,
+                        semester=self.current_semester
+                    )
+                else:
+                    print('no semester')
+            else:
+                print('no discipline')
+        else:
+            print('no group')
 
     def resizeEvent(self, QResizeEvent):
         super().resizeEvent(QResizeEvent)
-        self.on_table_change()
+        Markup.setup(self)
         self.map.offset_changed(self.verticalOffset(), self.horizontalOffset())
 
-    def table_right_click(self, event: QPoint):
+    @pyqtSlot(QPoint, name='on_table_right_click')
+    def on_table_right_click(self, event: QPoint):
         """
         Slot
         Shows context menu of item under mouse pointer if item is AbstractContextItem
@@ -366,20 +358,21 @@ class VisitSection(QTableWidget):
         """
         index = self.indexAt(event)
         row, col = index.row(), index.column()
-        item = self.item(row, col)
+        item: VisitItem = self.item(row, col)
 
-        if isinstance(item, AbstractContextItem):
-            real_pos = QCursor.pos()
-            item.show_context_menu(real_pos)
+        menu = QMenu()
 
-    def mouseMoveEvent(self, event):
-        try:
-            item, row, col = self.find_item(event.pos())
-            self.set_hover(row, col)
-        except IndexError:
-            self.set_hover(-1, -1)
-        except TypeError:
-            pass
+        if self.lessons[col].completed:
+            menu.addSection('Изменить данные')
+
+            if item.isVisit():
+                menu.addAction('Исключить посещение', item.del_visit_by_professor)
+            else:
+                menu.addAction('Отметить посещение', item.set_visited_by_professor)
+        else:
+            menu.addSection('пусто')
+
+        menu.exec_(QCursor().pos())
 
     def paintEvent(self, QPaintEvent):
         if not self.ready:
@@ -425,13 +418,13 @@ class VisitSection(QTableWidget):
                 if isinstance(item, IDraw):
                     if isinstance(item, VisitItem):
                         rect = self.map[row, col].rect
-                        item.draw(p, rect, self.isHighlighted(row, col), self.isCurrentLesson(item.lesson))
+                        item.draw(p, rect, False, self.isCurrentLesson(item.lesson))
                     elif isinstance(item, HorizontalSum):
                         rect = self.map[row, col].rect
-                        item.draw(p, rect, self.isHighlighted(row, col))
+                        item.draw(p, rect, False)
                     elif isinstance(item, VerticalSum):
                         rect = self.map[row, col].rect
-                        item.draw(p, rect, self.isHighlighted(row, col))
+                        item.draw(p, rect, False)
                 else:
                     pass
 
@@ -442,41 +435,6 @@ class VisitSection(QTableWidget):
 
             if current_abs_row:
                 abs_row = False
-
-        # # рисуем ячейки для занятий
-        # for col, l in enumerate(self.parent().lessons):
-        #     width = self.columnWidth(col)
-        #     # рисуем ячейки посещений
-        #     for row, st in enumerate(self.parent().students):
-        #         height = self.rowHeight(row)
-        #         item = self.item(row, col)
-        #         if isinstance(item, IDraw):
-        #             rect = QRectF(started_point[0], started_point[1], width, height)
-        #             item.draw(p, rect, self.isHighlighted(row, col))
-        #
-        #         started_point[1] += height
-        #
-        #     # рисуем ячейки процентов по занятиям
-        #     for percent_row in range(2):
-        #         row = len(self.parent().students) + percent_row
-        #
-        #         y_pos = self.height() - self.horizontalHeader().height() - self.rowHeight(row) * (
-        #                     2 - percent_row) + self.verticalOffset() - self.horizontalScrollBar().height()
-        #
-        #         item = self.item(row, col)
-        #         if isinstance(item, PercentItem):
-        #             item.refresh()
-        #         self.draw_item(p, item, row, col, [started_point[0], y_pos])
-        #         started_point[1] += self.rowHeight(row)
-        #     else:
-        #         started_point[1] = -1
-        #
-        #     started_point[0] += width
-        #
-        # # рисуем ячейки для процентов по студентам
-        # for col in range(len(self.parent().lessons), len(self.parent().lessons)+2):
-        #     for row in range(len(self.parent().students)):
-        #         pass
 
     def isCurrentLesson(self, lesson):
         if self.current_lesson:
@@ -522,9 +480,6 @@ class VisitSection(QTableWidget):
             else:
                 return Color.secondary_light
 
-    def isHighlighted(self, row, col):
-        return row == self.row_hovered or col == self.col_hovered
-
     def find_item(self, pos: QPoint):
         def find_row(target_y):
             if target_y > Markup.visit_rate_row:
@@ -564,61 +519,5 @@ class VisitSection(QTableWidget):
         row, col = find_row(pos.y()), find_col(pos.x())
         return self.item(row, col), row, col
 
-    def set_hover(self, row, col):
-        if self.row_hovered != row \
-                or self.col_hovered != col \
-                or (row == -1 and self.row_hovered != -1) \
-                or (col == -1 and self.col_hovered != -1):
-            self.col_hovered = col
-
-            self.verticalHeader().set_row_hovered(row)
-            self.horizontalHeader().set_hovered(col)
-
-            self.model().dataChanged.emit(self.model().index(0, 0),
-                                          self.model().index(self.columnCount() - 1, self.rowCount() - 1))
-
-            self.viewport().repaint()
-
-    def set_row_hovered(self, row):
-        self.row_hovered = row
-        self.model().dataChanged.emit(self.model().index(0, 0),
-                                      self.model().index(self.columnCount() - 1, self.rowCount() - 1))
-        self.viewport().repaint()
-
-    def set_row_hover(self, row):
-        self.set_hover(row, self.col_hovered)
-
-    def set_col_hover(self, col):
-        self.set_hover(self.row_hovered, col)
-
-    def select_current_lesson(self, lesson):
-        self.parent().set_current_lesson(lesson)
-
-    def switch_show_table_cross(self):
-        self.show_cross = not self.show_cross
-
-    # def eventFilter(self, obj, event):
-    #    if event.type() != QtCore.QEvent.Paint or not isinstance(obj, QtWidgets.QAbstractButton):
-    #        return False
-
-#
-#    # Paint by hand (borrowed from QTableCornerButton)
-#    opt = QtWidgets.QStyleOptionHeader()
-#    opt.initFrom(obj)
-#    styleState = QtWidgets.QStyle.State_None
-#    if obj.isEnabled():
-#        styleState |= QtWidgets.QStyle.State_Enabled
-#    if obj.isActiveWindow():
-#        styleState |= QtWidgets.QStyle.State_Active
-#    if obj.isDown():
-#        styleState |= QtWidgets.QStyle.State_Sunken
-#    opt.state = styleState
-#    opt.rect = obj.rect()
-#    # This line is the only difference to QTableCornerButton
-#    opt.text = obj.text()
-#    opt.position = QtWidgets.QStyleOptionHeader.OnlyOneSection
-#    painter = QtWidgets.QStylePainter(obj)
-#    painter.drawControl(QtWidgets.QStyle.CE_Header, opt)
-#
-#    return True
-#
+    def horizontalHeader(self)-> LessonHeaderView:
+        return super().horizontalHeader()

@@ -1,3 +1,5 @@
+from typing import List
+
 from PyQt5.QtCore import QPoint, QRectF, pyqtSignal, QSizeF
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QColor, QMouseEvent, QPen
@@ -7,6 +9,8 @@ from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Widgets.Table import PercentHeaderItem, StudentHeaderItem
 from Client.MyQt.Widgets.Table.Items import AbstractContextItem
 from Client.MyQt.Widgets.Table.Section import Markup
+from DataBase2 import Student
+from Domain.Data import names_of_groups
 
 
 class NoItemException(Exception):
@@ -24,6 +28,8 @@ class StudentHeaderView(QHeaderView):
 
     hover_changed = pyqtSignal(int)
 
+    students: List[Student] = None
+
     def __init__(self, parent):
         super().__init__(Qt.Vertical, parent=parent)
 
@@ -32,17 +38,23 @@ class StudentHeaderView(QHeaderView):
 
         self.row_height = 19
 
-        self.hovered = -1
-
         self.installEventFilter(self)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.vertical_header_click)
         self.setSectionResizeMode(QHeaderView.Fixed)
-        self.setMouseTracking(True)
 
         self.row_clicked = -1
 
-        self.hover_changed.connect(self.parent().set_row_hovered)
+    def set_students(self, students):
+        self.students = students
+        self.show_with_group_name = any([s.groups != students[0].groups for s in students])
+
+    def setOffset(self, p_int):
+        super().setOffset(p_int)
+        self.model().dataChanged.emit(self.model().index(0, 0),
+                                      self.model().index(1, len(self.students) - 1))
+
+        self.viewport().update()
 
     def vertical_header_click(self, event: QPoint):
         """
@@ -64,15 +76,13 @@ class StudentHeaderView(QHeaderView):
         headerWidth = self.size().width()
         headerHeight = 0
 
-        row_count = self.parent().model().rowCount()
-
         start_pixel = headerHeight
-        for row in range(row_count):
+        for row, student in enumerate(self.students+[None, None]):
             try:
-                item = self.parent().verticalHeaderItem(row)
+                item: StudentHeaderItem or PercentHeaderItem = self.parent().verticalHeaderItem(row)
 
                 if isinstance(item, StudentHeaderItem):
-                    self.draw_item(p, item, row, headerWidth, [0, start_pixel])
+                    self.draw_item(p, item, student, row, headerWidth, [0, start_pixel])
                 elif isinstance(item, PercentHeaderItem):
                     rect = QRectF(
                         QPoint(
@@ -84,7 +94,7 @@ class StudentHeaderView(QHeaderView):
                             self.parent().rowHeight(row)
                         )
                     )
-                    item.draw(p, rect, self.isHighlighted(row), )
+                    item.draw(p, rect, False)
                 elif item is None:
                     pass
                 else:
@@ -97,7 +107,7 @@ class StudentHeaderView(QHeaderView):
     def isHighlighted(self, row):
         return (self.row_clicked != -1 and self.row_clicked == row) or (self.row_clicked == -1 and self.hovered == row)
 
-    def draw_item(self, p: QPainter, item, row, width, started_point):
+    def draw_item(self, p: QPainter, item, student, row, width, started_point):
         height = self.parent().rowHeight(row)
 
         rect = QRectF(started_point[0],
@@ -107,7 +117,11 @@ class StudentHeaderView(QHeaderView):
         p.fillRect(rect, self.get_color(item, row))
 
         p.setPen(self.textPen)
-        p.drawText(rect, Qt.AlignLeft, item.text())
+        if self.show_with_group_name:
+            text = f"{names_of_groups(student.groups)} {item.text()}"
+        else:
+            text = item.text()
+        p.drawText(rect, Qt.AlignLeft, text)
 
         p.setPen(self.border_pen)
         p.drawRect(rect)
@@ -117,30 +131,12 @@ class StudentHeaderView(QHeaderView):
             return Color.primary_dark
         if isinstance(item, StudentHeaderItem):
             if item.have_card():
-                if row == self.hovered:
-                    rect_color = Color.primary_light_accent
-                else:
-                    rect_color = self.no_card_color
-            else:
-                if row == self.hovered:
-                    rect_color = Color.secondary_accent
-                else:
-                    rect_color = self.primary_color
-        else:
-            if row == self.hovered:
-                rect_color = Color.secondary_accent
+                rect_color = self.no_card_color
             else:
                 rect_color = self.primary_color
+        else:
+            rect_color = self.primary_color
         return rect_color
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-        try:
-            _, row = self.find_item(event.pos())
-
-            self.set_row_hovered(row)
-
-        except NoItemException:
-            self.set_row_hovered(-1)
 
     def find_item(self, pos: QPoint) -> (QTableWidgetItem, int):
         def find_row(target_y):
@@ -163,29 +159,6 @@ class StudentHeaderView(QHeaderView):
         row = find_row(pos.y())
 
         return self.parent().verticalHeaderItem(row), row
-
-    def set_row_hovered(self, row):
-        if row != self.hovered and self.row_clicked == -1:
-            self.hovered = row
-            self.hover_changed.emit(row)
-            self.changes(row)
-
-    def mousePressEvent(self, event: QMouseEvent):
-        item, row = self.find_item(event)
-
-        if self.row_clicked == -1:
-            self.row_clicked = row
-            self.changes(row)
-        else:
-            temp = self.row_clicked
-            self.row_clicked = -1
-            self.changes(temp)
-
-    def row_hovered(self) -> int:
-        if self.row_clicked == -1:
-            return self.hovered
-        else:
-            return self.row_clicked
 
     def changes(self, row):
         self.model().headerDataChanged.emit(Qt.Vertical, row - 1, row + 1)

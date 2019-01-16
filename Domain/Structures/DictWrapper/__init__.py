@@ -21,3 +21,6 @@ class HiddenStructure(Structure):
 
     def __len__(self):
         return sum([len(i) for i in self._data.values()])
+
+    def keys(self):
+        return self._data.keys()

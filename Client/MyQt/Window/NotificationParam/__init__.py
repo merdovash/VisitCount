@@ -2,9 +2,11 @@ from itertools import chain
 from typing import List
 
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QMessageBox
 from sqlalchemy import inspect
 
+from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
+from Client.MyQt.Widgets.Table.Contacts import AdministrationModel
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
 from Client.MyQt.Window.UpdatesInfoWindow import UpdatesInfoWidget
 from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow, IDataBaseUser
@@ -52,23 +54,10 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
 
         self.student.setItems(Student.of(self.professor))
 
-        self.tableWidget.set_professor(self.professor)
-
         program.window.synch_finished.connect(self.on_synch_finished)
 
         self.save_btn.clicked.connect(
-            lambda: self.setDialog(UpdatesInfoWidget(program.professor.updates()))
-        )
-        self.save_btn.clicked.connect(
-            lambda: NetAction.send_updates(
-                login=program.auth.login,
-                password=program.auth.password,
-                host=program.host,
-                professor_id=self.professor.id,
-                session=program.session,
-                on_error=program.window.ok_message.emit,
-                on_finish=program.window.synch_finished.emit
-            )
+            self.save_action
         )
 
         self.run_btn.clicked.connect(lambda: NetAction.run_notification(
@@ -81,6 +70,23 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
 
         assert hasattr(self, 'child_window'), f'inheritance gone wrong'
         assert hasattr(self, 'child_pool'), f'inheritance gone wrong'
+
+    @pyqtSlot(name='save_action')
+    def save_action(self):
+        self.professor.session.commit()
+
+        reply = QMessageBox().question(
+            self,
+            "Сохранено",
+            "Данные успешно сохранены.\nХотите отправить изменения на сервер?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            SendUpdatesWidget(self.program).show()
+
+        if self.tabWidget.currentIndex() == self.Tabs.ADMIN_TABLE:
+            self.administration_table_view.setModel(AdministrationModel(NotificationParam.of(self.professor)))
 
     def on_add_user(self):
         if self.new_user_type_combo_box.currentIndex() == UserType.ADMIN:
@@ -122,13 +128,7 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
             self.show_parent_table()
 
     def show_admin_table(self):
-        self.tableWidget.clear()
-
-        admins: List[Administration] = Administration.of(self.professor)
-
-        for admin in admins:
-            assert admin is not None, f'admin is None, in list {admins}'
-            self.tableWidget.add_row(admin)
+        self.administration_table_view.setModel(AdministrationModel(NotificationParam.of(self.professor)))
 
     def show_parent_table(self):
         self.tableWidget_2.clear()

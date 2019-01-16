@@ -23,11 +23,18 @@
     <autoscroll-to-editor value="false" />
     <autoscroll-from-editor value="true" />
     <show-object-properties value="true" />
-    <loaded-nodes />
+    <loaded-nodes>
+      <connection connection-id="355ef8f6-d083-457e-a733-79a364567d66">
+        <schema name="bisitor_update" object-types="table, view, procedure, function, constraint, index, column, dataset trigger" />
+      </connection>
+      <connection connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456">
+        <schema name="main" object-types="table, view, constraint, index, column, dataset trigger" />
+      </connection>
+    </loaded-nodes>
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
     <connection id="355ef8f6-d083-457e-a733-79a364567d66">
-      <console name="bisitor_update" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[ALTER TABLE administrations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+      <console name="bisitor_update" type="STANDARD" schema="bisitor_update" session="Main">ALTER TABLE administrations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE auth5 CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE disciplines CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
@@ -39,17 +46,25 @@ ALTER TABLE professors CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE students CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE students_groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE students_parents CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE visitations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;]]></console>
-      <console name="bisitor_update 1" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[update visitations set _is_deleted=0;]]></console>
-      <console name="clear" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[delete from visitations;
+ALTER TABLE visitations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;</console>
+      <console name="bisitor_update 1" type="STANDARD" schema="bisitor_update" session="Main">update visitations set _is_deleted=0;</console>
+      <console name="clear" type="STANDARD" schema="bisitor_update" session="Main">delete from visitations;
 update lessons set completed=0 WHERE completed=1;
-update lessons set _is_deleted=0 WHERE _is_deleted=1;]]></console>
+update lessons set _is_deleted=0 WHERE _is_deleted=1;</console>
       <console name="lesson_bug" type="STANDARD" schema="bisitor_update" session="Main" />
       <console name="local_server" type="STANDARD" schema="bisitor_update" session="Main" />
+      <console name="notification_update" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[alter table notifications add column show_groups int default 0;
+select * from notifications;]]></console>
     </connection>
     <connection id="51da6549-4b3f-41b1-9f5e-14c30caad456">
-      <console name="1" type="STANDARD" schema="main" session="Main"><![CDATA[select count(id) from visitations group by lesson_id, student_id having count(id)>1;]]></console>
+      <console name="1" type="STANDARD" schema="main" session="Main">select count(id) from visitations group by lesson_id, student_id having count(id)&gt;1;</console>
       <console name="client" type="STANDARD" schema="main" session="Main" />
+      <console name="notification_update" type="STANDARD" schema="main" session="Main"><![CDATA[.schema notificatios
+alter table notifications RENAME TO old_notifications;
+create table notifications (
+    id int primary key autoincrement unique, 
+    _created datetime default NOW, 
+    _updated datetime, )]]></console>
     </connection>
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
@@ -62,6 +77,7 @@ update lessons set _is_deleted=0 WHERE _is_deleted=1;]]></console>
         <condition column="_updated" operator="is null" value="" active="true" />
       </filter>
     </filter-list>
+    <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.administrations" active-filter-id="EMPTY_FILTER" />
     <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor.administrations" active-filter-id="" />
     <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.students" active-filter-id="EMPTY_FILTER" />
     <filter-list connection-id="355ef8f6-d083-457e-a733-79a364567d66" dataset="bisitor_update.notifications" active-filter-id="0ef2148b-cb89-4601-b40e-1a417d46f35d">
@@ -86,6 +102,12 @@ update lessons set _is_deleted=0 WHERE _is_deleted=1;]]></console>
       </filter>
     </filter-list>
     <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.professors" active-filter-id="EMPTY_FILTER" />
+    <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.notifications" active-filter-id="b4917ffc-1a48-401e-a19e-51b49c0087e3">
+      <filter id="b4917ffc-1a48-401e-a19e-51b49c0087e3" name="Filter" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="id" operator="is not null" value="" active="true" />
+      </filter>
+    </filter-list>
+    <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.administrations" active-filter-id="EMPTY_FILTER" />
     <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.visitations" active-filter-id="EMPTY_FILTER" />
     <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.lessons" active-filter-id="EMPTY_FILTER" />
     <filter-list connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456" dataset="main.students" active-filter-id="EMPTY_FILTER" />

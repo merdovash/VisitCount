@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Type
 
-from DataBase2 import Auth, Professor, _DBTrackedObject
+from DataBase2 import Auth, Professor, _DBTrackedObject, Administration
 from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Updates, ServerUpdateData
 from Modules import Module
 from Modules.Synch import address
@@ -37,10 +37,10 @@ class SynchModule(Module):
 
             item = class_.get(session, **fields)
             if item is None:
-                new_item = class_.new(session=session, **item_data)
-                changes['to_id'] = new_item
-            else:
-                changes['to_id'] = item
+                item = class_.new(session=session, **item_data)
+
+            changes['to_id'] = item
+            print(item)
 
             changed[class_.__name__].append(changes)
 
@@ -92,6 +92,8 @@ class SynchModule(Module):
             ]
             for key, item in changed.items()
         }
+
+        print(session.query(Administration).all())
 
         # применяем изменения записей
         received_updates.updates.updated.foreach(apply_update)

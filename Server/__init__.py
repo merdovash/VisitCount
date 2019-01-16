@@ -1,3 +1,3 @@
 class config:
-    email = ''
-    password = ''
+    email = 'bisitor.test@gmail.com'
+    password = 'Oe23zk45'

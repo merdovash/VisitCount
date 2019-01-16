@@ -1,4 +1,5 @@
 import threading
+from typing import Callable
 
 import serial
 
@@ -67,7 +68,14 @@ class RFIDReader(IReader, threading.Thread):
 
         for i in range(12):
             try:
-                self.connection = serial.Serial('COM' + str(i))
+                self.connection = serial.Serial(f'COM{i}')
+                self.status = RFIDReader.Found
+                break
+            except serial.serialutil.SerialException as e:
+                pass
+
+            try:
+                self.connection = serial.Serial(f"/dev/ttyUSB{i}")
                 self.status = RFIDReader.Found
                 break
             except serial.serialutil.SerialException as e:
@@ -81,7 +89,7 @@ class RFIDReader(IReader, threading.Thread):
                     number = a.split(",")[1].replace("\r\n", "")
                     self._method(number)
 
-    def on_read(self, method):
+    def on_read(self, method: Callable[[int], None]):
         self._method = method
 
     def stop_read(self):

@@ -2,6 +2,7 @@ from Client.Reader.Functor import OnRead
 from DataBase2 import Student
 from Domain import Action
 from Domain.functools.Format import format_name
+from Domain.functools.List import find
 
 
 class NewVisitOnRead(OnRead):
@@ -27,8 +28,8 @@ class NewVisitOnRead(OnRead):
         else:
             self.message.emit('Студент не обнаружен', False)
 
-    def __init__(self, groups, lesson):
+    def __init__(self, lesson):
         OnRead.__init__(self)
 
-        self.students = Student.of(groups)
+        self.students = Student.of(lesson)
         self.lesson = lesson

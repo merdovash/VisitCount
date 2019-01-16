@@ -10,9 +10,7 @@ from Client.MyQt.Widgets.ProgressBar import ProgressBar
 from DataBase2 import Professor, Auth, UserType
 from Domain.Structures.DictWrapper import Structure
 from Domain.Structures.DictWrapper.Network.FirstLoad import ClientFirstLoadData
-from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData
 from Modules.FirstLoad.ClientSide import ApplyFirstLoadData
-from Modules.Synch.ClientSide import ApplyUpdate
 from Parser.JsonParser import JsonParser
 
 
@@ -104,26 +102,6 @@ class RequestWidget(QWidget):
         self.manager.post(self.request, bytearray(JsonParser.dump(data), encoding='utf8'))
         self.progress_bar.increment()
         self.button.setEnabled(False)
-
-
-def send_updates(program):
-    from Modules.Synch import address
-
-    professor = program.professor
-    widget = RequestWidget(
-        professor=professor,
-        data=ClientUpdateData(
-            updates=professor.updates(),
-            last_update_in=professor._last_update_in,
-            last_update_out=professor._last_update_out),
-        address=program.host + address,
-        on_response=ApplyUpdate(program.professor),
-        on_error=lambda x: None,
-        on_finish=lambda x: None
-    )
-    widget.on_finish = widget.close
-
-    return widget
 
 
 def first_load(program, login, password, on_finish, on_error):

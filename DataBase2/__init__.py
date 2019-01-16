@@ -7,7 +7,7 @@ import pathlib
 import sys
 from datetime import datetime
 from threading import Lock
-from typing import List, Union, Dict, Any, Type
+from typing import List, Union, Dict, Any, Type, Set
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
@@ -209,9 +209,6 @@ class _DBObject(IJSON):
     def class_(name) -> Type['_DBObject']:
         return eval(name)
 
-    def __getitem__(self, item):
-        return self._dict()[item]
-
     def __eq__(self, other):
         if isinstance(other, _DBObject):
             return super().__eq__(other)
@@ -220,6 +217,13 @@ class _DBObject(IJSON):
             return self._dict() == other
 
         super().__eq__(other)
+
+    @classmethod
+    def subclasses(cls) -> List[Type['_DBObject']]:
+        return list(
+            filter(
+                lambda x: '_' != x.__name__[0],
+                set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in c.subclasses()])))
 
 
 class _DBTrackedObject(_DBObject):
@@ -390,7 +394,7 @@ class Visitation(Base, _DBTrackedObject):
         :param with_deleted: включать ли удаленные объекты в список
         :return: список посещений объекта
         """
-        if isinstance(obj, (list, _AssociationList)):
+        if isinstance(obj, (list, _AssociationList, frozenset)):
             return DBList([Visitation.of(o) for o in obj], flat=True, unique=True, with_deleted=with_deleted)
 
         if isinstance(obj, (Student, Lesson)):
@@ -550,7 +554,7 @@ class Lesson(Base, _DBTrackedObject):
     professor_id = Column(Integer, ForeignKey('professors.id'), nullable=False)
     discipline_id = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
     type = Column(Integer, nullable=False)
-    date = Column(DateTime, nullable=False)
+    date: datetime = Column(DateTime, nullable=False)
     completed = Column(Boolean, nullable=False)
     room_id = Column(String(40), nullable=False)
 
@@ -589,13 +593,12 @@ class Lesson(Base, _DBTrackedObject):
     def of(cls, obj, intersect=False, with_deleted=False) -> List['Lesson']:
         """
 
-        :param semester:
         :param intersect:
         :param obj: объект или спсиок объектов базы данных
         :param with_deleted: включать ли в список удаленные объекты
         :return: список родителей, отоносящихся к объекту
         """
-        if isinstance(obj, (list, _AssociationList)):
+        if isinstance(obj, (list, _AssociationList, frozenset)):
             if intersect:
                 lessons = None
                 for o in obj:
@@ -653,7 +656,7 @@ class Administration(Base, _DBPerson):
         elif isinstance(obj, Professor):
             return DBList(obj.admins, with_deleted=with_deleted)
         elif isinstance(obj, NotificationParam):
-            return DBList(obj.admin, with_deleted=with_deleted)
+            return DBList([obj.admin], with_deleted=with_deleted)
         else:
             raise NotImplementedError(type(obj))
 
@@ -704,23 +707,25 @@ class Professor(_DBPerson, Base):
                           unique=True,
                           with_deleted=with_deleted)
 
-        elif isinstance(obj, (Lesson, NotificationParam)):
+        if isinstance(obj, (Lesson, NotificationParam)):
             return DBList([obj.professor])
 
-        elif isinstance(obj, Visitation):
+        if isinstance(obj, Visitation):
             return Professor.of(obj.lesson, with_deleted=with_deleted)
 
-        elif isinstance(obj, Administration):
+        if isinstance(obj, Administration):
             return DBList(obj.professors, with_deleted=with_deleted)
 
-        elif isinstance(obj, Student):
+        if isinstance(obj, Student):
             return Professor.of(obj.groups, with_deleted=with_deleted)
 
-        elif isinstance(obj, Group):
+        if isinstance(obj, Group):
             return Professor.of(obj.lessons, with_deleted=with_deleted)
 
-        else:
-            raise NotImplementedError(type(obj))
+        if isinstance(obj, Professor):
+            return DBList([obj])
+
+        raise NotImplementedError(type(obj))
 
     def updates(self, last_in: datetime = None) -> Dict[str, Dict[str, List]]:
         """
@@ -747,7 +752,15 @@ class Professor(_DBPerson, Base):
         if self._last_update_out is None:
             self._last_update_out = datetime(2008, 1, 1)
 
-        for class_ in [class_ for class_ in _DBTrackedObject.__subclasses__() if class_.__name__[0] != '_']:
+        classes = _DBTrackedObject.subclasses()
+
+        if Auth in classes:
+            classes.remove(Auth)
+        if Professor in classes:
+            classes.remove(Professor)
+
+        print(classes)
+        for class_ in classes:
             data: List[_DBTrackedObject] = DBList(class_.of(self, with_deleted=True), flat=True, unique=True)
 
             created[class_.__name__] = [data.pop(i) for i in range(len(data) - 1, -1, -1) if created_cond(data[i])]
@@ -771,6 +784,10 @@ class NotificationParam(Base, _DBTrackedObject):
     professor_id = Column(Integer, ForeignKey('professors.id'))
     admin_id = Column(Integer, ForeignKey('administrations.id'))
     active = Column(Boolean)
+    show_groups = Column(Boolean, default=False)
+    show_disciplines = Column(Boolean, default=False)
+    show_students = Column(Boolean, default=True)
+    show_progress = Column(Boolean, default=False)
 
     @classmethod
     def of(cls, obj, with_deleted=False) -> List['NotificationParam']:
@@ -878,7 +895,7 @@ class Student(Base, _DBPerson):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список студентов, отоносящихся к объекту
         """
-        if isinstance(obj, (list, _AssociationList)):
+        if isinstance(obj, (list, _AssociationList, frozenset)):
             return DBList([Student.of(o) for o in obj],
                           flat=True,
                           unique=True,
