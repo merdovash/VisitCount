@@ -2,12 +2,13 @@ import threading
 from typing import Callable
 
 import serial
+from PyQt5.QtCore import QThread, pyqtSignal
 
 from Client.Reader import IReader
 
 
 def nothing(card_id):
-    pass
+    print(card_id)
 
 
 class RFIDReaderFunction:
@@ -38,16 +39,18 @@ class RFIDReaderNotFoundException(Exception):
         self.args = ["RFID Reader not found"]
 
 
-class RFIDReader(IReader, threading.Thread):
+class RFIDReader(IReader, QThread):
     inst = None
 
     NotFound = 0
     Found = 1
 
+    card_id = pyqtSignal('PyQt_PyObject')
+
     @staticmethod
     def instance() -> 'RFIDReader':
         if RFIDReader.inst is None:
-            RFIDReader.inst = RFIDReader(lambda x: 0)
+            RFIDReader.inst = RFIDReader()
             if RFIDReader.inst.status == RFIDReader.Found:
                 RFIDReader.inst.start()
             else:
@@ -59,12 +62,12 @@ class RFIDReader(IReader, threading.Thread):
 
     def __init__(self, method=nothing):
         self.state = True
-        self._method = method
         self.connection = None
         super().__init__()
         self.status = RFIDReader.NotFound
 
         self.daemon = True
+        self.card_id.connect(method)
 
         for i in range(12):
             try:
@@ -87,7 +90,7 @@ class RFIDReader(IReader, threading.Thread):
                 a = self.connection.readline().decode('UTF-8')
                 if (len(a)) > 10:
                     number = a.split(",")[1].replace("\r\n", "")
-                    self._method(number)
+                    self.card_id.emit(number)
 
     def on_read(self, method: Callable[[int], None]):
         self._method = method

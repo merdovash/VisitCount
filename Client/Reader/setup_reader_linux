@@ -1,40 +1,6 @@
 #! /bin/bash
 #
-# z2usb_install.sh
-# Copyright (C) 2017 uralbash <root@uralbash.ru>
-#
-# Distributed under terms of the MIT license.
-#
-username=$(whoami)
-
-# https://www.centos.org/docs/5/html/Deployment_Guide-en-US/s1-kernel-modules-persistant.html
-echo modprobe ftdi_sio >> /etc/rc.modules
-chmod +x /etc/rc.modules
-
-# Make rules file
-rules_file=/etc/udev/rules.d/40-persistent-ftdi.rules
-touch $rules_file
-
-# Set FTDI devices
-for device in $(
-  lsusb | awk '/FT232'`
-  `'|Future Technology Devices International'`
-  `'|Z-2 USB'`
-  `'|Ltd IronLogic RFID Adapter/ '`
-  `'{print $6}'
-  )
-do
-  vendor_id=${device:0:4}
-  product_id=${device:5:10}
-  echo "bash -c \"echo ${vendor_id} ${product_id} > " \
-    "/sys/bus/usb-serial/drivers/ftdi_sio/new_id\""   \
-    >> /etc/rc.modules
-  echo "ATTRS{idVendor}==\"${vendor_id}\"," \
-    "ATTRS{idProduct}==\"${product_id}\","  \
-    "MODE=\"0666\",GROUP=\"dialout\""       \
-    >> $rules_file
-done
-
-# Add user to dialout group
-usermod -aG tty ${username}
-usermod -aG dialout ${username}
+sudo modprobe ftdi_sio
+sudo echo 0403 1234 > /sys/bus/usb-serial/drivers/ftdi_sio/new_id
+sudo chown vlad /dev/ttyUSB0
+stty -F /dev/ttyUSB0 cs8 cstopb -ixon raw speed 9600

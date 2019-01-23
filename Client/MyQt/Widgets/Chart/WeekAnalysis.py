@@ -1,20 +1,20 @@
 from Client.MyQt.Widgets.Chart import QAnalysisDialog
-from Domain.Aggregation import Weeks, Column
+from Domain.Aggregation import WeeksAggregation, Column
 
 
 class WeekChart(QAnalysisDialog):
     def __init__(self, program, parent=None):
         super().__init__(program, parent)
 
-        self.data = Weeks.by_professor(self.program.professor)
+        self.data = WeeksAggregation.by_professor(self.program.professor)
 
         self.draw()
 
     def refresh_data(self):
         print(self.groups, self.disciplines)
-        self.data = Weeks.by_professor(self.program.professor,
-                                       groups=[i for i in self.groups.keys() if self.groups[i]],
-                                       disciplines=[i for i in self.disciplines.keys() if self.disciplines[i]])
+        self.data = WeeksAggregation.by_professor(self.program.professor,
+                                                  groups=[i for i in self.groups.keys() if self.groups[i]],
+                                                  disciplines=[i for i in self.disciplines.keys() if self.disciplines[i]])
 
     def get_data(self):
         return self.data

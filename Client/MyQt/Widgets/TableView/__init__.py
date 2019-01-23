@@ -10,6 +10,7 @@ from sqlalchemy import inspect
 
 from Client.MyQt.ColorScheme import Color
 from Client.MyQt.Dialogs.QOkMsg import QOkMsg
+from Client.Reader.Functor.RegisterCard import RegisterCard
 from DataBase2 import Lesson, Auth, Student, Group, Visitation
 from Domain.Validation.Values import Validate
 from Domain.functools.Decorator import memoize
@@ -382,12 +383,12 @@ class VisitView(QTableView):
         if student.card_id is None or student.card_id == '':
             menu.addAction(
                 'Зарегистрировать карту',
-                lambda: None
+                lambda: RegisterCard(student, self)
             )
         else:
             menu.addAction(
                 'Изменить карту',
-                lambda: None
+                lambda: RegisterCard(student, self)
             )
         menu.popup(QCursor().pos())
 
