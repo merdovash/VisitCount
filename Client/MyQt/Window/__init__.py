@@ -1,32 +1,25 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QMainWindow
-
-from Client.MyQt.Dialogs.QErrorMsg import QErrorMsg
-from Client.MyQt.Dialogs.QOkMsg import QOkMsg
-from Client.MyQt.Window.interfaces import IParentWindow
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 
-class AbstractWindow(QMainWindow, IParentWindow):
+class AbstractWindow(QMainWindow):
     error = pyqtSignal(str)
     message = pyqtSignal(str, bool)
     ok_message = pyqtSignal(str)
-    synch_finished = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(QMainWindow, self).__init__()
-        super(IParentWindow, self).__init__()
 
         self.error.connect(self.on_error)
         self.message.connect(self.on_show_message)
         self.ok_message.connect(self.on_ok_message)
-        self.synch_finished.connect(self.on_finish)
 
     def change_widget(self, widget):
         self.setCentralWidget(widget)
 
     @pyqtSlot(str)
     def on_error(self, msg):
-        self.setDialog(QErrorMsg(msg=msg))
+        QMessageBox().critical(self, "Ошибка", msg)
 
     @pyqtSlot(str, bool)
     def on_show_message(self, text, is_red):
@@ -34,7 +27,7 @@ class AbstractWindow(QMainWindow, IParentWindow):
 
     @pyqtSlot(str, name='on_ok_message')
     def on_ok_message(self, text):
-        self.setDialog(QOkMsg(text))
+        QMessageBox().information(self, "Сообщение", text)
 
     @pyqtSlot(name='on_finish')
     def on_finish(self):

@@ -4,24 +4,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QFormLayout
 from PyQtPlot.BarWidget import QBarGraphWidget
 
-from Client.IProgram import IProgram
-from Client.MyQt.Window.interfaces import IParentWindow, IChildWindow
 from DataBase2 import _DBObject
 # from Main.DataBase.GlobalStatistic import Statistic
 from Domain.Structures import Data
-
-
-def show(graph_window_constructor, program: IProgram):
-    def x():
-        window = program.window
-        if isinstance(window, IParentWindow):
-            dialog = graph_window_constructor(program)
-            dialog.setStyleSheet(program.css)
-            window.setDialog(graph_window_constructor(program))
-        else:
-            raise TypeError(f'window {window} is not able to take child window')
-
-    return x
 
 
 class PlotType:
@@ -43,7 +28,7 @@ class PlotType:
                            f"{value}% посещений\n {'в пн.во вт.в ср.в чт.в пт.в сб.в вс'.split('.')[int(bar)]}")
 
 
-class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
+class QAnalysisDialog(QWidget):
     """
     Базовый класс для отображения графиков
     """
@@ -66,8 +51,6 @@ class QAnalysisDialog(QWidget, IParentWindow, IChildWindow):
     def __init__(self, data: Data, selector: Dict[str, List[_DBObject]], plot_styler: Callable[[QBarGraphWidget], None],
                  flags=None, *args, **kwargs):
         QWidget.__init__(self, flags, *args, **kwargs)
-        IParentWindow.__init__(self)
-        IChildWindow.__init__(self)
 
         self.data = data
 

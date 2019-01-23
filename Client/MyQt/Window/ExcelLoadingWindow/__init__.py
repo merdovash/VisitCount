@@ -3,16 +3,14 @@ from typing import List, Dict
 from PyQt5.QtCore import QUrl, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushButton
 
-from Client.MyQt.Window.interfaces import IChildWindow
 from Domain.ExcelLoader.ExcelTableReader import Reader
 
 
-class ExcelLoadingWidget(QWidget, IChildWindow):
+class ExcelLoadingWidget(QWidget):
     exit = pyqtSignal()
 
     def __init__(self, files: List[QUrl], program, parent=None, *args, **kwargs):
         QWidget.__init__(self, parent, *args, **kwargs)
-        IChildWindow.__init__(self)
 
         # self.setWindowFlags(Qt.WindowStaysOnTopHint)
 

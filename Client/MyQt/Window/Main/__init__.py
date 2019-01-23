@@ -16,7 +16,7 @@ from Client.MyQt.Dialogs.QOkMsg import QOkMsg
 from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
 from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
-from Client.MyQt.Window import AbstractWindow, IParentWindow
+from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.MyQt.Window.NotificationParam import NotificationWindow
@@ -48,14 +48,13 @@ def closest_lesson(lessons: List[Lesson]):
     return closest
 
 
-class MainWindow(AbstractWindow, IParentWindow):
+class MainWindow(AbstractWindow):
     """
     class represents main window in program. includes table, control elements, status info, professor data.
     """
 
     def __init__(self, program: IProgram, professor: Professor):
         AbstractWindow.__init__(self)
-        IParentWindow.__init__(self)
 
         self.program: IProgram = program
 

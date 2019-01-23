@@ -1,14 +1,12 @@
 from PyQt5.QtWidgets import QWidget, QTabWidget, QListWidget, QVBoxLayout
 
 from Client.MyQt.Window.UpdatesInfoWindow.Ui_UpdatesInfoWidget import Ui_UpdatesInfoWidget
-from Client.MyQt.Window.interfaces import IChildWindow
 
 
-class UpdatesInfoWidget(QWidget, Ui_UpdatesInfoWidget, IChildWindow):
+class UpdatesInfoWidget(QWidget, Ui_UpdatesInfoWidget):
     def __init__(self, updates, flags=None, *args, **kwargs):
         QWidget.__init__(self, flags, *args, **kwargs)
         Ui_UpdatesInfoWidget.setupUi(self, self)
-        IChildWindow.__init__(self)
 
         self.tabs = QTabWidget()
         for case in updates:

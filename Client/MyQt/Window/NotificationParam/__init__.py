@@ -9,13 +9,13 @@ from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.Table.Contacts import AdministrationModel
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
 from Client.MyQt.Window.UpdatesInfoWindow import UpdatesInfoWidget
-from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow, IDataBaseUser
+from Client.MyQt.Window.interfaces import IDataBaseUser
 from DataBase2 import Administration, UserType, Parent, Student, NotificationParam
 from Domain.Action import NetAction
 from Domain.functools.Dict import format_view, validate_new_user
 
 
-class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWindow, IDataBaseUser):
+class NotificationWindow(QWidget, Ui_NotificationWindow, IDataBaseUser):
     _instance = None
 
     @staticmethod
@@ -30,9 +30,7 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         PARENT_TABLE = 2
 
     def __init__(self, program, flags=None, *args, **kwargs):
-        IParentWindow.__init__(self)
         IDataBaseUser.__init__(self, program.session)
-        IChildWindow.__init__(self)
         super(QWidget, self).__init__(flags)
         self.setupUi(self)
 
