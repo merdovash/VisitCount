@@ -17,7 +17,7 @@ class Case(object):
     loct = {'loct'}
 
 
-def format_name(user: Dict[str, str] or Professor or Student, case=None, small=False) -> str:
+def format_name(user: Dict[str, str] or Professor or Student, case: set = None, small=False) -> str:
     """
     Do format user data to readable string
     :param user: dictionary that contains keys: [last_name, first_name, middle_name]
@@ -62,7 +62,23 @@ def format_name(user: Dict[str, str] or Professor or Student, case=None, small=F
 
     if case is not None:
         morph = pymorphy2.MorphAnalyzer()
-        fio = [morph.parse(name)[0].inflect(case).word for name in fio]
+        first_name = list(filter(
+            lambda x: x.tag.case == 'nomn',
+            morph.parse(fio[1])))[0]
+
+        last_name = list(filter(
+            lambda x: x.tag.case == 'nomn' and first_name.tag.gender == first_name.tag.gender,
+            morph.parse(fio[0])))[0]
+
+        if len(fio) == 3:
+            middle_name = list(filter(
+                lambda x: x.tag.case == 'nomn' and first_name.tag.gender == first_name.tag.gender,
+                morph.parse(fio[2])))[0]
+
+            fio = [x.inflect(case).word for x in [last_name, first_name, middle_name]]
+
+        else:
+            fio = [x.inflect(case).word for x in [last_name, first_name]]
 
     if small:
         return ' '.join([f.capitalize() if i == 0 else f.capitalize()[0] + '.' for i, f in enumerate(fio)])

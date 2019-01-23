@@ -35,6 +35,7 @@
           <option value="PyQt5.QtWidgets.customContextMenuRequested.connect" />
           <option value="PyQt5.QtWidgets.cellChanged.connect" />
           <option value="PyQt5.QtCore.dataChanged.emit" />
+          <option value="PyQt5.QtChart" />
         </list>
       </option>
     </inspection_tool>

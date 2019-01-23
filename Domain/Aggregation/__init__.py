@@ -1,9 +1,10 @@
+from collections import defaultdict
 from typing import List
 
 from pandas import DataFrame, np
 from pandas.core.groupby import GroupBy
 
-from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline, LessonsGroups
+from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline, LessonsGroups, Auth
 from Domain.Data import names_of_groups
 from Domain.functools.Decorator import memoize
 from Domain.functools.Format import format_name
@@ -18,6 +19,50 @@ class Column(object):
     visit_rate = 'Посещения, %'
     visit_count = 'Количество посещений'
     student_count = 'Количество студентов'
+
+
+class Aggregator:
+    def __init__(self, lessons, groups=None):
+        self.lessons = lessons
+        self.groups = groups
+
+        self.reset()
+
+    def reset(self):
+        self._data = list(self.lessons)
+        return self
+
+    def filter(self, func):
+        self._data = [lesson for lesson in self._data if func(lesson)]
+        return self
+
+    def avg(self, group_by):
+        temp = defaultdict(list)
+
+        students = {}
+
+        for lesson in self._data:
+            if lesson.completed:
+                if frozenset(lesson.groups) not in students:
+                    t = Student.of(lesson.groups)
+                    if self.groups is not None:
+                        t &= Student.of(self.groups)
+
+                    students[frozenset(lesson.groups)] = t
+
+                temp[group_by(lesson)].append(
+                    (len(Visitation.of(lesson) & Visitation.of(students[frozenset(lesson.groups)])),
+                     len(students[frozenset(lesson.groups)])))
+        res = {}
+        for key in temp:
+            r = [0, 0]
+            for v in temp[key]:
+                r[0] += v[0]
+                r[1] += v[1]
+
+            res[key] = r[0] / r[1] if r[1] != 0 else 0
+
+        return res
 
 
 class Lessons:
@@ -62,11 +107,11 @@ class GroupAggregation:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
         # список групп
-        groups: List[Group] = professor.session\
-            .query(Group)\
-            .join(LessonsGroups)\
-            .join(Lesson)\
-            .filter(Lesson.professor_id==professor.id)\
+        groups: List[Group] = professor.session \
+            .query(Group) \
+            .join(LessonsGroups) \
+            .join(Lesson) \
+            .filter(Lesson.professor_id == professor.id) \
             .all()
 
         # список занятий по группам
@@ -142,7 +187,7 @@ class DisciplineAggregator:
         return df[[Column.discipline, 'Посещения, %', 'Всего занятий', 'Проведено занятий']]
 
 
-class Weeks:
+class WeeksAggregation:
     @staticmethod
     @memoize
     def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
@@ -266,3 +311,15 @@ class StudentAggregator:
                 data[Column.visit_rate].append(0)
 
         return DataFrame(data)
+
+
+if __name__ == '__main__':
+    professor = Auth.log_in('VAE', '123456').user
+
+    agg = Aggregator(Lesson.of(professor))
+    groups = Group.of(professor)
+
+    print(agg.reset().filter(lambda x: set(x.groups) == set(groups[0])).avg(lambda x: x.week))
+    print(agg.reset().filter(lambda x: set(x.groups) == set(groups[1])).avg(lambda x: x.week))
+    print(agg.reset().filter(lambda x: set(x.groups) == set(groups[2])).avg(lambda x: x.date.weekday()))
+    # print(DataFrame(agg.reset().avg(lambda x: x.week), index=['Week']).T)
