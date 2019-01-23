@@ -62,7 +62,7 @@ def create_threaded():
 
 def create():
     _new = False
-    if root == 'run_server.py':
+    if root == 'run_server.py' and os.name!='nt':
         engine = create_engine(Config.connection_string,
                                pool_pre_ping=True,
                                poolclass=NullPool,

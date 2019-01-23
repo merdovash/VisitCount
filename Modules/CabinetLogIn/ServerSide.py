@@ -9,8 +9,8 @@ from Domain.Aggregation import Weeks, Column, StudentAggregator, DisciplineAggre
 from Domain.Date import study_week
 from Domain.Exception.Authentication import InvalidLoginException, InvalidPasswordException, AuthenticationException, \
     InvalidUidException
-from Domain.WebUi import WebPage, Header, Card, Grid, s, m, MLink, DataFrameColumnChart, \
-    Row, Footer, MList, Col, offset, MText, DataFrameSmartTable2, CollapsibleBlock, Collapsible, \
+from Domain.WebUi import WebPage, MHeader, MCard, Grid, s, m, MLink, DataFrameColumnChart, \
+    MRow, MFooter, MList, Col, offset, MText, DataFrameSmartTable2, CollapsibleBlock, Collapsible, \
     TabContainer, Tab, MForm, MTextInput, MButton, MSubmitButton
 from Domain.functools.Format import format_name
 
@@ -59,7 +59,7 @@ def login(func):
 
                 except InvalidLoginException:
                     return WebPage(
-                        Card(
+                        MCard(
                             "Ошибка аутентификации",
                             "Вы указали невеврный логин",
                             MLink('/cabinet', text='Назад')
@@ -67,7 +67,7 @@ def login(func):
                     ).show()
                 except InvalidPasswordException:
                     return WebPage(
-                        Card(
+                        MCard(
                             "Ошибка аутентифкации",
                             "Вы указали неверный пароль",
                             MLink('/cabinet', text='Назад')
@@ -80,14 +80,14 @@ def login(func):
 
 def admin_cabinet(auth):
     return WebPage(
-        Row(
-            Card(
+        MRow(
+            MCard(
                 'Добро пожаловать',
                 'Система предназанчена для мониторинга посещаемости. Ниже вы можете увидеть базовые представления.',
                 grid=Grid(m(6), s(12))),
-            Card('В разработке',
+            MCard('В разработке',
                  'На данный момент система находится в разратоке - возможны перебои стабильности.',
-                 grid=Grid(m(6), s(12)))),
+                  grid=Grid(m(6), s(12)))),
         CollapsibleBlock(
             Collapsible(
                 title='Посещения по неделям на всех ваших занятиях',
@@ -153,13 +153,13 @@ def admin_cabinet(auth):
                 )
             )
         ),
-        header=Header(
+        header=MHeader(
             ' СПбГУТ',
             MLink('#', format_name(auth.user, small=True)),
             MLink('#', f'Текущая неделя: {study_week()}'),
             MLink('/', 'Выход')),
-        footer=Footer(
-            Row(
+        footer=MFooter(
+            MRow(
                 Col(
                     MList(
                         MLink(address='#', text='1'),
@@ -175,18 +175,18 @@ def admin_cabinet(auth):
 
 def auth_form():
     return WebPage(
-        Card(
+        MCard(
             title="Вход в информационную панель",
             body=MForm(
                 elements=(
-                    Row(
+                    MRow(
                         MTextInput(
                             label="Логин",
                             placeholder="Логин",
                             name="login",
                         ),
                     ),
-                    Row(
+                    MRow(
                         MTextInput(
                             label="Пароль",
                             type="password",

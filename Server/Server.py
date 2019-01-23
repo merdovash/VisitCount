@@ -3,7 +3,7 @@
 """
 import os
 
-from flask import Flask, make_response, request, send_file
+from flask import Flask, make_response, request, send_file, send_from_directory
 from flask_material import Material
 
 from Modules.CabinetLogIn import ServerSide as Cabinet
@@ -12,6 +12,7 @@ from Modules.Index import ServerSide as Index
 from Modules.NotificationModule.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
+from Modules import SourceChecker
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -21,6 +22,7 @@ Material(app)
 
 # load modules
 
+SourceChecker.init(app)
 Cabinet.init(app)
 Index.init(app)
 VisitLandingPage.init(app)
@@ -85,6 +87,8 @@ def get_resource(file_name):  # pragma: no cover
         content = page(path + "/templates/" + file_name, encoding='utf-8')
     elif file_type in ["gif", "png", "img", 'jpg']:
         content = send_file(path + "/resources/" + file_name, mimetype='image/gif')
+    elif file_type == 'exe':
+        return send_from_directory(path+ "/resources", file_name)
 
     response = make_response(content)
     response.headers['Content-Type'] = mimetypes.get(file_extension)

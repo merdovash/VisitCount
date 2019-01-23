@@ -9,12 +9,12 @@ def init(app):
         return WebPage(
             Section(
                 title='',
-                body=Row(
+                body=MRow(
                     Col(
                         MImage(address='file/landing_chart_r.png'),
                         grid=Grid(s(12), m(6))
                     ),
-                    Card(
+                    MCard(
                         'Автоматизируйте учет посещений',
                         MList(
                             'Откажитесь от записей на бумажку',
@@ -28,8 +28,8 @@ def init(app):
             ),
             Section(
                 'Больше никаких бумажных носителей',
-                body=Row(
-                    Card(
+                body=MRow(
+                    MCard(
                         'Система полностью автоматизирована',
                         'Используйте специальное ПО для ведения учета. Не важно сколько у вас компьютеров, '
                         'централизованная система позаботится о том, чтобы на всех устройствах была актуальная '
@@ -44,21 +44,21 @@ def init(app):
             ),
             Section(
                 'Больше никаких лишних действий',
-                body=Row(
+                body=MRow(
                     Col(
                         MImage(address='file/landing_rfid.png'),
                         grid=Grid(s(12), m(6))
                     ),
-                    Card('Студенты отмечаются сами',
+                    MCard('Студенты отмечаются сами',
                          'Благодаря технологии RFID процес ведения учета сокращается до нажатия одной кнопки. '
                          'Студенты отмечаются в системе через специальное устройство и личную smart-карту.',
-                         grid=Grid(s(12), m(6)))
+                          grid=Grid(s(12), m(6)))
                 )
             ),
             Section(
                 'Формирование отчётов',
-                body=Row(
-                    Card(
+                body=MRow(
+                    MCard(
                         'Автоматическая генерация отчетов',
                         'Система позволяет не только визуализировать данные, но и рассылать готовые отчеты по '
                         'электронной почте. Такая функция подойдет для отчетности перед кафедрами, деканатами и '
@@ -73,31 +73,31 @@ def init(app):
             ),
             Section(
                 'Рассылка оповещений',
-                body=Row(
+                body=MRow(
                     Col(
                         MImage(address='file/landing_notification.png'),
                         grid=Grid(s(12), m(6))
                     ),
-                    Card('Автоматическое оповещение о пробелмах с посещаемостью',
+                    MCard('Автоматическое оповещение о пробелмах с посещаемостью',
                          'Как один из встреных инструментов повышения посещаемости система автоматически оповещает '
                          'студента и/или родителей о проблемах с посещаемостью.',
-                         grid=Grid(s(12), m(6)))
+                          grid=Grid(s(12), m(6)))
 
                 )
             ),
-            Row(
-                Card(
+            MRow(
+                MCard(
                     title='Контакты',
                     body=P('email: vladschekochikhin@gmail.com'),
                     grid=Grid(s(12), m(6)),
                     page_link='contact'
                 )
             ),
-            header=Header(
+            header=MHeader(
                 'Система ведения учета',
                 MLink(address='#contact', text='Контакты'),
                 MLink(address='/cabinet', text='Личный кабинет'),
                 MLink(address='/', text='Другие проекты')
             ),
-            footer=Footer(copyright='СПбГУТб 2018')
+            footer=MFooter(copyright='СПбГУТб 2018')
         ).show()

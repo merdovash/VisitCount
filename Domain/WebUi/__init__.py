@@ -260,7 +260,7 @@ class WebContainer(WebComponent):
         return self
 
 
-class Row(WebContainer):
+class MRow(WebContainer):
     main = "<div class='row{is_flex}'>{components}</div>"
 
     def __render__(self) -> str:
@@ -400,7 +400,7 @@ class MImage(WebComponent):
         self.address = address
 
 
-class Header(WebContainer):
+class MHeader(WebContainer):
     def __render__(self) -> str:
         return """
   <nav>
@@ -451,7 +451,7 @@ class MLink(WebContainer):
             'text_color') is not None else ''
 
 
-class Card(WebContainer):
+class MCard(WebContainer):
     def _apply_mobile(self, is_mobile):
         self.position.__set_monitor__(is_mobile)
 
@@ -698,7 +698,7 @@ var myChart = new Chart(ctx, {
         )
 
 
-class Footer(WebContainer):
+class MFooter(WebContainer):
     def __render__(self) -> str:
         return self.main.format(components=''.join(map(str, self._items())),
                                 copyright=self._copyright,

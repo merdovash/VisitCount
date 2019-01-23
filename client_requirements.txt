@@ -1,0 +1,7 @@
+PyQt5
+PyQtPlot
+pymorphy2
+sqlalchemy
+pyserial
+xlrd
+requests

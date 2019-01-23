@@ -16,55 +16,21 @@
       <scope value="GLOBAL" />
       <destination value="FILE" />
       <format value="EXCEL" />
-      <charset value="UTF-8" />
+      <charset value="windows-1251" />
     </export-instructions>
   </component>
   <component name="DBNavigator.Project.DatabaseBrowserManager">
     <autoscroll-to-editor value="false" />
     <autoscroll-from-editor value="true" />
     <show-object-properties value="true" />
-    <loaded-nodes>
-      <connection connection-id="355ef8f6-d083-457e-a733-79a364567d66">
-        <schema name="bisitor_update" object-types="table, view, procedure, function, constraint, index, column, dataset trigger" />
-      </connection>
-      <connection connection-id="51da6549-4b3f-41b1-9f5e-14c30caad456">
-        <schema name="main" object-types="table, view, constraint, index, column, dataset trigger" />
-      </connection>
-    </loaded-nodes>
+    <loaded-nodes />
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
     <connection id="355ef8f6-d083-457e-a733-79a364567d66">
-      <console name="bisitor_update" type="STANDARD" schema="bisitor_update" session="Main">ALTER TABLE administrations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE auth5 CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE disciplines CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE lessons CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE lessons_groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE notifications CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE parents CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE professors CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE students CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE students_groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE students_parents CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-ALTER TABLE visitations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;</console>
-      <console name="bisitor_update 1" type="STANDARD" schema="bisitor_update" session="Main">update visitations set _is_deleted=0;</console>
-      <console name="clear" type="STANDARD" schema="bisitor_update" session="Main">delete from visitations;
-update lessons set completed=0 WHERE completed=1;
-update lessons set _is_deleted=0 WHERE _is_deleted=1;</console>
-      <console name="lesson_bug" type="STANDARD" schema="bisitor_update" session="Main" />
-      <console name="local_server" type="STANDARD" schema="bisitor_update" session="Main" />
-      <console name="notification_update" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[alter table notifications add column show_groups int default 0;
-select * from notifications;]]></console>
+      <console name="local_server" type="STANDARD" schema="" session="Main" />
     </connection>
     <connection id="51da6549-4b3f-41b1-9f5e-14c30caad456">
-      <console name="1" type="STANDARD" schema="main" session="Main">select count(id) from visitations group by lesson_id, student_id having count(id)&gt;1;</console>
       <console name="client" type="STANDARD" schema="main" session="Main" />
-      <console name="notification_update" type="STANDARD" schema="main" session="Main"><![CDATA[.schema notificatios
-alter table notifications RENAME TO old_notifications;
-create table notifications (
-    id int primary key autoincrement unique, 
-    _created datetime default NOW, 
-    _updated datetime, )]]></console>
     </connection>
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
@@ -114,9 +80,6 @@ create table notifications (
   </component>
   <component name="DBNavigator.Project.EditorStateManager">
     <last-used-providers />
-  </component>
-  <component name="DBNavigator.Project.FileConnectionMappingManager">
-    <mapping file-url="file://$PROJECT_DIR$/DataBase2/SQL/bisitor_update.sql" connection-id="355ef8f6-d083-457e-a733-79a364567d66" session-id="MAIN" current-schema="bisitor_update" />
   </component>
   <component name="DBNavigator.Project.MethodExecutionManager">
     <method-browser />
