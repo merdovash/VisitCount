@@ -1,35 +1,34 @@
-from Client.Reader.Functor import OnRead
-from DataBase2 import Student
-from Domain import Action
-from Domain.functools.Format import format_name
-from Domain.functools.List import find
+from typing import List
+
+from PyQt5.QtCore import QObject, pyqtSignal
+from sqlalchemy import inspect
+
+from Client.Reader.SerialReader import RFIDReader
+from DataBase2 import Lesson, Student, Visitation
+from Domain.Exception import StudentNotFoundException, TooManyStudentsFoundException
 
 
-class NewVisitOnRead(OnRead):
-    def __call__(self, card_id):
-        print('Control new visit', end='')
-        student = find(lambda x: x.card_id == card_id, self.widget.students_header.keys())
-        if student is not None:
-            # записываем в БД
-            visit = Action.new_visitation(
-                student=student,
-                lesson=self.lesson,
-                professor_id=self.professor.id,
-                session=self.session)
+class MarkVisit(QObject):
+    new_visit = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject')
 
-            # отмечаем в таблице
-            row_index = self.widget.students_header[student].index
-            col_index = self.widget.lessons_header[self.lesson].index
-            self.widget.visits[row_index, col_index].set_visitation(visit)
-            self.widget.force_repaint()
+    def __init__(self, students: List[Student], lesson: Lesson, **kwargs):
+        super().__init__()
+        self.reader = RFIDReader.instance("начать регистрацию студентов", **kwargs)
+        self.reader.card_id.connect(self._new_visit)
 
-            # выводим сообщение
-            self.message.emit(f'{format_name(student)} отмечен', False)
-        else:
-            self.message.emit('Студент не обнаружен', False)
-
-    def __init__(self, lesson):
-        OnRead.__init__(self)
-
-        self.students = Student.of(lesson)
+        self.students = students
         self.lesson = lesson
+
+    def _new_visit(self, card_id):
+        students = list(filter(lambda x: int(x.card_id) == int(card_id), self.students))
+        if len(students) == 0:
+            raise StudentNotFoundException()
+        elif len(students) == 1:
+            student = students[0]
+            visit = Visitation.get_or_create(inspect(student).session, student_id=student.id, lesson_id=self.lesson.id)
+            self.new_visit.emit(visit, student, self.lesson)
+        else:
+            raise TooManyStudentsFoundException(students)
+
+    def stop(self):
+        self.reader.card_id.disconnect(self._new_visit)

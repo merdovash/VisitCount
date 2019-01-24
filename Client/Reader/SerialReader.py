@@ -3,8 +3,10 @@ from typing import Callable
 
 import serial
 from PyQt5.QtCore import QThread, pyqtSignal
+from serial import SerialException
 
 from Client.Reader import IReader
+from Domain.Exception.RFIDReader import RFIDReaderNotFoundException, RFIDReaderHasGoneAwayException
 
 
 def nothing(card_id):
@@ -34,11 +36,6 @@ class RFIDReaderFunction:
         self.on_read(*args, **kwargs)
 
 
-class RFIDReaderNotFoundException(Exception):
-    def __init__(self):
-        self.args = ["RFID Reader not found"]
-
-
 class RFIDReader(IReader, QThread):
     inst = None
 
@@ -48,26 +45,29 @@ class RFIDReader(IReader, QThread):
     card_id = pyqtSignal('PyQt_PyObject')
 
     @staticmethod
-    def instance() -> 'RFIDReader':
+    def instance(case="найти считыватель", **kwargs) -> 'RFIDReader':
         if RFIDReader.inst is None:
-            RFIDReader.inst = RFIDReader()
+            RFIDReader.inst = RFIDReader(**kwargs)
             if RFIDReader.inst.status == RFIDReader.Found:
                 RFIDReader.inst.start()
             else:
                 RFIDReader.inst = None
                 # traceback.print_stack()
-                raise RFIDReaderNotFoundException()
+                raise RFIDReaderNotFoundException(case, **kwargs)
 
+        RFIDReader.inst.case = case
         return RFIDReader.inst
 
-    def __init__(self, method=nothing):
+    def __init__(self, **kwargs):
+        self.case = ''
         self.state = True
         self.connection = None
         super().__init__()
         self.status = RFIDReader.NotFound
 
         self.daemon = True
-        self.card_id.connect(method)
+        self.card_id.connect(kwargs.get('method', nothing))
+        self.error_callback = kwargs.get('error_callback', None)
 
         for i in range(12):
             try:
@@ -86,11 +86,23 @@ class RFIDReader(IReader, QThread):
 
     def run(self):
         while self.state:
-            if self.connection.read():
-                a = self.connection.readline().decode('UTF-8')
-                if (len(a)) > 10:
-                    number = a.split(",")[1].replace("\r\n", "")
-                    self.card_id.emit(number)
+            try:
+                if self.connection.read():
+                    a = self.connection.readline().decode('UTF-8')
+                    if (len(a)) > 10:
+                        number = a.split(",")[1].replace("\r\n", "")
+                        self.card_id.emit(number)
+            except SerialException as serial_excpetion:
+                RFIDReader.inst = None
+                if 'read failed' in str(serial_excpetion):
+                    self.state = False
+                    RFIDReader.status = RFIDReader.NotFound
+                    raise RFIDReaderHasGoneAwayException(self.case, callback=self.error_callback)
+                else:
+                    print(serial_excpetion)
+
+        self.terminate()
+        RFIDReader.inst = None
 
     def on_read(self, method: Callable[[int], None]):
         self._method = method

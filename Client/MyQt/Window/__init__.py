@@ -1,9 +1,13 @@
+import traceback
+
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
+from Domain.Exception import BisitorException
+
 
 class AbstractWindow(QMainWindow):
-    error = pyqtSignal(str)
+    error = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject')
     message = pyqtSignal(str, bool)
     ok_message = pyqtSignal(str)
 
@@ -17,9 +21,16 @@ class AbstractWindow(QMainWindow):
     def change_widget(self, widget):
         self.setCentralWidget(widget)
 
-    @pyqtSlot(str)
-    def on_error(self, msg):
-        QMessageBox().critical(self, "Ошибка", msg)
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject', name='on_error')
+    def on_error(self, exception_type, exception, tb):
+        if isinstance(exception, BisitorException):
+                exception.show(self)
+        else:
+            QMessageBox().critical(self,
+                                   "Непредвиденная ошибка",
+                                   "Exception type: {},\n"
+                                   "value: {},\n"
+                                   "tb: {}".format(exception_type, exception, traceback.format_tb(tb)))
 
     @pyqtSlot(str, bool)
     def on_show_message(self, text, is_red):

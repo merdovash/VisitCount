@@ -11,7 +11,7 @@ class RegisterCard(QMessageBox):
     def __init__(self, student: Student, parent, *__args):
         super().__init__(parent)
 
-        self.reader = RFIDReader.instance()
+        self.reader = RFIDReader.instance("зарегистрировать карту студента")
         if self.reader is None:
             raise Exception()
         self.reader.card_id.connect(self.set_new_card_id)
@@ -25,12 +25,11 @@ class RegisterCard(QMessageBox):
 
     @pyqtSlot('PyQt_PyObject', name='set_new_card_id')
     def set_new_card_id(self, card_id):
-        print('gggggg')
         self.setText("Успешно записано")
         self.student.card_id = card_id
         inspect(self.student).session.commit()
-        self.close()
         self.reader.card_id.disconnect(self.set_new_card_id)
+        self.close()
 
 
 

@@ -7,7 +7,8 @@ from Client.IProgram import IProgram
 from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox, DisciplineComboBox, GroupComboBox, \
     LessonComboBox
 from Client.MyQt.Widgets.TableView import VisitTableWidget
-from DataBase2 import Professor
+from Client.Reader.Functor.NewVisit import MarkVisit
+from DataBase2 import Professor, Student
 
 CurrentData = namedtuple('CurrentData', 'discipline groups lesson')
 
@@ -27,6 +28,8 @@ class Selector(QWidget):
     lesson_finished = pyqtSignal()
 
     professor: Professor = None
+
+    visitMarker: MarkVisit = None
 
     def __init__(self, program: IProgram):
         super().__init__()
@@ -121,10 +124,10 @@ class Selector(QWidget):
 
     @pyqtSlot(bool, name='user_start_lesson')
     def user_start_lesson(self, status):
-        if self.program.reader() is not None:
-            self.lesson_started.emit(self.lesson.current())
-        else:
-            self.reader_required.emit('Считыватель не обнаружен.')
+        students = Student.of(self.group.current())
+        lesson = self.lesson.current()
+        self.visit_marker = MarkVisit(students, lesson, error_callback=self.lesson_finished.emit)
+        self.lesson_started.emit(lesson)
 
     @pyqtSlot(name='user_stop_lesson')
     def user_stop_lesson(self):
@@ -139,6 +142,7 @@ class Selector(QWidget):
         self._is_lesson_started = True
 
     def end_lesson(self):
+        self.visit_marker.stop()
         self.start_button.setVisible(True)
         self.end_button.setVisible(False)
 
