@@ -30,7 +30,7 @@ class IDChanges(HiddenStructure):
                 func(item, class_)
 
 
-class Updates(Structure):
+class Changes(Structure):
     created: TablesData
     updated: TablesData
     deleted: TablesData
@@ -40,17 +40,20 @@ class Updates(Structure):
         self.updated = TablesData(updated)
         self.deleted = TablesData(deleted)
 
+    def __len__(self):
+        return len(self.created)+len(self.updated)+len(self.deleted)
+
 
 class ClientUpdateData(Structure):
-    updates: Updates
+    updates: Changes
     last_update_out: datetime
     last_update_in: datetime
 
     def __init__(self, updates, last_update_in, last_update_out):
-        if isinstance(updates, Updates):
+        if isinstance(updates, Changes):
             self.updates = updates
         else:
-            self.updates = Updates(**updates)
+            self.updates = Changes(**updates)
 
         self.last_update_in = Get.datetime(last_update_in)
 
@@ -59,12 +62,12 @@ class ClientUpdateData(Structure):
 
 class ServerUpdateData(Structure):
     changed_id: IDChanges
-    updates: Updates
+    updates: Changes
 
     def __init__(self, changed_id, updates):
         self.changed_id = IDChanges(changed_id)
 
-        if isinstance(updates, Updates):
+        if isinstance(updates, Changes):
             self.updates = updates
         else:
-            self.updates = Updates(**updates)
+            self.updates = Changes(**updates)

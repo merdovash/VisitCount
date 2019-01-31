@@ -602,7 +602,7 @@ class Section(WebContainer):
         self.body = body
 
 
-class DataFrameColumnChart(WebComponent):
+class MColumnChart(WebComponent):
     main = """
     <div class='convas-container' height=100% width=100%">
         <canvas id="{id}" ></canvas>
@@ -677,7 +677,7 @@ var myChart = new Chart(ctx, {
                  id='chartContainer' + str(randint(0, 1000000)),
                  color='rgba(255,128,0,0.75)',
                  **kwargs):
-        self.df = df
+        self.data: dict = df
         self.title = title
         self.label_font_color = label_font_color
         self.x, self.y = x, y
@@ -688,14 +688,10 @@ var myChart = new Chart(ctx, {
         self.kwargs['xAxes_labelString'] = kwargs.get('xAxes_labelString', '')
 
     def x_values(self):
-        return '[{}]'.format(
-            ','.join([str(i) for i in self.df[self.x]])
-        )
+        return str(list(self.data.keys()))
 
     def y_values(self):
-        return '[{}]'.format(
-            ','.join([str(i) for i in self.df[self.y]])
-        )
+        return str(list(map(lambda x:round(x*100), self.data.values())))
 
 
 class MFooter(WebContainer):

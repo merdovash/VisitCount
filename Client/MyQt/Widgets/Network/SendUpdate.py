@@ -1,13 +1,13 @@
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTableView
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTableView, QLabel
 
 from Client.MyQt.Widgets.Network.Request import RequestWidget
-from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Updates
-from Modules.Synch.ClientSide import ApplyUpdate
+from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes
+from Modules.Synch.ClientSide import Updater
 
 
 class UpdatesModel(QAbstractTableModel):
-    def __init__(self, updates: Updates):
+    def __init__(self, updates: Changes):
         super().__init__()
 
         self.updates = updates
@@ -59,35 +59,43 @@ class UpdatesModel(QAbstractTableModel):
 class SendUpdatesWidget(QWidget):
     def __init__(self, program, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
-        from Modules.Synch import address
+        self.setMinimumWidth(600)
 
         professor = program.professor
 
         l = QVBoxLayout()
 
-        updates = Updates(**professor.updates())
+        updates = Changes(**professor.updates())
 
-        widget = RequestWidget(
-            professor=professor,
-            data=ClientUpdateData(
-                updates=updates,
-                last_update_in=professor._last_update_in,
-                last_update_out=professor._last_update_out),
-            address=program.host + address,
-            title='Отправить обновления на сервер',
-            text_button='Начать',
-            on_response=ApplyUpdate(program.professor),
-            on_error=lambda x: None,
-            on_finish=lambda x: None
-        )
-        widget.setMinimumWidth(500)
-        widget.on_finish = self.close
+        if len(updates):
+            def on_finish_update(self):
+                self.table.setModel(UpdatesModel(Changes(**professor.updates)))
 
-        l.addWidget(widget)
+            widget = RequestWidget(
+                professor=professor,
+                worker=Updater(
+                    professor,
+                    ClientUpdateData(
+                        updates=updates,
+                        last_update_in=professor._last_update_in,
+                        last_update_out=professor._last_update_out),
+                    program.host
+                ),
+                text_button='Начать'
+            )
+            widget.setMinimumWidth(500)
 
-        self.table = QTableView()
-        self.table.setModel(UpdatesModel(updates))
+            widget.finish.connect(on_finish_update)
 
-        l.addWidget(self.table)
+            l.addWidget(widget)
+
+            self.table = QTableView()
+            self.table.setModel(UpdatesModel(updates))
+            l.addWidget(self.table)
+
+        else:
+            l.addWidget(QLabel("Синхронизировано"))
+            l.addWidget(QLabel(f'Последняя загрузка {str(professor._last_update_in)}'))
+            l.addWidget(QLabel(f'Последняя выгрузка {str(professor._last_update_out)}'))
 
         self.setLayout(l)

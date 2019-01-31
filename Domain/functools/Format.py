@@ -90,3 +90,11 @@ def js_format(js: str, **kwargs):
         js = js.replace('{' + key + '}', str(val))
 
     return js
+
+
+def agree_to_number(word, number):
+    morph = pymorphy2.MorphAnalyzer()
+    word = morph.parse(word)[0]
+    if number not in [-1, 1]:
+        word = word.make_agree_with_number(number)
+    return word.word

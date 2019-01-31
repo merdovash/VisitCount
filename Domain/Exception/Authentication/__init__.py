@@ -18,3 +18,8 @@ class InvalidPasswordException(AuthenticationException):
 class InvalidUidException(AuthenticationException):
     def __init__(self, msg=None):
         super().__init__(f'Invalid uid token {msg}')
+
+
+class UnothorizedError(AuthenticationException):
+    _title = "ошибка доступа"
+    _mask = "При {} произошла попытка получения доступа к правам недоступного пользователя"

@@ -5,7 +5,7 @@ from typing import List
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QSize, QRect, QVariant, QPoint, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QResizeEvent, QCursor, QFont
 from PyQt5.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QStyleOptionViewItem, QHeaderView, QWidget, \
-    QAbstractItemView, QScrollArea, QMenu
+    QAbstractItemView, QScrollArea, QMenu, QMessageBox
 from sqlalchemy import inspect
 
 from Client.MyQt.ColorScheme import Color
@@ -86,7 +86,7 @@ class VisitModel(QAbstractTableModel):
             self.dataChanged.emit(
                 self.createIndex(0, column),
                 self.createIndex(self.rowCount() - 1, column),
-                [Qt.BackgroundColorRole| Qt.FontRole] * self.rowCount()
+                [Qt.BackgroundColorRole | Qt.FontRole] * self.rowCount()
             )
 
     def data(self, index: QModelIndex, role=None):
@@ -377,7 +377,7 @@ class VisitView(QTableView):
         menu.addSection('Показать данные')
         menu.addAction(
             'Показать карту',
-            lambda: self.show_student_card_id.emit(student.card_id))
+            lambda: self.show_student_card_id.emit(student))
 
         menu.addSection('Изменить данные')
         if student.card_id is None or student.card_id == '':
@@ -440,13 +440,21 @@ class VisitTableWidget(QWidget):
         self.percent_horizontal_view.horizontalScrollBar().valueChanged.connect(
             self.view.horizontalScrollBar().setValue)
         self.percent_vertical_view.verticalScrollBar().valueChanged.connect(self.view.verticalScrollBar().setValue)
-        self.view.horizontalScrollBar().valueChanged.connect(self.percent_horizontal_view.horizontalScrollBar().setValue)
+        self.view.horizontalScrollBar().valueChanged.connect(
+            self.percent_horizontal_view.horizontalScrollBar().setValue)
         self.view.verticalScrollBar().valueChanged.connect(self.percent_vertical_view.verticalScrollBar().setValue)
 
         self.view.select_current_lesson.connect(self.select_current_lesson)
         self.set_current_lesson.connect(self.view.set_current_lesson)
 
-        self.view.show_student_card_id.connect(lambda x: QOkMsg(x).exec_())
+        self.view.show_student_card_id.connect(
+            lambda x:
+            QMessageBox().information(
+                self,
+                "Информация",
+                f'Карта студента {format_name(x, {"gent"})}:\n'
+                f'{"не зарегистрирована" if x.card_id is None else x.card_id}')
+        )
 
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
@@ -471,7 +479,7 @@ class VisitTableWidget(QWidget):
             ROW_HEIGHT * 2 + SCROLL_BAR_SIZE)
 
     def setData(self, lessons, groups):
-        students = Student.of(groups)
+        students = sorted(Student.of(groups), key=lambda x:format_name(x))
         model = VisitModel(lessons, students)
         self.view.setModel(model)
 

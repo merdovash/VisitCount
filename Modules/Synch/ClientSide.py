@@ -2,15 +2,21 @@ from datetime import datetime
 from typing import Type, Dict
 
 from DataBase2 import _DBTrackedObject, Visitation
+from Domain.Structures.DictWrapper.Network import BaseRequest
 from Domain.Structures.DictWrapper.Network.Synch import ServerUpdateData, ChangeId
 from Domain.functools.Function import None_or_empty
+from Modules.Client import ClientWorker
+from Modules.Synch import address
 
 
-class ApplyUpdate:
-    def __init__(self, professor):
+class Updater(ClientWorker):
+    def __init__(self, professor, data, host):
+        super().__init__()
+        self.data = BaseRequest(professor, data)
+        self.address = host + address
         self.professor = professor
 
-    def __call__(self, data, progress_bar):
+    def on_response(self, data, progress_bar):
         """
 
         :param data: {

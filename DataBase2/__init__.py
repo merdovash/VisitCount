@@ -19,7 +19,8 @@ from sqlalchemy.sql import ClauseElement
 from DataBase2.config2 import Config
 from Domain.ArgPars import get_argv
 from Domain.Date import study_week, study_semester
-from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException
+from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException, \
+    UnothorizedError
 from Domain.Validation.Values import Get
 from Domain.functools.List import DBList
 from Parser import IJSON
@@ -62,9 +63,10 @@ def create_threaded():
 
 def create():
     _new = False
-    if root == 'run_server.py' and os.name!='nt':
+    if root == 'run_server.py' and os.name != 'nt':
         engine = create_engine(Config.connection_string,
                                pool_pre_ping=True,
+                               echo=True if get_argv('--db-echo') else False,
                                poolclass=NullPool,
                                pool_recycle=3600)
 
@@ -205,8 +207,8 @@ class _DBObject(IJSON):
             session.add(instance)
             return instance
 
-    @staticmethod
-    def class_(name) -> Type['_DBObject']:
+    @classmethod
+    def class_(cls, name) -> Type['_DBObject']:
         return eval(name)
 
     def __eq__(self, other):
@@ -245,11 +247,14 @@ class _DBTrackedObject(_DBObject):
 
 
 class _DBPerson(_DBTrackedObject):
+    type_name: str
+
     last_name = Column(String(50), nullable=False)
     first_name = Column(String(50), nullable=False)
     middle_name = Column(String(50), default="")
     sex = Column(Boolean, default=True)
     email = Column(String(200))
+    _card_id = Column('card_id', String(16), unique=True)
 
     def __init__(self, **kwargs):
         super().__init__(
@@ -261,6 +266,14 @@ class _DBPerson(_DBTrackedObject):
             **kwargs)
 
     session = None
+
+    @property
+    def card_id(self):
+        return Get.card_id(self._card_id)
+
+    @card_id.setter
+    def card_id(self, value):
+        self._card_id = Get.card_id(value)
 
     @classmethod
     def get_by_id(cls, id):
@@ -278,6 +291,17 @@ class _DBPerson(_DBTrackedObject):
             return UserSession(user, user_session)
         else:
             raise ValueError('user of {id} not found'.format(id=id))
+
+    def full_name(self, case=None):
+        from Domain.functools.Format import format_name
+        return format_name(self, case)
+
+    @property
+    def auth(self):
+        if hasattr(self, '_auth') and self._auth is not None:
+            return self._auth
+        else:
+            raise UnothorizedError()
 
 
 class StudentsGroups(Base, _DBTrackedObject):
@@ -463,12 +487,12 @@ class Auth(Base, _DBObject):
                     .filter(Professor.id == self.user_id) \
                     .first()
                 self.__user.session = self.session
-                self.__user.auth = self
+                self.__user._auth = self
 
         return self.__user
 
     @staticmethod
-    def log_in(login=None, password=None) -> 'Auth':
+    def log_in(login=None, password=None, **kwargs) -> 'Auth':
         """
 
         Производит аутентифкацию в двухфакторном режиме
@@ -633,6 +657,7 @@ class Administration(Base, _DBPerson):
     Таблица администраций
     """
     __tablename__ = 'administrations'
+    type_name = 'Представитель администрации'
 
     notification = relationship('NotificationParam', backref=backref("admin", cascade="all,delete"),
                                 passive_updates=False)
@@ -679,8 +704,7 @@ class Professor(_DBPerson, Base):
     Таблица преподавателей
     """
     __tablename__ = 'professors'
-
-    card_id = Column('card_id', String(40), unique=True)
+    type_name = 'Преподаватель'
 
     _last_update_in = Column(DateTime, default=datetime.now)
     _last_update_out = Column(DateTime)
@@ -691,7 +715,7 @@ class Professor(_DBPerson, Base):
     admins = association_proxy('_admins', 'admin')
 
     session: Session = None
-    auth: Auth = None
+    _auth: Auth = None
 
     @classmethod
     def of(cls, obj, with_deleted=False) -> List['Professor']:
@@ -869,10 +893,9 @@ class Student(Base, _DBPerson):
     """
     Таблица студентов
     """
+    type_name = 'Студент'
 
     __tablename__ = 'students'
-
-    card_id = Column(String(40))
 
     _parents = relationship('StudentsParents', backref=backref('student'))
     parents = association_proxy('_parents', 'parent')
@@ -926,6 +949,7 @@ class Parent(Base, _DBPerson):
     Таблица содержащая информациюо родителях
     """
     __tablename__ = "parents"
+    type_name = "Родитель"
 
     _students = relationship("StudentsParents", backref=backref('parent'))
     students = association_proxy('_students', 'student')
@@ -958,6 +982,11 @@ class Parent(Base, _DBPerson):
 
 if _new:
     Base.metadata.create_all(engine)
+else:
+    try:
+        p = Auth.log_in_by_uid(-1)
+    except:
+        Base.metadata.create_all(engine)
 
 # events
 

@@ -69,3 +69,5 @@ class Module:
 
     def read_data(self, data: bytearray):
         return JsonParser.read(data.decode('utf8').replace("'", '"'))
+
+

@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Dict, Type
 
 from DataBase2 import Auth, Professor, _DBTrackedObject, Administration
-from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Updates, ServerUpdateData
+from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes, ServerUpdateData
 from Modules import Module
 from Modules.Synch import address
 from Server.Response import Response
@@ -78,7 +78,7 @@ class SynchModule(Module):
         session = professor.session
 
         received_updates = ClientUpdateData(**data)
-        server_updates = Updates(**professor.updates(last_in=received_updates.last_update_in))
+        server_updates = Changes(**professor.updates(last_in=received_updates.last_update_in))
 
         # сохраняем новые записи
         changed = defaultdict(list)

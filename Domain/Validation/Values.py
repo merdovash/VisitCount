@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from Domain.Exception.Constraint import CardIdValueException
+
 
 class Validate:
     @staticmethod
@@ -13,11 +15,12 @@ class Validate:
 
 
 class Get:
+
     @staticmethod
     def table_name(val) -> str:
-        from DataBase2 import Base
         from sqlalchemy.ext.declarative import DeclarativeMeta
-        if isinstance(val, str) and val in [cls.__name__ for cls in Base.__subclasses__()]:
+        from DataBase2 import _DBObject, Base
+        if isinstance(val, str) and val in [cls.__name__ for cls in _DBObject.subclasses()]:
             return val
         elif isinstance(val, DeclarativeMeta):
             return val.__name__
@@ -58,4 +61,19 @@ class Get:
         if val is None:
             return None
         raise NotImplementedError(type(val))
+
+    @staticmethod
+    def card_id(val)->int or None:
+        if isinstance(val, str):
+            try:
+                return int(val)
+            except ValueError:
+                if val in ['None', 'none', 'null', '']:
+                    return None
+                raise CardIdValueException()
+        if isinstance(val, int):
+            return val
+        if val is None:
+            return None
+        raise NotImplementedError()
 

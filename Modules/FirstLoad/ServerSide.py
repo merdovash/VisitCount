@@ -1,5 +1,5 @@
 from DataBase2 import Professor, Lesson, Group, LessonsGroups, \
-    StudentsGroups, Student, Discipline, Visitation, Auth, UserType, Administration, NotificationParam
+    StudentsGroups, Student, Discipline, Visitation, Auth, UserType, Administration, NotificationParam, Parent
 from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
 from Modules import Module
 from Modules.FirstLoad import address
@@ -66,6 +66,7 @@ class FirstLoadModule(Module):
                                 .all(),
                                 Visitation=Visitation.of(professor),
                                 Administration=Administration.of(professor),
-                                NotificationParam=NotificationParam.of(professor))
+                                NotificationParam=NotificationParam.of(professor),
+                                Parent=Parent.of(professor))
         print(r.data['Lesson'])
         return r

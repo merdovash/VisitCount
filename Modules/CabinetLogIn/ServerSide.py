@@ -1,17 +1,21 @@
 import _md5
 import random
 
-import flask
-from flask import render_template, request
+from flask import make_response, redirect, request
 
-from DataBase2 import Auth, Session, Discipline
-from Domain.Aggregation import Weeks, Column, StudentAggregator, DisciplineAggregator
+from DataBase2 import Auth, Discipline, Lesson
+from Domain.Aggregation import (Column, DisciplineAggregator,
+                                StudentAggregator, VisitationsRateByStudents)
 from Domain.Date import study_week
-from Domain.Exception.Authentication import InvalidLoginException, InvalidPasswordException, AuthenticationException, \
-    InvalidUidException
-from Domain.WebUi import WebPage, MHeader, MCard, Grid, s, m, MLink, DataFrameColumnChart, \
-    MRow, MFooter, MList, Col, offset, MText, DataFrameSmartTable2, CollapsibleBlock, Collapsible, \
-    TabContainer, Tab, MForm, MTextInput, MButton, MSubmitButton
+from Domain.Exception.Authentication import (AuthenticationException,
+                                             InvalidLoginException,
+                                             InvalidPasswordException,
+                                             InvalidUidException)
+from Domain.WebUi import (Col, Collapsible, CollapsibleBlock,
+                          MColumnChart, DataFrameSmartTable2, Grid,
+                          MCard, MFooter, MForm, MHeader, MLink,
+                          MList, MRow, MSubmitButton, MText, MTextInput, Tab,
+                          TabContainer, WebPage, m, offset, s)
 from Domain.functools.Format import format_name
 
 
@@ -40,22 +44,22 @@ def login(func):
                 auth.uid = new_uid(auth.session)
                 auth.session.commit()
 
-                res = flask.make_response()
+                res = make_response()
                 res.set_cookie('uid', auth.uid)
 
                 return func(*args, **kwargs, response=res, auth=auth)
 
-            except AuthenticationException as e:
+            except AuthenticationException as exception:
                 try:
                     if 'uid' in request.cookies:
                         try:
                             auth = Auth.log_in_by_uid(request.cookies['uid'])
-                            return func(*args, **kwargs, auth=auth, response=flask.make_response())
+                            return func(*args, **kwargs, auth=auth, response=make_response())
                         except InvalidUidException:
-                            res = flask.make_response(flask.redirect('/cabinet'))
+                            res = make_response(redirect('/cabinet'))
                             return res
                     else:
-                        raise e
+                        raise exception
 
                 except InvalidLoginException:
                     return WebPage(
@@ -75,6 +79,7 @@ def login(func):
                     ).show()
         elif request.method == 'GET':
             return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -86,13 +91,13 @@ def admin_cabinet(auth):
                 'Система предназанчена для мониторинга посещаемости. Ниже вы можете увидеть базовые представления.',
                 grid=Grid(m(6), s(12))),
             MCard('В разработке',
-                 'На данный момент система находится в разратоке - возможны перебои стабильности.',
+                  'На данный момент система находится в разратоке - возможны перебои стабильности.',
                   grid=Grid(m(6), s(12)))),
         CollapsibleBlock(
             Collapsible(
                 title='Посещения по неделям на всех ваших занятиях',
-                body=DataFrameColumnChart(
-                    Weeks.by_professor(auth.user),
+                body=MColumnChart(
+                    VisitationsRateByStudents(Lesson.of(auth.user)).avg(lambda x: x.week),
                     x=Column.date,
                     y=Column.visit_rate,
                     title='Посещения в неделю, %',
@@ -214,9 +219,6 @@ def init(app):
             response.set_data(admin_cabinet(auth))
             return response
 
-
     # @app.route('/panel', methods=['GET'])
     # @login
     # def panel(auth):
-
-

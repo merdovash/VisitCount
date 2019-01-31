@@ -23,10 +23,21 @@
     <autoscroll-to-editor value="false" />
     <autoscroll-from-editor value="true" />
     <show-object-properties value="true" />
-    <loaded-nodes />
+    <loaded-nodes>
+      <connection connection-id="355ef8f6-d083-457e-a733-79a364567d66">
+        <schema name="bisitor_update" object-types="table, view, procedure, function, index, column" />
+      </connection>
+    </loaded-nodes>
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
     <connection id="355ef8f6-d083-457e-a733-79a364567d66">
+      <console name="aggreagtors" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[select students_groups.student_id, count(distinct lessons.id), count(distinct visitations.id)
+from lessons
+join lessons_groups on lessons.id=lessons_groups.lesson_id
+join students_groups on lessons_groups.group_id=students_groups.group_id
+left join visitations on visitations.student_id=students_groups.student_id
+group by students_groups.student_id
+where lessons.professor_id = 1;]]></console>
       <console name="bisitor_update" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[ALTER TABLE administrations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE auth5 CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE disciplines CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
@@ -41,6 +52,7 @@ ALTER TABLE students_groups CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_c
 ALTER TABLE students_parents CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 ALTER TABLE visitations CONVERT TO CHARACTER SET utf8 COLLATE utf8_unicode_ci;]]></console>
       <console name="bisitor_update 1" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[update visitations set _is_deleted=0;]]></console>
+      <console name="card_id_update" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[alter table administrations add column card_id int;]]></console>
       <console name="clear" type="STANDARD" schema="bisitor_update" session="Main"><![CDATA[delete from visitations;
 update lessons set completed=0 WHERE completed=1;
 update lessons set _is_deleted=0 WHERE _is_deleted=1;]]></console>

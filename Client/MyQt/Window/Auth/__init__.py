@@ -48,9 +48,9 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
 
             self.auth_success.emit(dict(login=login, password=password))
         except InvalidLoginException:
-            self.centralwidget.layout().addWidget(first_load(self.program, login, password,
-                                                             on_finish=lambda: self.auth_success.emit(dict(login=login, password=password)),
-                                                             on_error=lambda x: self.ok_message.emit(str(x))))
+            self.centralwidget.layout().addWidget(
+                first_load(self.program.host, login, password,
+                           on_close=lambda: self.auth_success.emit(dict(login=login, password=password))))
         except InvalidPasswordException as e:
             self.ok_message.emit(str(e))
 

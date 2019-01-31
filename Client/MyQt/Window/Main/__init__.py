@@ -210,13 +210,21 @@ class MainWindow(AbstractWindow):
         updates.addAction(updates_action)
 
     def _init_notification(self):
+        def show_notification_window():
+            if self.notification_window is None:
+                self.notification_window = NotificationWindow(program=self.program)
+                self.notification_window.show()
+                self.notification_window.close = lambda x: x.setVisible(False)
+            else:
+                self.notification_window.activateWindow()
+                self.notification_window.setVisible(True)
+                self.notification_window.raise_()
+
+        self.notification_window: NotificationWindow = None
         note = self.menu_bar.addMenu('Оповещения')
 
         note_run = QAction('Настройка оповещения', self)
-        note_run.triggered.connect(
-            lambda:
-            self.setDialog(NotificationWindow.instance(self.program))
-        )
+        note_run.triggered.connect(show_notification_window)
 
         note.addAction(note_run)
 

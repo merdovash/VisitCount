@@ -1,4 +1,7 @@
-class ConstraintException(Exception):
+from Domain.Exception import BisitorException
+
+
+class ConstraintException(BisitorException):
     pass
 
 
@@ -15,3 +18,9 @@ class ConstraintDictNameException(ConstraintException):
 class ConstraintNotEmptyException(ConstraintException):
     def __init__(self, key):
         super().__init__(f'value from {key} must be not empty')
+
+
+class CardIdValueException(ConstraintException):
+    _title = "Ошибка ввода"
+    _mask = "Во время {} была произведена попытка изменить идентифкатор карты на невозможную комбинацию.\n" \
+            "Пожалуйста, убедитесь, что введены только числа."

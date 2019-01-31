@@ -19,7 +19,7 @@ class BisitorException(Exception):
     def message(self) -> str:
         return self._mask.format(self._msg)
 
-    def __init__(self, msg: str = None, callback: Callable[[], None] = lambda: None, **kwargs):
+    def __init__(self, msg: str = "неуказанное действие", callback: Callable[[], None] = lambda: None, **kwargs):
         self._msg = msg
         self._callback = callback
 

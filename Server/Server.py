@@ -9,7 +9,7 @@ from flask_material import Material
 from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.Index import ServerSide as Index
-from Modules.NotificationModule.ServerSIde import NotificationModule
+from Modules.Notification.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
 from Modules import SourceChecker

@@ -1,60 +1,75 @@
 import json
-import sys
-from typing import Dict, Callable
 
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel, QApplication
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel, QMessageBox
 
 from Client.MyQt.Widgets.ProgressBar import ProgressBar
-from DataBase2 import Professor, Auth, UserType
-from Domain.Structures.DictWrapper import Structure
-from Domain.Structures.DictWrapper.Network.FirstLoad import ClientFirstLoadData
-from Modules.FirstLoad.ClientSide import ApplyFirstLoadData
+from Modules.Client import ClientWorker
+from Modules.FirstLoad.ClientSide import InitialDataLoader
 from Parser.JsonParser import JsonParser
 
 
-class RequestWidget(QWidget):
-    def __init__(self, professor: Professor or None, data: Dict or Structure, address: str,
-                 on_response: Callable[[Dict, ProgressBar], None],
-                 on_finish: Callable,
-                 on_error: Callable[[int], None],
-                 flags=None, text_button: str = 'Запустить', title: str = '%Запрос на сервер%', *args, **kwargs):
-        super().__init__(flags, *args, **kwargs)
+def nothing(*args, **kwargs):
+    pass
 
-        self.manager = QNetworkAccessManager(self)
-        self.manager.finished.connect(self._on_finish)
 
-        self.address = address
 
-        self.on_response = on_response
-        self.on_finish = on_finish
-        self.on_error = on_error
-
-        self.data = data
-
-        self.professor = professor
+class Requset_Ui:
+    @staticmethod
+    def setupUi(self: QWidget, **kwargs):
+        self.setWindowModality(Qt.ApplicationModal)
 
         layout = QVBoxLayout()
-
         self.title = QLabel()
-        self.title.setText(title)
+        self.title.setText(kwargs.get('title', '%Запрос на сервер%'))
+
         layout.addWidget(self.title)
 
         inner_layout = QHBoxLayout()
         self.button = QPushButton()
-        self.button.setText(text_button)
-        self.button.clicked.connect(self._run_once)
+        self.button.setText(kwargs.get('text_button', 'Запустить'))
+
         inner_layout.addWidget(self.button)
 
         self.progress_bar = ProgressBar(self)
+
         inner_layout.addWidget(self.progress_bar)
 
         layout.addLayout(inner_layout)
 
         self.setLayout(layout)
 
-    def _on_finish(self, reply: QNetworkReply):
+
+class RequestWidget(QWidget, Requset_Ui):
+    send = pyqtSignal(bool)
+    read_response = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
+    finish = pyqtSignal('PyQt_PyObject')
+    exit = pyqtSignal(bool)
+    error = pyqtSignal('PyQt_PyObject')
+
+    def on_error(self, error):
+        QMessageBox().critical(self, "Ошибка", str(error))
+
+    def __init__(self, worker: ClientWorker, parent=None, *args, **kwargs):
+        QWidget.__init__(self, parent)
+        Requset_Ui.setupUi(self, **kwargs)
+
+        self.manager = QNetworkAccessManager(self)
+
+        self.worker = worker
+
+        self.button.clicked.connect(self.send)
+        self.send.connect(self.on_run)
+        self.manager.finished.connect(self.on_response)
+        self.read_response.connect(self.worker.on_response)
+        self.worker.finish.connect(self.finish)
+        self.progress_bar.finish.connect(self.exit)
+        self.progress_bar.finish.connect(self.close)
+        self.error.connect(self.on_error)
+
+    @pyqtSlot(QNetworkReply, name='on_response')
+    def on_response(self, reply: QNetworkReply):
         self.progress_bar.set_part(10, 1, 'Чтение ответа')
         error_code = reply.error()
 
@@ -63,67 +78,41 @@ class RequestWidget(QWidget):
 
             json_ar = json.loads(str(bytes_string, 'utf-8'))
             print(json_ar)
-            if json_ar['status']=='OK':
+            if json_ar['status'] == 'OK':
                 self.progress_bar.increment()
-                self.on_response(json_ar['data'], self.progress_bar)
-                self.progress_bar.on_finish('Успешно синхронизированно', self.on_finish)
+                self.read_response.emit(json_ar['data'], self.progress_bar)
+                self.finish.emit(json_ar['data'])
+                self.progress_bar.on_finish('Успешно синхронизированно')
             else:
                 self.progress_bar.abord()
                 self.button.setEnabled(True)
-                self.on_error(str(error_code))
-                self.progress_bar.on_finish(f'Завершено с ошибкой {json_ar["message"]}', self.on_finish)
+                self.error.emit(str(error_code))
+                self.progress_bar.on_finish(f'Завершено с ошибкой {json_ar["message"]}')
         else:
             print(error_code)
             self.progress_bar.abord()
             self.button.setEnabled(True)
-            self.on_error(error_code)
-            self.progress_bar.on_finish(f'Завершено с ошибкой {error_code}', self.on_finish)
+            self.error.emit(error_code)
+            self.progress_bar.on_finish(f'Завершено с ошибкой {error_code}')
 
-    def _run_once(self):
+    @pyqtSlot(name='on_run')
+    def on_run(self, *args):
         self.progress_bar.set_part(25, 1, 'Отправка сообщения')
 
-        if self.professor is not None:
-            auth = Auth.get(self.professor.session, user_id=self.professor.id, user_type=UserType.PROFESSOR)
-            data = {
-                'user': {
-                    'login': auth.login,
-                    'password': auth.password},
-                'data': self.data
-            }
-        else:
-            data = {
-                'user': {
-                    'login': self.data.login,
-                    'password': self.data.password
-                }
-            }
-        self.request = QNetworkRequest(QUrl(self.address))
+        self.request = QNetworkRequest(QUrl(self.worker.address))
         self.request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
-        self.manager.post(self.request, bytearray(JsonParser.dump(data), encoding='utf8'))
+        self.manager.post(self.request, bytearray(JsonParser.dump(self.worker.data), encoding='utf8'))
         self.progress_bar.increment()
         self.button.setEnabled(False)
 
 
-def first_load(program, login, password, on_finish, on_error):
-    from Modules.FirstLoad import address
-
+def first_load(host, login, password, on_close):
     return RequestWidget(
-        professor=None,
-        data=ClientFirstLoadData(login=login, password=password),
-        address=program.host+address,
+        InitialDataLoader(
+            login=login,
+            password=password,
+            host=host),
         text_button="Загрузить данные",
-        title="Данные отсутствуют",
-        on_response=ApplyFirstLoadData(),
-        on_error=on_error,
-        on_finish=on_finish
+        title="загрузка данных",
+        on_close=on_close
     )
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    widget = RequestWidget(Auth.log_in('VAE', '123456').user, {'1': '2'}, 'http://127.0.0.1:5000/first_load',
-                           on_response=print, on_error=print)
-    widget.show()
-
-    sys.exit(app.exec_())

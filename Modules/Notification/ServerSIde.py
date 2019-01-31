@@ -7,9 +7,10 @@ from premailer import transform
 
 from DataBase2 import Auth, Administration, Parent, Lesson
 from Domain.Aggregation import GroupAggregation, DisciplineAggregator, WeekDaysAggregation
+from Domain.Structures.DictWrapper.Network.Notification import Reciever, NotificationResponse
 from Domain.functools.Format import format_name
 from Modules import Module
-from Modules.NotificationModule import address
+from Modules.Notification import address
 from Server import config, Response
 
 
@@ -91,19 +92,23 @@ class NotificationModule(Module):
 
         message = MessageMaker(auth.user)
 
+        failed_users = []
+        success_count = 0
+
         for receiver in sum([admins, parents], []):
             assert receiver is not None, f'receiver is None'
             assert receiver.email is not None, f'receiver {receiver} email is None'
-            print(receiver, receiver.email)
             try:
                 self.connection.sendmail(
                     to_addrs=receiver.email,
                     from_addr=config.email,
                     msg=message.to(receiver)
                 )
-                print(f'send to {receiver.email}')
+                success_count += 1
             except smtplib.SMTPRecipientsRefused:
-                pass
+                failed_users.append(
+                    Reciever(id=receiver.id, class_name=receiver)
+                )
             except smtplib.SMTPSenderRefused:
                 self.connection = self.connector()
 
@@ -112,5 +117,11 @@ class NotificationModule(Module):
                     from_addr=config.email,
                     msg=message.to(receiver)
                 )
+                success_count += 1
 
-        response.set_data({})
+        response.set_data(
+            NotificationResponse(
+                success_count=success_count,
+                wrong_emails=failed_users
+            )
+        )

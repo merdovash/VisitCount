@@ -5,6 +5,7 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QWidget, QMessageBox
 from sqlalchemy import inspect
 
+from Client.MyQt.Widgets.Network.SendNotifications import SendNotifications
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.Table.Contacts import AdministrationModel
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
@@ -13,17 +14,10 @@ from Client.MyQt.Window.interfaces import IDataBaseUser
 from DataBase2 import Administration, UserType, Parent, Student, NotificationParam
 from Domain.Action import NetAction
 from Domain.functools.Dict import format_view, validate_new_user
+from Domain.interface import Singleton
 
 
-class NotificationWindow(QWidget, Ui_NotificationWindow, IDataBaseUser):
-    _instance = None
-
-    @staticmethod
-    def instance(program, flags=None):
-        if NotificationWindow._instance is None:
-            NotificationWindow._instance = NotificationWindow(program, flags)
-        return NotificationWindow._instance
-
+class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUser):
     class Tabs(int):
         NEW_USER = 0
         ADMIN_TABLE = 1
@@ -31,7 +25,8 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IDataBaseUser):
 
     def __init__(self, program, flags=None, *args, **kwargs):
         IDataBaseUser.__init__(self, program.session)
-        super(QWidget, self).__init__(flags)
+        QWidget.__init__(self, flags)
+        Singleton.__init__(self)
         self.setupUi(self)
 
         self.program = program
@@ -52,22 +47,18 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IDataBaseUser):
 
         self.student.setItems(Student.of(self.professor))
 
-        program.window.synch_finished.connect(self.on_synch_finished)
+        self.save_btn.clicked.connect(self.save_action)
 
-        self.save_btn.clicked.connect(
-            self.save_action
-        )
+        self.notification_progress_window = None
 
-        self.run_btn.clicked.connect(lambda: NetAction.run_notification(
-            login=program.auth.login,
-            password=program.auth.password,
-            host=program.host,
-            on_finish=lambda: program.window.ok_message.emit('Успешно отправлено'),
-            on_error=program.window.error.emit
-        ))
+        def run_notification():
+            self.notification_progress_window = SendNotifications(
+                host=self.program.host,
+                professor=self.professor
+            )
+            self.notification_progress_window.show()
 
-        assert hasattr(self, 'child_window'), f'inheritance gone wrong'
-        assert hasattr(self, 'child_pool'), f'inheritance gone wrong'
+        self.run_btn.clicked.connect(run_notification)
 
     @pyqtSlot(name='save_action')
     def save_action(self):

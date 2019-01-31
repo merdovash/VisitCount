@@ -1,12 +1,11 @@
 import sys
 
 
-def get_argv(arg_name, next=False, default=None):
+def get_argv(arg_name, is_next=False, default=None):
     try:
         index = sys.argv.index(arg_name)
-        if next:
+        if is_next:
             return sys.argv[index+1]
-        else:
-            return sys.argv[index]
+        return sys.argv[index]
     except ValueError:
         return default

@@ -1,8 +1,8 @@
 from typing import Dict, List, Callable, Type
 
 from DataBase2 import _DBObject, _DBTrackedObject, StudentsGroups, Student, Group, Discipline, Professor, Auth, \
-    LessonsGroups, Lesson, Visitation, Administration, NotificationParam, Parent, StudentsParents
-from Domain.Structures.DictWrapper import HiddenStructure
+    LessonsGroups, Lesson, Visitation, Administration, NotificationParam, Parent, StudentsParents, _DBPerson
+from Domain.Structures.DictWrapper import HiddenStructure, Structure
 
 DBSlice = Dict[str, List[_DBObject or Dict]]
 
@@ -34,3 +34,16 @@ class TablesData(HiddenStructure):
 
     def __init__(self, data: DBSlice):
         self._data: DBSlice = data
+
+
+class BaseRequest(Structure):
+    user: Dict
+    data: Dict
+
+    def __init__(self, user: _DBPerson, data=None):
+        self.user = {
+            'login': user.auth.login,
+            'password': user.auth.password,
+            'user_type': user.auth.user_type
+        }
+        self.data = data

@@ -35,6 +35,7 @@ class ProgressBar(QWidget):
             else:
                 self.base += size
                 self.progress_bar.setValue(self.base)
+            QApplication.processEvents()
         else:
             raise ValueError('part is not over')
 
@@ -46,6 +47,7 @@ class ProgressBar(QWidget):
             self.progress_bar.setValue(int(self.base))
             if self.current_tick == self.current_part_size:
                 self.part = None
+            QApplication.processEvents()
         else:
             raise ValueError('part is not set')
 
@@ -58,7 +60,7 @@ class ProgressBar(QWidget):
         self.progress_bar.setValue(0)
         self.label.setText('Отмена')
 
-    def on_finish(self, msg, callback):
+    def on_finish(self, msg):
         self.layout().removeWidget(self.label)
         self.finish_label.setText(msg)
         self.layout().removeWidget(self.progress_bar)
@@ -67,4 +69,4 @@ class ProgressBar(QWidget):
         self.progress_bar.deleteLater()
         self.label.deleteLater()
         QApplication.processEvents()
-        self.finish_button.clicked.connect(callback)
+        self.finish.emit()

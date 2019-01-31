@@ -1,16 +1,15 @@
 from collections import defaultdict
-from typing import List
+from typing import List, Callable, Any
 
-from pandas import DataFrame, np
-from pandas.core.groupby import GroupBy
+from pandas import DataFrame
 
-from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline, LessonsGroups, Auth
+from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline, LessonsGroups
 from Domain.Data import names_of_groups
 from Domain.functools.Decorator import memoize
 from Domain.functools.Format import format_name
 
 
-class Column(object):
+class Column:
     group_name = 'Группа'
     student_name = 'ФИО'
     date = 'Дата'
@@ -21,7 +20,7 @@ class Column(object):
     student_count = 'Количество студентов'
 
 
-class Aggregator:
+class VisitationsRateByStudents:
     def __init__(self, lessons, groups=None):
         self.lessons = lessons
         self.groups = groups
@@ -36,31 +35,31 @@ class Aggregator:
         self._data = [lesson for lesson in self._data if func(lesson)]
         return self
 
-    def avg(self, group_by):
+    def avg(self, group_by: Callable[[Lesson], Any])->dict:
         temp = defaultdict(list)
 
-        students = {}
+        students_by_groups = {}
 
         for lesson in self._data:
             if lesson.completed:
-                if frozenset(lesson.groups) not in students:
-                    t = Student.of(lesson.groups)
+                if frozenset(lesson.groups) not in students_by_groups:
+                    students = Student.of(lesson.groups)
                     if self.groups is not None:
-                        t &= Student.of(self.groups)
+                        students &= Student.of(self.groups)
 
-                    students[frozenset(lesson.groups)] = t
+                    students_by_groups[frozenset(lesson.groups)] = students
 
                 temp[group_by(lesson)].append(
-                    (len(Visitation.of(lesson) & Visitation.of(students[frozenset(lesson.groups)])),
-                     len(students[frozenset(lesson.groups)])))
+                    (len(Visitation.of(lesson) & Visitation.of(students_by_groups[frozenset(lesson.groups)])),
+                     len(students_by_groups[frozenset(lesson.groups)])))
         res = {}
         for key in temp:
-            r = [0, 0]
-            for v in temp[key]:
-                r[0] += v[0]
-                r[1] += v[1]
+            acc = [0, 0]
+            for visit_info in temp[key]:
+                acc[0] += visit_info[0]
+                acc[1] += visit_info[1]
 
-            res[key] = r[0] / r[1] if r[1] != 0 else 0
+            res[key] = acc[0] / acc[1] if acc[1] != 0 else 0
 
         return res
 
@@ -96,9 +95,9 @@ class Lessons:
 
             visit_rates.append(row)
 
-        df = DataFrame(visit_rates,
+        data_frame = DataFrame(visit_rates,
                        columns=[Column.date, Column.type, Column.discipline, Column.visit_count, Column.student_count])
-        return df
+        return data_frame
 
 
 class GroupAggregation:
@@ -143,17 +142,17 @@ class GroupAggregation:
             else:
                 data[i] = [round(sum(map(lambda x: x[0], group_data)) / sum(map(lambda x: x[1], group_data)) * 100, 1)]
 
-        df = DataFrame(data, index=list(map(lambda group: names_of_groups(group), groups)), columns=['Посещения. %'])
+        data_frame = DataFrame(data, index=list(map(lambda group: names_of_groups(group), groups)), columns=['Посещения. %'])
 
         # итоговый процент посещений
         total = round(visits_count / total_count * 100, 2)
 
-        print(df)
+        print(data_frame)
 
         if html:
-            return total, df.to_html()
+            return total, data_frame.to_html()
         else:
-            return total, df
+            return total, data_frame
 
 
 class DisciplineAggregator:
@@ -177,35 +176,14 @@ class DisciplineAggregator:
                 disciplines[name]['Проведено занятий'] += 1
             disciplines[name]['Всего занятий'] += 1
 
-        df = DataFrame(disciplines).T
-        df['Посещения, %'] = round(df['visit'] / df['total'] * 100, 1)
+        data_frame = DataFrame(disciplines).T
+        data_frame['Посещения, %'] = round(data_frame['visit'] / data_frame['total'] * 100, 1)
 
-        df = df.drop(['visit', 'total'], axis=1)
+        data_frame = data_frame.drop(['visit', 'total'], axis=1)
 
-        df[Column.discipline] = df.index
+        data_frame[Column.discipline] = data_frame.index
 
-        return df[[Column.discipline, 'Посещения, %', 'Всего занятий', 'Проведено занятий']]
-
-
-class WeeksAggregation:
-    @staticmethod
-    @memoize
-    def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
-        assert isinstance(professor, Professor), f'object {professor} is not Professor'
-
-        df = Lessons.by_professor(professor, groups=groups, disciplines=disciplines)
-
-        df[Column.date] = df[Column.date].apply(lambda date: date.isocalendar()[1])
-        df[Column.date] = df[Column.date].apply(lambda date: 1 + date - df[Column.date].min())
-
-        grouped: GroupBy = df.groupby(Column.date)
-
-        grouped = grouped[Column.visit_count, Column.student_count].agg(np.sum)
-
-        df = DataFrame(np.round(grouped[Column.visit_count] / grouped[Column.student_count], 2) * 100,
-                       columns=[Column.visit_rate]).reset_index()
-
-        return df
+        return data_frame[[Column.discipline, 'Посещения, %', 'Всего занятий', 'Проведено занятий']]
 
 
 class WeekDaysAggregation:
@@ -249,13 +227,13 @@ class WeekDaysAggregation:
                 # completed lesson count
                 data[week_day][2] += 1
 
-        df = DataFrame(data).T
-        df[Column.visit_rate] = round(df[0].astype(float).divide(df[1].astype(float)) * 100)
-        df = df.rename(columns={2: 'Проведено занятий', 3: 'Всего занятий', 4: Column.date})
-        df = df.loc[:, [Column.date, 'Проведено занятий', Column.visit_rate, 'Всего занятий']]
-        df[Column.visit_rate] = df[Column.visit_rate].map(lambda x: 0 if x != x else x)
+        data_frame = DataFrame(data).T
+        data_frame[Column.visit_rate] = round(data_frame[0].astype(float).divide(data_frame[1].astype(float)) * 100)
+        data_frame = data_frame.rename(columns={2: 'Проведено занятий', 3: 'Всего занятий', 4: Column.date})
+        data_frame = data_frame.loc[:, [Column.date, 'Проведено занятий', Column.visit_rate, 'Всего занятий']]
+        data_frame[Column.visit_rate] = data_frame[Column.visit_rate].map(lambda x: 0 if x != x else x)
 
-        return df
+        return data_frame
 
 
 class StudentAggregator:
@@ -284,9 +262,9 @@ class StudentAggregator:
             else:
                 data[Column.visit_rate].append(round(visit_count / lesson_count * 100))
 
-        df = DataFrame(data)
+        data_frame = DataFrame(data)
 
-        return df
+        return data_frame
 
     @staticmethod
     def by_discipline(disc):
@@ -311,15 +289,3 @@ class StudentAggregator:
                 data[Column.visit_rate].append(0)
 
         return DataFrame(data)
-
-
-if __name__ == '__main__':
-    professor = Auth.log_in('VAE', '123456').user
-
-    agg = Aggregator(Lesson.of(professor))
-    groups = Group.of(professor)
-
-    print(agg.reset().filter(lambda x: set(x.groups) == set(groups[0])).avg(lambda x: x.week))
-    print(agg.reset().filter(lambda x: set(x.groups) == set(groups[1])).avg(lambda x: x.week))
-    print(agg.reset().filter(lambda x: set(x.groups) == set(groups[2])).avg(lambda x: x.date.weekday()))
-    # print(DataFrame(agg.reset().avg(lambda x: x.week), index=['Week']).T)
