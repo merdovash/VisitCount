@@ -98,3 +98,9 @@ def agree_to_number(word, number):
     if number not in [-1, 1]:
         word = word.make_agree_with_number(number)
     return word.word
+
+
+def case(word, case):
+    morph = pymorphy2.MorphAnalyzer()
+    word = morph.parse(word)[0]
+    return word.inflect(case).word

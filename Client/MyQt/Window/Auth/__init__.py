@@ -51,8 +51,6 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
             self.centralwidget.layout().addWidget(
                 first_load(self.program.host, login, password,
                            on_close=lambda: self.auth_success.emit(dict(login=login, password=password))))
-        except InvalidPasswordException as e:
-            self.ok_message.emit(str(e))
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         print("keypressEvent", a0.key(), QtCore.Qt.Key_Enter)

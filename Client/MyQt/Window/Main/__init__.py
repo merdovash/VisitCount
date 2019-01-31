@@ -13,20 +13,16 @@ from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar
 
 from Client.IProgram import IProgram
 from Client.MyQt.Dialogs.QOkMsg import QOkMsg
-from Client.MyQt.QAction.RegisterProfessorCard import RegisterProfessorCard
 from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.MyQt.Window.NotificationParam import NotificationWindow
+from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
 from DataBase2 import Professor, Lesson, Group, Discipline
-from Domain import Action
-from Domain.Action import NetAction
-from Domain.Data import valid_card
 from Domain.Date import BisitorDateTime
 from Domain.Structures import Data
-from Domain.functools.List import find
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
     ',')
@@ -53,6 +49,8 @@ class MainWindow(AbstractWindow):
     class represents main window in program. includes table, control elements, status info, professor data.
     """
 
+    log_out = pyqtSignal()
+
     def __init__(self, program: IProgram, professor: Professor):
         AbstractWindow.__init__(self)
 
@@ -77,6 +75,8 @@ class MainWindow(AbstractWindow):
         self.setAcceptDrops(True)
 
         self.setStatusBar(QStatusBar(self))
+
+        self.log_out.connect(lambda: self.program.change_user())
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
@@ -175,13 +175,18 @@ class MainWindow(AbstractWindow):
         file = self.menu_bar.addMenu("Файл")
 
         file_change_user = QAction("Сменить пользоватлея", self)
-        file_change_user.triggered.connect(lambda: self.program.change_user())
+        file_change_user.triggered.connect(self.log_out)
 
         file.addAction(file_change_user)
 
-        if self.program.professor is not None:
-            if not valid_card(self.program.professor):
-                file.addAction(RegisterProfessorCard(self.program, self))
+        if self.professor.card_id is None:
+            def register_card():
+                register_process = RegisterCardProcess(self.professor, self)
+                register_process.success.connect(lambda: register_professor_card.setVisible(False))
+
+            register_professor_card = QAction("Зарегистрировать карту", self)
+            register_professor_card.triggered.connect(register_card)
+            file.addAction(register_professor_card)
 
         file_exit = QAction("Выход", self)
         file_exit.triggered.connect(self.close)

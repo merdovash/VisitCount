@@ -2,22 +2,23 @@ from Domain.Exception import BisitorException
 
 
 class AuthenticationException(BisitorException):
-    pass
+    _title = "Ошибка аутентификации"
+    _mask = "{}"
+
+    def __init__(self, action='входа в систему'):
+        self._msg = action
 
 
 class InvalidLoginException(AuthenticationException):
-    def __init__(self, msg='no such login'):
-        super().__init__(f"Invalid login: {msg}")
+    _mask = "Во время {} вы неверно указали логин."
 
 
 class InvalidPasswordException(AuthenticationException):
-    def __init__(self, msg=None):
-        super().__init__(f'Invalid password {msg}')
+    _mask = "Во время {} вы неверно указали пароль."
 
 
 class InvalidUidException(AuthenticationException):
-    def __init__(self, msg=None):
-        super().__init__(f'Invalid uid token {msg}')
+    pass
 
 
 class UnothorizedError(AuthenticationException):
