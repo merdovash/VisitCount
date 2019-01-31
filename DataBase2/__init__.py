@@ -199,7 +199,7 @@ class _DBObject(IJSON):
     @classmethod
     def get_or_create(cls, session, **kwargs):
         instance = cls.get(session, **kwargs)
-        if instance:
+        if instance is not None:
             return instance
         else:
             params = dict((k, v) for k, v in kwargs.items() if not isinstance(v, ClauseElement))

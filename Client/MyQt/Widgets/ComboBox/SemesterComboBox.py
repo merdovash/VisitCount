@@ -14,7 +14,7 @@ class SemesterComboBox(MComboBox):
             return lesson.semester == semester
         return cond
 
-    def formater(self, semester) -> str:
+    def formatter(self, semester) -> str:
         return str(semester)
 
     def sorter(self, semester) -> Any:
@@ -37,7 +37,7 @@ class DisciplineComboBox(MComboBox):
     def extractor(self, lesson: Lesson) -> Any:
         return lesson.discipline
 
-    def formater(self, discipline: Discipline) -> str:
+    def formatter(self, discipline: Discipline) -> str:
         return discipline.name
 
     def sorter(self, discipline: Discipline) -> Any:
@@ -56,7 +56,7 @@ class GroupComboBox(MComboBox):
     def extractor(self, lesson: Lesson) -> Any:
         return frozenset(lesson.groups)
 
-    def formater(self, groups: List[Group]) -> str:
+    def formatter(self, groups: List[Group]) -> str:
         return names_of_groups(groups)
 
     def sorter(self, groups: List[Group]) -> Any:
@@ -75,7 +75,7 @@ class LessonComboBox(MComboBox):
     def extractor(self, lesson: Lesson) -> Any:
         return lesson
 
-    def formater(self, lesson: Lesson) -> str:
+    def formatter(self, lesson: Lesson) -> str:
         return lesson.date.strftime("%Y.%m.%d %H:%M")
 
     def sorter(self, lesson: Lesson) -> Any:

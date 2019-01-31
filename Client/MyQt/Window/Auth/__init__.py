@@ -5,8 +5,6 @@ from Client.IProgram import IProgram
 from Client.MyQt.Widgets.Network.Request import first_load
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
-from Client.Reader.Functor import OnRead
-from Client.Reader.Functor.AuthProfessor import AuthProfessorOnRead
 from DataBase2 import Auth
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException
 
@@ -26,11 +24,6 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
         self.auth_btn.clicked.connect(self.auth)
         self.auth_success.connect(self.on_auth_success)
         self.dialog = None
-
-        OnRead.prepare(program, self, program.session, window=self)
-
-        if program.reader() is not None:
-            self.program.reader().on_read(AuthProfessorOnRead())
 
     # signals
     auth_success = pyqtSignal('PyQt_PyObject')

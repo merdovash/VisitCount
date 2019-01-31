@@ -31,7 +31,7 @@ class MComboBox(QComboBox):
     def extractor(self, item)-> Any:
         raise NotImplementedError()
 
-    def formater(self, item)-> str:
+    def formatter(self, item)-> str:
         raise NotImplementedError()
 
     def sorter(self, item) -> Any:
@@ -39,7 +39,8 @@ class MComboBox(QComboBox):
 
     @pyqtSlot(int, name='resignal')
     def resignal(self):
-        self.current_changed.emit(list(filter(self.filter_cond(self.current()), self.lessons)), self.current())
+        if self.lessons is not None:
+            self.current_changed.emit(list(filter(self.filter_cond(self.current()), self.lessons)), self.current())
 
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='on_parent_change')
     def on_parent_change(self, lessons, parent_value):
@@ -67,7 +68,7 @@ class MComboBox(QComboBox):
             # print(i, value)
             self.items.append(value)
         else:
-            super().addItems([self.formater(i) for i in iterable])
+            super().addItems([self.formatter(i) for i in iterable])
 
     def current(self) -> T:
         return self.items[self.currentIndex()]

@@ -7,7 +7,7 @@ from Client.IProgram import IProgram
 from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox, DisciplineComboBox, GroupComboBox, \
     LessonComboBox
 from Client.MyQt.Widgets.TableView import VisitTableWidget
-from Client.Reader.Functor.NewVisit import MarkVisit
+from Client.Reader.Functor.NewVisit import MarkVisitProcess
 from DataBase2 import Professor, Student
 
 CurrentData = namedtuple('CurrentData', 'discipline groups lesson')
@@ -29,7 +29,7 @@ class Selector(QWidget):
 
     professor: Professor = None
 
-    visitMarker: MarkVisit = None
+    visitMarker: MarkVisitProcess = None
 
     def __init__(self, program: IProgram):
         super().__init__()
@@ -116,7 +116,7 @@ class Selector(QWidget):
 
         self.start_button.clicked.connect(self.user_start_lesson)
         self.lesson_started.connect(self.start_lesson)
-        self.lesson_started.connect(self.table.on_lesson_start)
+        self.lesson_started.connect(self.table.lesson_start)
 
         self.end_button.clicked.connect(self.user_stop_lesson)
         self.lesson_finished.connect(self.end_lesson)
@@ -126,7 +126,8 @@ class Selector(QWidget):
     def user_start_lesson(self, status):
         students = Student.of(self.group.current())
         lesson = self.lesson.current()
-        self.visit_marker = MarkVisit(students, lesson, error_callback=self.lesson_finished.emit)
+        self.visit_marker = MarkVisitProcess(students, lesson, error_callback=self.lesson_finished.emit)
+        self.visit_marker.new_visit.connect(self.table.new_visit)
         self.lesson_started.emit(lesson)
 
     @pyqtSlot(name='user_stop_lesson')

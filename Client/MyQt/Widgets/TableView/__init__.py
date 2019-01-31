@@ -4,16 +4,14 @@ from typing import List
 
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, QSize, QRect, QVariant, QPoint, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QResizeEvent, QCursor, QFont
-from PyQt5.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QStyleOptionViewItem, QHeaderView, QWidget, \
-    QAbstractItemView, QScrollArea, QMenu, QMessageBox
+from PyQt5.QtWidgets import QApplication, QTableView, QStyledItemDelegate, QHeaderView, QWidget, \
+    QMenu, QMessageBox
 from sqlalchemy import inspect
 
 from Client.MyQt.ColorScheme import Color
-from Client.MyQt.Dialogs.QOkMsg import QOkMsg
 from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
 from DataBase2 import Lesson, Auth, Student, Group, Visitation
 from Domain.Validation.Values import Validate
-from Domain.functools.Decorator import memoize
 from Domain.functools.Format import format_name
 
 
@@ -88,6 +86,29 @@ class VisitModel(QAbstractTableModel):
                 self.createIndex(self.rowCount() - 1, column),
                 [Qt.BackgroundColorRole | Qt.FontRole] * self.rowCount()
             )
+
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject', name='on_new_visit')
+    def on_new_visit(self, visit, student, lesson):
+        index = self.createIndex(self.students.index(student), self.lessons.index(lesson))
+        self.dataChanged.emit(
+            index,
+            index,
+            [Qt.DisplayRole | Qt.BackgroundColorRole | VisitModel.VisitRole]*9)
+
+        self.item_changed.emit(index.row(), index.column())
+
+    @pyqtSlot('PyQt_PyObject', name='on_lesson_start')
+    def on_lesson_start(self, lesson):
+        column = self.lessons.index(lesson)
+
+        self.dataChanged.emit(
+            self.createIndex(0, column),
+            self.createIndex(self.rowCount()-1, column),
+            [Qt.DisplayRole | VisitModel.LessonCompletedRole] * self.rowCount()
+        )
+
+        for row in range(self.rowCount()):
+            self.item_changed.emit(row, column)
 
     def data(self, index: QModelIndex, role=None):
         def item() -> int:
@@ -390,6 +411,10 @@ class VisitView(QTableView):
                 'Изменить карту',
                 lambda: RegisterCardProcess(student, self)
             )
+            menu.addAction(
+                'Удалить карту',
+                lambda: setattr(student, 'card_id', None)
+            )
         menu.popup(QCursor().pos())
 
     def horizontalHeaderMenuRequested(self, pos: QPoint):
@@ -416,6 +441,8 @@ class VisitView(QTableView):
 class VisitTableWidget(QWidget):
     set_current_lesson = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
     select_current_lesson = pyqtSignal('PyQt_PyObject')
+    new_visit = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject')
+    lesson_start = pyqtSignal('PyQt_PyObject')
 
     @pyqtSlot('PyQt_PyObject', name='on_lesson_start')
     def on_lesson_start(self, lesson):
@@ -456,6 +483,8 @@ class VisitTableWidget(QWidget):
                 f'{"не зарегистрирована" if x.card_id is None else x.card_id}')
         )
 
+        self.lesson_start.connect(self.on_lesson_start)
+
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
 
@@ -479,8 +508,10 @@ class VisitTableWidget(QWidget):
             ROW_HEIGHT * 2 + SCROLL_BAR_SIZE)
 
     def setData(self, lessons, groups):
-        students = sorted(Student.of(groups), key=lambda x:format_name(x))
+        students = sorted(Student.of(groups), key=lambda x: format_name(x))
         model = VisitModel(lessons, students)
+        self.new_visit.connect(model.on_new_visit)
+        self.lesson_start.connect(model.on_lesson_start)
         self.view.setModel(model)
 
         percent_vertical_model = PercentVerticalModel(lessons, students)
