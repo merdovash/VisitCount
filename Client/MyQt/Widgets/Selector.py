@@ -80,8 +80,7 @@ class Selector(QWidget):
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
 
-        selector_layout.addWidget(lesson_label, 1,
-                                  alignment=Qt.AlignCenter | Qt.AlignRight)
+        selector_layout.addWidget(lesson_label, 1, alignment=Qt.AlignCenter | Qt.AlignRight)
         selector_layout.addWidget(self.lesson, 2)
 
         self.start_button = QPushButton()

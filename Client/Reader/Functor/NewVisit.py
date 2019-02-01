@@ -42,6 +42,7 @@ class StudentSelector(QWidget):
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.label)
+        main_layout.addWidget(self.show_all_students)
         main_layout.addWidget(self.combo)
 
         button_layout = QHBoxLayout()
