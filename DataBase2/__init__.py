@@ -9,7 +9,7 @@ from datetime import datetime
 from threading import Lock
 from typing import List, Union, Dict, Any, Type, Set
 
-from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime
+from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
@@ -127,6 +127,14 @@ def UserSession(user, session=None):
     return s
 
 
+class ISession:
+    def commit(self):
+        ...
+
+    def query(self, table: Type['_DBObject']):
+        ...
+
+
 class _DBObject(IJSON):
     __table_args__ = {
         'mysql_engine': 'InnoDB',
@@ -226,6 +234,9 @@ class _DBObject(IJSON):
             filter(
                 lambda x: '_' != x.__name__[0],
                 set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in c.subclasses()])))
+
+    def session(self) -> ISession:
+        return inspect(self).session
 
 
 class _DBTrackedObject(_DBObject):
@@ -612,6 +623,9 @@ class Lesson(Base, _DBTrackedObject):
         if self._semester is None:
             self._semester = study_semester(self.date)
         return self._semester
+
+    def repr(self):
+        return f"занятие {self.date} по дисциплине {self.discipline.name}, преподаватель: {self.professor.full_name()}"
 
     @classmethod
     def of(cls, obj, intersect=False, with_deleted=False) -> List['Lesson']:

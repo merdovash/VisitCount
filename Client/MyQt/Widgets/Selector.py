@@ -119,7 +119,7 @@ class Selector(QWidget):
 
         self.end_button.clicked.connect(self.user_stop_lesson)
         self.lesson_finished.connect(self.end_lesson)
-        self.lesson_finished.connect(self.table.on_lesson_stop)
+        self.lesson_finished.connect(self.table.lesson_finish)
 
     @pyqtSlot(bool, name='user_start_lesson')
     def user_start_lesson(self, status):
