@@ -28,11 +28,9 @@ from Parser.JsonParser import JsonParser
 
 try:
     root = sys.modules['__main__'].__file__
-    print(sys.modules['__main__'].__file__)
 except AttributeError:
     root = "run_client.py"
 
-print(os.path.basename(root))
 root = os.path.basename(root)
 
 datetime_format = "%Y-%m-%d %H:%M:%S"
@@ -797,7 +795,6 @@ class Professor(_DBPerson, Base):
         if Professor in classes:
             classes.remove(Professor)
 
-        print(classes)
         for class_ in classes:
             data: List[_DBTrackedObject] = DBList(class_.of(self, with_deleted=True), flat=True, unique=True)
 
@@ -1001,23 +998,3 @@ else:
         p = Auth.log_in_by_uid(-1)
     except:
         Base.metadata.create_all(engine)
-
-# events
-
-# for class_ in _DBTrackedObject.__subclasses__():
-#     if Base in class_.__bases__:
-#         for atr in dir(class_):
-#             if atr != 'id' and atr[0] != '_':
-#                 if isinstance(getattr(class_, atr), InstrumentedAttribute):
-#                     print(eval(f"{class_.__name__}.{atr}"))
-#
-#
-#                     @event.listens_for(eval(f"{class_.__name__}.{atr}"), 'set')
-#                     def receive_set(target, value, oldvalue, initiator):
-#                         print('fdsgdghfh')
-#                         target._updated = datetime.now()
-
-if __name__ == '__main__':
-    d = Visitation.get(Session(), id=3161)
-
-    print(d._is_deleted)

@@ -91,9 +91,7 @@ class QAnalysisDialog(QWidget):
 
     def draw(self):
         ignored = [self.option_map[key] for key in self.option_map.keys() if not key.isChecked()]
-        print(ignored)
         data = self.data.avg(ignored=ignored)
-        print(data)
         bars = sorted(data.keys())
         heights = [int(data[key] * 100) for key in bars]
 

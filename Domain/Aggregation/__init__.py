@@ -147,8 +147,6 @@ class GroupAggregation:
         # итоговый процент посещений
         total = round(visits_count / total_count * 100, 2)
 
-        print(data_frame)
-
         if html:
             return total, data_frame.to_html()
         else:

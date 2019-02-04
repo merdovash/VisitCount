@@ -84,7 +84,6 @@ class ExcelVisitationLoader:
     def _get_lesson_header(self, sheet: Sheet, group: Group) -> Dict[int, lesson]:
         lessons = {}
         real_lessons = sorted(Lesson.of(group), key=lambda x: x.date)
-        print(list(map(lambda x: x.date, real_lessons)))
 
         year = datetime.now().year
 
@@ -205,7 +204,6 @@ class ExcelVisitationLoader:
                     new_card_id=st.new_card_id,
                     professor_id=self.program.professor.id
                 )
-                print(f'new card_id {st.real_student}, {st.new_card_id}')
             except UnnecessaryActionException:
                 pass
 
@@ -224,11 +222,9 @@ class ExcelVisitationLoader:
 
     def progress_updater_factory(self, progress_bar):
         def nothing(value):
-            print('nothing')
             pass
 
         def main(value):
-            print('set', value)
             progress_bar.setValue(value)
 
         if progress_bar is None:

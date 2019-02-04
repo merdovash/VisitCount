@@ -9,10 +9,9 @@ from typing import List, Callable
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QDropEvent
-from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar
+from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar, QMessageBox
 
 from Client.IProgram import IProgram
-from Client.MyQt.Dialogs.QOkMsg import QOkMsg
 from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Window import AbstractWindow
@@ -57,9 +56,6 @@ class MainWindow(AbstractWindow):
         self.program: IProgram = program
 
         self.professor = professor
-        if str(professor.id) not in program.win_config:
-            program.win_config.new_user(professor.id)
-            program.win_config.set_professor_id(professor.id)
 
         self.central_widget = MainWindowWidget(
             program=program,
@@ -92,7 +88,6 @@ class MainWindow(AbstractWindow):
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
-        print(event)
         if event.mimeData().hasUrls:
             event.setDropAction(Qt.CopyAction)
             event.accept()
@@ -104,7 +99,6 @@ class MainWindow(AbstractWindow):
                         program=self.program
                     )
                 )
-                print('drop dialog')
             except Exception as e:
                 self.error.emit(str(e))
         else:
@@ -257,7 +251,7 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
     @pyqtSlot('PyQt_PyObject', name='on_ok_message')
     def on_ok_message(self, text):
-        QOkMsg(text).exec_()
+        QMessageBox().information(self, "!", text)
 
     def show_message(self, text, is_red):
         self.info_label.setText(text)
@@ -265,12 +259,3 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
     def switch_show_table_cross(self):
         self.table.switch_show_table_cross()
-
-
-if __name__ == '__main__':
-    def d(a, b, c):
-        print(a + b + c)
-
-
-    d(4, 5, 6)
-    d(b=4, c=7, a=3)

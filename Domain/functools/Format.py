@@ -108,6 +108,6 @@ def case(word, case):
 
 def agree_to_gender(word, to):
     morph = pymorphy2.MorphAnalyzer()
-    to = list(filter(lambda x:x.tag.case == 'nomn', morph.parse(to)))[0]
+    to = list(filter(lambda x: x.tag.case == 'nomn', morph.parse(to)))[0]
     word = morph.parse(word)[0]
     return word.inflect({to.tag.gender}).word

@@ -133,8 +133,6 @@ class ContactTableComboItem(QComboBox):
 
     def on_update(self, *args):
         if int(self.value.data) != self.currentIndex():
-            print("notification status changed")
-            print()
             self.value.data = bool(self.currentIndex())
 
 
@@ -162,9 +160,7 @@ class AdministrationModel(QAbstractTableModel):
 
     def setData(self, index:QModelIndex, value, role=None):
         if index.column() in range(3,8):
-            print(value, role)
             if role == Qt.CheckStateRole:
-                print('fdsfds')
                 self.set_value(index, not self.get_value(index))
                 return True
         return False

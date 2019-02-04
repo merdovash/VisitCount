@@ -38,8 +38,6 @@ class MessageMaker:
 
         self.week_day_table = WeekDaysAggregation.by_professor(self.user).to_html()
 
-        print(self.to_sender_name)
-
     def to(self, receiver):
         html_text = transform(
             render_template(
@@ -87,8 +85,6 @@ class NotificationModule(Module):
             self.connection = self.connector()
         admins = Administration.active_of(auth.user)
         parents = Parent.of(auth.user)
-
-        print(admins, Administration.of(auth.user))
 
         message = MessageMaker(auth.user)
 

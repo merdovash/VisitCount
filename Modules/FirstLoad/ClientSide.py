@@ -26,7 +26,6 @@ class InitialDataLoader(ClientWorker):
 
         session = Session()
         received_data = ServerFirstLoadData(**received_data)
-        print(received_data.data['Lesson'])
 
         TOTAL_LENGTH = progress_bar.last()
         progress_bar.set_part(TOTAL_LENGTH, len(received_data.data), "Загрузка данных")
@@ -52,7 +51,6 @@ class ApplyFirstLoadData:
 
         session = Session()
         received_data = ServerFirstLoadData(**received_data)
-        print(received_data.data['Lesson'])
 
         TOTAL_LENGTH = progress_bar.last()
         progress_bar.set_part(TOTAL_LENGTH, len(received_data.data), "Загрузка данных")

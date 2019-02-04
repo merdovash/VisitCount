@@ -34,7 +34,6 @@ class ServerConnection(Thread):
         self.on_response = kwargs.get('on_response', self.on_response)
 
     def _send(self, data: dict):
-        print('sending ', self.url)
         try:
             client = requests.session()
             client.get(f"{self.host}/cabinet")

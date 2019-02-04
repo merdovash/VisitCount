@@ -46,6 +46,5 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
                            on_close=lambda: self.auth_success.emit(dict(login=login, password=password))))
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
-        print("keypressEvent", a0.key(), QtCore.Qt.Key_Enter)
         if a0.key() + 1 == QtCore.Qt.Key_Enter:
             self.auth()

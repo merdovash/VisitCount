@@ -4,8 +4,6 @@ This module contains class wrapper of all global variables
 import os
 from pathlib import PurePath
 
-from Client.Configuartion import WindowConfig
-from Client.Configuartion.WindowConfig import Config
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main import MainWindow
@@ -21,8 +19,7 @@ class MyProgram(IProgram):
     Wrapper of all global variables
     """
 
-    def __init__(self, widget: AbstractWindow = None,
-                 win_config: Config = WindowConfig.load(), test=False,
+    def __init__(self, widget: AbstractWindow = None, test=False,
                  css=True, host='http://bisitor.itut.ru'):
         self._state = {'marking_visits': False,
                        'host': 'http://bisitor.itut.ru',
@@ -49,8 +46,6 @@ class MyProgram(IProgram):
             self.window = AuthWindow(self, css=self.css)
         else:
             self.window: AbstractWindow = widget
-
-        self.win_config: WindowConfig = win_config
 
         self.window.show()
 
@@ -85,16 +80,13 @@ class MyProgram(IProgram):
         """
         self.auth = Auth.log_in(**auth)
         self.professor = self.auth.user
-        self.win_config.set_professor_id(self.auth.user.id)
         self.set_window(MainWindow(program=self, professor=self.professor))
-        print("load completed")
 
     def change_user(self, *args):
         """
         Log out from MainWindow and shows AuthenticationWindow
         """
         from Client.MyQt.Window.Auth import AuthWindow
-        self.win_config.log_out()
         self.set_window(AuthWindow(self))
 
     def __setitem__(self, key, value):

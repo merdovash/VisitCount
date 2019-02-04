@@ -110,7 +110,6 @@ class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUse
             input_.clear()
 
     def on_change_tab(self, index):
-        print('hello')
         if index == NotificationWindow.Tabs.ADMIN_TABLE:
             self.show_admin_table()
         elif index == NotificationWindow.Tabs.PARENT_TABLE:
@@ -125,8 +124,6 @@ class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUse
         students = Student.of(self.professor)
         lists_of_parents = map(lambda student: student.parents, students)
         parents: List[Parent] = chain.from_iterable(lists_of_parents)
-
-        print(parents)
 
         for parent in parents:
             self.tableWidget_2.add_row(parent)

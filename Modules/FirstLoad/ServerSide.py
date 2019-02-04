@@ -10,7 +10,6 @@ class FirstLoadModule(Module):
         super().__init__(app, request, address)
 
     def post(self, data, response, auth, **kwargs):
-        print('first_load', auth)
         if auth.user_type == 1:
             response.set_data(
                 self.first_load_data(auth)
@@ -68,5 +67,4 @@ class FirstLoadModule(Module):
                                 Administration=Administration.of(professor),
                                 NotificationParam=NotificationParam.of(professor),
                                 Parent=Parent.of(professor))
-        print(r.data['Lesson'])
         return r

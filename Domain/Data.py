@@ -62,7 +62,6 @@ def lessons_of(professor, groups=None, discipline=None, semester=None):
     if discipline is not None:
         total = [item for item in total if item.discipline == discipline]
     if groups is not None:
-        print([item for item in total if set(item.groups) == set(groups)])
         total = [item for item in total if set(item.groups) == set(groups)]
     if semester is not None:
         total = [item for item in total if item.semester == semester]
