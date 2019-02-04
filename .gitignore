@@ -10,3 +10,4 @@ Test/build/exe.win-amd64-3.6/lib/email/architecture.rst
 db.db
 db.db
 db.db
+.idea/*
