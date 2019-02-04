@@ -1,9 +1,0 @@
-
-            DELETE FROM updates 
-            WHERE updates.id IN ()
-
-            DELETE FROM updates 
-            WHERE updates.id IN ()
-
-            DELETE FROM updates 
-            WHERE updates.id IN (5, 6)

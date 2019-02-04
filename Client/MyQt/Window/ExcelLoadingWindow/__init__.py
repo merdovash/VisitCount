@@ -3,7 +3,7 @@ from typing import List, Dict
 from PyQt5.QtCore import QUrl, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushButton
 
-from Domain.ExcelLoader.ExcelTableReader import Reader
+from Domain.Loader.VisitationLoader import Reader
 
 
 class ExcelLoadingWidget(QWidget):
