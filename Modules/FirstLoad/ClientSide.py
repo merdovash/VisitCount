@@ -1,48 +1,68 @@
 from datetime import datetime
-from pydoc import locate
+from typing import Type, Dict
 
-from Client.Requests.ClientConnection import ServerConnection
-from DataBase2 import Session
-from Domain.Action.SynchAction import table_order
+from DataBase2 import Session, _DBObject, Auth, Professor
+from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData, ClientFirstLoadData
+from Domain.Validation.Dict import Map
+from Modules.Client import ClientWorker
 from Modules.FirstLoad import address
 
 
-class FirstLoad(ServerConnection):
-    class AuthType(int):
-        ByLogin = 0
-        ByCard = 1
+class InitialDataLoader(ClientWorker):
+    def __init__(self, login, password, host):
+        super().__init__()
+        self.data = {
+            'user': {
+                'login': login,
+                'password': password
+            },
+            'data': ClientFirstLoadData(login=login, password=password)}
+        self.address = host + address
 
-    def __init__(self, host, login, password, **kwargs):
-        super().__init__(login, password, host + address, **kwargs)
-
-    def _run(self):
-        self._send({})
-
-    def on_response(self, data):
+    def on_response(self, received_data: Dict, progress_bar):
+        def create_row(item_data: Dict, class_: Type[_DBObject]):
+            class_.new(session, **item_data)
+            progress_bar.increment()
 
         session = Session()
-        for class_name in table_order:
-            if class_name in data.keys():
-                mapper = locate(f'DataBase2.{class_name}')
-                mappings = data[class_name]
-                print(class_name, mapper)
+        received_data = ServerFirstLoadData(**received_data)
 
-                if class_name == 'Lesson':
-                    for i, item in enumerate(mappings):
-                        mappings[i]['date'] = datetime.strptime(item['date'], "%Y-%m-%dT%H:%M:%S")
-                if class_name == 'NotificationParam':
-                    for i, item in enumerate(mappings):
-                        mappings[i]['active'] = eval(mappings[i]['active'])
+        TOTAL_LENGTH = progress_bar.last()
+        progress_bar.set_part(TOTAL_LENGTH, len(received_data.data), "Загрузка данных")
 
-                session.bulk_insert_mappings(mapper, mappings)
+        received_data.data.foreach(create_row)
 
-        session.flush()
+        Auth.new(session, **received_data.auth)
+        professor = Professor.new(session, **Map.item_type(received_data.professor, Professor))
+        professor._last_update_in = datetime.now()
+        professor._last_update_out = datetime.now()
+
         session.commit()
 
-        session.expire_all()
-        session.close()
 
-        self.on_finish(dict(login=self.login, password=self.password))
+class ApplyFirstLoadData:
+    def __init__(self):
+        pass
+
+    def __call__(self, received_data, progress_bar):
+        def create_row(item_data: Dict, class_: Type[_DBObject]):
+            class_.new(session, **item_data)
+            progress_bar.increment()
+
+        session = Session()
+        received_data = ServerFirstLoadData(**received_data)
+
+        TOTAL_LENGTH = progress_bar.last()
+        progress_bar.set_part(TOTAL_LENGTH, len(received_data.data), "Загрузка данных")
+
+        received_data.data.foreach(create_row)
+
+        Auth.new(session, **received_data.auth)
+        professor = Professor.new(session, **Map.item_type(received_data.professor, Professor))
+        professor._last_update_in = datetime.now()
+        professor._last_update_out = datetime.now()
+
+        session.commit()
 
 # if __name__ == "__main__":
 #     f = FirstLoad(card_id="61157", password="123456")

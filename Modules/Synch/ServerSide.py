@@ -1,34 +1,107 @@
-from DataBase2 import Auth, UpdateType, Discipline, StudentsGroups, Student, Group, Professor, Visitation, Lesson, \
-    Parent, NotificationParam, Administration
-from Domain.Action.SynchAction import add_new_rows, sync_rows, delete_rows
-from Domain.functools.Dict import fix_keys
+from collections import defaultdict
+from typing import Dict, Type
+
+from DataBase2 import Auth, Professor, _DBTrackedObject, Administration
+from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes, ServerUpdateData
 from Modules import Module
 from Modules.Synch import address
 from Server.Response import Response
 
 
-class Sycnh(Module):
-    table_order = list(map(
-        lambda x: type(x).__name__,
-        [Discipline(), Student(), StudentsGroups(), Group(), Professor(), Lesson(), Visitation(), Parent(),
-         Administration(), NotificationParam()]))
-
+class SynchModule(Module):
     def __init__(self, app, request):
         super().__init__(app, request, address)
-        print(self.table_order)
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
-        print('raw', data)
-        updates_dict = fix_keys(data)
-        print(updates_dict)
-        with self.session.no_autoflush:
-            new_id_map = add_new_rows(updates_dict[UpdateType.NEW], self.session, auth.user.id)
-            sync_rows(updates_dict[UpdateType.UPDATE], self.session, auth.user.id)
-            delete_rows(updates_dict[UpdateType.DELETE], self.session, auth.user.id)
+        """
+        Находит все обновления для преподавателя
 
-        self.session.commit()
-        self.session.flush()
 
-        print('map', new_id_map)
+        :param data:
+        :param response:
+        :param auth:
+        :param kwargs:
+        :return:
+        """
 
-        response.set_data(new_id_map)
+        def apply_new_item(item_data: Dict, class_: Type[_DBTrackedObject]):
+            """
+            Создает новый объект класса class_ на основании данных item_data
+
+            :param item_data: словарь {%название_поля% : %значение_поля%,  ...}
+            :param class_: класс мапппер orm sqlalchemy
+            """
+            changes = {'from_id': item_data.pop('id')}
+            fields = {key: class_.column_type(key)(value) for key, value in item_data.items() if
+                      key[0] != '_'}
+
+            item = class_.get(session, **fields)
+            if item is None:
+                item = class_.new(session=session, **item_data)
+
+            changes['to_id'] = item
+            print(item)
+
+            changed[class_.__name__].append(changes)
+
+            session.flush()
+
+        def apply_update(item_data: Dict, class_: Type[_DBTrackedObject]):
+            """
+            Обновляет данные эленты класса class_ на основании данных item_data
+
+            :param item_data: словарь {%название_поля% : %значение_поля%,  ...}
+            :param class_: класс мапппер orm sqlalchemy
+            """
+            item: _DBTrackedObject = class_.get(session, id=item_data['id'])
+            if not item._updated or item._updated < item_data['_updated']:
+                for key in item_data.keys():
+                    current_value = getattr(item, key)
+                    received_value = item_data[key]
+                    if current_value != received_value:
+                        setattr(item, key, item_data[key])
+                    setattr(item, '_updated', item_data['_updated'])
+                session.flush()
+
+        def delete_item(item_data, class_: Type[_DBTrackedObject]):
+            """
+            Удаляет элент класса class_ на основании данных item_data
+
+            :param item_data: словарь {%название_поля% : %значение_поля%,  ...}
+            :param class_: класс мапппер orm sqlalchemy
+            """
+            item: _DBTrackedObject = class_.get(session, id=item_data['id'])
+            item.delete()
+            session.flush()
+
+        professor: Professor = auth.user
+        session = professor.session
+
+        received_updates = ClientUpdateData(**data)
+        server_updates = Changes(**professor.updates(last_in=received_updates.last_update_in))
+
+        # сохраняем новые записи
+        changed = defaultdict(list)
+        received_updates.updates.created.foreach(apply_new_item)
+        session.commit()
+        changed = {
+            key: [
+                {'from_id': i['from_id'], 'to_id': i['to_id'].id}
+                for i in item
+                if int(i['from_id']) != int(i['to_id'].id)
+            ]
+            for key, item in changed.items()
+        }
+
+        print(session.query(Administration).all())
+
+        # применяем изменения записей
+        received_updates.updates.updated.foreach(apply_update)
+        session.commit()
+
+        # удаляем записи
+        received_updates.updates.deleted.foreach(delete_item)
+        session.commit()
+
+        # формируем ответ клиенту
+        response.set_data(ServerUpdateData(changed_id=changed, updates=server_updates))

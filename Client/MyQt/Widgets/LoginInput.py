@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 
 
-class LoginInput(QtWidgets.QLineEdit):
+class QLoginInput(QtWidgets.QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.innerText = ""
@@ -14,8 +14,8 @@ class LoginInput(QtWidgets.QLineEdit):
 
     def set_image_text(self, value: str, image: str):
         super().setText(image)
-        self.innerText = str(int(value))
-        self.image=True
+        self.innerText = value
+        self.image = True
 
     def text(self) -> str:
         if self.image:
@@ -25,7 +25,7 @@ class LoginInput(QtWidgets.QLineEdit):
 
     def login(self):
         if self.image:
-            return None
+            return self.innerText
         else:
             return super().text()
 

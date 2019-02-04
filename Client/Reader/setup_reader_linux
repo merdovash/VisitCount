@@ -1,0 +1,6 @@
+#! /bin/bash
+#
+sudo modprobe ftdi_sio
+sudo echo 0403 1234 > /sys/bus/usb-serial/drivers/ftdi_sio/new_id
+sudo chown vlad /dev/ttyUSB0
+stty -F /dev/ttyUSB0 cs8 cstopb -ixon raw speed 9600

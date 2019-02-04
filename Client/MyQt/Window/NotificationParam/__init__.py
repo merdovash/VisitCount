@@ -2,35 +2,31 @@ from itertools import chain
 from typing import List
 
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QMessageBox
 from sqlalchemy import inspect
 
+from Client.MyQt.Widgets.Network.SendNotifications import SendNotifications
+from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
+from Client.MyQt.Widgets.Table.Contacts import AdministrationModel
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
-from Client.MyQt.Window.interfaces import IChildWindow, IParentWindow, IDataBaseUser
-from DataBase2 import Administration, UserType, Parent, Student
-from Domain import Action
+from Client.MyQt.Window.UpdatesInfoWindow import UpdatesInfoWidget
+from Client.MyQt.Window.interfaces import IDataBaseUser
+from DataBase2 import Administration, UserType, Parent, Student, NotificationParam
 from Domain.Action import NetAction
 from Domain.functools.Dict import format_view, validate_new_user
+from Domain.interface import Singleton
 
 
-class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWindow, IDataBaseUser):
-    _instance = None
-
-    @staticmethod
-    def instance(program, flags=None):
-        if NotificationWindow._instance is None:
-            NotificationWindow._instance = NotificationWindow(program, flags)
-        return NotificationWindow._instance
-
+class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUser):
     class Tabs(int):
         NEW_USER = 0
         ADMIN_TABLE = 1
         PARENT_TABLE = 2
 
     def __init__(self, program, flags=None, *args, **kwargs):
-        IParentWindow.__init__(self)
         IDataBaseUser.__init__(self, program.session)
-        super(QWidget, self).__init__(flags)
+        QWidget.__init__(self, flags)
+        Singleton.__init__(self)
         self.setupUi(self)
 
         self.program = program
@@ -51,32 +47,35 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
 
         self.student.setItems(Student.of(self.professor))
 
-        self.tableWidget.set_professor(self.professor)
+        self.save_btn.clicked.connect(self.save_action)
 
-        program.window.synch_finished.connect(self.on_synch_finished)
+        self.notification_progress_window = None
 
-        self.save_btn.clicked.connect(
-            lambda: NetAction.send_updates(
-                login=program.auth.login,
-                password=program.auth.password,
-                host=program.host,
-                professor_id=self.professor.id,
-                session=program.session,
-                on_error=program.window.error.emit,
-                on_finish=program.window.synch_finished.emit
+        def run_notification():
+            self.notification_progress_window = SendNotifications(
+                host=self.program.host,
+                professor=self.professor
             )
+            self.notification_progress_window.show()
+
+        self.run_btn.clicked.connect(run_notification)
+
+    @pyqtSlot(name='save_action')
+    def save_action(self):
+        self.professor.session.commit()
+
+        reply = QMessageBox().question(
+            self,
+            "Сохранено",
+            "Данные успешно сохранены.\nХотите отправить изменения на сервер?",
+            QMessageBox.Yes | QMessageBox.No
         )
 
-        self.run_btn.clicked.connect(lambda: NetAction.run_notification(
-            login=program.auth.login,
-            password=program.auth.password,
-            host=program.host,
-            on_finish=lambda: program.window.ok_message.emit('Успешно отправлено'),
-            on_error=program.window.error.emit
-        ))
+        if reply == QMessageBox.Yes:
+            SendUpdatesWidget(self.program).show()
 
-        assert hasattr(self, 'child_window'), f'inheritance gone wrong'
-        assert hasattr(self, 'child_pool'), f'inheritance gone wrong'
+        if self.tabWidget.currentIndex() == self.Tabs.ADMIN_TABLE:
+            self.administration_table_view.setModel(AdministrationModel(NotificationParam.of(self.professor)))
 
     def on_add_user(self):
         if self.new_user_type_combo_box.currentIndex() == UserType.ADMIN:
@@ -87,8 +86,14 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
 
             if validate_new_user(admin_data):
                 admin_data = format_view(admin_data)
-                Action.create_administration(performer_id=self.professor.id,
-                                             **admin_data)
+
+                admin = Administration(**admin_data)
+                np = NotificationParam()
+                np.admin = admin
+                np.professor = self.professor
+
+                self.professor.session.add_all([admin, np])
+                self.professor.session.commit()
 
                 self.program.window.ok_message.emit('Контакт добавлен')
                 self.tabWidget.setCurrentIndex(NotificationWindow.Tabs.ADMIN_TABLE)
@@ -105,20 +110,13 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
             input_.clear()
 
     def on_change_tab(self, index):
-        print('hello')
         if index == NotificationWindow.Tabs.ADMIN_TABLE:
             self.show_admin_table()
         elif index == NotificationWindow.Tabs.PARENT_TABLE:
             self.show_parent_table()
 
     def show_admin_table(self):
-        self.tableWidget.clear()
-
-        admins: List[Administration] = Administration.of(self.professor)
-
-        for admin in admins:
-            assert admin is not None, f'admin is None, in list {admins}'
-            self.tableWidget.add_row(admin)
+        self.administration_table_view.setModel(AdministrationModel(NotificationParam.of(self.professor)))
 
     def show_parent_table(self):
         self.tableWidget_2.clear()
@@ -126,8 +124,6 @@ class NotificationWindow(QWidget, Ui_NotificationWindow, IParentWindow, IChildWi
         students = Student.of(self.professor)
         lists_of_parents = map(lambda student: student.parents, students)
         parents: List[Parent] = chain.from_iterable(lists_of_parents)
-
-        print(parents)
 
         for parent in parents:
             self.tableWidget_2.add_row(parent)

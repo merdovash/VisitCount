@@ -1,40 +1,44 @@
+import traceback
+
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
-from Client.MyQt.Dialogs.ErrorMessage import ErrorMessage
-from Client.MyQt.Dialogs.OkMessage import OkMessage
-from Client.MyQt.Window.interfaces import IParentWindow
+from Domain.Exception import BisitorException
 
 
-class AbstractWindow(QMainWindow, IParentWindow):
-    error = pyqtSignal(str)
+class AbstractWindow(QMainWindow):
+    error = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject')
     message = pyqtSignal(str, bool)
     ok_message = pyqtSignal(str)
-    synch_finished = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(QMainWindow, self).__init__()
-        super(IParentWindow, self).__init__()
 
         self.error.connect(self.on_error)
         self.message.connect(self.on_show_message)
         self.ok_message.connect(self.on_ok_message)
-        self.synch_finished.connect(self.on_finish)
 
     def change_widget(self, widget):
         self.setCentralWidget(widget)
 
-    @pyqtSlot(str)
-    def on_error(self, msg):
-        self.setDialog(ErrorMessage(self, msg=msg))
+    @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject', name='on_error')
+    def on_error(self, exception_type, exception, tb):
+        if isinstance(exception, BisitorException):
+                exception.show(self)
+        else:
+            QMessageBox().critical(self,
+                                   "Непредвиденная ошибка",
+                                   "Exception type: {},\n"
+                                   "value: {},\n"
+                                   "tb: {}".format(exception_type, exception, traceback.format_tb(tb)))
 
     @pyqtSlot(str, bool)
     def on_show_message(self, text, is_red):
-        self.centralWidget().show_message(text, is_red)
+        self.central_widget.show_message(text, is_red)
 
     @pyqtSlot(str, name='on_ok_message')
     def on_ok_message(self, text):
-        self.setDialog(OkMessage(text))
+        QMessageBox().information(self, "Сообщение", text)
 
     @pyqtSlot(name='on_finish')
     def on_finish(self):

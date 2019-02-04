@@ -12,6 +12,4 @@ class ExcelValidation:
 
         groups = group_names.split(',')
 
-        print(groups)
-
         return groups

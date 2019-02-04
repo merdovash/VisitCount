@@ -1,1 +1,1 @@
-address = '/synch_db'
+address = '/synch'

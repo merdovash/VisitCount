@@ -1,6 +1,6 @@
 from collections import namedtuple
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 import xlrd
 from PyQt5.QtCore import QUrl
@@ -10,12 +10,28 @@ from xlrd.sheet import Sheet
 from Client.IProgram import IProgram
 from DataBase2 import Group, Student, Lesson
 from Domain import Action
+from Domain.Exception.Action import UnnecessaryActionException
 from Domain.Validation import ExcelValidation
-from Domain.functools.Function import memoize
+from Domain.functools.Decorator import memoize
 from Domain.functools.List import find
 
-student = namedtuple('student', 'real_student visitations')
+student = namedtuple('student', 'real_student visitations new_card_id')
 lesson = namedtuple('lesson', 'date col real_lesson')
+visitation = namedtuple('visitation', 'col status')
+
+
+def try_except(handler):
+    def decorator(func):
+        def input(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except:
+                handler()
+                raise
+
+        return input
+
+    return decorator
 
 
 class ExcelVisitationLoader:
@@ -30,10 +46,13 @@ class ExcelVisitationLoader:
 
     students_row = 5
 
-    def __init__(self, program: IProgram, test=False):
+    def __init__(self, program: IProgram, window=None, test=False):
         assert isinstance(program, IProgram), TypeError()
         self.program = program
         self.session = program.session
+
+        if window is not None:
+            self.read = try_except(window.exit.emit)(self.read)
 
         if test:
             self.test()
@@ -62,10 +81,9 @@ class ExcelVisitationLoader:
 
         return self.session.query(Group).filter(Group.name.in_(group_name)).all()
 
-    def _get_lesson_header(self, sheet: Sheet, group: Group) -> List[lesson]:
-        lessons = []
+    def _get_lesson_header(self, sheet: Sheet, group: Group) -> Dict[int, lesson]:
+        lessons = {}
         real_lessons = sorted(Lesson.of(group), key=lambda x: x.date)
-        print(list(map(lambda x: x.date, real_lessons)))
 
         year = datetime.now().year
 
@@ -79,8 +97,15 @@ class ExcelVisitationLoader:
                 date = datetime(year=year, month=month, day=day, hour=hours, minute=minutes)
 
                 real_lesson = find(lambda x: x.date == date, real_lessons)
-                assert real_lesson is not None, f'no lesson for date {date}'
-                lessons.append(lesson(date, col, real_lesson))
+                if real_lesson is not None:
+                    lessons[col] = lesson(date, col, real_lesson)
+                else:
+                    self.program.window.ok_message.emit(f'Для даты {month}.{day} {hours}:{minutes} не найдено '
+                                                        f'совпадений в БД. Записи о посещениях будут пропущены. \n'
+                                                        f'Для записи пропущенных данных измените дату занятия в '
+                                                        f'программе или в документе и повторите попытку (дупликаты '
+                                                        f'посещений будут проигнорированы при повторном запуске).')
+                    lessons[col] = None
 
         return lessons
 
@@ -118,27 +143,28 @@ class ExcelVisitationLoader:
                 student_fio = self._extract_student_info(sheet, row)
                 assert len(student_fio) == 3, f'row {row} is not valid, {student_fio}'
                 last_name, first_name, middle_name = student_fio
-                student_card_id = sheet.cell(row, self.card_id_column)
-                visitation = []
+                student_card_id = int(sheet.cell(row, self.card_id_column).value)
+                visitations = []
 
                 for lesson in range(lesson_count):
                     col = self.student_column + 1 + lesson
 
                     visit_cell = sheet.cell(row, col)
-                    visitation.append(visit_cell.value == 1)
+                    visitations.append(visitation(col, visit_cell.value == 1))
 
                 real_student = find(
                     lambda x: x.last_name == last_name and x.first_name == first_name and x.middle_name == middle_name,
                     real_students)
                 assert real_student is not None, f'no such student for {student_fio}'
 
-                student_info.append(student(real_student, visitation))
+                student_info.append(student(real_student, visitations, student_card_id))
 
         return student_info
 
-    def read(self, file_path):
+    def read(self, file_path, progress_bar=None):
         """
 
+        :param progress_bar: индикатор для отображения прогресса чтения
         :param file_path: принимает строку адреса или QUrl объект
         """
         if isinstance(file_path, str):
@@ -147,6 +173,8 @@ class ExcelVisitationLoader:
             file_path = file_path.toLocalFile()
         else:
             raise NotImplementedError(type(file_path))
+
+        progress_updated = self.progress_updater_factory(progress_bar)
 
         wb = self._read_file(file_path)
 
@@ -161,18 +189,50 @@ class ExcelVisitationLoader:
         total = len(students) * len(lessons)
         read = 0
 
-        for col, l in enumerate(lessons):
-            Action.start_lesson(lesson=l.real_lesson, professor=self.program.professor)
+        for col in lessons.keys():
+            l = lessons[col]
+            if l is not None:
+                try:
+                    Action.start_lesson(lesson=l.real_lesson, professor=self.program.professor)
+                except UnnecessaryActionException:
+                    pass
 
         for st in students:
-            for index, visit in enumerate(st.visitations):
-                self.program.window.statusBar().showMessage(f"Записано {read} из {total}")
-                if visit:
-                    Action.new_visitation(student=st.real_student, lesson=lessons[index].real_lesson,
-                                          professor_id=self.program.professor.id)
-                read += 1
+            try:
+                Action.change_student_card_id(
+                    student=st.real_student,
+                    new_card_id=st.new_card_id,
+                    professor_id=self.program.professor.id
+                )
+            except UnnecessaryActionException:
+                pass
 
-        self.program.window.statusBar().showMessage(f"Успешно прочитан файл {file_path}")
+            for visit in st.visitations:
+                if lessons[visit.col] is not None \
+                        and lessons[visit.col].real_lesson.completed \
+                        and visit.status:
+                    try:
+                        Action.new_visitation(student=st.real_student,
+                                              lesson=lessons[visit.col].real_lesson,
+                                              professor_id=self.program.professor.id)
+                    except UnnecessaryActionException:
+                        pass
+                read += 1
+                progress_updated(int(read / total * 100))
+
+    def progress_updater_factory(self, progress_bar):
+        def nothing(value):
+            pass
+
+        def main(value):
+            progress_bar.setValue(value)
+
+        if progress_bar is None:
+            return nothing
+        elif hasattr(progress_bar, 'setValue'):
+            return main
+        else:
+            raise NotImplementedError()
 
     def test(self):
         self.read('/home/vlad/PycharmProjects/VisitCount/Domain/ExcelLoader/Группа_ИСТ_622.xls')

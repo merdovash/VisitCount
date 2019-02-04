@@ -3,24 +3,32 @@
 """
 import os
 
-from flask import Flask, make_response, request
+from flask import Flask, make_response, request, send_file, send_from_directory
+from flask_material import Material
 
-from Modules.Cabinet.ServerSide import CabinetModule
-from Modules.CabinetLogIn.ServerSide import CabinetLogInModule
+from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.FirstLoad.ServerSide import FirstLoadModule
-from Modules.NotificationModule.ServerSIde import NotificationModule
-from Modules.Synch.ServerSide import Sycnh
+from Modules.Index import ServerSide as Index
+from Modules.Notification.ServerSIde import NotificationModule
+from Modules.Synch.ServerSide import SynchModule
+from Modules.VisitLandingPage import ServerSide as VisitLandingPage
+from Modules import SourceChecker
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
-app = Flask(__name__, static_folder=path + "/static")
+app = Flask(__name__, static_folder=path + "/static", template_folder=path + '/templates')
+Material(app)
 
 # load modules
-CabinetModule(app, request)
+
+SourceChecker.init(app)
+Cabinet.init(app)
+Index.init(app)
+VisitLandingPage.init(app)
+SynchModule(app, request)
+
 FirstLoadModule(app, request)
-Sycnh(app, request)
-CabinetLogInModule(app, request)
 NotificationModule(app, request)
 
 print(path)
@@ -35,13 +43,20 @@ def related(a):
     return os.path.join(path, a)
 
 
-def page(path):
+def page(path, encoding='utf-8'):
     """
 
+    :param encoding:
     :param path:
     :return: complete html page
     """
-    return open(path, encoding='utf-8').read()
+    with open(path, encoding=encoding) as file:
+        return file.read()
+
+
+@app.route('/TableFilter/<path:file_name>')
+def get_TableFilter_lib(file_name):
+    return send_file(path+'/TableFilter/'+file_name)
 
 
 @app.route('/file/<path:file_name>')
@@ -65,28 +80,20 @@ def get_resource(file_name):  # pragma: no cover
     file_type = file_extension[1:]
     content = ""
     if file_type in ["js"]:
-        content = page(path + "/javascript/" + file_name)
+        content = page(path + "/javascript/" + file_name, encoding='utf-8')
     elif file_type in ["css"]:
-        content = page(path + "/css/" + file_name)
+        content = page(path + "/css/" + file_name, encoding='utf-8')
     elif file_type in ["html", "htm"]:
-        content = page(path + "/templates/" + file_name)
-    elif file_type in ["gif", "png", "img"]:
-        content = page(path + "/resources/" + file_name)
+        content = page(path + "/templates/" + file_name, encoding='utf-8')
+    elif file_type in ["gif", "png", "img", 'jpg']:
+        content = send_file(path + "/resources/" + file_name, mimetype='image/gif')
+    elif file_type == 'exe':
+        return send_from_directory(path+ "/resources", file_name)
 
     response = make_response(content)
     response.headers['Content-Type'] = mimetypes.get(file_extension)
 
     return response
-
-
-@app.route("/", methods=['GET'])
-def index():
-    """
-
-    :return: index.html
-    """
-    if request.method == "GET":
-        return page(path + "/templates/index.html")
 
 
 @app.route("/visit", methods=['GET', 'POST'])
@@ -99,62 +106,52 @@ def visit():
         return page(f'{path}/templates/login2.htm')
 
 
-@app.route('/cabinet', methods=['GET'])
-def cabinet():
-    """
-
-    :return:
-    """
-    if request.method == 'GET':
-        return page(f'{path}/templates/cabinet.html')
-
-
-def fix_request_args(args, user_type, user_id):
-    """
-
-    Denies access to private fields
-
-    :param args: request's dict of args
-    :param user_type: type of user access
-    :param user_id: use ID
-    :return: fixed dict of args
-    """
-    request_args = {key: args[key][0] if args[key] is list else args[key] for key in args}
-
-    if str(user_type) == "0":
-        request_args["student_id"] = user_id
-        request_args["user_type"] = 0
-
-    elif str(user_type) == "1":
-        request_args["professor_id"] = user_id
-        request_args["user_type"] = 1
-
-    elif str(user_type) == "2":
-        request_args["admin_id"] = user_id
-        request_args["user_type"] = 2
-
-    return request_args
-
-
-def read_params(args, keys) -> dict:
-    """
-
-    :param args: request's dict of args
-    :param keys: function params
-    :return:
-    """
-    intersect = list(set(keys) & set(args))
-
-    params = {keys[i]: None for i in range(len(keys))}
-
-    for i in range(len(params)):
-        if keys[i] in intersect:
-            params[keys[i]] = args[keys[i]]
-            intersect.remove(keys[i])
-
-    return params
-
-
+# def fix_request_args(args, user_type, user_id):
+#     """
+#
+#     Denies access to private fields
+#
+#     :param args: request's dict of args
+#     :param user_type: type of user access
+#     :param user_id: use ID
+#     :return: fixed dict of args
+#     """
+#     request_args = {key: args[key][0] if args[key] is list else args[key] for key in args}
+#
+#     if str(user_type) == "0":
+#         request_args["student_id"] = user_id
+#         request_args["user_type"] = 0
+#
+#     elif str(user_type) == "1":
+#         request_args["professor_id"] = user_id
+#         request_args["user_type"] = 1
+#
+#     elif str(user_type) == "2":
+#         request_args["admin_id"] = user_id
+#         request_args["user_type"] = 2
+#
+#     return request_args
+#
+#
+# def read_params(args, keys) -> dict:
+#     """
+#
+#     :param args: request's dict of args
+#     :param keys: function params
+#     :return:
+#     """
+#     intersect = list(set(keys) & set(args))
+#
+#     params = {keys[i]: None for i in range(len(keys))}
+#
+#     for i in range(len(params)):
+#         if keys[i] in intersect:
+#             params[keys[i]] = args[keys[i]]
+#             intersect.remove(keys[i])
+#
+#     return params
+#
+#
 # @app.route("/get")
 # def get_field():
 #     """
@@ -221,4 +218,4 @@ def run():
     run server
     """
 
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="0.0.0.0", port=5000)

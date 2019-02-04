@@ -1,0 +1,8 @@
+flask
+Flask-Materialize
+pymorphy2
+sqlalchemy
+pyserial
+pandas
+mysqlclient
+premailer
