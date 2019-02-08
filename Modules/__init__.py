@@ -43,7 +43,7 @@ class Module:
                             response.set_error(str(e))
                         finally:
                             if authentication is not None:
-                                authentication.user.session.close()
+                                authentication.user.session().close()
                     else:
                         response.set_error(
                             "you send no data: {}".format(request.value))

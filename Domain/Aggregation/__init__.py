@@ -106,7 +106,7 @@ class GroupAggregation:
         assert isinstance(professor, Professor), f'object {professor} is not Professor'
 
         # список групп
-        groups: List[Group] = professor.session \
+        groups: List[Group] = professor.session() \
             .query(Group) \
             .join(LessonsGroups) \
             .join(Lesson) \

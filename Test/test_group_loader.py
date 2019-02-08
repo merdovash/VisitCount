@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from Domain.Loader.GroupLoader.GroupLoader import GroupWordReader
+from Domain.Loader.GroupLoader.GroupLoader import GroupWordLoader
 
 
 class TestGroupLoader(TestCase):
     def test_group_file_test1_docx(self):
-        gr = GroupWordReader('../Domain/Loader/GroupLoader/test1.docx')
+        gr = GroupWordLoader('../Domain/Loader/GroupLoader/test1.docx')
         self.assertEqual('ИСТ-511', gr.get_group_name())
         self.assertEqual([
             gr.student('фывыфвы', 'фвыф', 'в'),
@@ -15,7 +15,7 @@ class TestGroupLoader(TestCase):
             gr.get_students_list())
 
     def test_group_name_file_text2_docx(self):
-        gr = GroupWordReader('../Domain/Loader/GroupLoader/test2.docx')
+        gr = GroupWordLoader('../Domain/Loader/GroupLoader/test2.docx')
         self.assertEqual('ИСТ-511', gr.get_group_name())
         self.assertEqual([
             gr.student('фывыфвы', 'фвыф', 'в'),
@@ -25,7 +25,7 @@ class TestGroupLoader(TestCase):
             gr.get_students_list())
 
     def test_group_name_file_text3_docx(self):
-        gr = GroupWordReader('../Domain/Loader/GroupLoader/test3.docx')
+        gr = GroupWordLoader('../Domain/Loader/GroupLoader/test3.docx')
         self.assertEqual('ИСТ-511', gr.get_group_name())
         self.assertEqual([
             gr.student('Авыаыв', 'авыа', 'ыва'),

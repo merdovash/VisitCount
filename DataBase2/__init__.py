@@ -6,8 +6,7 @@ import os
 import pathlib
 import sys
 from datetime import datetime
-from threading import Lock
-from typing import List, Union, Dict, Any, Type, Set
+from typing import List, Union, Dict, Any, Type
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
@@ -24,7 +23,6 @@ from Domain.Exception.Authentication import InvalidPasswordException, InvalidLog
 from Domain.Validation.Values import Get
 from Domain.functools.List import DBList
 from Parser import IJSON
-from Parser.JsonParser import JsonParser
 
 try:
     root = sys.modules['__main__'].__file__
@@ -96,41 +94,26 @@ def create():
 
 Session, Base, metadata, engine, _new = create()
 
-lock = Lock()
-
-
-def session_user(func):
-    def f(*args, **kwargs):
-        lock.acquire()
-        try:
-            res = func(*args, **kwargs)
-        except:
-            raise
-        finally:
-            lock.release()
-        return res
-
-    return f
-
-
-def UserSession(user, session=None):
-    if session is None:
-        s = Session()
-    else:
-        s = session
-
-    if isinstance(user, _DBPerson):
-        setattr(s, 'user', user)
-
-    return s
-
 
 class ISession:
     def commit(self):
-        ...
+        pass
 
     def query(self, table: Type['_DBObject']):
-        ...
+        pass
+
+    def flush(self):
+        pass
+
+    def expire_all(self):
+        pass
+
+    def add(self, obj: '_DBObject'):
+        pass
+
+
+def is_None(x):
+    return x in [None, 'None', 'null']
 
 
 class _DBObject(IJSON):
@@ -162,7 +145,22 @@ class _DBObject(IJSON):
             return Get.datetime
         if python_type == bool:
             return Get.bool
+        if python_type == int:
+            return Get.int
         return python_type
+
+    @classmethod
+    def column_str(cls, name):
+        python_type = cls.table().c[name].type.python_type
+        if python_type == datetime:
+            def datetime_to_str(x):
+                if is_None(x):
+                    return str(None)
+                return x.strftime("%Y-%m-%d %H:%M:%S")
+            return datetime_to_str
+        if python_type == str:
+            return lambda x: x
+        return str
 
     def _dict(self) -> dict:
         return {
@@ -174,8 +172,25 @@ class _DBObject(IJSON):
         return {key: item for key, item in self._dict() if key[0] != '_'}
 
     def to_json(self) -> str:
+        def str_value(key):
+            return f'"{self.column_str(key)(r[key])}"'
+
         r = self._dict()
-        return JsonParser.dump(r)
+        return '{' + ','.join([':'.join([f'"{key}"', str_value(key)]) for key, value in r.items()]) + '}'
+
+    @classmethod
+    def load(cls, data: dict, class_: Type['_DBObject'] = None, class_name: str = None):
+        if cls not in [_DBObject, _DBPerson, _DBTrackedObject]:
+            class_ = cls
+        if class_ is not None:
+            class_ = class_
+        if class_name is not None:
+            class_ = _DBObject.class_(class_name)
+
+        json_dict: Dict[str, str] = json.loads(data)
+        result_dict: Dict[str, Any] = {key: class_.column_type(key)(value) for key, value in json_dict.items()}
+
+        return class_(**result_dict)
 
     @classmethod
     def of(cls, obj, with_deleted=False):
@@ -199,11 +214,15 @@ class _DBObject(IJSON):
         ).execute(data)
 
     @classmethod
-    def get(cls, session, **kwargs) -> '_DBObject':
+    def get(cls, session=None, **kwargs) -> '_DBObject':
+        if session is None:
+            session = Session()
         return session.query(cls).filter_by(**kwargs).first()
 
     @classmethod
-    def get_or_create(cls, session, **kwargs):
+    def get_or_create(cls, session=None, **kwargs):
+        if session is None:
+            session = Session()
         instance = cls.get(session, **kwargs)
         if instance is not None:
             return instance
@@ -235,6 +254,12 @@ class _DBObject(IJSON):
 
     def session(self) -> ISession:
         return inspect(self).session
+
+    def __str__(self):
+        if hasattr(self, 'name'):
+            return self.name
+        if hasattr(self, 'full_name'):
+            return self.full_name()
 
 
 class _DBTrackedObject(_DBObject):
@@ -274,8 +299,6 @@ class _DBPerson(_DBTrackedObject):
             email=kwargs.pop('email', ''),
             **kwargs)
 
-    session = None
-
     @property
     def card_id(self):
         return Get.card_id(self._card_id)
@@ -297,7 +320,7 @@ class _DBPerson(_DBTrackedObject):
         user = user_session.query(cls).filter(cls.id == id).first()
 
         if user is not None:
-            return UserSession(user, user_session)
+            return user
         else:
             raise ValueError('user of {id} not found'.format(id=id))
 
@@ -329,7 +352,7 @@ class StudentsGroups(Base, _DBTrackedObject):
     def of(cls, obj, with_deleted=False):
         if isinstance(obj, Professor):
             return DBList(
-                obj.session \
+                obj.session() \
                     .query(StudentsGroups)
                     .distinct(StudentsGroups.id) \
                     .join(Group) \
@@ -359,7 +382,7 @@ class LessonsGroups(Base, _DBTrackedObject):
     def of(cls, obj, with_deleted=False):
         if isinstance(obj, Professor):
             return DBList(
-                obj.session
+                obj.session()
                     .query(LessonsGroups)
                     .distinct(LessonsGroups.id)
                     .join(Lesson)
@@ -387,7 +410,7 @@ class StudentsParents(Base, _DBTrackedObject):
     @DBList.wrapper
     def of(cls, obj, with_deleted=False):
         if isinstance(obj, Professor):
-            return obj.session \
+            return obj.session() \
                 .query(StudentsParents) \
                 .distinct(StudentsParents.id) \
                 .join(Student) \
@@ -467,6 +490,13 @@ class Auth(Base, _DBObject):
     """
     Таблица пользователей
     """
+
+    class Type:
+        STUDENT = 0
+        PROFESSOR = 1
+        PARENT = 2
+        ADMIN = 3
+
     __tablename__ = 'auth5'
 
     login = Column(String(40), unique=True)
@@ -476,7 +506,6 @@ class Auth(Base, _DBObject):
     user_id = Column(Integer)
 
     __user = None
-    session: Session = None
 
     @property
     def user(self) -> Union['Student', 'Professor']:
@@ -485,13 +514,13 @@ class Auth(Base, _DBObject):
         :return: Professor or Student
         """
         if self.__user is None:
-            if self.user_type == UserType.STUDENT:
-                self.__user: Student = self.session \
+            if self.user_type == Auth.Type.STUDENT:
+                self.__user: Student = self.session() \
                     .query(Student) \
                     .filter(Student.id == self.user_id) \
                     .first()
-            elif self.user_type == UserType.PROFESSOR:
-                self.__user: Professor = self.session \
+            elif self.user_type == Auth.Type.PROFESSOR:
+                self.__user: Professor = self.session() \
                     .query(Professor) \
                     .filter(Professor.id == self.user_id) \
                     .first()
@@ -516,8 +545,6 @@ class Auth(Base, _DBObject):
         if q.first():
             auth = q.filter(Auth.password == password).first()
             if auth:
-                auth.session = sess
-                auth.session = UserSession(auth.user, sess)
                 return auth
             else:
                 raise InvalidPasswordException()
@@ -538,6 +565,13 @@ class Auth(Base, _DBObject):
         return f"<Auth(id={self.id}," \
             f" user_type={self.user_type}," \
             f" user_id={self.user_id})>"
+
+    def data(self) -> Dict[str, str]:
+        return {
+            'login': self.login,
+            'password': self.password,
+            'user_type': self.user_type
+        }
 
 
 class Discipline(Base, _DBTrackedObject):
@@ -578,6 +612,12 @@ class Lesson(Base, _DBTrackedObject):
     """
     Lesson
     """
+
+    class Type:
+        Lecture = 0
+        Lab = 1
+        Practice = 2
+
     __tablename__ = 'lessons'
     __table_args__ = (
         UniqueConstraint('professor_id', 'date', name='lesson_UK'),
@@ -586,13 +626,14 @@ class Lesson(Base, _DBTrackedObject):
 
     professor_id = Column(Integer, ForeignKey('professors.id'), nullable=False)
     discipline_id = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
-    type = Column(Integer, nullable=False)
+    type = Column(Integer, nullable=False, default=Type.Lecture)
     date: datetime = Column(DateTime, nullable=False)
-    completed = Column(Boolean, nullable=False)
+    completed = Column(Boolean, nullable=False, default=False)
     room_id = Column(String(40), nullable=False)
 
     _groups = relationship('LessonsGroups', backref=backref('lesson'))
-    groups = association_proxy('_groups', 'group')
+    groups = association_proxy('_groups', 'group',
+                               creator=lambda group: LessonsGroups(group=group))
 
     visitations = relationship('Visitation', backref=backref('lesson'))
 
@@ -726,7 +767,6 @@ class Professor(_DBPerson, Base):
     _admins = relationship('NotificationParam', backref="professor")
     admins = association_proxy('_admins', 'admin')
 
-    session: Session = None
     _auth: Auth = None
 
     @classmethod
@@ -998,3 +1038,11 @@ else:
         p = Auth.log_in_by_uid(-1)
     except:
         Base.metadata.create_all(engine)
+
+if __name__ == '__main__':
+    import json
+
+    st = Student(_created=datetime.now()).to_json()
+    print(type(st), st)
+    object = Student.load(st)
+    print(type(object._created), object)

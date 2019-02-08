@@ -1,6 +1,6 @@
 from typing import Dict
 
-from DataBase2 import UserType
+from DataBase2 import Auth
 from Domain.Structures.DictWrapper import Structure
 from Domain.Structures.DictWrapper.Network import TablesData
 
@@ -10,7 +10,7 @@ class ClientFirstLoadData(Structure):
     password: str
     type: int
 
-    def __init__(self, login, password, type=UserType.PROFESSOR):
+    def __init__(self, login, password, type=Auth.Type.PROFESSOR):
         self.login = login
         self.password = password
         self.type = type

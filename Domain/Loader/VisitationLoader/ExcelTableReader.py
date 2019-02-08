@@ -212,7 +212,7 @@ class Reader(IDataBaseUser, QObject):
                             real_lesson = lesson.real_lesson
                             if real_lesson is not None:
                                 Visitation.get_or_create(
-                                    session=self.professor.session,
+                                    session=self.professor.session(),
                                     student_id=student.real_student.id,
                                     lesson_id=lesson.real_lesson.id)
                         else:
@@ -223,6 +223,6 @@ class Reader(IDataBaseUser, QObject):
                 self.on_error(f'Студент {student.name} не обнаружен в БД.')
 
         QApplication.processEvents()
-        self.professor.session.commit()
+        self.professor.session().commit()
         self.session.expire_all()
         self.on_finish(f'Успешно загружены данные')

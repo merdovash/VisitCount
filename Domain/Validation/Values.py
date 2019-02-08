@@ -54,6 +54,8 @@ class Get:
 
     @staticmethod
     def int(val)->int or None:
+        if val in [None, 'None', 'null']:
+            return None
         if isinstance(val, int):
             return val
         if isinstance(val, str):

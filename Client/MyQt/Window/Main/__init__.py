@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar, QMessageBox
 
 from Client.IProgram import IProgram
 from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
+from Client.MyQt.Widgets.LoadData import LoadingWizardWindow
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
@@ -201,12 +202,20 @@ class MainWindow(AbstractWindow):
             self.update_action_dialog = SendUpdatesWidget(self.program)
             self.update_action_dialog.show()
 
-        updates = self.menu_bar.addMenu("Синхронизация")
+        def show_loader_widget():
+            self.loader_Widget = LoadingWizardWindow(self.professor)
+            self.loader_Widget.show()
+
+        updates = self.menu_bar.addMenu("Данные")
 
         updates_action = QAction("Обновить локальную базу данных", self)
         updates_action.triggered.connect(update_db_action)
 
+        load_new_action = QAction("Загрузить данные", self)
+        load_new_action.triggered.connect(show_loader_widget)
+
         updates.addAction(updates_action)
+        updates.addAction(load_new_action)
 
     def _init_notification(self):
         def show_notification_window():

@@ -75,7 +75,7 @@ class SynchModule(Module):
             session.flush()
 
         professor: Professor = auth.user
-        session = professor.session
+        session = professor.session()
 
         received_updates = ClientUpdateData(**data)
         server_updates = Changes(**professor.updates(last_in=received_updates.last_update_in))

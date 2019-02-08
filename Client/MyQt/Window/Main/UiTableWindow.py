@@ -14,7 +14,7 @@ class UI_TableWindow:
         info_layout = QHBoxLayout()
 
         professor_label = QLabel(
-            format_name(widget.professor)
+            widget.professor.full_name()
         )
         professor_label.setFont(QFont('Calibri', 20))
 

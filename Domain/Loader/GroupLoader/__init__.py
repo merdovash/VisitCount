@@ -1,14 +1,11 @@
-from typing import List, NamedTuple
+from typing import List
+
+from DataBase2 import Student, Group
 
 
 class GroupLoader:
-    class student(NamedTuple):
-        first_name: str
-        last_name: str
-        middle_name: str = ''
-
-    def get_group_name(self) -> str:
+    def get_group(self) -> Group:
         raise NotImplementedError()
 
-    def get_students_list(self) -> List[student]:
+    def get_students_list(self) -> List[Student]:
         raise NotImplementedError()

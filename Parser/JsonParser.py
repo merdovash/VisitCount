@@ -7,10 +7,12 @@ TODO:
 """
 import json
 from datetime import datetime, date
+from enum import Enum
 
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 from Domain.Exception.Net import InvalidPOSTDataException
+from Domain.Structures.DictWrapper import Structure
 from Parser import IJSON
 
 date_format = "%Y-%m-%d %H:%M:%S"
@@ -69,8 +71,7 @@ class JsonParser:
             res = "{"
             for key in obj.keys():
                 value = obj[key]
-                if any(map(lambda x: isinstance(value, x),
-                           [int, str, bool, float])) or value is None:
+                if isinstance(value, (int, str, bool, float)) or value is None:
                     res += f'"{key}":"{value}",'
                 else:
                     res += f'"{key}":{JsonParser.dump(obj[key])},'
@@ -87,6 +88,9 @@ class JsonParser:
                 res = res[:-1] if len(res) > 1 else res
             res += "]"
 
+        elif isinstance(obj, Structure.__class__):
+            res = f'"{obj.class_name()}"'
+
         elif isinstance(obj, IJSON) or hasattr(obj, 'to_json'):
             res = obj.to_json()
 
@@ -95,6 +99,9 @@ class JsonParser:
 
         elif isinstance(obj, (datetime, date)):
             res = f'"{obj.strftime("%Y-%m-%d %H:%M:%S")}"'
+
+        elif isinstance(obj, Enum):
+            res = f'"{str(obj).split(".")[1]}"'
 
         else:
             res = json.dumps(encode(obj)).encode("utf-8")

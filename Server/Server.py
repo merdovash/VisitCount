@@ -6,6 +6,7 @@ import os
 from flask import Flask, make_response, request, send_file, send_from_directory
 from flask_material import Material
 
+from Modules import API
 from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.Index import ServerSide as Index
@@ -27,6 +28,7 @@ Cabinet.init(app)
 Index.init(app)
 VisitLandingPage.init(app)
 SynchModule(app, request)
+API.init(app, request)
 
 FirstLoadModule(app, request)
 NotificationModule(app, request)

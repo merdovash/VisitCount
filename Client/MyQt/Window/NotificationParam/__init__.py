@@ -9,10 +9,8 @@ from Client.MyQt.Widgets.Network.SendNotifications import SendNotifications
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.Table.Contacts import AdministrationModel
 from Client.MyQt.Window.NotificationParam.UiDesign import Ui_NotificationWindow
-from Client.MyQt.Window.UpdatesInfoWindow import UpdatesInfoWidget
 from Client.MyQt.Window.interfaces import IDataBaseUser
-from DataBase2 import Administration, UserType, Parent, Student, NotificationParam
-from Domain.Action import NetAction
+from DataBase2 import Administration, Auth, Parent, Student, NotificationParam
 from Domain.functools.Dict import format_view, validate_new_user
 from Domain.interface import Singleton
 
@@ -62,7 +60,7 @@ class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUse
 
     @pyqtSlot(name='save_action')
     def save_action(self):
-        self.professor.session.commit()
+        self.professor.session().commit()
 
         reply = QMessageBox().question(
             self,
@@ -78,7 +76,7 @@ class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUse
             self.administration_table_view.setModel(AdministrationModel(NotificationParam.of(self.professor)))
 
     def on_add_user(self):
-        if self.new_user_type_combo_box.currentIndex() == UserType.ADMIN:
+        if self.new_user_type_combo_box.currentIndex() == Auth.Type.ADMIN:
             admin_data = dict(last_name=self.new_user_last_name.text(),
                               first_name=self.new_user_first_name.text(),
                               middle_name=self.new_user_middle_name.text(),
@@ -92,14 +90,14 @@ class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUse
                 np.admin = admin
                 np.professor = self.professor
 
-                self.professor.session.add_all([admin, np])
-                self.professor.session.commit()
+                self.professor.session().add_all([admin, np])
+                self.professor.session().commit()
 
                 self.program.window.ok_message.emit('Контакт добавлен')
                 self.tabWidget.setCurrentIndex(NotificationWindow.Tabs.ADMIN_TABLE)
             else:
                 self.program.window.ok_message.emit(f'Необходимо заполнить поля [Фамилия, Имя, Отчество, Email]')
-        elif self.new_user_type_combo_box.currentIndex() == UserType.PARENT:
+        elif self.new_user_type_combo_box.currentIndex() == Auth.Type.PARENT:
 
             raise NotImplementedError('TODO')
 
@@ -129,8 +127,8 @@ class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUse
             self.tableWidget_2.add_row(parent)
 
     def on_user_type_changed(self, current_index):
-        self.student_label.setHidden(current_index != UserType.PARENT)
-        self.student.setHidden(current_index != UserType.PARENT)
+        self.student_label.setHidden(current_index != Auth.Type.PARENT)
+        self.student.setHidden(current_index != Auth.Type.PARENT)
 
     def showAsChild(self, *args):
         self.show()

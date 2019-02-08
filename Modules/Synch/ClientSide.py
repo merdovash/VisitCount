@@ -110,7 +110,7 @@ class Updater(ClientWorker):
 
         PART_SIZE = progress_bar.last() / 4
 
-        session = self.professor.session
+        session = self.professor.session()
         data = ServerUpdateData(**data)
 
         # Обновление id

@@ -57,7 +57,7 @@ class Data:
             students = self._get_students(lesson.groups, groups)
 
             for student in students:
-                visitation = Visitation.get(professor.session, student_id=student.id, lesson_id=lesson.id)
+                visitation = Visitation.get(professor.session(), student_id=student.id, lesson_id=lesson.id)
                 status = 0 if visitation is None or visitation.is_deleted() else 1
                 self.rows.append(row(Vector(status, int(lesson.completed)), lesson, student))
 

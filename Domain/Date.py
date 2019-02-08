@@ -3,6 +3,19 @@ from datetime import datetime, timedelta
 START_STUDY = datetime(2008, 9, 1)
 
 
+def semester_start():
+    now = datetime.now()
+    year = now.year
+    month = now.month
+
+    if month > 6:
+        return datetime(year, 9, 1)
+    else:
+        temp = datetime(year, 2, 7)
+        temp += timedelta(7 - temp.weekday())
+        return temp
+
+
 def week(date: datetime = datetime.now()) -> int:
     return date.isocalendar()[1]
 
@@ -86,4 +99,3 @@ class BisitorDateTime(datetime):
     @property
     def weekday(self):
         return datetime.weekday(self)
-

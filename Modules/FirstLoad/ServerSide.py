@@ -1,5 +1,5 @@
 from DataBase2 import Professor, Lesson, Group, LessonsGroups, \
-    StudentsGroups, Student, Discipline, Visitation, Auth, UserType, Administration, NotificationParam, Parent
+    StudentsGroups, Student, Discipline, Visitation, Auth, Administration, NotificationParam, Parent
 from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
 from Modules import Module
 from Modules.FirstLoad import address
@@ -22,7 +22,7 @@ class FirstLoadModule(Module):
         professor_id = professor.id
         r = ServerFirstLoadData(Auth=self.session
                                 .query(Auth)
-                                .filter(Auth.user_type == UserType.PROFESSOR)
+                                .filter(Auth.user_type == Auth.Type.PROFESSOR)
                                 .filter(Auth.user_id == professor_id)
                                 .first(),
                                 Professor=self.session
