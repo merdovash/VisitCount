@@ -3,13 +3,15 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from typing import List, Tuple
 
+import xlrd
 from docx import Document
 
-from DataBase2 import Professor, Session, Discipline, Group, Lesson, LessonsGroups
-from Domain.Loader import WordReader
+from DataBase2 import Professor, Session, Discipline, Group, Lesson, Student, ISession
+from Domain.Loader import WordReader, ExcelReader, Reader
+from Domain.Validation.Values import Get
 
 
-class LessonLoader:
+class LessonLoader(Reader):
     def get_disciplines(self):
         raise NotImplementedError()
 
@@ -18,6 +20,138 @@ class LessonLoader:
 
     def get_groups(self):
         raise NotImplementedError()
+
+
+class ExcelLessonLoader(ExcelReader, LessonLoader):
+    group_regex = re.compile(
+        r'(?:(?:[Гг]рупп[аы])?\s?(?P<G>(?:[А-Яа-я]+-[0-9]+,?\s?)+))'
+    )
+
+    discipline_regex = re.compile(
+        r'(?:(?:[Дд]исциплина\s?:?\s)?(?P<discipline>.+))'
+    )
+
+    student_regex = re.compile(
+        r'(?:(?P<last>[А-яа-яё]+) (?P<first>[А-яа-яё]+)(?: (?P<middle>[А-яа-яё]+))?)'
+    )
+
+    day_regex = re.compile(
+        r'(?:(?P<month>[0-9]+)[:.](?P<day>[0-9]+))'
+    )
+
+    INDEX_COL = 0
+    CARD_COL = 1
+    FULL_NAME_COL = 2
+    TIME_START_COL = 3
+
+    GROUP_CELL = (0, 2)
+    DISCIPLINE_CELL = (0, 3)
+
+    FULL_NAME_START_ROW = 5
+    LESSON_INDEX_ROW = 1
+    WEEK_ROW = 2
+    DAY_ROW = 3
+    TIME_ROW = 4
+
+    def __init__(self, file: str, start_day: datetime, professor: Professor, session: ISession):
+        self.document = xlrd.open_workbook(filename=file)
+        self.sheet = self.document.sheet_by_index(0)
+
+        self.session: ISession = session
+
+        group_regex = self.group_regex.findall(self.sheet.cell(*self.GROUP_CELL).value)
+        if len(group_regex):
+            group_name = group_regex[0]
+            group = Group.get_or_create(self.session, name=group_name)
+        else:
+            raise ValueError('group is not found')
+
+        discipline_regex = self.discipline_regex.findall(self.sheet.cell(*self.DISCIPLINE_CELL).value)
+        if len(discipline_regex):
+            discipline_name = discipline_regex[0]
+            discipline = Discipline.get_or_create(self.session, name=discipline_name)
+        else:
+            raise ValueError('discipline is not found')
+
+        self.students = list()
+        for row in range(self.FULL_NAME_START_ROW, self.sheet.nrows):
+            full_name = self.sheet.cell(row, self.TIME_START_COL).value
+            if full_name not in [None, '']:
+                student_regex = self.student_regex.findall(full_name)
+                if len(student_regex):
+                    if len(student_regex) == 2:
+                        student = Student.get_or_create(self.session,
+                                                        last_name=student_regex[0],
+                                                        first_name=student_regex[1])
+                    else:
+                        student = Student.get_or_create(self.session,
+                                                        last_name=student_regex[0],
+                                                        first_name=student_regex[1],
+                                                        middle_name=student_regex[2])
+                    if student.id is None:
+                        student.groups.append(group)
+
+                    card_id = Get.card_id(self.sheet.cell(row, self.CARD_COL).value)
+                    if card_id not in [None, ''] and card_id != student.card_id:
+                        student.card_id = card_id
+
+                    self.students.append(student)
+            else:
+                break
+
+        self.lessons = list()
+        for col in range(self.TIME_START_COL, self.sheet.ncols):
+            lesson_index = self.sheet.cell(self.LESSON_INDEX_ROW, col).value
+            if lesson_index not in [None, '']:
+                date_regex = self.day_regex.findall(self.sheet.cell(self.DAY_ROW, col).value)
+                if len(date_regex):
+                    date_regex = date_regex[0]
+                    month = int(date_regex[1])
+                    day = int(date_regex[0])
+                else:
+                    raise ValueError(f'{self.sheet.cell(self.DAY_ROW, col).value} is not acceptable date format')
+
+                time_regex = self.day_regex.findall(self.sheet.cell(self.TIME_ROW, col).value)
+                if len(time_regex):
+                    time_regex = time_regex[0]
+                    hours = int(time_regex[0])
+                    minutes = int(time_regex[1])
+                else:
+                    raise ValueError(f'{self.sheet.cell(self.TIME_ROW, col).value} is not acceptable time format')
+
+                time = datetime(start_day.year, month, day, hours, minutes)
+
+                kwargs = dict(room_id='', type=Lesson.Type.Practice)
+                if discipline.id is None:
+                    lesson = Lesson.new(self.session, date=time, professor_id=professor.id, **kwargs)
+                    lesson.discipline = discipline
+                    lesson.groups.append(group)
+                else:
+                    lesson = Lesson.get_or_create(
+                        self.session,
+                        date=time,
+                        professor_id=professor.id,
+                        discipline_id=discipline.id,
+                        **kwargs)
+                    if group not in lesson.groups:
+                        lesson.groups.append(group)
+                self.lessons.append(lesson)
+            else:
+                break
+
+        self.discipline = discipline
+        self.group = group
+        self.session.commit()
+        professor.session().expire_all()
+
+    def get_disciplines(self):
+        return [self.discipline]
+
+    def get_lessons(self):
+        return self.lessons
+
+    def get_groups(self):
+        return [self.group]
 
 
 class WordLessonLoader(WordReader, LessonLoader):
@@ -127,12 +261,3 @@ class WordLessonLoader(WordReader, LessonLoader):
         if "практ" in lower_text:
             return Lesson.Type.Practice
 
-
-if __name__ == '__main__':
-    session = Session()
-    professor = Professor.get_or_create(session, id=1)
-    session.flush()
-    d = WordLessonLoader("test1.docx", datetime(2019, 2, 11), professor, session)
-    session.commit()
-    lessons = session.query(Lesson).all()
-    pass

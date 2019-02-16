@@ -36,7 +36,6 @@ class GroupApi(API):
         super().__init__(app, request, '/group')
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
-        print('group', data)
         session = auth.session()
 
         group = session.query(Group).filter_by(**data, _is_deleted=False).first()

@@ -81,7 +81,6 @@ class MarkVisitProcess(QObject):
             self.session.expire(student)
             self.session.expire(self.lesson)
             self.new_visit.emit(visit, student, self.lesson)
-            print(visit)
 
         students = list(filter(lambda x: x.card_id == int(card_id), self.students))
         if len(students) == 0:

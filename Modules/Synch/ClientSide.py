@@ -62,7 +62,6 @@ class Updater(ClientWorker):
                 created = {key: value
                            for key, value in item_data.items()
                            if not None_or_empty(value)}
-                print(created)
                 class_.new(session, **created)
                 session.flush()
 

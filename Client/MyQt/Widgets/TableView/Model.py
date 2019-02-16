@@ -64,7 +64,7 @@ class PercentHorizontalModel(AbstractPercentModel):
                 visitations = [visit for visit in lesson.visitations if not visit._is_deleted]
                 if index.row() == 0:
                     return round(100 / len(self.students) * len([item for item in visitations
-                                                                 if item.student in self.students]))
+                                                                 if item.student in self.students])) if len(self.students) else 0
                 if index.row() == 1:
                     return len([item for item in visitations if item.student in self.students])
 
@@ -89,7 +89,7 @@ class PercentVerticalModel(AbstractPercentModel):
                 [item for item in Visitation.of(self.lessons) if item.student_id == self.students[index.row()].id])
             count = len(list(filter(lambda x: x.completed, self.lessons)))
             if index.column() == 0:
-                return round(100 * visits // count)
+                return round(100 * visits // count) if count else 0
             if index.column() == 1:
                 return visits
 

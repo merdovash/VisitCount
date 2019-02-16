@@ -17,6 +17,12 @@ class Reader(Loader):
 
         return file.suffix in cls.suffix
 
+    @classmethod
+    def auto(cls, file, **kwargs):
+        for class_ in cls.__subclasses__():
+            if class_.check(file):
+                return class_(file, **kwargs)
+
 
 class WordReader(Reader):
     suffix = ['.docx']
@@ -24,6 +30,11 @@ class WordReader(Reader):
     class Mode(Enum):
         LIST = 0
         LIST_IN_TABLE = 1
+
+
+
+class ExcelReader(Reader):
+    suffix = ['.xls', '.xlsx']
 
 
 class NetworkLoader(Loader):

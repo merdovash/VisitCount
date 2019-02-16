@@ -40,7 +40,6 @@ class SynchModule(Module):
                 item = class_.new(session=session, **item_data)
 
             changes['to_id'] = item
-            print(item)
 
             changed[class_.__name__].append(changes)
 
@@ -92,8 +91,6 @@ class SynchModule(Module):
             ]
             for key, item in changed.items()
         }
-
-        print(session.query(Administration).all())
 
         # применяем изменения записей
         received_updates.updates.updated.foreach(apply_update)

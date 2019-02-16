@@ -13,8 +13,8 @@ from Client.MyQt.Widgets.Table.NewItemsTable import QNewItemsTable
 from Client.MyQt.interface import IAcceptDrop, ISelectFile
 from DataBase2 import Group, Student
 from Domain.Date import semester_start
-from Domain.Loader.GroupLoader.GroupLoader import GroupAutoLoader
-from Domain.Loader.LessonLoader import WordLessonLoader
+from Domain.Loader.GroupLoader.GroupLoader import GroupLoader
+from Domain.Loader.LessonLoader import LessonLoader
 from Modules.API import GroupApi
 
 
@@ -24,6 +24,8 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
         Step('Загрузить файл с расписанием', 'требуется загрузить файл с распсианием занятий', False),
         Step('Загрузить данные для всех групп', '', False)
     ]
+
+    group_steps: Dict[str, Step]
 
     def setupUi(self):
         main_layout = QVBoxLayout()
@@ -100,7 +102,7 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
             QMessageBox().information(self, "", "Сначала укажите дату начала семестра.")
 
     def read_file(self, file: QUrl):
-        self.worker = WordLessonLoader(
+        self.worker = LessonLoader.auto(
             file=file.path(),
             start_day=datetime(self.date_input.date().year(), self.date_input.date().month(),
                                self.date_input.date().day()),
@@ -138,7 +140,7 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
             self.group_list.addItem(group)
 
             group_step = Step(f'Загрузить данные группы {group.name}', '')
-            self.group_steps[group.name] = group_step
+            self.group_steps[group.name]: Dict[str, Step] = group_step
             self.steps.append(group_step)
 
         self.steps_changed.emit(self.steps)
@@ -161,7 +163,10 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
             self.students_lists[group] = list_widget
             self.tabs.addTab(list_widget, group.name)
 
-        self.check_groups(self.worker.get_groups())
+        for group in self.worker.get_groups():
+            if len(group.students):
+                self._apply_group(group_name=group.name, students=group.students)
+                self.step.emit(self.group_steps[group.name])
 
         list_student_layout.addWidget(QLabel("Списки групп"))
         list_student_layout.addWidget(self.tabs)
@@ -194,10 +199,10 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
                     self._apply_group(existing_group.name, existing_group.students)
 
     def load_group(self, file: QUrl):
-        group_loader = GroupAutoLoader(file.path())
+        group_loader = GroupLoader.auto(file=file.path(), professor=self.professor, session=self.loading_session)
 
         group = group_loader.get_group()
-        self._apply_group(group, group_loader.get_students_list())
+        self._apply_group(group.name, group_loader.get_students_list())
 
     def _apply_group(self, group_name: str, students: List[Student]):
         group: Group = list(filter(lambda x: x.name == group_name, self.students_lists.keys()))[0]

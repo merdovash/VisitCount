@@ -6,7 +6,7 @@ import os
 import pathlib
 import sys
 from datetime import datetime
-from typing import List, Union, Dict, Any, Type
+from typing import List, Union, Dict, Any, Type, Callable
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
@@ -110,6 +110,12 @@ class ISession:
 
     def add(self, obj: '_DBObject'):
         pass
+
+    def close(self):
+        pass
+
+
+Session: Callable[[], ISession] = Session
 
 
 def is_None(x):
@@ -524,7 +530,6 @@ class Auth(Base, _DBObject):
                     .query(Professor) \
                     .filter(Professor.id == self.user_id) \
                     .first()
-                self.__user.session = self.session
                 self.__user._auth = self
 
         return self.__user
@@ -952,7 +957,7 @@ class Student(Base, _DBPerson):
     parents = association_proxy('_parents', 'parent')
 
     _groups = relationship('StudentsGroups', backref=backref('student'))
-    groups = association_proxy('_groups', 'group')
+    groups = association_proxy('_groups', 'group', creator= lambda group: StudentsGroups(group=group))
 
     visitations = relationship("Visitation", backref=backref('student'))
 
@@ -1038,11 +1043,3 @@ else:
         p = Auth.log_in_by_uid(-1)
     except:
         Base.metadata.create_all(engine)
-
-if __name__ == '__main__':
-    import json
-
-    st = Student(_created=datetime.now()).to_json()
-    print(type(st), st)
-    object = Student.load(st)
-    print(type(object._created), object)

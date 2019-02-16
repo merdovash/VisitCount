@@ -31,7 +31,6 @@ class Module:
                     if data is not None:
                         authentication = None
                         try:
-                            print(data['user'])
                             authentication = Auth.log_in(**data['user'])
 
                             self.post(data=data.get('data'), response=response,
@@ -61,7 +60,6 @@ class Module:
                 'data': {}
             }
         else:
-            print(request.data)
             return self.read_data(request.data)
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
