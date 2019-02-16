@@ -21,6 +21,6 @@ class InvalidUidException(AuthenticationException):
     pass
 
 
-class UnothorizedError(AuthenticationException):
+class UnauthorizedError(AuthenticationException):
     _title = "ошибка доступа"
     _mask = "При {} произошла попытка получения доступа к правам недоступного пользователя"

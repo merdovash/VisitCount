@@ -1,6 +1,18 @@
 import functools
 import sys
 import traceback
+from itertools import chain
+
+from Domain.functools.List import DBList
+
+
+def is_iterable(item):
+    try:
+        iterator = iter(item)
+    except TypeError:
+        return False
+    else:
+        return True
 
 
 def memoize(obj):
@@ -47,3 +59,30 @@ def safe(func):
             raise
 
     return wrapper
+
+
+def listed(func):
+    def __wrapper__(self, value, *args, **kwargs):
+        if is_iterable(value):
+            res = [func(self, v, *args, **kwargs) for v in value]
+        else:
+            res = func(self, value, *args, **kwargs)
+
+        if len(res) and is_iterable(res[0]):
+            return list(set(chain.from_iterable(res)))
+        else:
+            return res
+
+    return __wrapper__
+
+
+def filter_deleted(func):
+    def __wrapper__(self, value, with_deleted=False, *args, **kwargs):
+        return list(filter(lambda x: (not x._is_deleted) | with_deleted, func(self, value, *args, **kwargs)))
+    return __wrapper__
+
+
+if __name__ == '__main__':
+    from DataBase2 import Parent, Professor, Student, Lesson, Group
+
+    print(Group.of(Student.get(id=1)))

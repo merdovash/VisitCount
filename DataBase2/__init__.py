@@ -5,6 +5,7 @@ safsdf
 import os
 import pathlib
 import sys
+from abc import ABC
 from datetime import datetime
 from typing import List, Union, Dict, Any, Type, Callable
 
@@ -19,8 +20,9 @@ from DataBase2.config2 import Config
 from Domain.ArgPars import get_argv
 from Domain.Date import study_week, study_semester
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException, \
-    UnothorizedError
+    UnauthorizedError
 from Domain.Validation.Values import Get
+from Domain.functools.Decorator import listed, filter_deleted
 from Domain.functools.List import DBList
 from Parser import IJSON
 
@@ -145,7 +147,12 @@ class _DBObject(IJSON):
         return hash(f'{type(self).__name__}:{self.id}')
 
     @classmethod
-    def column_type(cls, name):
+    def column_type(cls, name: str) -> callable:
+        """
+        Возвращает функцию, которая воспроизводит класс объекта для атрибута name
+        :param name: имя атрибута
+        :return: callable
+        """
         python_type = cls.table().c[name].type.python_type
         if python_type == datetime:
             return Get.datetime
@@ -157,12 +164,18 @@ class _DBObject(IJSON):
 
     @classmethod
     def column_str(cls, name):
+        """
+        Возвращает строкое представление значения атрибута name
+        :param name: имя атрибута
+        :return: str
+        """
         python_type = cls.table().c[name].type.python_type
         if python_type == datetime:
             def datetime_to_str(x):
                 if is_None(x):
                     return str(None)
                 return x.strftime("%Y-%m-%d %H:%M:%S")
+
             return datetime_to_str
         if python_type == str:
             return lambda x: x
@@ -175,9 +188,17 @@ class _DBObject(IJSON):
         }
 
     def dict(self):
+        """
+        Возвращает словарь {атрибут:значение}
+        :return:
+        """
         return {key: item for key, item in self._dict() if key[0] != '_'}
 
     def to_json(self) -> str:
+        """
+        Возвращает строковое представление json объекта, отображабщего объект
+        :return: str
+        """
         def str_value(key):
             return f'"{self.column_str(key)(r[key])}"'
 
@@ -185,25 +206,21 @@ class _DBObject(IJSON):
         return '{' + ','.join([':'.join([f'"{key}"', str_value(key)]) for key, value in r.items()]) + '}'
 
     @classmethod
-    def load(cls, data: dict, class_: Type['_DBObject'] = None, class_name: str = None):
-        if cls not in [_DBObject, _DBPerson, _DBTrackedObject]:
-            class_ = cls
-        if class_ is not None:
-            class_ = class_
-        if class_name is not None:
-            class_ = _DBObject.class_(class_name)
-
-        json_dict: Dict[str, str] = json.loads(data)
-        result_dict: Dict[str, Any] = {key: class_.column_type(key)(value) for key, value in json_dict.items()}
-
-        return class_(**result_dict)
-
-    @classmethod
-    def of(cls, obj, with_deleted=False):
+    def of(cls, obj):
+        """
+        Возвращает все объекты класса cls, относящиеся к объекту obj
+        :param obj: _DBObject
+        """
         raise NotImplementedError(cls)
 
     @classmethod
     def new(cls, session=None, **kwargs):
+        """
+        Создает новый элемент и присодияет его к сессии
+        :param session: ISession
+        :param kwargs: dict
+        :return: _DBObject
+        """
         obj = cls(**kwargs)
         if session is not None:
             session.add(obj)
@@ -211,22 +228,43 @@ class _DBObject(IJSON):
 
     @classmethod
     def table(cls):
+        """
+        Возвращает объект, представляющий таблицу класса cls
+        :return: Table
+        """
         return cls.__table__
 
     @classmethod
     def insert_or_ignore(cls, data: List[Dict[str, Any]]):
+        """
+        Вставляет в таблицу записи, при совпадении - игнорирует
+        :param data: Список словарей {название_атрибута: значение}
+        """
         cls.table().insert(
             prefixes=['OR IGNORE']
         ).execute(data)
 
     @classmethod
-    def get(cls, session=None, **kwargs) -> '_DBObject':
+    def get(cls, session: ISession = None, **kwargs) -> '_DBObject':
+        """
+        Производит поиск элмента по заданным в **kwargs атрубтам и возвращает найденные строки
+        :param session: ISession
+        :param kwargs: dict
+        :return: _DBObject
+        """
         if session is None:
             session = Session()
         return session.query(cls).filter_by(**kwargs).first()
 
     @classmethod
-    def get_or_create(cls, session=None, **kwargs):
+    def get_or_create(cls, session: ISession = None, **kwargs):
+        """
+        Производит поиск элмента по заданным в **kwargs атрубтам и возвращает найденные поля,
+        если записей не найдено, то создаёт запись
+        :param session: ISession
+        :param kwargs: dict
+        :return: _DBObject
+        """
         if session is None:
             session = Session()
         instance = cls.get(session, **kwargs)
@@ -240,6 +278,11 @@ class _DBObject(IJSON):
 
     @classmethod
     def class_(cls, name) -> Type['_DBObject']:
+        """
+        Воспроизводит класс по его названию
+        :param name: имя класса
+        :return: Type
+        """
         return eval(name)
 
     def __eq__(self, other):
@@ -253,12 +296,19 @@ class _DBObject(IJSON):
 
     @classmethod
     def subclasses(cls) -> List[Type['_DBObject']]:
+        """
+        :return: list of real subclasses
+        """
         return list(
             filter(
                 lambda x: '_' != x.__name__[0],
                 set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in c.subclasses()])))
 
     def session(self) -> ISession:
+        """
+        Возвращает сессию, которой принадлежит объект
+        :return: ISession
+        """
         return inspect(self).session
 
     def __str__(self):
@@ -275,14 +325,24 @@ class _DBTrackedObject(_DBObject):
     _deleted = Column(DateTime)
 
     def delete(self):
+        """
+        помечает себя как удаленный
+        """
         self._is_deleted = True
         self._deleted = datetime.now()
 
     def restore(self):
+        """
+        восстанавливает себя
+        """
         self._deleted = None
         self._is_deleted = False
 
     def is_deleted(self):
+        """
+        Сообщает удален ли элемент
+        :return: bool
+        """
         return self._is_deleted
 
 
@@ -296,6 +356,8 @@ class _DBPerson(_DBTrackedObject):
     email = Column(String(200))
     _card_id = Column('card_id', String(16), unique=True)
 
+    _auth = None
+
     def __init__(self, **kwargs):
         super().__init__(
             last_name=kwargs.pop('last_name', ''),
@@ -306,11 +368,15 @@ class _DBPerson(_DBTrackedObject):
             **kwargs)
 
     @property
-    def card_id(self):
+    def card_id(self) -> Integer:
+        """
+        Свойство идентификатор карты
+        :return: int
+        """
         return Get.card_id(self._card_id)
 
     @card_id.setter
-    def card_id(self, value):
+    def card_id(self, value: str or int):
         self._card_id = Get.card_id(value)
 
     @classmethod
@@ -331,15 +397,24 @@ class _DBPerson(_DBTrackedObject):
             raise ValueError('user of {id} not found'.format(id=id))
 
     def full_name(self, case=None):
+        """
+        Возвращает полное имя
+        :param case: падеж, по умолчанию Именительный
+        :return: str
+        """
         from Domain.functools.Format import format_name
         return format_name(self, case)
 
     @property
     def auth(self):
+        """
+        @Свойство указатель на объект-аутентификацию
+        Если оно не присвоено объекту, то вызывается исключение Неаутентифициорованного пользователя
+        :return: Auth
+        """
         if hasattr(self, '_auth') and self._auth is not None:
             return self._auth
-        else:
-            raise UnothorizedError()
+        raise UnauthorizedError()
 
 
 class StudentsGroups(Base, _DBTrackedObject):
@@ -457,7 +532,8 @@ class Visitation(Base, _DBTrackedObject):
         :return: список посещений объекта
         """
         if isinstance(obj, (list, _AssociationList, frozenset)):
-            return DBList([Visitation.of(o) for o in obj], flat=True, unique=True, with_deleted=with_deleted)
+            return DBList([Visitation.of(sub_obj) for sub_obj in obj], flat=True, unique=True,
+                          with_deleted=with_deleted)
 
         if isinstance(obj, (Student, Lesson)):
             return DBList(obj.visitations, with_deleted=with_deleted)
@@ -466,7 +542,7 @@ class Visitation(Base, _DBTrackedObject):
             return DBList(Visitation.of(obj.students), flat=True, with_deleted=with_deleted)
 
         if isinstance(obj, (Professor, Discipline)):
-            return DBList([o.visitations for o in obj.lessons], flat=True, with_deleted=with_deleted)
+            return DBList([sub_obj.visitations for sub_obj in obj.lessons], flat=True, with_deleted=with_deleted)
 
         raise NotImplementedError(type(obj))
 
@@ -546,15 +622,13 @@ class Auth(Base, _DBObject):
         """
         sess = Session()
 
-        q = sess.query(Auth).filter(Auth.login == login)
-        if q.first():
-            auth = q.filter(Auth.password == password).first()
+        query = sess.query(Auth).filter(Auth.login == login)
+        if query.first():
+            auth = query.filter(Auth.password == password).first()
             if auth:
                 return auth
-            else:
-                raise InvalidPasswordException()
-        else:
-            raise InvalidLoginException()
+            raise InvalidPasswordException()
+        raise InvalidLoginException()
 
     @staticmethod
     def log_in_by_uid(uid):
@@ -563,8 +637,7 @@ class Auth(Base, _DBObject):
         auth = sess.query(Auth).filter(Auth.uid == uid).first()
         if auth:
             return auth
-        else:
-            raise InvalidUidException()
+        raise InvalidUidException()
 
     def __repr__(self):
         return f"<Auth(id={self.id}," \
@@ -603,14 +676,16 @@ class Discipline(Base, _DBTrackedObject):
         :return: список дисциплин объекта
         """
         if isinstance(obj, (list, _AssociationList)):
-            return DBList([Discipline.of(o) for o in obj], flat=True, unique=True)
-        elif isinstance(obj, Lesson):
+            return DBList([Discipline.of(sub_obj) for sub_obj in obj], flat=True, unique=True)
+
+        if isinstance(obj, Lesson):
             return DBList([obj.discipline], with_deleted=with_deleted)
-        elif isinstance(obj, Professor):
+
+        if isinstance(obj, Professor):
             return DBList([lesson.discipline for lesson in obj.lessons], flat=True, unique=True,
                           with_deleted=with_deleted)
-        else:
-            raise NotImplementedError(type(obj))
+
+        raise NotImplementedError(type(obj))
 
 
 class Lesson(Base, _DBTrackedObject):
@@ -644,7 +719,6 @@ class Lesson(Base, _DBTrackedObject):
                     return cls(key)
             else:
                 raise ValueError(f'no such case: {string}')
-
 
     __tablename__ = 'lessons'
     __table_args__ = (
@@ -727,31 +801,30 @@ class Lesson(Base, _DBTrackedObject):
         if isinstance(obj, (list, _AssociationList, frozenset)):
             if intersect:
                 lessons = None
-                for o in obj:
-                    lessons = Lesson.of(o) \
+                for sub_obj in obj:
+                    lessons = Lesson.of(sub_obj) \
                         if lessons is None \
-                        else list(set(lessons).intersection(Lesson.of(o)))
+                        else list(set(lessons).intersection(Lesson.of(sub_obj)))
                 return DBList(lessons,
                               with_deleted=with_deleted,
                               flat=True)
 
             else:
-                return DBList([Lesson.of(o) for o in obj],
+                return DBList([Lesson.of(sub_obj) for sub_obj in obj],
                               flat=True,
                               unique=True,
                               with_deleted=with_deleted)
 
-        elif isinstance(obj, (Professor, Discipline, Group)):
+        if isinstance(obj, (Professor, Discipline, Group)):
             return DBList(obj.lessons,
                           with_deleted=with_deleted)
 
-        elif isinstance(obj, Student):
-            return DBList([Lesson.of(o) for o in obj.groups],
+        if isinstance(obj, Student):
+            return DBList([Lesson.of(sub_obj) for sub_obj in obj.groups],
                           flat=True,
                           with_deleted=with_deleted)
 
-        else:
-            raise NotImplementedError(type(obj))
+        raise NotImplementedError(type(obj))
 
 
 class Administration(Base, _DBPerson):
@@ -771,6 +844,8 @@ class Administration(Base, _DBPerson):
             f"middle_name={self.middle_name})>"
 
     @classmethod
+    @filter_deleted
+    @listed
     def of(cls, obj, with_deleted=False) -> List['Administration']:
         """
         Возвращает список Администраторов, которые относятся к переданому объекту
@@ -778,14 +853,13 @@ class Administration(Base, _DBPerson):
         :param with_deleted: список включает удаленные объекты
         :return: список
         """
-        if isinstance(obj, (list, _AssociationList)):
-            return DBList([Administration.of(o) for o in obj], flat=True, unique=True, with_deleted=with_deleted)
-        elif isinstance(obj, Professor):
-            return DBList(obj.admins, with_deleted=with_deleted)
-        elif isinstance(obj, NotificationParam):
-            return DBList([obj.admin], with_deleted=with_deleted)
-        else:
-            raise NotImplementedError(type(obj))
+        if isinstance(obj, Professor):
+            return obj.admins
+
+        if isinstance(obj, NotificationParam):
+            return [obj.admin]
+
+        raise NotImplementedError(type(obj))
 
     @staticmethod
     def active_of(obj):
@@ -797,8 +871,8 @@ class Administration(Base, _DBPerson):
         if isinstance(obj, Professor):
             nps = list(filter(lambda np: np.active, NotificationParam.of(obj)))
             return Administration.of(nps)
-        else:
-            raise NotImplementedError(type(obj))
+
+        raise NotImplementedError(type(obj))
 
 
 class Professor(_DBPerson, Base):
@@ -818,7 +892,14 @@ class Professor(_DBPerson, Base):
 
     _auth: Auth = None
 
+    def groups(self, with_deleted=False) -> List[List['Group']]:
+        return [list(item)
+                for item in set([frozenset(filter(lambda group: not group._is_deleted | with_deleted, lesson.groups))
+                                 for lesson in self.lessons])]
+
     @classmethod
+    @filter_deleted
+    @listed
     def of(cls, obj, with_deleted=False) -> List['Professor']:
         """
 
@@ -826,20 +907,14 @@ class Professor(_DBPerson, Base):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список преподавателей, отоносящихся к объекту
         """
-        if isinstance(obj, (list, _AssociationList, set)):
-            return DBList([Professor.of(o) for o in obj],
-                          flat=True,
-                          unique=True,
-                          with_deleted=with_deleted)
-
         if isinstance(obj, (Lesson, NotificationParam)):
-            return DBList([obj.professor])
+            return [obj.professor]
 
         if isinstance(obj, Visitation):
-            return Professor.of(obj.lesson, with_deleted=with_deleted)
+            return [lesson.professor for lesson in obj.lesson]
 
         if isinstance(obj, Administration):
-            return DBList(obj.professors, with_deleted=with_deleted)
+            return obj.professors
 
         if isinstance(obj, Student):
             return Professor.of(obj.groups, with_deleted=with_deleted)
@@ -914,6 +989,8 @@ class NotificationParam(Base, _DBTrackedObject):
     show_progress = Column(Boolean, default=False)
 
     @classmethod
+    @filter_deleted
+    @listed
     def of(cls, obj, with_deleted=False) -> List['NotificationParam']:
         """
 
@@ -921,21 +998,14 @@ class NotificationParam(Base, _DBTrackedObject):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список Парааметров оповещений, которые отностятся к переданному объекту
         """
-        if isinstance(obj, (list, _AssociationList)):
-            return DBList([NotificationParam.of(o, with_deleted=with_deleted) for o in obj],
-                          flat=True,
-                          unique=True,
-                          with_deleted=with_deleted)
 
-        elif isinstance(obj, Professor):
-            return DBList(obj._admins,
-                          with_deleted=with_deleted)
+        if isinstance(obj, Professor):
+            return obj._admins
 
-        elif isinstance(obj, Administration):
-            return DBList(obj.notification,
-                          with_deleted=with_deleted)
-        else:
-            raise NotImplementedError(type(obj))
+        if isinstance(obj, Administration):
+            return obj.notification
+
+        raise NotImplementedError(type(obj))
 
     def __repr__(self):
         return f"<NotificationParam (id={self.id}, professor_id={self.professor_id}, admin_id={self.admin_id}, " \
@@ -960,7 +1030,9 @@ class Group(Base, _DBTrackedObject):
         return f"<Group(id={self.id}, name={self.name})>"
 
     @classmethod
-    def of(cls, obj, with_deleted=False, flat_list=False) -> List['Group'] or DBList:
+    @filter_deleted
+    @listed
+    def of(cls, obj, flat_list=False) -> List['Group'] or List[List['Group']]:
         """
 
         :param flat_list: исключить из результата наборы групп (оставить только перечень групп)
@@ -968,25 +1040,20 @@ class Group(Base, _DBTrackedObject):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список групп, отоносящихся к объекту
         """
-        if isinstance(obj, (list, _AssociationList)):
-            return DBList([Group.of(o) for o in obj], unique=True, with_deleted=with_deleted, flat=flat_list)
-        elif isinstance(obj, Lesson):
-            return DBList(obj.groups, flat=flat_list)
-        elif isinstance(obj, Professor):
-            return DBList([frozenset(lesson.groups) if len(lesson.groups) > 1 else DBList(lesson.groups)
-                           for lesson in obj.lessons],
-                          flat=flat_list,
-                          unique=True,
-                          with_deleted=with_deleted)
 
-        elif isinstance(obj, Discipline):
-            return DBList([Group.of(lesson) for lesson in obj.lessons],
-                          unique=True,
-                          with_deleted=with_deleted)
-        elif isinstance(obj, Student):
-            return DBList(obj.groups, with_deleted=with_deleted)
-        else:
-            raise NotImplementedError(type(obj))
+        if isinstance(obj, Lesson):
+            return obj.groups
+
+        if isinstance(obj, Discipline):
+            return [Group.of(lesson) for lesson in obj.lessons]
+
+        if isinstance(obj, Student):
+            return obj.groups
+
+        if isinstance(obj, Professor):
+            return obj.groups()
+
+        raise NotImplementedError(type(obj))
 
 
 class Student(Base, _DBPerson):
@@ -1001,7 +1068,7 @@ class Student(Base, _DBPerson):
     parents = association_proxy('_parents', 'parent')
 
     _groups = relationship('StudentsGroups', backref=backref('student'))
-    groups = association_proxy('_groups', 'group', creator= lambda group: StudentsGroups(group=group))
+    groups = association_proxy('_groups', 'group', creator=lambda group: StudentsGroups(group=group))
 
     visitations = relationship("Visitation", backref=backref('student'))
 
@@ -1011,6 +1078,8 @@ class Student(Base, _DBPerson):
             f"middle_name={self.middle_name})>"
 
     @classmethod
+    @filter_deleted
+    @listed
     def of(cls, obj, with_deleted=False) -> List['Student']:
         """
 
@@ -1018,30 +1087,17 @@ class Student(Base, _DBPerson):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список студентов, отоносящихся к объекту
         """
-        if isinstance(obj, (list, _AssociationList, frozenset)):
-            return DBList([Student.of(o) for o in obj],
-                          flat=True,
-                          unique=True,
-                          with_deleted=with_deleted)
 
-        elif isinstance(obj, Group):
-            return DBList(sorted(obj.students, key=lambda student: student.last_name),
-                          with_deleted=with_deleted,
-                          unique=True)
+        if isinstance(obj, Group):
+            return sorted(obj.students, key=lambda student: student.last_name)
 
-        elif isinstance(obj, Lesson):
-            return DBList([Student.of(group) for group in obj.groups],
-                          flat=True,
-                          unique=True,
-                          with_deleted=with_deleted)
+        if isinstance(obj, Lesson):
+            return [Student.of(group) for group in obj.groups]
 
-        elif isinstance(obj, (Professor, Discipline)):
-            return DBList(map(lambda lesson: Student.of(lesson.groups), obj.lessons),
-                          flat=True,
-                          unique=True,
-                          with_deleted=with_deleted)
-        else:
-            raise NotImplementedError(type(obj))
+        if isinstance(obj, (Professor, Discipline)):
+            return [Student.of(lesson.groups) for lesson in obj.lessons]
+
+        raise NotImplementedError(type(obj))
 
 
 class Parent(Base, _DBPerson):
@@ -1055,6 +1111,7 @@ class Parent(Base, _DBPerson):
     students = association_proxy('_students', 'student')
 
     @classmethod
+    @listed
     def of(cls, obj, with_deleted=False) -> List['Parent']:
         """
 
@@ -1062,22 +1119,14 @@ class Parent(Base, _DBPerson):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список родителей, отоносящихся к объекту
         """
-        if isinstance(obj, (list, _AssociationList)):
-            return DBList([Parent.of(o) for o in obj],
-                          flat=True,
-                          unique=True)
 
-        elif isinstance(obj, Student):
-            return DBList(obj.parents)
+        if isinstance(obj, Student):
+            return obj.parents
 
-        elif isinstance(obj, Professor):
-            return DBList(Parent.of(Student.of(obj)),
-                          flat=True,
-                          unique=True,
-                          with_deleted=with_deleted)
+        if isinstance(obj, Professor):
+            return Parent.of(Student.of(obj))
 
-        else:
-            raise NotImplementedError(type(obj))
+        raise NotImplementedError(type(obj))
 
 
 if _new:
