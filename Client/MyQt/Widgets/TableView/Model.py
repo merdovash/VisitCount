@@ -151,7 +151,7 @@ class VisitModel(QAbstractTableModel):
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='setCurrentLesson')
     def setCurrentLesson(self, lessons: List[Lesson], lesson: Lesson):
         column = self.getColumnIndex(lesson)
-        if column > 0:
+        if column >= 0:
             self.current_lesson = lesson
             self.dataChanged.emit(
                 self.createIndex(0, column),
