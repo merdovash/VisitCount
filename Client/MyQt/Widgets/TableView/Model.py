@@ -282,6 +282,11 @@ class VisitModel(QAbstractTableModel):
         if role == Qt.BackgroundColorRole:
             if orientation == Qt.Vertical:
                 return [Color.primary_light, Color.secondary_light][Validate.card_id(self.students[p_int].card_id)]
+            if orientation == Qt.Horizontal:
+                if self.current_lesson == self.lessons[p_int]:
+                    return Color.primary
+                else:
+                    return QVariant()
         if role == self.ValueRole:
             if orientation == Qt.Horizontal:
                 return self.lessons[p_int]
