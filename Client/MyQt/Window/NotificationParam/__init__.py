@@ -120,7 +120,7 @@ class NotificationWindow(Singleton, QWidget, Ui_NotificationWindow, IDataBaseUse
         self.tableWidget_2.clear()
 
         students = Student.of(self.professor)
-        lists_of_parents = map(lambda student: student.parents, students)
+        lists_of_parents = Parent.of(self.professor)
         parents: List[Parent] = chain.from_iterable(lists_of_parents)
 
         for parent in parents:
