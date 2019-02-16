@@ -287,6 +287,9 @@ class VisitModel(QAbstractTableModel):
                 return self.lessons[p_int]
             if orientation == Qt.Vertical:
                 return self.students[p_int]
+        if role == Qt.ToolTipRole:
+            if orientation == Qt.Horizontal:
+                return self.lessons[p_int].repr()
 
     def flags(self, index: QModelIndex):
         if self.lessons[index.column()].completed:

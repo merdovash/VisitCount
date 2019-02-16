@@ -49,8 +49,12 @@ class DisciplineComboBox(MComboBox):
 
 class GroupComboBox(MComboBox):
     def filter_cond(self, group: List[Group]) -> Callable[[Any], bool]:
-        def cond(lesson: Lesson):
-            return set(lesson.groups) == set(group)
+        def cond(lesson: Lesson)->bool:
+            if len(group) == 1:
+                return bool(len(set(lesson.groups) & set(group)))
+            if len(group)>1:
+                return set(lesson.groups) == set(group)
+            raise ValueError('no groups found')
         return cond
 
     def extractor(self, lesson: Lesson) -> Any:

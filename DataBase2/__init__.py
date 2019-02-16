@@ -707,7 +707,13 @@ class Lesson(Base, _DBTrackedObject):
         return self._semester
 
     def repr(self):
-        return f"занятие {self.date} по дисциплине {self.discipline.name}, преподаватель: {self.professor.full_name()}"
+        from Domain.Data import names_of_groups
+
+        return f"""{self.type} {self.date}
+        дисциплина: {self.discipline.name}
+        преподаватель: {self.professor.full_name()}
+        группы: {names_of_groups(self.groups)}
+        кабинет: {self.room_id}"""
 
     @classmethod
     def of(cls, obj, intersect=False, with_deleted=False) -> List['Lesson']:
