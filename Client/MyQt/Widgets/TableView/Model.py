@@ -148,6 +148,12 @@ class VisitModel(QAbstractTableModel):
 
             self.item_changed.emit(index.row(), index.column())
 
+    @pyqtSlot('PyQt_PyObject', str, name='on_lesson_change')
+    def on_lesson_change(self, lesson, field):
+        index = self.getColumnIndex(lesson)
+        if field in ['type']:
+            self.headerDataChanged.emit(Qt.Horizontal, index, Qt.DisplayRole)
+
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='setCurrentLesson')
     def setCurrentLesson(self, lessons: List[Lesson], lesson: Lesson):
         column = self.getColumnIndex(lesson)

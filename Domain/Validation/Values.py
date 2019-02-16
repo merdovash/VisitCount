@@ -59,7 +59,10 @@ class Get:
         if isinstance(val, int):
             return val
         if isinstance(val, str):
-            return int(val)
+            try:
+                return int(val)
+            except ValueError:
+                return None
         if val is None:
             return None
         raise NotImplementedError(type(val))

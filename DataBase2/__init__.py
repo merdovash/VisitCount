@@ -618,10 +618,33 @@ class Lesson(Base, _DBTrackedObject):
     Lesson
     """
 
-    class Type:
+    class Type(int):
         Lecture = 0
         Lab = 1
         Practice = 2
+
+        def __init__(self, *args):
+            super().__init__()
+
+        def __str__(self):
+            return self.types()[self]
+
+        @classmethod
+        def types(cls):
+            return {
+                cls.Lecture: "Лекция",
+                cls.Practice: "Практика",
+                cls.Lab: "Лабораторная работа"
+            }
+
+        @classmethod
+        def from_str(cls, string: str):
+            for key, value in cls.types().items():
+                if value == string:
+                    return cls(key)
+            else:
+                raise ValueError(f'no such case: {string}')
+
 
     __tablename__ = 'lessons'
     __table_args__ = (
@@ -629,12 +652,27 @@ class Lesson(Base, _DBTrackedObject):
         _DBObject.__table_args__
     )
 
-    professor_id = Column(Integer, ForeignKey('professors.id'), nullable=False)
-    discipline_id = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
-    type = Column(Integer, nullable=False, default=Type.Lecture)
+    professor_id: int = Column(Integer, ForeignKey('professors.id'), nullable=False)
+    discipline_id: int = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
+    _type: int = Column('type', Integer, nullable=False, default=Type.Lecture)
     date: datetime = Column(DateTime, nullable=False)
-    completed = Column(Boolean, nullable=False, default=False)
-    room_id = Column(String(40), nullable=False)
+    completed: bool = Column(Boolean, nullable=False, default=False)
+    room_id: str = Column(String(40), nullable=False)
+
+    @property
+    def type(self) -> 'Lesson.Type':
+        return self.Type(self._type)
+
+    @type.setter
+    def type(self, value: 'Lesson.Type' or int or str):
+        if isinstance(value, int):
+            self._type = value
+        elif isinstance(value, str):
+            int_value = Get.int(value)
+            if int_value is not None:
+                self._type = int_value
+            else:
+                self._type = Lesson.Type.from_str(value)
 
     _groups = relationship('LessonsGroups', backref=backref('lesson'))
     groups = association_proxy('_groups', 'group',

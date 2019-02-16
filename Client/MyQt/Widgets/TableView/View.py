@@ -2,7 +2,7 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSignal, Qt, pyqtSlot, QPoint, QModelIndex
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QTableView, QHeaderView, QMenu, QMessageBox
+from PyQt5.QtWidgets import QTableView, QHeaderView, QMenu, QMessageBox, QInputDialog
 
 from Client.MyQt.Widgets.Dialogs.QRequesUncompleteLesson import QRequestUncompleteLesson
 from Client.MyQt.Widgets.TableView import VisitModel
@@ -21,6 +21,8 @@ class VisitView(QTableView):
     lesson_finish = pyqtSignal()
 
     lesson_started = False
+
+    lesson_changed = pyqtSignal('PyQt_PyObject', str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -163,6 +165,19 @@ class VisitView(QTableView):
                 msg
             )
 
+        def request_new_lesson_type(lesson):
+            result = QInputDialog().getItem(
+                self,
+                "Выберите новый тип занятия",
+                f"Выберите новый тип занятия из выпадающего спсика ниже.\nТекущий тип занятия {lesson.type}",
+                [Lesson.Type.types()[i] if i in Lesson.Type.types().keys() else ''
+                 for i in range(max(Lesson.Type.types().keys())+1)]
+            )
+            if result[1]:
+                lesson.type = result[0]
+                self.lesson_changed.emit(lesson, 'type')
+                lesson.session().commit()
+
         index = self.indexAt(pos)
 
         lesson = self.model().headerData(index.column(), Qt.Horizontal, VisitModel.ValueRole)
@@ -184,12 +199,17 @@ class VisitView(QTableView):
             menu.addAction(
                 'Отменить проведение',
                 lambda: request_type_of_uncompliting_lessons(lesson))
+            menu.addAction(
+                'Изменить тип занятия',
+                lambda: request_new_lesson_type(lesson)
+            )
 
         menu.popup(QCursor().pos())
 
     def setModel(self, model: VisitModel):
         super().setModel(model)
         self.set_current_lesson.connect(model.setCurrentLesson)
+        self.lesson_changed.connect(model.on_lesson_change)
 
     def model(self) -> VisitModel:
         return super().model()
