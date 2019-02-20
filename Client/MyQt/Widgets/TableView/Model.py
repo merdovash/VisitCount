@@ -123,7 +123,7 @@ class VisitModel(QAbstractTableModel):
         self.lessons: List[Lesson] = lessons
         self.students: List[Student] = students
 
-        self.current_lesson: Lesson = lessons[3]
+        self.current_lesson: Lesson = lessons[0]
 
     def setData(self, index: QModelIndex, value, role=None):
         if role == Qt.EditRole:

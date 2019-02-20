@@ -7,6 +7,7 @@ import pathlib
 import sys
 from abc import ABC
 from datetime import datetime
+from itertools import chain
 from typing import List, Union, Dict, Any, Type, Callable
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
@@ -1125,7 +1126,7 @@ class Student(Base, _DBPerson):
             return sorted(obj.students, key=lambda student: student.last_name)
 
         if isinstance(obj, Lesson):
-            return [Student.of(group) for group in obj.groups]
+            return list(chain.from_iterable([Student.of(group) for group in obj.groups]))
 
         if isinstance(obj, (Professor, Discipline)):
             return [Student.of(lesson.groups) for lesson in obj.lessons]

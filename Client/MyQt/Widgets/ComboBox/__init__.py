@@ -15,6 +15,7 @@ compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
 
 T = TypeVar('T')
 
+
 class MComboBox(QComboBox):
     image = QImage('Client/MyQt/Window/Main/icons/baseline_arrow_drop_down_black_18dp.png')
 
@@ -23,24 +24,36 @@ class MComboBox(QComboBox):
     hovered_pen = QPen(Color.primary)
     hovered_pen.setWidth(3)
 
-    current_changed = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
+    current_changed = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')  # real signature (List[Lesson], T)
 
-    def filter_cond(self, item)->Callable[[Any], bool]:
+    def filter_cond(self, item: T) -> Callable[[Lesson], bool]:
+        """
+        Фильтрует список занятий для соответсвия с item
+        :param item:
+        :return:
+        """
         raise NotImplementedError()
 
-    def extractor(self, item)-> Any:
+    def extractor(self, item: Lesson) -> T:
+        """
+        Вычленяет значение элемента из занятия
+        :param item:
+        """
         raise NotImplementedError()
 
-    def formatter(self, item)-> str:
+    def formatter(self, item: T) -> str:
         raise NotImplementedError()
 
-    def sorter(self, item) -> Any:
+    def sorter(self, item: T) -> Any:
         raise NotImplementedError()
 
     @pyqtSlot(int, name='resignal')
     def resignal(self):
         if self.lessons is not None:
-            self.current_changed.emit(list(filter(self.filter_cond(self.current()), self.lessons)), self.current())
+            self.current_changed.emit(
+                [lesson for lesson in self.lessons if self.filter_cond(self.current())(lesson)],
+                self.current()
+            )
 
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='on_parent_change')
     def on_parent_change(self, lessons, parent_value):
@@ -54,7 +67,7 @@ class MComboBox(QComboBox):
         super().__init__()
         self.setParent(parent)
         self.type = type_
-        self.lessons: List[Lesson] = None
+        self.lessons: List[Lesson] = list()
 
         self.currentIndexChanged.connect(self.resignal)
 
@@ -71,7 +84,10 @@ class MComboBox(QComboBox):
             super().addItems([self.formatter(i) for i in iterable])
 
     def current(self) -> T:
-        return self.items[self.currentIndex()]
+        try:
+            return self.items[self.currentIndex()]
+        except IndexError:
+            return None
 
     def clear(self):
         print('clear', type(self))
@@ -110,3 +126,8 @@ class MComboBox(QComboBox):
         self.addItems(items)
         self.blockSignals(False)
         self.resignal()
+
+    def loads(self, user):
+        self.lessons = Lesson.of(user)
+        self.on_parent_change(self.lessons, None)
+

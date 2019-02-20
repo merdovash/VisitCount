@@ -41,6 +41,30 @@ class Vector:
         return f"<Vector {len(self)} ({', '.join(str(i) for i in self.list_)})>"
 
 
+class NamedVector:
+    def __init__(self, **kwargs):
+        self._dict = kwargs
+
+    def __add__(self, other: 'NamedVector'):
+        assert self._dict.keys() == other._dict.keys()
+        return NamedVector(**{key: self._dict[key] + other._dict[key] for key in self._dict.keys()})
+
+    def __getitem__(self, item):
+        assert isinstance(item, int)
+        assert len(self._dict.keys()) < item
+        return self._dict[list(self._dict.keys())[item]]
+
+    @classmethod
+    def rate(cls, first, second):
+        return round(first * 100 / second) if second else 0
+
+    def __repr__(self):
+        return "<Vector ("+', '.join([f'{key}={value}' for key, value in self._dict.items()])+")>"
+
+    def __getattr__(self, item):
+        return self._dict[item]
+
+
 row = namedtuple('row', 'value lesson student')
 
 

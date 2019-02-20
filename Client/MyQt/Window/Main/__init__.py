@@ -5,24 +5,22 @@ TODO:
     * fix error on relogin after changing user
 """
 import datetime
-from typing import List, Callable
+from typing import List
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QDropEvent
 from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar, QMessageBox
 
 from Client.IProgram import IProgram
-from Client.MyQt.Widgets.Chart.QAnalysisDialog import QAnalysisDialog, PlotType
 from Client.MyQt.Widgets.LoadData import LoadingWizardWindow
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
+from Client.MyQt.Widgets.VisualData.VisualMenu import VisualWidget
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
-from DataBase2 import Professor, Lesson, Group, Discipline
-from Domain.Date import BisitorDateTime
-from Domain.Structures import Data
+from DataBase2 import Professor, Lesson
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
     ',')
@@ -122,46 +120,14 @@ class MainWindow(AbstractWindow):
         self._init_notification()
 
     def _init_menu_analysis(self):
-        self.analysis = []
-
-        def show(data: Callable[[], Data], type):
-            def _show():
-                d = QAnalysisDialog(
-                    data(),
-                    selector={'группы': Group.of(self.professor), 'дисциплины': Discipline.of(self.professor)},
-                    plot_styler=type)
-                self.analysis.append(d)
-
-                d.show()
-
-            return _show
+        def show():
+            if not hasattr(self, 'visual') or self.visual is None:
+                self.visual = VisualWidget(self.professor)
+            self.visual.show()
 
         analysis = self.menu_bar.addMenu("Анализ")
 
-        analysis_weeks = QAction("По неделям", self)
-        semester = BisitorDateTime.now().semester
-        analysis_weeks.triggered.connect(
-            show(
-                lambda: Data(professor=self.professor)
-                    .filter(lambda x: x.lesson.semester == semester)
-                    .group_by(lambda x: x.lesson.week),
-                PlotType.WEEK
-            )
-        )
-
-        analysis.addAction(analysis_weeks)
-
-        analysis_week_days = QAction("По дням недели", self)
-        analysis_week_days.triggered.connect(
-            show(
-                lambda: Data(professor=self.professor)
-                    .filter(lambda x: x.lesson.semester == semester)
-                    .group_by(group_by=lambda x: x.lesson.date.weekday()),
-                PlotType.WEEKDAY
-            )
-        )
-
-        analysis.addAction(analysis_week_days)
+        analysis.addAction("Просмотр", show)
 
     def _init_menu_lessons(self):
         lessons = self.menu_bar.addMenu("Занятия")

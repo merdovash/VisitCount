@@ -64,7 +64,8 @@ def safe(func):
 def listed(func):
     def __wrapper__(self, value, *args, **kwargs):
         if is_iterable(value):
-            res = [func(self, v, *args, **kwargs) for v in value]
+            result = [func(self, v, *args, **kwargs) for v in value]
+            res = list(set(chain.from_iterable(result)))
         else:
             res = func(self, value, *args, **kwargs)
 

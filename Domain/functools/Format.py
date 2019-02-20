@@ -92,7 +92,7 @@ def js_format(js: str, **kwargs):
     return js
 
 
-def agree_to_number(word, number):
+def agree_to_number(word: str, number: int)->str:
     morph = pymorphy2.MorphAnalyzer()
     word = morph.parse(word)[0]
     if number not in [-1, 1]:
