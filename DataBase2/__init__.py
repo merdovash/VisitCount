@@ -124,6 +124,36 @@ def is_None(x):
     return x in [None, 'None', 'null']
 
 
+class _ListedValues(int, IJSON):
+    __values__ = {}
+
+    def __new__(cls, inst):
+        if isinstance(inst, int):
+            return inst
+        elif isinstance(inst, str):
+            for key, value in cls.__values__.items():
+                if inst == value:
+                    return key
+        raise ValueError('unacceptable value')
+
+    def to_json(self):
+        return self
+
+    def __str__(self):
+        return self.__values__[self]
+
+    @classmethod
+    def types(cls):
+        return cls.__values__
+
+    @classmethod
+    def derived(self, obj)->Type:
+        if isinstance(obj, _DBObject) or issubclass(obj, _DBObject):
+            if hasattr(obj, 'Type'):
+                return obj.Type
+        raise ValueError(f'No type inside class {obj}')
+
+
 class _DBObject(IJSON):
     __table_args__ = {
         'mysql_engine': 'InnoDB',
@@ -147,12 +177,14 @@ class _DBObject(IJSON):
         return hash(f'{type(self).__name__}:{self.id}')
 
     @classmethod
-    def column_type(cls, name: str) -> callable:
+    def column_type(cls, name: str) -> callable or Type:
         """
         Возвращает функцию, которая воспроизводит класс объекта для атрибута name
         :param name: имя атрибута
         :return: callable
         """
+        if name == 'type':
+            return _ListedValues.derived(cls)
         python_type = cls.table().c[name].type.python_type
         if python_type == datetime:
             return Get.datetime
@@ -693,28 +725,26 @@ class Lesson(Base, _DBTrackedObject):
     Lesson
     """
 
-    class Type(int):
+    class Type(_ListedValues):
         Lecture = 0
         Lab = 1
         Practice = 2
+
+        __values__ = {
+            Lecture: "Лекция",
+            Practice: "Практика",
+            Lab: "Лабораторная работа"
+        }
 
         def __init__(self, *args):
             super().__init__()
 
         def __str__(self):
-            return self.types()[self]
-
-        @classmethod
-        def types(cls):
-            return {
-                cls.Lecture: "Лекция",
-                cls.Practice: "Практика",
-                cls.Lab: "Лабораторная работа"
-            }
+            return self.__values__[self]
 
         @classmethod
         def from_str(cls, string: str):
-            for key, value in cls.types().items():
+            for key, value in cls.__values__.items():
                 if value == string:
                     return cls(key)
             else:

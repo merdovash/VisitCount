@@ -85,4 +85,4 @@ def filter_deleted(func):
 if __name__ == '__main__':
     from DataBase2 import Parent, Professor, Student, Lesson, Group
 
-    print(Group.of(Student.get(id=1)))
+    print(Group.of(Professor.get(id=1)))

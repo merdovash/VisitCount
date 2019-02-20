@@ -122,6 +122,7 @@ class Updater(ClientWorker):
         # загрузка новых записей
         progress_bar.set_part(PART_SIZE, len(data.updates.created), "Загрузка полученных данных")
         data.updates.created.foreach(creating_new_items)
+        session.flush()
 
         # применение изменений записей
         progress_bar.set_part(PART_SIZE, len(data.updates.updated), "Принятие изменений")

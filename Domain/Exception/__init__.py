@@ -1,6 +1,9 @@
 from typing import Callable
 
-from PyQt5.QtWidgets import QMessageBox
+try:
+    from PyQt5.QtWidgets import QMessageBox
+except ModuleNotFoundError:
+    pass
 
 
 class BisitorException(Exception):

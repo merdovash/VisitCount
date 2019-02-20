@@ -3,7 +3,6 @@ Flask-Materialize
 pymorphy2
 sqlalchemy
 pyserial
-numpy
 pandas
 mysqlclient
 premailer

@@ -68,7 +68,7 @@ class SendUpdatesWidget(QWidget):
         updates = Changes(**professor.updates())
 
         if len(updates):
-            def on_finish_update(self):
+            def on_finish_update():
                 self.table.setModel(UpdatesModel(Changes(**professor.updates)))
 
             widget = RequestWidget(
