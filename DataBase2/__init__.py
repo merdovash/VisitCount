@@ -128,12 +128,15 @@ class _ListedValues(int, IJSON):
     __values__ = {}
 
     def __new__(cls, inst):
+        # assert all(isinstance(key, int) for key in cls.__values__),
         if isinstance(inst, int):
-            return inst
+            return super(_ListedValues, cls).__new__(cls, inst)
         elif isinstance(inst, str):
             for key, value in cls.__values__.items():
                 if inst == value:
-                    return key
+                    return super(_ListedValues, cls).__new__(cls, key)
+            if inst.isnumeric():
+                return  super(_ListedValues, cls).__new__(cls, int(inst))
         raise ValueError('unacceptable value')
 
     def to_json(self):
@@ -813,7 +816,7 @@ class Lesson(Base, _DBTrackedObject):
     def repr(self):
         from Domain.Data import names_of_groups
 
-        return f"""{self.type} {self.date}
+        return f"""{str(self.type)} {self.date}
         дисциплина: {self.discipline.name}
         преподаватель: {self.professor.full_name()}
         группы: {names_of_groups(self.groups)}

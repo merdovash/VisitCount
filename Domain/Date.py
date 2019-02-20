@@ -26,7 +26,7 @@ def study_week(date: datetime = datetime.now()) -> int:
         return week(date) + (week(datetime(date.year - 1, 12, 31)) - week(datetime(date.year - 1, 9, 1))) + 1
 
     elif 2 <= month < 9:
-        start_date = datetime(date.year, 2, 4)
+        start_date = datetime(date.year, 2, 7)
         while start_date.weekday() != 1:
             start_date += timedelta(1)
         return week(date) - week(start_date) + 1
