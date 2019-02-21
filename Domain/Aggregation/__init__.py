@@ -5,6 +5,7 @@ from pandas import DataFrame
 
 from DataBase2 import Professor, Group, Lesson, Student, Visitation, Discipline, LessonsGroups
 from Domain.Data import names_of_groups
+from Domain.Structures import NamedVector
 from Domain.functools.Decorator import memoize
 from Domain.functools.Format import format_name
 
@@ -35,7 +36,7 @@ class VisitationsRateByStudents:
         self._data = [lesson for lesson in self._data if func(lesson)]
         return self
 
-    def avg(self, group_by: Callable[[Lesson], Any])->dict:
+    def avg(self, group_by: Callable[[Lesson], Any]) -> dict:
         temp = defaultdict(list)
 
         students_by_groups = {}
@@ -96,7 +97,8 @@ class Lessons:
             visit_rates.append(row)
 
         data_frame = DataFrame(visit_rates,
-                       columns=[Column.date, Column.type, Column.discipline, Column.visit_count, Column.student_count])
+                               columns=[Column.date, Column.type, Column.discipline, Column.visit_count,
+                                        Column.student_count])
         return data_frame
 
 
@@ -126,7 +128,7 @@ class GroupAggregation:
         total_count = 0
 
         for i, group in enumerate(groups):
-            group_data = []
+            group_data = NamedVector(visit=0, total=0)
             for lesson in lessons[i]:
                 if lesson.completed:
                     # посещение занятия группой находим как пересечение наборов посещений занятия и посещений группы
@@ -136,13 +138,14 @@ class GroupAggregation:
                     visits = 0
                     total = 0
 
-                group_data.append([visits, total])
+                group_data += NamedVector(visit=visits, total=total)
                 visits_count += visits
                 total_count += total
             else:
-                data[i] = [round(sum(map(lambda x: x[0], group_data)) / sum(map(lambda x: x[1], group_data)) * 100, 1)]
+                data[i] = [NamedVector.rate(group_data.visit, group_data.total)]
 
-        data_frame = DataFrame(data, index=list(map(lambda group: names_of_groups(group), groups)), columns=['Посещения. %'])
+        data_frame = DataFrame(data, index=list(map(lambda group: names_of_groups(group), groups)),
+                               columns=['Посещения. %'])
 
         # итоговый процент посещений
         total = round(visits_count / total_count * 100, 2)
@@ -258,7 +261,7 @@ class StudentAggregator:
             if lesson_count == 0:
                 data[Column.visit_rate].append(0)
             else:
-                data[Column.visit_rate].append(round(visit_count / lesson_count * 100))
+                data[Column.visit_rate].append(round(visit_count / lesson_count * 100) if lesson_count > 0 else 0)
 
         data_frame = DataFrame(data)
 
