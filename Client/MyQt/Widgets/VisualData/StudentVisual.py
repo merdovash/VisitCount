@@ -88,9 +88,9 @@ class StudentVisual(_VisualData):
                                 max_index = len(keys)
                             data: Dict[int, int] = {}
                             for index, key in enumerate(keys):
-                                visit = sum([sum(groups[k]) for k in keys[:index]])
+                                visit = sum([sum(groups[k]) for k in keys[:index+1]])
                                 total = index + 1
-                                data[index] = round(visit / total * 100)
+                                data[index+1] = round(visit / total * 100)
 
                             self.plot.add_plot(data, discipline.name)
                         self.plot.horizontal_ax.set_ticks(range(max_index))
