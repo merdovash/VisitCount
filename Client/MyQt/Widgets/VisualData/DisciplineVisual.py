@@ -61,6 +61,8 @@ class DisciplineVisual(_VisualData):
                     self.plot.horizontal_ax.set_ticks(range(max(18, max(visitations.keys()) if len(visitations) else 0)))
                 else:
                     self.plot.horizontal_ax.set_ticks(visitations.keys())
+                self.plot.vertical_ax.set_label("Посещения, %")
+                self.plot.horizontal_ax.set_label("Номер недели")
                 data_layout.insertWidget(0, self.plot, stretch=9)
 
             visitations = defaultdict(lambda: NamedVector(visit=0, total=0))

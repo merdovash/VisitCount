@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Callable, List
 
 from PyQt5.QtCore import pyqtSlot
@@ -19,7 +20,9 @@ class SemesterComboBox(MComboBox):
         return cond
 
     def formatter(self, semester) -> str:
-        return str(semester)
+        year = datetime(2008+(semester-2)//2, 1, 1).year
+        date = f"{year}-{year+1} учебный год, {1+semester%2} семестр"
+        return date
 
     def sorter(self, semester) -> Any:
         return semester

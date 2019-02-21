@@ -30,7 +30,9 @@ class VisualWidget(QWidget):
         for cls in _VisualData.subclasses():
             layout = QHBoxLayout()
             btn = QPushButton(cls.name)
+            btn.setFixedWidth(150)
             label = QLabel(cls.description)
+            label.setWordWrap(True)
 
             def show(cls):
                 def __show__():
@@ -40,8 +42,8 @@ class VisualWidget(QWidget):
 
             btn.clicked.connect(show(cls))
 
-            layout.addWidget(btn, alignment=Qt.AlignHCenter, stretch=1)
-            layout.addWidget(label, alignment=Qt.AlignLeft, stretch=6)
+            layout.addWidget(btn, alignment=Qt.AlignHCenter, stretch=2)
+            layout.addWidget(label, alignment=Qt.AlignLeft, stretch=3)
 
             main_layout.addLayout(layout, stretch=1)
 

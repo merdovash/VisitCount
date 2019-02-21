@@ -76,6 +76,8 @@ class GroupVisual(_VisualData):
 
             self.plot.vertical_ax.set_ticks(range(100))
             self.plot.horizontal_ax.set_ticks(range(max_week))
+            self.plot.vertical_ax.set_label("Посещения, %")
+            self.plot.horizontal_ax.set_label("Номер недели")
             # self.plot.set_tooltip_func(
             #     lambda col, value, discipline_name:
             #     f"{agree_to_number('группа', len(groups))} {names_of_groups(groups)}\n"

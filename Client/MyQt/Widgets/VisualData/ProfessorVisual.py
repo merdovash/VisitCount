@@ -52,6 +52,8 @@ class ProfessorVisual(_VisualData):
                 self.plot.add_plot(data, name=professor.full_name())
                 self.plot.vertical_ax.set_ticks(range(100))
                 self.plot.horizontal_ax.set_ticks(range(max(18, max(data.keys()) if len(data) else 0)))
+                self.plot.vertical_ax.set_label("Посещения, %")
+                self.plot.horizontal_ax.set_label("Номер недели")
                 data_layout.insertWidget(0, self.plot, stretch=9)
 
             visitations, total = self.calculate_visitations(lessons)

@@ -12,6 +12,11 @@ class _VisualData(QWidget):
     name = None
     description = None
 
+    def __init__(self, flags=None, *args, **kwargs):
+        super().__init__(flags, *args, **kwargs)
+
+        self.setMinimumSize(500, 300)
+
     def __new__(cls, *args, **kwargs):
         assert all(x is not None for x in [cls.group_by, cls.name, cls.description])
         return super(_VisualData, cls).__new__(cls, *args, **kwargs)
@@ -42,3 +47,4 @@ class _VisualData(QWidget):
                     total=len(Student.of(lesson))
                 )
         return visitations, completed
+
