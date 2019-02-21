@@ -1079,7 +1079,7 @@ class Group(Base, _DBTrackedObject):
             return obj.groups
 
         if isinstance(obj, Discipline):
-            return [Group.of(lesson) for lesson in obj.lessons]
+            return Group.of(obj.lessons)
 
         if isinstance(obj, Student):
             return obj.groups
