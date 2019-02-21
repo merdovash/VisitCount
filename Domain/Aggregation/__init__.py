@@ -134,13 +134,10 @@ class GroupAggregation:
                     # посещение занятия группой находим как пересечение наборов посещений занятия и посещений группы
                     visits = len(set(Visitation.of(lesson)).intersection(set(Visitation.of(group))))
                     total = students_count[i]
-                else:
-                    visits = 0
-                    total = 0
+                    group_data += NamedVector(visit=visits, total=total)
 
-                group_data += NamedVector(visit=visits, total=total)
-                visits_count += visits
-                total_count += total
+                    visits_count += visits
+                    total_count += total
             else:
                 data[i] = [NamedVector.rate(group_data.visit, group_data.total)]
 
@@ -182,9 +179,10 @@ class DisciplineAggregator:
 
         data_frame = data_frame.drop(['visit', 'total'], axis=1)
 
-        data_frame[Column.discipline] = data_frame.index
+        # data_frame[Column.discipline] = data_frame.index
+        # data_frame = data_frame.reset_index()
 
-        return data_frame[[Column.discipline, 'Посещения, %', 'Всего занятий', 'Проведено занятий']]
+        return data_frame[['Посещения, %', 'Всего занятий', 'Проведено занятий']]
 
 
 class WeekDaysAggregation:
