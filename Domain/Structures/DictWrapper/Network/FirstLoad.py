@@ -29,6 +29,7 @@ class ServerFirstLoadData(Structure):
             self.auth = kwargs.pop('Auth')
         else:
             raise ValueError('auth is required')
+        self.auth = {key: Auth.column_type(key)(value) for key, value in self.auth.items()}
 
         if 'professor' in kwargs:
             self.professor = kwargs.pop('professor')

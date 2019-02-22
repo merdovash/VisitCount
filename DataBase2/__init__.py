@@ -5,7 +5,6 @@ safsdf
 import os
 import pathlib
 import sys
-from abc import ABC
 from datetime import datetime
 from itertools import chain
 from typing import List, Union, Dict, Any, Type, Callable
@@ -16,6 +15,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool
 from sqlalchemy.sql import ClauseElement
+
+from DataBase2.SessionInterface import ISession
 
 from DataBase2.config2 import Config
 from Domain.ArgPars import get_argv
@@ -62,7 +63,7 @@ def create_threaded():
 
 def create():
     _new = False
-    if root == 'run_server.py' and os.name != 'nt':
+    if root != 'run_client.py' and os.name != 'nt':
         engine = create_engine(Config.connection_string,
                                pool_pre_ping=True,
                                echo=True if get_argv('--db-echo') else False,
@@ -97,27 +98,6 @@ def create():
 
 Session, Base, metadata, engine, _new = create()
 
-
-class ISession:
-    def commit(self):
-        pass
-
-    def query(self, table: Type['_DBObject']):
-        pass
-
-    def flush(self):
-        pass
-
-    def expire_all(self):
-        pass
-
-    def add(self, obj: '_DBObject'):
-        pass
-
-    def close(self):
-        pass
-
-
 Session: Callable[[], ISession] = Session
 
 
@@ -137,11 +117,11 @@ class _ListedValues(int, IJSON):
                 if inst == value:
                     return super(_ListedValues, cls).__new__(cls, key)
             if inst.isnumeric():
-                return  super(_ListedValues, cls).__new__(cls, int(inst))
+                return super(_ListedValues, cls).__new__(cls, int(inst))
         raise ValueError('unacceptable value')
 
     def to_json(self):
-        return self
+        return self.__repr__()
 
     def __str__(self):
         return self.__values__[self]
@@ -151,11 +131,19 @@ class _ListedValues(int, IJSON):
         return cls.__values__
 
     @classmethod
-    def derived(self, obj)->Type:
+    def derived(self, obj) -> Type:
         if isinstance(obj, _DBObject) or issubclass(obj, _DBObject):
             if hasattr(obj, 'Type'):
                 return obj.Type
         raise ValueError(f'No type inside class {obj}')
+
+    @classmethod
+    def from_str(cls, string: str):
+        for key, value in cls.__values__.items():
+            if value == string:
+                return cls(key)
+        else:
+            raise ValueError(f'no such case: {string}')
 
 
 class _DBObject(IJSON):
@@ -221,6 +209,7 @@ class _DBObject(IJSON):
         return {
             name: getattr(self, name)
             for name in self.table().c.keys()
+            if len(name)<16
         }
 
     def dict(self):
@@ -235,6 +224,7 @@ class _DBObject(IJSON):
         Возвращает строковое представление json объекта, отображабщего объект
         :return: str
         """
+
         def str_value(key):
             return f'"{self.column_str(key)(r[key])}"'
 
@@ -382,14 +372,56 @@ class _DBTrackedObject(_DBObject):
         return self._is_deleted
 
 
-class _DBPerson(_DBTrackedObject):
+class _DBEmailObject:
+
+    email = Column(String(200))
+
+    # итоговые посещения по всем студентам
+    students_visitations_total = Column(Boolean, default=False)
+    # итоговые посещения всех студентов по дисциплнам
+    students_visitations_total_by_disciplines = Column(Boolean, default=False)
+    # динамика посещений всех студентов
+    students_visitations_dynamic = Column(Boolean, default=False)
+    students_loss = Column(Boolean, default=False)
+
+    groups_visitations_total = Column(Boolean, default=False)  # итоговые посещения по всем группам
+    group_visitations_dynamic = Column(Boolean, default=False)
+
+    professors_visitations_total = Column(Boolean, default=False)  # итоговые посещения по всем преподавателям
+    professors_visitations_dynamic = Column(Boolean, default=False)
+
+    disciplines_visitations_total = Column(Boolean, default=False)  # итоговые посещения по всем дисциплинам
+    disciplines_visitations_dynamic = Column(Boolean, default=False)
+    discipline_visitations_total_by_professor = Column(Boolean, default=False)  # посещения дисциплин по преподавателям
+    discipline_visitations_total_by_groups = Column(Boolean, default=False)  # посещения дисциплин по группам
+
+    auto = Column(Boolean, default=False)
+    last_auto = Column(DateTime)
+    interval_auto_hours = Column(Integer)
+
+    def start_auto(self, target_time: datetime.time, interval_hours: int):
+        self.auto = True
+        now = datetime.now()
+        self.last_auto = datetime(now.year, now.month, now.day) + target_time
+        self.interval_auto_hours = interval_hours
+
+    def stop_auto(self):
+        self.auto = False
+
+    @classmethod
+    def email_subclasses(cls)-> List[Type['_DBEmailObject']]:
+        res = [cls]
+        for class_ in cls.__subclasses__():
+            res.extend(class_.email_subclasses())
+        return res
+
+
+class _DBPerson(_DBEmailObject, _DBTrackedObject):
     type_name: str
 
     last_name = Column(String(50), nullable=False)
     first_name = Column(String(50), nullable=False)
     middle_name = Column(String(50), default="")
-    sex = Column(Boolean, default=True)
-    email = Column(String(200))
     _card_id = Column('card_id', String(16), unique=True)
 
     _auth = None
@@ -451,6 +483,56 @@ class _DBPerson(_DBTrackedObject):
         if hasattr(self, '_auth') and self._auth is not None:
             return self._auth
         raise UnauthorizedError()
+
+
+class _DBNamedObject:
+    name: str = Column(String(100), nullable=False)
+    abbreviation: str = Column(String(16))
+
+    def full_name(self) -> str:
+        return self.name
+
+    def short_name(self) -> str:
+        if is_None(self.abbreviation):
+            return self.name
+        return self.abbreviation
+
+
+class Faculty(Base, _DBObject, _DBNamedObject, _DBEmailObject):
+    __tablename__ = "faculties"
+
+
+class FacultyAdministrations(Base, _DBObject):
+    __tablename__ = "faculty_administrations"
+
+    faculty_id = Column('Faculty', ForeignKey('faculties.id'))
+    admin_id = Column('Administration', ForeignKey('administrations.id'))
+
+    faculty = relationship('Faculty', backref=backref('_admins'))
+    admin = relationship('Administration', backref=backref('_faculties'))
+
+
+class Department(Base, _DBObject, _DBNamedObject, _DBEmailObject):
+    __tablename__ = "departments"
+
+    faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
+
+    faculty = relationship('Faculty', backref=backref('departments'))
+    professors = association_proxy('_professors', 'professor')
+
+
+class DepartmentProfessors(Base, _DBObject):
+    __tablename__ = "departments_professors"
+    __table_args__ = (
+        UniqueConstraint('department_id', 'professor_id', name='departments_professors_UK'),
+        _DBObject.__table_args__
+    )
+
+    department_id = Column(Integer, ForeignKey('departments.id'))
+    professor_id = Column(Integer, ForeignKey('professors.id'))
+
+    department = relationship('Department', backref=backref('_professors'))
+    professor = relationship('Professor', backref=backref('_department'))
 
 
 class StudentsGroups(Base, _DBTrackedObject):
@@ -604,7 +686,7 @@ class UserType(int):
     ADMIN = 3
 
 
-class Auth(Base, _DBObject):
+class Auth(Base, _DBTrackedObject):
     """
     Таблица пользователей
     """
@@ -688,16 +770,16 @@ class Auth(Base, _DBObject):
         }
 
 
-class Discipline(Base, _DBTrackedObject):
+class Discipline(Base, _DBTrackedObject, _DBNamedObject):
     """
     Таблица дисциплин
     """
     __tablename__ = 'disciplines'
 
-    name = Column(String(40), nullable=False)
-    full_name = Column(String(200))
+    department_id = Column(Integer, ForeignKey('departments.id'))
 
-    lessons = relationship('Lesson', backref=backref('discipline'))
+    lessons: List['Lesson'] = relationship('Lesson', backref=backref('discipline'))
+    department: Department = relationship('Department', backref=backref('disciplines'))
 
     def __repr__(self):
         return f"<Discipline(id={self.id}," \
@@ -740,20 +822,6 @@ class Lesson(Base, _DBTrackedObject):
             Lab: "Лабораторная работа"
         }
 
-        def __init__(self, *args):
-            super().__init__()
-
-        def __str__(self):
-            return self.__values__[self]
-
-        @classmethod
-        def from_str(cls, string: str):
-            for key, value in cls.__values__.items():
-                if value == string:
-                    return cls(key)
-            else:
-                raise ValueError(f'no such case: {string}')
-
     __tablename__ = 'lessons'
     __table_args__ = (
         UniqueConstraint('professor_id', 'date', name='lesson_UK'),
@@ -766,6 +834,8 @@ class Lesson(Base, _DBTrackedObject):
     date: datetime = Column(DateTime, nullable=False)
     completed: bool = Column(Boolean, nullable=False, default=False)
     room_id: str = Column(String(40), nullable=False)
+
+    discipline: Discipline
 
     @property
     def type(self) -> 'Lesson.Type':
@@ -909,7 +979,7 @@ class Administration(Base, _DBPerson):
         raise NotImplementedError(type(obj))
 
 
-class Professor(_DBPerson, Base):
+class Professor(Base, _DBPerson):
     """
     Таблица преподавателей
     """
@@ -922,7 +992,9 @@ class Professor(_DBPerson, Base):
     lessons: List[Lesson] = relationship("Lesson", backref=backref('professor'), order_by="Lesson.date")
 
     _admins = relationship('NotificationParam', backref="professor")
-    admins = association_proxy('_admins', 'admin')
+    admins: List[Administration] = association_proxy('_admins', 'admin')
+
+    departments: List[Department] = association_proxy('_departments', 'department')
 
     _auth: Auth = None
 
@@ -1046,19 +1118,21 @@ class NotificationParam(Base, _DBTrackedObject):
             f"active={self.active})>"
 
 
-class Group(Base, _DBTrackedObject):
+class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
     """
     Таблица групп
     """
     __tablename__ = 'groups'
 
-    name = Column(String(40))
+    faculty_id = Column(Integer, ForeignKey('faculties.id'))
+
+    faculty = relationship('Faculty', backref=backref('groups'))
 
     _students = relationship('StudentsGroups', backref=backref('group'))
-    students = association_proxy('_students', 'student')
+    students: List['Student'] = association_proxy('_students', 'student')
 
     _lessons = relationship('LessonsGroups', backref=backref('group'))
-    lessons = association_proxy('_lessons', 'lesson')
+    lessons: List[Lesson] = association_proxy('_lessons', 'lesson')
 
     def __repr__(self):
         return f"<Group(id={self.id}, name={self.name})>"
@@ -1071,7 +1145,6 @@ class Group(Base, _DBTrackedObject):
 
         :param flat_list: исключить из результата наборы групп (оставить только перечень групп)
         :param obj: объект или спсиок объектов базы данных
-        :param with_deleted: включать ли в список удаленные объекты
         :return: список групп, отоносящихся к объекту
         """
 
@@ -1099,12 +1172,12 @@ class Student(Base, _DBPerson):
     __tablename__ = 'students'
 
     _parents = relationship('StudentsParents', backref=backref('student'))
-    parents = association_proxy('_parents', 'parent')
+    parents: List['Parent'] = association_proxy('_parents', 'parent')
 
     _groups = relationship('StudentsGroups', backref=backref('student'))
-    groups = association_proxy('_groups', 'group', creator=lambda group: StudentsGroups(group=group))
+    groups: List[Group] = association_proxy('_groups', 'group', creator=lambda group: StudentsGroups(group=group))
 
-    visitations = relationship("Visitation", backref=backref('student'))
+    visitations: List[Visitation] = relationship("Visitation", backref=backref('student'))
 
     def __repr__(self):
         return f"<Student(id={self.id}, card_id={self.card_id}," \
@@ -1142,7 +1215,7 @@ class Parent(Base, _DBPerson):
     type_name = "Родитель"
 
     _students = relationship("StudentsParents", backref=backref('parent'))
-    students = association_proxy('_students', 'student')
+    students: List[Student] = association_proxy('_students', 'student')
 
     @classmethod
     @listed

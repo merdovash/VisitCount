@@ -6,7 +6,8 @@ from typing import List, Tuple
 import xlrd
 from docx import Document
 
-from DataBase2 import Professor, Session, Discipline, Group, Lesson, Student, ISession
+from DataBase2 import Professor, Session, Discipline, Group, Lesson, Student
+from DataBase2.SessionInterface import ISession
 from Domain.Loader import WordReader, ExcelReader, Reader
 from Domain.Validation.Values import Get
 

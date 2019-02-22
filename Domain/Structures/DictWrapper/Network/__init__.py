@@ -30,7 +30,8 @@ class TablesData(HiddenStructure):
                 class_: Type[_DBTrackedObject] = _DBObject.class_(class_name)
 
                 for item_dict in self._data[class_name]:
-                    callback({key: class_.column_type(key)(value) for key, value in item_dict.items()}, class_)
+                    if item_dict is not None:
+                        callback({key: class_.column_type(key)(value) for key, value in item_dict.items()}, class_)
 
     def __init__(self, data: DBSlice):
         self._data: DBSlice = data
