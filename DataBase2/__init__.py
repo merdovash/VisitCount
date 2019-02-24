@@ -13,8 +13,9 @@ from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String,
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
-from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool
+from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool, QueuePool
 from sqlalchemy.sql import ClauseElement
+from sqlalchemy.util import ThreadLocalRegistry
 
 from DataBase2.SessionInterface import ISession
 
@@ -24,7 +25,7 @@ from Domain.Date import study_week, study_semester
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException, \
     UnauthorizedError
 from Domain.Validation.Values import Get
-from Domain.functools.Decorator import listed, filter_deleted
+from Domain.functools.Decorator import listed, filter_deleted, sorter
 from Domain.functools.List import DBList
 from Parser import IJSON
 
@@ -63,12 +64,14 @@ def create_threaded():
 
 def create():
     _new = False
-    if root != 'run_client.py' and os.name != 'nt':
+    mysql = root != 'run_client.py' and os.name != 'nt'
+    if mysql:
         engine = create_engine(Config.connection_string,
-                               pool_pre_ping=True,
-                               echo=True if get_argv('--db-echo') else False,
-                               poolclass=NullPool,
-                               pool_recycle=3600)
+                               pool_pre_ping=False,
+                               echo=False,
+                               poolclass=QueuePool,
+                               pool_recycle=3600,
+                               connect_args=dict(use_unicode=True))
 
     else:
         db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db2.db'))
@@ -89,7 +92,10 @@ def create():
 
     Base = declarative_base(bind=engine)
 
-    Session = scoped_session(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
+    if mysql:
+        Session = ThreadLocalRegistry(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
+    else:
+        Session = scoped_session(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
 
     metadata = Base.metadata
 
@@ -372,7 +378,7 @@ class _DBTrackedObject(_DBObject):
         return self._is_deleted
 
 
-class _DBEmailObject:
+class _DBEmailObject(_DBObject):
 
     email = Column(String(200))
 
@@ -485,7 +491,7 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         raise UnauthorizedError()
 
 
-class _DBNamedObject:
+class _DBNamedObject(_DBObject):
     name: str = Column(String(100), nullable=False)
     abbreviation: str = Column(String(16))
 
@@ -497,9 +503,31 @@ class _DBNamedObject:
             return self.name
         return self.abbreviation
 
+    def __repr__(self):
+        return f"<{type(self).__name__} (name={self.name})>"
 
-class Faculty(Base, _DBObject, _DBNamedObject, _DBEmailObject):
+
+class Faculty(Base, _DBNamedObject, _DBEmailObject):
     __tablename__ = "faculties"
+
+    groups: List['Group'] = relationship('Group', backref=backref('faculty'))
+
+    @classmethod
+    @listed
+    def of(cls, obj)-> List['Faculty']:
+        if isinstance(obj, Student):
+            return Faculty.of(Group.of(obj))
+
+        if isinstance(obj, Group):
+            return [obj.faculty]
+
+        if isinstance(obj, Discipline):
+            return Faculty.of(obj.department)
+
+        if isinstance(obj, Department):
+            return [obj.faculty]
+
+        raise NotImplementedError()
 
 
 class FacultyAdministrations(Base, _DBObject):
@@ -512,13 +540,15 @@ class FacultyAdministrations(Base, _DBObject):
     admin = relationship('Administration', backref=backref('_faculties'))
 
 
-class Department(Base, _DBObject, _DBNamedObject, _DBEmailObject):
+class Department(Base, _DBNamedObject, _DBEmailObject):
     __tablename__ = "departments"
 
     faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
 
-    faculty = relationship('Faculty', backref=backref('departments'))
-    professors = association_proxy('_professors', 'professor')
+    faculty: Faculty = relationship('Faculty', backref=backref('departments'))
+    professors: List['Professor'] = association_proxy('_professors', 'professor')
+
+    disciplines: List['Discipline']
 
 
 class DepartmentProfessors(Base, _DBObject):
@@ -642,25 +672,23 @@ class Visitation(Base, _DBTrackedObject):
             f' lesson_id={self.lesson_id})>'
 
     @classmethod
-    def of(cls, obj, with_deleted=False) -> List['Visitation']:
+    @filter_deleted
+    @listed
+    def of(cls, obj) -> List['Visitation']:
         """
 
         :param obj: объект или список объектов базы данных
-        :param with_deleted: включать ли удаленные объекты в список
         :return: список посещений объекта
         """
-        if isinstance(obj, (list, _AssociationList, frozenset)):
-            return DBList([Visitation.of(sub_obj) for sub_obj in obj], flat=True, unique=True,
-                          with_deleted=with_deleted)
 
         if isinstance(obj, (Student, Lesson)):
-            return DBList(obj.visitations, with_deleted=with_deleted)
+            return obj.visitations
 
         if isinstance(obj, Group):
-            return DBList(Visitation.of(obj.students), flat=True, with_deleted=with_deleted)
+            return Visitation.of(obj.students)
 
         if isinstance(obj, (Professor, Discipline)):
-            return DBList([sub_obj.visitations for sub_obj in obj.lessons], flat=True, with_deleted=with_deleted)
+            return Visitation.of(Lesson.of(obj))
 
         raise NotImplementedError(type(obj))
 
@@ -777,31 +805,35 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
     __tablename__ = 'disciplines'
 
     department_id = Column(Integer, ForeignKey('departments.id'))
+    department: Department = relationship('Department', backref=backref('disciplines'))
 
     lessons: List['Lesson'] = relationship('Lesson', backref=backref('discipline'))
-    department: Department = relationship('Department', backref=backref('disciplines'))
+    # department: Department
 
     def __repr__(self):
         return f"<Discipline(id={self.id}," \
             f" name={self.name})>"
 
     @classmethod
-    def of(cls, obj, with_deleted=False) -> List['Discipline']:
+    @filter_deleted
+    @listed
+    def of(cls, obj) -> List['Discipline']:
         """
 
         :param obj: объект или список объектов базы данных
-        :param with_deleted: включать ли удаленные объекты в список
         :return: список дисциплин объекта
         """
-        if isinstance(obj, (list, _AssociationList)):
-            return DBList([Discipline.of(sub_obj) for sub_obj in obj], flat=True, unique=True)
-
         if isinstance(obj, Lesson):
-            return DBList([obj.discipline], with_deleted=with_deleted)
+            return [obj.discipline]
 
         if isinstance(obj, Professor):
-            return DBList([lesson.discipline for lesson in obj.lessons], flat=True, unique=True,
-                          with_deleted=with_deleted)
+            return [lesson.discipline for lesson in obj.lessons]
+
+        if isinstance(obj, Student):
+            return Discipline.of(Lesson.of(obj))
+
+        if isinstance(obj, Department):
+            return obj.disciplines
 
         raise NotImplementedError(type(obj))
 
@@ -894,39 +926,21 @@ class Lesson(Base, _DBTrackedObject):
         кабинет: {self.room_id}"""
 
     @classmethod
-    def of(cls, obj, intersect=False, with_deleted=False) -> List['Lesson']:
+    @filter_deleted
+    @listed
+    def of(cls, obj, intersect=False) -> List['Lesson']:
         """
 
         :param intersect:
         :param obj: объект или спсиок объектов базы данных
-        :param with_deleted: включать ли в список удаленные объекты
         :return: список родителей, отоносящихся к объекту
         """
-        if isinstance(obj, (list, _AssociationList, frozenset)):
-            if intersect:
-                lessons = None
-                for sub_obj in obj:
-                    lessons = Lesson.of(sub_obj) \
-                        if lessons is None \
-                        else list(set(lessons).intersection(Lesson.of(sub_obj)))
-                return DBList(lessons,
-                              with_deleted=with_deleted,
-                              flat=True)
-
-            else:
-                return DBList([Lesson.of(sub_obj) for sub_obj in obj],
-                              flat=True,
-                              unique=True,
-                              with_deleted=with_deleted)
 
         if isinstance(obj, (Professor, Discipline, Group)):
-            return DBList(obj.lessons,
-                          with_deleted=with_deleted)
+            return obj.lessons
 
         if isinstance(obj, Student):
-            return DBList([Lesson.of(sub_obj) for sub_obj in obj.groups],
-                          flat=True,
-                          with_deleted=with_deleted)
+            return Lesson.of(obj.groups)
 
         raise NotImplementedError(type(obj))
 
@@ -1126,7 +1140,7 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
 
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
 
-    faculty = relationship('Faculty', backref=backref('groups'))
+    faculty: Faculty
 
     _students = relationship('StudentsGroups', backref=backref('group'))
     students: List['Student'] = association_proxy('_students', 'student')
@@ -1160,6 +1174,12 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
         if isinstance(obj, Professor):
             return obj.groups()
 
+        if isinstance(obj, Faculty):
+            return obj.groups
+
+        if isinstance(obj, Department):
+            return Group.of(Discipline.of(obj))
+
         raise NotImplementedError(type(obj))
 
 
@@ -1186,6 +1206,7 @@ class Student(Base, _DBPerson):
 
     @classmethod
     @filter_deleted
+    @sorter
     @listed
     def of(cls, obj, with_deleted=False) -> List['Student']:
         """
@@ -1196,13 +1217,19 @@ class Student(Base, _DBPerson):
         """
 
         if isinstance(obj, Group):
-            return sorted(obj.students, key=lambda student: student.last_name)
+            return obj.students
 
         if isinstance(obj, Lesson):
             return list(chain.from_iterable([Student.of(group) for group in obj.groups]))
 
         if isinstance(obj, (Professor, Discipline)):
-            return [Student.of(lesson.groups) for lesson in obj.lessons]
+            return Student.of(obj.lessons)
+
+        if isinstance(obj, Department):
+            return Student.of(Discipline.of(obj))
+
+        if isinstance(obj, Faculty):
+            return Student.of(Group.of(obj))
 
         raise NotImplementedError(type(obj))
 

@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 START_STUDY = datetime(2008, 9, 1)
 
 
-def semester_start():
-    now = datetime.now()
+def semester_start(now=None):
+    if now is None:
+        now = datetime.now()
     year = now.year
     month = now.month
 

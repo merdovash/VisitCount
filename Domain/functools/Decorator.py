@@ -65,7 +65,10 @@ def listed(func):
     def __wrapper__(self, value, *args, **kwargs):
         if is_iterable(value):
             result = [func(self, v, *args, **kwargs) for v in value]
-            res = list(set(chain.from_iterable(result)))
+            if any(is_iterable(sub_res) for sub_res in result):
+                res = list(set(chain.from_iterable(result)))
+            else:
+                res = list(set(result))
         else:
             res = func(self, value, *args, **kwargs)
 
@@ -82,6 +85,14 @@ def filter_deleted(func):
         return list(filter(lambda x: (not x._is_deleted) | with_deleted, func(self, value, *args, **kwargs)))
     return __wrapper__
 
+
+def sorter(func):
+    def __wrapper__(self, value, sort=None, *args, **kwargs):
+        res = func(self, value, *args, **kwargs)
+        if sort is None:
+            return res
+        return sorted(res, key=sort)
+    return __wrapper__
 
 if __name__ == '__main__':
     from DataBase2 import Parent, Professor, Student, Lesson, Group, Discipline
