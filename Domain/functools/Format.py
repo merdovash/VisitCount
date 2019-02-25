@@ -92,7 +92,7 @@ def js_format(js: str, **kwargs):
     return js
 
 
-def agree_to_number(word: str, number: int)->str:
+def agree_to_number(word: str, number: int) -> str:
     morph = pymorphy2.MorphAnalyzer()
     word = morph.parse(word)[0]
     if number not in [-1, 1]:
@@ -100,10 +100,19 @@ def agree_to_number(word: str, number: int)->str:
     return word.word
 
 
-def case(word, case):
-    morph = pymorphy2.MorphAnalyzer()
-    word = morph.parse(word)[0]
-    return word.inflect(case).word
+def inflect(text, case) -> str:
+    def case_one_word(word) -> str:
+        morph = pymorphy2.MorphAnalyzer()
+        word = morph.parse(word)[0]
+        try:
+            return word.inflect(case).word
+        except AttributeError:
+            return word.word
+
+    if len(text.split(' ')) > 1:
+        return ' '.join(case_one_word(word) for word in text.split(' '))
+    else:
+        return case_one_word(text)
 
 
 def agree_to_gender(word, to):

@@ -1,2 +1,4 @@
+from Parser import server_args
 class Config:
-    connection_string = f"mysql+pymysql://root:|Oe23zk45|@localhost/bisitor_faculty?charset=utf8"
+    schemas = {'mysql': 'mysql+pymysql'}
+    connection_string = f"{schemas[server_args.database_server]}://{server_args.database_login}:{server_args.database_password}@{server_args.database_host}/{server_args.database_database}?charset=utf8"

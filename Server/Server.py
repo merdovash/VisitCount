@@ -7,13 +7,14 @@ from flask import Flask, make_response, request, send_file, send_from_directory
 from flask_material import Material
 
 from Modules import API
+from Modules import SourceChecker
 from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.Index import ServerSide as Index
 from Modules.Notification.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
-from Modules import SourceChecker
+from Parser import server_args
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -58,7 +59,7 @@ def page(path, encoding='utf-8'):
 
 @app.route('/TableFilter/<path:file_name>')
 def get_TableFilter_lib(file_name):
-    return send_file(path+'/TableFilter/'+file_name)
+    return send_file(path + '/TableFilter/' + file_name)
 
 
 @app.route('/file/<path:file_name>')
@@ -90,7 +91,7 @@ def get_resource(file_name):  # pragma: no cover
     elif file_type in ["gif", "png", "img", 'jpg']:
         content = send_file(path + "/resources/" + file_name, mimetype='image/gif')
     elif file_type == 'exe':
-        return send_from_directory(path+ "/resources", file_name)
+        return send_from_directory(path + "/resources", file_name)
 
     response = make_response(content)
     response.headers['Content-Type'] = mimetypes.get(file_extension)
@@ -219,5 +220,4 @@ def run():
     """
     run server
     """
-
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host=server_args.server_host, port=server_args.server_port)

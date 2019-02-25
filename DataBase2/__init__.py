@@ -378,7 +378,42 @@ class _DBTrackedObject(_DBObject):
         return self._is_deleted
 
 
-class _DBEmailObject(_DBObject):
+class _DBNamed(_DBObject):
+    type_name: str
+
+    def full_name(self, case=None) -> str:
+        raise NotImplementedError()
+
+    def short_name(self) -> str:
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return f"<{type(self).__name__} (name={self.full_name()})>"
+
+
+class _DBNamedObject(_DBNamed):
+    type_name: str
+    name: str = Column(String(100), nullable=False)
+    abbreviation: str = Column(String(16))
+
+    def full_name(self, case=None) -> str:
+        from Domain.functools.Format import inflect
+        if case is not None:
+            if self.type_name in self.name:
+                name = f"{inflect(self.type_name, case)}{self.name.replace(self.type_name, '')}"
+            else:
+                name = f"{inflect(self.type_name, case)}{self.name}"
+        else:
+            name = self.name
+        return name.title()
+
+    def short_name(self) -> str:
+        if is_None(self.abbreviation):
+            return self.name
+        return self.abbreviation
+
+
+class _DBEmailObject(_DBNamed):
 
     email = Column(String(200))
 
@@ -476,8 +511,16 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         :param case: падеж, по умолчанию Именительный
         :return: str
         """
-        from Domain.functools.Format import format_name
-        return format_name(self, case)
+        from Domain.functools.Format import inflect
+        if is_None(self.middle_name):
+            name = f"{self.last_name} {self.first_name}"
+        else:
+            name = f'{self.last_name} {self.first_name} {self.middle_name}'
+
+        if case is not None:
+            name = inflect(name, case)
+
+        return name
 
     @property
     def auth(self):
@@ -491,24 +534,9 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         raise UnauthorizedError()
 
 
-class _DBNamedObject(_DBObject):
-    name: str = Column(String(100), nullable=False)
-    abbreviation: str = Column(String(16))
-
-    def full_name(self) -> str:
-        return self.name
-
-    def short_name(self) -> str:
-        if is_None(self.abbreviation):
-            return self.name
-        return self.abbreviation
-
-    def __repr__(self):
-        return f"<{type(self).__name__} (name={self.name})>"
-
-
-class Faculty(Base, _DBNamedObject, _DBEmailObject):
+class Faculty(Base, _DBEmailObject, _DBNamedObject):
     __tablename__ = "faculties"
+    type_name = "Факультет"
 
     groups: List['Group'] = relationship('Group', backref=backref('faculty'))
 
@@ -542,6 +570,8 @@ class FacultyAdministrations(Base, _DBObject):
 
 class Department(Base, _DBNamedObject, _DBEmailObject):
     __tablename__ = "departments"
+
+    type_name = "Кафедра"
 
     faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
 
@@ -803,6 +833,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
     Таблица дисциплин
     """
     __tablename__ = 'disciplines'
+    type_name = "Дисциплина"
 
     department_id = Column(Integer, ForeignKey('departments.id'))
     department: Department = relationship('Department', backref=backref('disciplines'))
@@ -1137,6 +1168,7 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
     Таблица групп
     """
     __tablename__ = 'groups'
+    type_name = "Группа"
 
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
 

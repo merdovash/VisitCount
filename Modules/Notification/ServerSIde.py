@@ -11,7 +11,8 @@ from Domain.Structures.DictWrapper.Network.Notification import Reciever, Notific
 from Domain.functools.Format import format_name
 from Modules import Module
 from Modules.Notification import address
-from Server import config, Response
+from Parser import server_args
+from Server import Response
 
 
 class MessageMaker:
@@ -66,9 +67,9 @@ class MessageMaker:
 
 class NotificationModule(Module):
     def __init__(self, app, request):
-        assert config.email is not None and config.password is not None, 'config is not complete (email, password)'
+        assert server_args.notification_email is not None and server_args.notification_password is not None, 'config is not complete (email, password)'
         super().__init__(app, request, address)
-        self.connector = lambda: self.connect(config.email, config.password)
+        self.connector = lambda: self.connect(server_args.notification_email, server_args.notification_password)
 
         self.connection = None
 
@@ -97,7 +98,7 @@ class NotificationModule(Module):
             try:
                 self.connection.sendmail(
                     to_addrs=receiver.email,
-                    from_addr=config.email,
+                    from_addr=server_args.notification_email,
                     msg=message.to(receiver)
                 )
                 success_count += 1
@@ -110,7 +111,7 @@ class NotificationModule(Module):
 
                 self.connection.sendmail(
                     to_addrs=receiver.email,
-                    from_addr=config.email,
+                    from_addr=server_args.notification_email,
                     msg=message.to(receiver)
                 )
                 success_count += 1

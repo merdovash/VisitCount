@@ -4,7 +4,7 @@ from sqlalchemy import inspect
 
 from Client.Reader.SerialReader import RFIDReader
 from DataBase2 import _DBPerson
-from Domain.functools.Format import format_name, case
+from Domain.functools.Format import format_name, inflect
 
 
 class RegisterCardProcess(QMessageBox):
@@ -13,7 +13,7 @@ class RegisterCardProcess(QMessageBox):
     def __init__(self, user: _DBPerson, parent, *__args):
         super().__init__(parent)
 
-        self.reader = RFIDReader.instance(f"зарегистрировать карту {case(user.type_name, {'gent'})}")
+        self.reader = RFIDReader.instance(f"зарегистрировать карту {inflect(user.type_name, {'gent'})}")
         if self.reader is None:
             raise Exception()
         self.reader.card_id.connect(self.set_new_card_id)
