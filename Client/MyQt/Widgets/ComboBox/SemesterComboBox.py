@@ -36,6 +36,7 @@ class SemesterComboBox(MComboBox):
 
 
 class DisciplineComboBox(MComboBox):
+    label = "Дисциплина"
     def filter_cond(self, discipline: Discipline) -> Callable[[Any], bool]:
         def cond(lesson: Lesson):
             return lesson.discipline_id == discipline.id
@@ -56,6 +57,8 @@ class DisciplineComboBox(MComboBox):
 
 
 class GroupComboBox(MComboBox):
+    label = "Группа"
+
     def filter_cond(self, group: List[Group]) -> Callable[[Any], bool]:
         def cond(lesson: Lesson) -> bool:
             if len(group) == 1:
@@ -109,7 +112,7 @@ class StudentComboBox(MComboBox):
         self.setCurrentIndex(0)
 
     def extractor(self, item: Lesson) -> Any:
-        return Student.of(item)
+        return Student.of(item, sort=lambda x: x.full_name())
 
     def formatter(self, item: Student) -> str:
         return item.full_name()

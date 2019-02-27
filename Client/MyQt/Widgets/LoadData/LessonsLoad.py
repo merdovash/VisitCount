@@ -19,6 +19,9 @@ from Modules.API import GroupApi
 
 
 class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
+    label = "Загрузить занятия"
+    description = "Открывает интерфейс загрузки занятия"
+
     steps = [
         Step('Выбрать дату начала семестра', ''),
         Step('Загрузить файл с расписанием', 'требуется загрузить файл с распсианием занятий', False),

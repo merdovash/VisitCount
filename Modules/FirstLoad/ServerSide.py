@@ -25,44 +25,13 @@ class FirstLoadModule(Module):
                                 .filter(Auth.user_type == Auth.Type.PROFESSOR)
                                 .filter(Auth.user_id == professor_id)
                                 .first(),
-                                Professor=self.session
-                                .query(Professor)
-                                .filter(Professor.id == professor_id).first(),
-                                Lesson=self.session
-                                .query(Lesson)
-                                .filter(Lesson.professor_id == professor_id)
-                                .all(),
-                                LessonsGroups=self.session
-                                .query(LessonsGroups)
-                                .join(Lesson)
-                                .filter(Lesson.professor_id == professor_id)
-                                .all(),
-                                Group=self.session
-                                .query(Group)
-                                .join(LessonsGroups)
-                                .join(Lesson)
-                                .filter(Lesson.professor_id == professor_id)
-                                .all(),
-                                StudentsGroups=self.session
-                                .query(StudentsGroups)
-                                .join(Group)
-                                .join(LessonsGroups)
-                                .join(Lesson)
-                                .filter(Lesson.professor_id == professor_id)
-                                .all(),
-                                Student=self.session
-                                .query(Student)
-                                .join(StudentsGroups)
-                                .join(Group)
-                                .join(LessonsGroups)
-                                .join(Lesson)
-                                .filter(Lesson.professor_id == professor_id)
-                                .all(),
-                                Discipline=self.session
-                                .query(Discipline)
-                                .join(Lesson)
-                                .filter(Lesson.professor_id == professor_id)
-                                .all(),
+                                Professor=Professor.of(professor),
+                                Lesson=Lesson.of(professor),
+                                LessonsGroups=LessonsGroups.of(professor),
+                                Group=Group.of(professor),
+                                StudentsGroups=StudentsGroups.of(professor),
+                                Student=Student.of(professor),
+                                Discipline=Discipline.of(professor),
                                 Visitation=Visitation.of(professor),
                                 Administration=Administration.of(professor),
                                 NotificationParam=NotificationParam.of(professor),

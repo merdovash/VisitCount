@@ -12,6 +12,32 @@ from Domain.Loader import WordReader, ExcelReader, Reader
 from Domain.Validation.Values import Get
 
 
+def get_lesson_by_time(day, time, start_day: datetime, professor: Professor, session: Session)-> Lesson:
+    day_regex = re.compile(
+        r'(?:(?P<month>[0-9]+)[:.](?P<day>[0-9]+))'
+    )
+
+    date_regex = day_regex.findall(day)
+    if len(date_regex):
+        date_regex = date_regex[0]
+        month = int(date_regex[1])
+        day = int(date_regex[0])
+    else:
+        raise ValueError(f'{day} is not acceptable date format')
+
+    time_regex = day_regex.findall(time)
+    if len(time_regex):
+        time_regex = time_regex[0]
+        hours = int(time_regex[0])
+        minutes = int(time_regex[1])
+    else:
+        raise ValueError(f'{time} is not acceptable time format')
+
+    time = datetime(start_day.year, month, day, hours, minutes)
+
+    return Lesson.get(session, time=time, professor_id=professor.id)
+
+
 class LessonLoader(Reader):
     def get_disciplines(self):
         raise NotImplementedError()

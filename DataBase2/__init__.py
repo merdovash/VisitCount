@@ -19,7 +19,6 @@ from sqlalchemy.util import ThreadLocalRegistry
 
 from DataBase2.SessionInterface import ISession
 
-from DataBase2.config2 import Config
 from Domain.ArgPars import get_argv
 from Domain.Date import study_week, study_semester
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException, \
@@ -66,6 +65,7 @@ def create():
     _new = False
     mysql = root != 'run_client.py' and os.name != 'nt'
     if mysql:
+        from DataBase2.config2 import Config
         engine = create_engine(Config.connection_string,
                                pool_pre_ping=False,
                                echo=False,
@@ -215,7 +215,7 @@ class _DBObject(IJSON):
         return {
             name: getattr(self, name)
             for name in self.table().c.keys()
-            if len(name)<16
+            if len(name) < 16
         }
 
     def dict(self):
@@ -223,7 +223,7 @@ class _DBObject(IJSON):
         Возвращает словарь {атрибут:значение}
         :return:
         """
-        return {key: item for key, item in self._dict() if key[0] != '_'}
+        return {key: item for key, item in self._dict().items() if key[0] != '_'}
 
     def to_json(self) -> str:
         """
@@ -412,9 +412,15 @@ class _DBNamedObject(_DBNamed):
             return self.name
         return self.abbreviation
 
+    @classmethod
+    def get(cls, session=None, **kwargs):
+        if 'name' in kwargs.keys():
+            return session.query(cls).filter(cls.name == kwargs.get('name')).first()
+        else:
+            return super().get(session, **kwargs)
+
 
 class _DBEmailObject(_DBNamed):
-
     email = Column(String(200))
 
     # итоговые посещения по всем студентам
@@ -450,7 +456,7 @@ class _DBEmailObject(_DBNamed):
         self.auto = False
 
     @classmethod
-    def email_subclasses(cls)-> List[Type['_DBEmailObject']]:
+    def email_subclasses(cls) -> List[Type['_DBEmailObject']]:
         res = [cls]
         for class_ in cls.__subclasses__():
             res.extend(class_.email_subclasses())
@@ -533,6 +539,12 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
             return self._auth
         raise UnauthorizedError()
 
+    @classmethod
+    def get(cls, session: ISession = None, **kwargs):
+        if session is None:
+            session = Session()
+        return session.query(cls).filter(cls.id == kwargs.get('id')).first()
+
 
 class Faculty(Base, _DBEmailObject, _DBNamedObject):
     __tablename__ = "faculties"
@@ -542,7 +554,7 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject):
 
     @classmethod
     @listed
-    def of(cls, obj)-> List['Faculty']:
+    def of(cls, obj) -> List['Faculty']:
         if isinstance(obj, Student):
             return Faculty.of(Group.of(obj))
 
@@ -608,19 +620,12 @@ class StudentsGroups(Base, _DBTrackedObject):
     group_id = Column(Integer, ForeignKey('groups.id'))
 
     @classmethod
-    def of(cls, obj, with_deleted=False):
+    @listed
+    def of(cls, obj):
         if isinstance(obj, Professor):
-            return DBList(
-                obj.session() \
-                    .query(StudentsGroups)
-                    .distinct(StudentsGroups.id) \
-                    .join(Group) \
-                    .join(LessonsGroups) \
-                    .join(Lesson) \
-                    .join(Professor) \
-                    .filter(Professor.id == obj.id) \
-                    .all(),
-                with_deleted=with_deleted)
+            return StudentsGroups.of(Group.of(obj))
+        if isinstance(obj, Group):
+            return obj._students
         raise NotImplementedError(type(obj), obj)
 
 
@@ -638,17 +643,13 @@ class LessonsGroups(Base, _DBTrackedObject):
     group_id = Column(Integer, ForeignKey('groups.id'))
 
     @classmethod
-    def of(cls, obj, with_deleted=False):
+    @filter_deleted
+    @listed
+    def of(cls, obj):
         if isinstance(obj, Professor):
-            return DBList(
-                obj.session()
-                    .query(LessonsGroups)
-                    .distinct(LessonsGroups.id)
-                    .join(Lesson)
-                    .join(Professor)
-                    .filter(Professor.id == obj.id).
-                    all(),
-                with_deleted=with_deleted)
+            return LessonsGroups.of(Group.of(obj))
+        if isinstance(obj, Group):
+            return obj._lessons
         raise NotImplementedError(type(obj))
 
 
@@ -717,7 +718,7 @@ class Visitation(Base, _DBTrackedObject):
         if isinstance(obj, Group):
             return Visitation.of(obj.students)
 
-        if isinstance(obj, (Professor, Discipline)):
+        if isinstance(obj, (Professor, Discipline, Faculty)):
             return Visitation.of(Lesson.of(obj))
 
         raise NotImplementedError(type(obj))
@@ -839,6 +840,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
     department: Department = relationship('Department', backref=backref('disciplines'))
 
     lessons: List['Lesson'] = relationship('Lesson', backref=backref('discipline'))
+
     # department: Department
 
     def __repr__(self):
@@ -970,7 +972,7 @@ class Lesson(Base, _DBTrackedObject):
         if isinstance(obj, (Professor, Discipline, Group)):
             return obj.lessons
 
-        if isinstance(obj, Student):
+        if isinstance(obj, (Student, Faculty)):
             return Lesson.of(obj.groups)
 
         raise NotImplementedError(type(obj))
@@ -1262,6 +1264,9 @@ class Student(Base, _DBPerson):
 
         if isinstance(obj, Faculty):
             return Student.of(Group.of(obj))
+
+        if isinstance(obj, Student):
+            return [obj]
 
         raise NotImplementedError(type(obj))
 

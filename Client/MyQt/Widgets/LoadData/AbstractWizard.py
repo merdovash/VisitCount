@@ -14,6 +14,9 @@ class Step:
 
 
 class AbstractLoadingWizard(QWidget):
+    label: str
+    description: str
+
     steps: List[Step]
     step = pyqtSignal('PyQt_PyObject')
     revoke_step = pyqtSignal('PyQt_PyObject')

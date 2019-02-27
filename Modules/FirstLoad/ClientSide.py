@@ -21,7 +21,9 @@ class InitialDataLoader(ClientWorker):
 
     def on_response(self, received_data: Dict, progress_bar):
         def create_row(item_data: Dict, class_: Type[_DBObject]):
-            class_.new(session, **item_data)
+            if not class_.get(session, **item_data):
+                class_.new(session, **item_data)
+                session.flush()
             progress_bar.increment()
 
         session = Session()
@@ -33,7 +35,7 @@ class InitialDataLoader(ClientWorker):
         received_data.data.foreach(create_row)
 
         Auth.new(session, **received_data.auth)
-        professor = Professor.new(session, **Map.item_type(received_data.professor, Professor))
+        professor = Professor.new(session, **Map.item_type(received_data.professor[0], Professor))
         professor._last_update_in = datetime.now()
         professor._last_update_out = datetime.now()
 

@@ -48,6 +48,7 @@ class MainWindow(AbstractWindow):
     """
 
     log_out = pyqtSignal()
+    refresh_data = pyqtSignal()
 
     def __init__(self, program: IProgram, professor: Professor):
         AbstractWindow.__init__(self)
@@ -60,6 +61,7 @@ class MainWindow(AbstractWindow):
             program=program,
             professor=professor,
             parent=self)
+        self.refresh_data.connect(self.central_widget.on_refresh_data)
 
         self.setCentralWidget(self.central_widget)
 
@@ -92,12 +94,14 @@ class MainWindow(AbstractWindow):
             event.accept()
 
             try:
-                self.setDialog(
-                    dialog=ExcelLoadingWidget(
-                        files=event.mimeData().urls(),
-                        program=self.program
-                    )
+
+                dialog=ExcelLoadingWidget(
+                    files=event.mimeData().urls(),
+                    program=self.program
                 )
+                self.dialog = dialog
+                self.dialog.showAsChild()
+
             except Exception as e:
                 self.error.emit(str(e))
         else:
@@ -170,6 +174,7 @@ class MainWindow(AbstractWindow):
 
         def show_loader_widget():
             self.loader_Widget = LoadingWizardWindow(self.professor)
+            self.loader_Widget.data_loaded.connect(self.refresh_data)
             self.loader_Widget.show()
 
         updates = self.menu_bar.addMenu("Данные")
@@ -223,6 +228,10 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
         self.selector.set_up.emit(self.professor)
         self.selector.reader_required.connect(self.on_ok_message)
+
+    @pyqtSlot(name='on_refresh_data')
+    def on_refresh_data(self):
+        self.selector.set_up.emit(self.professor)
 
     @pyqtSlot('PyQt_PyObject', name='on_ok_message')
     def on_ok_message(self, text):

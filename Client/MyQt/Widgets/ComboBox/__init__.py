@@ -5,11 +5,11 @@ from typing import List, Dict, TypeVar, Any, Callable
 from PyQt5.QtCore import QRectF, pyqtSignal, pyqtSlot
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QImage, QPen, QColor
-from PyQt5.QtWidgets import QComboBox
+from PyQt5.QtWidgets import QComboBox, QWidget, QHBoxLayout, QLabel
 
 from Client.MyQt.ColorScheme import Color
 from Domain.functools.List import closest_lesson
-from DataBase2 import Discipline, Group, Lesson
+from DataBase2 import Discipline, Group, Lesson, _DBPerson
 
 compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
 
@@ -25,6 +25,8 @@ class MComboBox(QComboBox):
     hovered_pen.setWidth(3)
 
     current_changed = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')  # real signature (List[Lesson], T)
+
+    label: str
 
     def filter_cond(self, item: T) -> Callable[[Lesson], bool]:
         """
@@ -131,3 +133,19 @@ class MComboBox(QComboBox):
         self.lessons = Lesson.of(user)
         self.on_parent_change(self.lessons, None)
 
+
+class Selector(QWidget):
+    def __init__(self, items: List[MComboBox], user: _DBPerson, flags=None):
+        assert all(isinstance(item, MComboBox) for item in items)
+        super().__init__(flags)
+
+        main_layout = QHBoxLayout()
+        for index, item in enumerate(items):
+            main_layout.addWidget(QLabel(item.label), alignment=Qt.AlignRight | Qt.AlignVCenter, stretch=1)
+            main_layout.addWidget(item, stretch=3)
+            if index > 0:
+                items[index - 1].current_changed.connect(item.on_parent_change)
+
+        items[0].loads(user)
+
+        self.setLayout(main_layout)

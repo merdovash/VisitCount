@@ -13,6 +13,7 @@ from DataBase2 import Auth, Session, Professor, Lesson
 
 class LoadingWizardWindow(QMainWindow):
     data_loaded = pyqtSignal()
+
     def __init__(self, professor, flags=None):
         super().__init__(flags)
         self.professor = professor
@@ -23,11 +24,12 @@ class LoadingWizardWindow(QMainWindow):
         self.setMinimumSize(900, 500)
 
         wizard_widget = LoadingWizardWidget(professor)
-        wizard_widget.load_lesson.connect(self.on_load_lesson)
+        wizard_widget.start_loader.connect(self.on_start_load)
+        wizard_widget.start_loader.connect(print)
         self.setCentralWidget(wizard_widget)
 
-    def on_load_lesson(self):
-        widget = WizardWidget(LessonLoadingWidget(self.professor, self.loading_session), self)
+    def on_start_load(self, class_):
+        widget = WizardWidget(class_(self.professor, self.loading_session), self)
         widget.data_loaded.connect(self.data_loaded)
         widget.complete.connect(self.close)
         self.setCentralWidget(widget)
@@ -86,7 +88,7 @@ class WizardWidget(QWidget):
 
 
 class LoadingWizardWidget(QWidget):
-    load_lesson = pyqtSignal('PyQt_PyObject')
+    start_loader = pyqtSignal('PyQt_PyObject')
 
     def __init__(self, professor, parent=None):
         super().__init__(parent)
@@ -98,11 +100,14 @@ class LoadingWizardWidget(QWidget):
 
         option_layout = QFormLayout()
 
-        self.option_1_load_lessons = QPushButton("Загрузить занятия")
-        self.option_1_load_lessons.clicked.connect(lambda x: self.load_lesson.emit(professor))
-        self.option_1_load_lessons_label = QLabel("Загрузите занятия для нового семеста из .docx документа.")
-
-        option_layout.addRow(self.option_1_load_lessons, self.option_1_load_lessons_label)
+        for child in AbstractLoadingWizard.__subclasses__():
+            def starter(class_):
+                def __starter__():
+                    self.start_loader.emit(class_)
+                return __starter__
+            btn = QPushButton(child.label)
+            option_layout.addRow(btn, QLabel(child.description))
+            btn.clicked.connect(starter(child))
 
         main_layout.addWidget(self.hello_label)
         main_layout.addLayout(option_layout)

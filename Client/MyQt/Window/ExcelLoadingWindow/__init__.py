@@ -3,8 +3,6 @@ from typing import List, Dict
 from PyQt5.QtCore import QUrl, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushButton
 
-from Domain.Loader.VisitationLoader.ExcelTableReader import Reader
-
 
 class ExcelLoadingWidget(QWidget):
     exit = pyqtSignal()
@@ -34,7 +32,6 @@ class ExcelLoadingWidget(QWidget):
             layout.addWidget(self.loading[file])
 
         self.end_button = QPushButton('Завершить')
-        self.end_button.clicked.connect(self.closeSelf)
         self.end_button.setVisible(False)
         self.exit.connect(lambda: self.end_button.setVisible(True))
 
@@ -53,16 +50,7 @@ class ExcelLoadingWidget(QWidget):
             self.raise_()
 
         for file in self.files:
-            r = Reader(
-                file=file,
-                professor=self.program.professor,
-                progress_bar=self.loading[file],
-                on_error=self.program.window.ok_message.emit,
-                on_finish=special_finish_handler,
-                on_warning=special_warning_handler
-            )
-            print('hi')
-            r.run(callback=lambda x: self.loading[file].setValue(x))
+            raise NotImplementedError()
 
     def on_change(self, value, file):
         self.loading_status[file] = value >= 100
