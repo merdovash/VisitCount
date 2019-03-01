@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar, QMessageBox
 from Client.IProgram import IProgram
 from Client.MyQt.Widgets.LoadData import LoadingWizardWindow
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
+from Client.MyQt.Widgets.VisualData.Graph.BisitorMPLWidget import BisitorMPLWidget
 from Client.MyQt.Widgets.VisualData.VisualMenu import VisualWidget
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
@@ -126,7 +127,7 @@ class MainWindow(AbstractWindow):
     def _init_menu_analysis(self):
         def show():
             if not hasattr(self, 'visual') or self.visual is None:
-                self.visual = VisualWidget(self.professor)
+                self.visual = BisitorMPLWidget(self.professor)
             self.visual.show()
 
         analysis = self.menu_bar.addMenu("Анализ")

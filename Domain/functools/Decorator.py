@@ -75,7 +75,7 @@ def listed(func):
         if len(res) and is_iterable(res[0]):
             return list(set(chain.from_iterable(res)))
         else:
-            return res
+            return list(set(res))
 
     return __wrapper__
 
@@ -93,6 +93,7 @@ def sorter(func):
             return res
         return sorted(res, key=sort)
     return __wrapper__
+
 
 if __name__ == '__main__':
     from DataBase2 import Parent, Professor, Student, Lesson, Group, Discipline

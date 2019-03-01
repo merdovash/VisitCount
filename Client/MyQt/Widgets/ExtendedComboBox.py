@@ -8,14 +8,14 @@ from Domain.Data import student_info
 class UserItem(QStandardItem):
     def __init__(self, user, *__args):
         self._item = user
-        super().__init__(student_info(user), *__args)
+        super().__init__(user.full_name(), *__args)
 
     def item(self):
         return self._item
 
 
 class ExtendedCombo(QComboBox):
-    def __init__(self, items, parent=None):
+    def __init__(self, items=None, parent=None):
         super().__init__(parent)
 
         self.setFocusPolicy(Qt.StrongFocus)

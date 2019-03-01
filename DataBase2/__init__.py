@@ -8,6 +8,7 @@ import sys
 from datetime import datetime
 from itertools import chain
 from typing import List, Union, Dict, Any, Type, Callable
+from warnings import warn
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
@@ -24,7 +25,7 @@ from Domain.Date import study_week, study_semester
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException, \
     UnauthorizedError
 from Domain.Validation.Values import Get
-from Domain.functools.Decorator import listed, filter_deleted, sorter
+from Domain.functools.Decorator import listed, filter_deleted, sorter, is_iterable
 from Domain.functools.List import DBList
 from Parser import IJSON
 
@@ -238,12 +239,27 @@ class _DBObject(IJSON):
         return '{' + ','.join([':'.join([f'"{key}"', str_value(key)]) for key, value in r.items()]) + '}'
 
     @classmethod
-    def of(cls, obj):
+    @listed
+    def of(cls, obj, *args, **kwargs):
         """
         Возвращает все объекты класса cls, относящиеся к объекту obj
         :param obj: _DBObject
         """
-        raise NotImplementedError(cls)
+        if hasattr(obj, cls.__name__.lower()):
+            warn(f'you mast declare relation between `{cls.__name__}` and `{type(obj).__name__}` directly')
+            res = getattr(obj, cls.__name__.lower())
+            if not is_iterable(res):
+                return [res]
+            return res
+
+        if hasattr(obj, cls.__name__.lower()+'s'):
+            warn(f'you mast declare relation between `{cls.__name__}` and `{type(obj).__name__}` directly')
+            res = getattr(obj, cls.__name__.lower()+'s')
+            if not is_iterable(res):
+                return [res]
+            return res
+
+        raise NotImplementedError(f'{cls.__name__}.of({type(obj)})')
 
     @classmethod
     def new(cls, session=None, **kwargs):
@@ -528,6 +544,9 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
 
         return name
 
+    def short_name(self):
+        return f'{self.last_name} {self.first_name[0]}.'+(f' {self.middle_name[0]}.' if len(self.middle_name) else '')
+
     @property
     def auth(self):
         """
@@ -554,7 +573,7 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject):
 
     @classmethod
     @listed
-    def of(cls, obj) -> List['Faculty']:
+    def of(cls, obj, *args, **kwargs) -> List['Faculty']:
         if isinstance(obj, Student):
             return Faculty.of(Group.of(obj))
 
@@ -567,7 +586,16 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject):
         if isinstance(obj, Department):
             return [obj.faculty]
 
-        raise NotImplementedError()
+        if isinstance(obj, Professor):
+            return Faculty.of(Group.of(obj))
+
+        if isinstance(obj, Lesson):
+            return Faculty.of(Group.of(obj))
+
+        if isinstance(obj, Faculty):
+            return [obj]
+
+        raise NotImplementedError(type(obj))
 
 
 class FacultyAdministrations(Base, _DBObject):
@@ -591,6 +619,23 @@ class Department(Base, _DBNamedObject, _DBEmailObject):
     professors: List['Professor'] = association_proxy('_professors', 'professor')
 
     disciplines: List['Discipline']
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Lesson):
+            return Department.of(obj.professor)
+
+        if isinstance(obj, Professor):
+            return obj.departments
+
+        if isinstance(obj, Group):
+            return Department.of(obj.lessons)
+
+        if isinstance(obj, Student):
+            return Department.of(Lesson.of(obj))
+
+        raise NotImplementedError(type(obj))
 
 
 class DepartmentProfessors(Base, _DBObject):
@@ -621,7 +666,7 @@ class StudentsGroups(Base, _DBTrackedObject):
 
     @classmethod
     @listed
-    def of(cls, obj):
+    def of(cls, obj, *args, **kwargs):
         if isinstance(obj, Professor):
             return StudentsGroups.of(Group.of(obj))
         if isinstance(obj, Group):
@@ -645,7 +690,7 @@ class LessonsGroups(Base, _DBTrackedObject):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj):
+    def of(cls, obj, *args, **kwargs):
         if isinstance(obj, Professor):
             return LessonsGroups.of(Group.of(obj))
         if isinstance(obj, Group):
@@ -667,8 +712,8 @@ class StudentsParents(Base, _DBTrackedObject):
     student_id = Column(Integer, ForeignKey('students.id'))
 
     @classmethod
-    @DBList.wrapper
-    def of(cls, obj, with_deleted=False):
+    @listed
+    def of(cls, obj, *args, **kwargs):
         if isinstance(obj, Professor):
             return obj.session() \
                 .query(StudentsParents) \
@@ -705,7 +750,7 @@ class Visitation(Base, _DBTrackedObject):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj) -> List['Visitation']:
+    def of(cls, obj, *args, **kwargs) -> List['Visitation']:
         """
 
         :param obj: объект или список объектов базы данных
@@ -718,7 +763,7 @@ class Visitation(Base, _DBTrackedObject):
         if isinstance(obj, Group):
             return Visitation.of(obj.students)
 
-        if isinstance(obj, (Professor, Discipline, Faculty)):
+        if isinstance(obj, (Professor, Discipline, Faculty, Department)):
             return Visitation.of(Lesson.of(obj))
 
         raise NotImplementedError(type(obj))
@@ -850,7 +895,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj) -> List['Discipline']:
+    def of(cls, obj, *args, **kwargs) -> List['Discipline']:
         """
 
         :param obj: объект или список объектов базы данных
@@ -862,7 +907,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
         if isinstance(obj, Professor):
             return [lesson.discipline for lesson in obj.lessons]
 
-        if isinstance(obj, Student):
+        if isinstance(obj, (Student, Group)):
             return Discipline.of(Lesson.of(obj))
 
         if isinstance(obj, Department):
@@ -961,7 +1006,7 @@ class Lesson(Base, _DBTrackedObject):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj, intersect=False) -> List['Lesson']:
+    def of(cls, obj, *args, **kwargs) -> List['Lesson']:
         """
 
         :param intersect:
@@ -974,6 +1019,9 @@ class Lesson(Base, _DBTrackedObject):
 
         if isinstance(obj, (Student, Faculty)):
             return Lesson.of(obj.groups)
+
+        if isinstance(obj, Department):
+            return Lesson.of(Professor.of(obj))
 
         raise NotImplementedError(type(obj))
 
@@ -997,7 +1045,7 @@ class Administration(Base, _DBPerson):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj, with_deleted=False) -> List['Administration']:
+    def of(cls, obj, *args, **kwargs) -> List['Administration']:
         """
         Возвращает список Администраторов, которые относятся к переданому объекту
         :param obj: Объект базы данных
@@ -1041,7 +1089,7 @@ class Professor(Base, _DBPerson):
     _admins = relationship('NotificationParam', backref="professor")
     admins: List[Administration] = association_proxy('_admins', 'admin')
 
-    departments: List[Department] = association_proxy('_departments', 'department')
+    departments: List[Department] = association_proxy('_department', 'department')
 
     _auth: Auth = None
 
@@ -1053,7 +1101,7 @@ class Professor(Base, _DBPerson):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj, with_deleted=False) -> List['Professor']:
+    def of(cls, obj, *args, **kwargs) -> List['Professor']:
         """
 
         :param obj: объект или спсиок объектов базы данных
@@ -1070,13 +1118,16 @@ class Professor(Base, _DBPerson):
             return obj.professors
 
         if isinstance(obj, Student):
-            return Professor.of(obj.groups, with_deleted=with_deleted)
+            return Professor.of(obj.groups)
 
-        if isinstance(obj, Group):
-            return Professor.of(obj.lessons, with_deleted=with_deleted)
+        if isinstance(obj, (Group, Discipline)):
+            return Professor.of(obj.lessons)
 
         if isinstance(obj, Professor):
-            return DBList([obj])
+            return [obj]
+
+        if isinstance(obj, Department):
+            return obj.professors
 
         raise NotImplementedError(type(obj))
 
@@ -1144,7 +1195,7 @@ class NotificationParam(Base, _DBTrackedObject):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj, with_deleted=False) -> List['NotificationParam']:
+    def of(cls, obj, *args, **kwargs) -> List['NotificationParam']:
         """
 
         :param obj: Объект базы данных или список объектов
@@ -1188,10 +1239,9 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
     @classmethod
     @filter_deleted
     @listed
-    def of(cls, obj, flat_list=False) -> List['Group'] or List[List['Group']]:
+    def of(cls, obj, *args, **kwargs) -> List['Group'] or List[List['Group']]:
         """
 
-        :param flat_list: исключить из результата наборы групп (оставить только перечень групп)
         :param obj: объект или спсиок объектов базы данных
         :return: список групп, отоносящихся к объекту
         """
@@ -1213,6 +1263,9 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
 
         if isinstance(obj, Department):
             return Group.of(Discipline.of(obj))
+
+        if isinstance(obj, Group):
+            return [obj]
 
         raise NotImplementedError(type(obj))
 
@@ -1242,7 +1295,7 @@ class Student(Base, _DBPerson):
     @filter_deleted
     @sorter
     @listed
-    def of(cls, obj, with_deleted=False) -> List['Student']:
+    def of(cls, obj, *args, **kwargs) -> List['Student']:
         """
 
         :param obj: объект или спсиок объектов базы данных
@@ -1283,7 +1336,7 @@ class Parent(Base, _DBPerson):
 
     @classmethod
     @listed
-    def of(cls, obj, with_deleted=False) -> List['Parent']:
+    def of(cls, obj, *args, **kwargs) -> List['Parent']:
         """
 
         :param obj: объект или спсиок объектов базы данных
