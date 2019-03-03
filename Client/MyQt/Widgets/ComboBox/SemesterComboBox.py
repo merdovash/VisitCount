@@ -20,12 +20,10 @@ class SemesterComboBox(MComboBox):
         return cond
 
     def formatter(self, semester) -> str:
-        year = datetime(2008+(semester-2)//2, 1, 1).year
-        date = f"{year}-{year+1} учебный год, {1+semester%2} семестр"
-        return date
+        return semester.full_name()
 
     def sorter(self, semester) -> Any:
-        return semester
+        return semester.start_date
 
     def __init__(self, parent=None):
         super().__init__(parent, int)

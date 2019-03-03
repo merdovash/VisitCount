@@ -7,13 +7,13 @@ from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox
 from Client.MyQt.Widgets.ExtendedComboBox import ExtendedCombo
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
-from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department
+from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department, Semester
 
 
 class BisitorMPLWidget(QWidget):
     def __init__(self, user=None, flags=None):
         super().__init__(flags)
-        data_groups: List[Type[_DBObject]] = [Student, Group, Professor, Discipline, Faculty, Department]
+        data_groups: List[Type[_DBObject]] = [Student, Group, Professor, Discipline, Faculty, Department, Semester]
         plot_types = {
             "Посещения по неделям": 'bar_week',
             'Распределение': 'distribution',
@@ -100,5 +100,4 @@ class BisitorMPLWidget(QWidget):
 
 
 if __name__ == '__main__':
-    print(Discipline.of(Professor.get(id=1)))
     simple_show(BisitorMPLWidget, user=Professor.get(id=1))

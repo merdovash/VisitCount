@@ -7,6 +7,6 @@ def simple_show(widget_class, *args, **kwargs):
     app = QApplication(sys.argv)
 
     widget = widget_class(*args, **kwargs)
-    widget.show()
+    widget.showMaximized()
 
     sys.exit(app.exec_())

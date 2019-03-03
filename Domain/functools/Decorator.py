@@ -82,7 +82,11 @@ def listed(func):
 
 def filter_deleted(func):
     def __wrapper__(self, value, with_deleted=False, *args, **kwargs):
-        return list(filter(lambda x: (not x._is_deleted) | with_deleted, func(self, value, *args, **kwargs)))
+        res = func(self, value, *args, **kwargs)
+        if not with_deleted:
+            return list(filter(lambda x: not x._is_deleted, res))
+        else:
+            return res
     return __wrapper__
 
 

@@ -401,7 +401,8 @@ class _DBNamed(_DBObject):
         raise NotImplementedError()
 
     def short_name(self) -> str:
-        raise NotImplementedError()
+        warn('short name is not define')
+        return self.full_name()
 
     def __repr__(self):
         return f"<{type(self).__name__} (name={self.full_name()})>"
@@ -586,11 +587,11 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject):
         if isinstance(obj, Department):
             return [obj.faculty]
 
-        if isinstance(obj, Professor):
-            return Faculty.of(Group.of(obj))
+        if isinstance(obj, (Professor, Semester)):
+            return Faculty.of(obj.lessons)
 
         if isinstance(obj, Lesson):
-            return Faculty.of(Group.of(obj))
+            return Faculty.of(obj.groups)
 
         if isinstance(obj, Faculty):
             return [obj]
@@ -633,7 +634,10 @@ class Department(Base, _DBNamedObject, _DBEmailObject):
             return Department.of(obj.lessons)
 
         if isinstance(obj, Student):
-            return Department.of(Lesson.of(obj))
+            return Department.of(Professor.of(obj))
+
+        if isinstance(obj, Semester):
+            return Department.of(obj.lessons)
 
         raise NotImplementedError(type(obj))
 
@@ -765,6 +769,9 @@ class Visitation(Base, _DBTrackedObject):
 
         if isinstance(obj, (Professor, Discipline, Faculty, Department)):
             return Visitation.of(Lesson.of(obj))
+
+        if isinstance(obj, Semester):
+            return Visitation.of(obj.lessons)
 
         raise NotImplementedError(type(obj))
 
@@ -913,6 +920,42 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
         if isinstance(obj, Department):
             return obj.disciplines
 
+        if isinstance(obj, Discipline):
+            return [obj]
+
+        raise NotImplementedError(type(obj))
+
+
+class Semester(Base, _DBNamed):
+    __tablename__ = "semesters"
+
+    start_date: datetime = Column(DateTime, nullable=False, unique=True)
+    first_week_index: int = Column(Integer, default=0, nullable=False)
+
+    def full_name(self, case=None):
+        if 1<self.start_date.month<9:
+            return f'2 семестр, {self.start_date.year-1}-{self.start_date.year}'
+        else:
+            return f'1 семестр, {self.start_date.year}-{self.start_date.year+1}'
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Lesson):
+            return [obj.semester]
+
+        if isinstance(obj, (Professor, Discipline, Group)):
+            return Semester.of(obj.lessons)
+
+        if isinstance(obj, Student):
+            return Semester.of(obj.groups)
+
+        if isinstance(obj, (Department, Faculty)):
+            return Semester.of(Lesson.of(obj))
+
+        if isinstance(obj, Semester):
+            return [obj]
+
         raise NotImplementedError(type(obj))
 
 
@@ -944,6 +987,8 @@ class Lesson(Base, _DBTrackedObject):
     date: datetime = Column(DateTime, nullable=False)
     completed: bool = Column(Boolean, nullable=False, default=False)
     room_id: str = Column(String(40), nullable=False)
+    _semester = Column('semester', Integer, ForeignKey('semesters.id'))
+    semester = relationship('Semester', backref=backref('lessons'))
 
     discipline: Discipline
 
@@ -982,18 +1027,6 @@ class Lesson(Base, _DBTrackedObject):
             self._week = study_week(self.date)
         return self._week
 
-    _semester = None
-
-    @property
-    def semester(self):
-        """
-
-        :return: номер семестра этого занятия
-        """
-        if self._semester is None:
-            self._semester = study_semester(self.date)
-        return self._semester
-
     def repr(self):
         from Domain.Data import names_of_groups
 
@@ -1022,6 +1055,9 @@ class Lesson(Base, _DBTrackedObject):
 
         if isinstance(obj, Department):
             return Lesson.of(Professor.of(obj))
+
+        if isinstance(obj, Semester):
+            return obj.lessons
 
         raise NotImplementedError(type(obj))
 
@@ -1120,7 +1156,7 @@ class Professor(Base, _DBPerson):
         if isinstance(obj, Student):
             return Professor.of(obj.groups)
 
-        if isinstance(obj, (Group, Discipline)):
+        if isinstance(obj, (Group, Discipline, Semester)):
             return Professor.of(obj.lessons)
 
         if isinstance(obj, Professor):
@@ -1249,7 +1285,7 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
         if isinstance(obj, Lesson):
             return obj.groups
 
-        if isinstance(obj, Discipline):
+        if isinstance(obj, (Discipline, Semester)):
             return Group.of(obj.lessons)
 
         if isinstance(obj, Student):
@@ -1309,7 +1345,7 @@ class Student(Base, _DBPerson):
         if isinstance(obj, Lesson):
             return list(chain.from_iterable([Student.of(group) for group in obj.groups]))
 
-        if isinstance(obj, (Professor, Discipline)):
+        if isinstance(obj, (Professor, Discipline, Semester)):
             return Student.of(obj.lessons)
 
         if isinstance(obj, Department):
