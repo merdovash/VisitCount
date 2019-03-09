@@ -1,62 +1,79 @@
 import sys
-from typing import Generic, TypeVar
+from typing import TypeVar
 
-from PyQt5.QtCore import Qt, QAbstractListModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QComboBox, QApplication
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QStandardItemModel
+from PyQt5.QtWidgets import QComboBox, QApplication, QListView
 
-from Client.MyQt.Widgets.ComboBox import MComboBox
 from DataBase2 import Professor, Student
 
 T = TypeVar('T')
 
 
-class CheckComboBoxModel(QAbstractListModel):
-    def flags(self, index):
-        return Qt.ItemIsUserCheckable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
+class CheckableComboBox(QComboBox):
+    currentChanged = pyqtSignal('PyQt_PyObject')
 
-
-class CheckComboBox(QComboBox):
-    def __init__(self, parent=None, proxy=None):
-        super().__init__(parent)
-
-        self._model = CheckComboBoxModel()
-        self.proxy = proxy
-
-        self.setModel(self._model)
-
-    def addItems(self, Iterable, p_str=None):
-        for item in Iterable:
-            q_item = QStandardItem()
-            if self.proxy is None:
-                q_item.setText(str(item))
-            else:
-                q_item.setText(self.proxy.formatter(item))
-            q_item.setCheckable(True)
-            q_item.setSelectable(True)
-            q_item.setCheckState(Qt.Unchecked)
-            self.model().setItem(self.model().rowCount(), 0, q_item)
+    def __init__(self, parent=None, with_all=False):
+        super(CheckableComboBox, self).__init__(parent)
+        self.setView(QListView(self))
+        self.view().pressed.connect(self.handleItemPressed)
+        self.setModel(QStandardItemModel(self))
+        self.with_all = with_all
+        self.items = []
+        if self.with_all:
+            self.addItem('All')
 
     def handleItemPressed(self, index):
-        item = self.model().itemFromIndex(index)
-        if item.checkState() == Qt.Checked:
-            item.setCheckState(Qt.Unchecked)
+        def switch(item):
+            if item.checkState() == Qt.Checked:
+                item.setCheckState(Qt.Unchecked)
+            else:
+                item.setCheckState(Qt.Checked)
+        print(index.row())
+        if self.with_all and index.row() == 0:
+            model: QStandardItemModel = self.model()
+            all_item = self.model().itemFromIndex(index)
+            switch(all_item)
+            for row in range(len(self.items)):
+                index = model.index(row + 1, index.column())
+                item = self.model().itemFromIndex(index)
+                if item is not None:
+                    item.setCheckState(all_item.checkState())
         else:
-            item.setCheckState(Qt.Checked)
+            item = self.model().itemFromIndex(index)
+            switch(item)
 
+        self.currentChanged.emit(self.current())
 
-class CheckableComboBox(QComboBox):
-    # once there is a checkState set, it is rendered
-    # here we assume default Unchecked
+    def current(self):
+        checkedItems = []
+        for index in range(1, self.count()):
+            item = self.model().item(index)
+            if item.checkState() == Qt.Checked:
+                checkedItems.append(self.items[index])
+        return checkedItems
+
     def addItem(self, item):
+        self.items.append(item)
         super(CheckableComboBox, self).addItem(str(item))
-        item = self.model().item(self.count()-1,0)
+        item = self.model().item(self.count() - 1, 0)
         item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
         item.setCheckState(Qt.Unchecked)
 
-    def itemChecked(self, index):
-        item = self.model().item(index,0)
-        return item.checkState() == Qt.Checked
+    def setItems(self, items):
+        for item in items:
+            self.addItem(item)
+
+    def clear(self):
+        super().clear()
+        self.setModel(QStandardItemModel(self))
+        self.items = []
+        if self.with_all:
+            self.addItem('All')
+
+    # def addItem(self, *__args):
+    #     model: QStandardItemModel = self.model()
+    #     model.appendRow()
 
 
 if __name__ == '__main__':
@@ -67,5 +84,6 @@ if __name__ == '__main__':
         widget.addItem(st)
 
     widget.show()
+    widget.checked.connect(lambda x: print(widget.current()))
 
     sys.exit(app.exec_())

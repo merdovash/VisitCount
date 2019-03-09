@@ -19,7 +19,6 @@ from Client.MyQt.Widgets.VisualData.VisualMenu import VisualWidget
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
-from Client.MyQt.Window.NotificationParam import NotificationWindow
 from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
 from DataBase2 import Professor, Lesson
 
@@ -122,7 +121,6 @@ class MainWindow(AbstractWindow):
         self._init_menu_view()
         self._init_menu_lessons()
         self._init_menu_updates()
-        self._init_notification()
 
     def _init_menu_analysis(self):
         def show():
@@ -188,25 +186,6 @@ class MainWindow(AbstractWindow):
 
         updates.addAction(updates_action)
         updates.addAction(load_new_action)
-
-    def _init_notification(self):
-        def show_notification_window():
-            if self.notification_window is None:
-                self.notification_window = NotificationWindow(program=self.program)
-                self.notification_window.show()
-                self.notification_window.close = lambda x: x.setVisible(False)
-            else:
-                self.notification_window.activateWindow()
-                self.notification_window.setVisible(True)
-                self.notification_window.raise_()
-
-        self.notification_window: NotificationWindow = None
-        note = self.menu_bar.addMenu('Оповещения')
-
-        note_run = QAction('Настройка оповещения', self)
-        note_run.triggered.connect(show_notification_window)
-
-        note.addAction(note_run)
 
 
 class MainWindowWidget(QWidget, UI_TableWindow):

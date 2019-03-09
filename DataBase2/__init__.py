@@ -7,12 +7,13 @@ import pathlib
 import sys
 from datetime import datetime
 from itertools import chain
+from math import floor
 from typing import List, Union, Dict, Any, Type, Callable
 from warnings import warn
 
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool, QueuePool
 from sqlalchemy.sql import ClauseElement
@@ -252,9 +253,9 @@ class _DBObject(IJSON):
                 return [res]
             return res
 
-        if hasattr(obj, cls.__name__.lower()+'s'):
+        if hasattr(obj, cls.__name__.lower() + 's'):
             warn(f'you mast declare relation between `{cls.__name__}` and `{type(obj).__name__}` directly')
-            res = getattr(obj, cls.__name__.lower()+'s')
+            res = getattr(obj, cls.__name__.lower() + 's')
             if not is_iterable(res):
                 return [res]
             return res
@@ -364,6 +365,7 @@ class _DBObject(IJSON):
             return self.name
         if hasattr(self, 'full_name'):
             return self.full_name()
+        return self.__repr__()
 
 
 class _DBTrackedObject(_DBObject):
@@ -438,39 +440,13 @@ class _DBNamedObject(_DBNamed):
 
 
 class _DBEmailObject(_DBNamed):
-    email = Column(String(200))
+    @declared_attr
+    def contact_info_id(cls) -> int:
+        return Column(Integer, ForeignKey('contacts.id'))
 
-    # итоговые посещения по всем студентам
-    students_visitations_total = Column(Boolean, default=False)
-    # итоговые посещения всех студентов по дисциплнам
-    students_visitations_total_by_disciplines = Column(Boolean, default=False)
-    # динамика посещений всех студентов
-    students_visitations_dynamic = Column(Boolean, default=False)
-    students_loss = Column(Boolean, default=False)
-
-    groups_visitations_total = Column(Boolean, default=False)  # итоговые посещения по всем группам
-    group_visitations_dynamic = Column(Boolean, default=False)
-
-    professors_visitations_total = Column(Boolean, default=False)  # итоговые посещения по всем преподавателям
-    professors_visitations_dynamic = Column(Boolean, default=False)
-
-    disciplines_visitations_total = Column(Boolean, default=False)  # итоговые посещения по всем дисциплинам
-    disciplines_visitations_dynamic = Column(Boolean, default=False)
-    discipline_visitations_total_by_professor = Column(Boolean, default=False)  # посещения дисциплин по преподавателям
-    discipline_visitations_total_by_groups = Column(Boolean, default=False)  # посещения дисциплин по группам
-
-    auto = Column(Boolean, default=False)
-    last_auto = Column(DateTime)
-    interval_auto_hours = Column(Integer)
-
-    def start_auto(self, target_time: datetime.time, interval_hours: int):
-        self.auto = True
-        now = datetime.now()
-        self.last_auto = datetime(now.year, now.month, now.day) + target_time
-        self.interval_auto_hours = interval_hours
-
-    def stop_auto(self):
-        self.auto = False
+    @declared_attr
+    def contact(cls) -> 'ContactInfo':
+        return relationship('ContactInfo')
 
     @classmethod
     def email_subclasses(cls) -> List[Type['_DBEmailObject']]:
@@ -483,9 +459,9 @@ class _DBEmailObject(_DBNamed):
 class _DBPerson(_DBEmailObject, _DBTrackedObject):
     type_name: str
 
-    last_name = Column(String(50), nullable=False)
-    first_name = Column(String(50), nullable=False)
-    middle_name = Column(String(50), default="")
+    last_name: str = Column(String(50), nullable=False)
+    first_name: str = Column(String(50), nullable=False)
+    middle_name: str = Column(String(50), default="")
     _card_id = Column('card_id', String(16), unique=True)
 
     _auth = None
@@ -546,7 +522,7 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         return name
 
     def short_name(self):
-        return f'{self.last_name} {self.first_name[0]}.'+(f' {self.middle_name[0]}.' if len(self.middle_name) else '')
+        return f'{self.last_name} {self.first_name[0]}.' + (f' {self.middle_name[0]}.' if len(self.middle_name) else '')
 
     @property
     def auth(self):
@@ -566,11 +542,74 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         return session.query(cls).filter(cls.id == kwargs.get('id')).first()
 
 
+class ContactInfo(Base, _DBTrackedObject):
+    __tablename__ = "contacts"
+
+    email = Column(String(200))
+
+    auto = Column(Boolean, default=False)
+    last_auto = Column(DateTime)
+    interval_auto_hours = Column(Integer)
+
+    _views = relationship('ContactViews', backref='contact')
+    views: List['DataView'] = association_proxy('_views', '_view')
+
+    def start_auto(self, target_time: datetime.time, interval_hours: int):
+        self.auto = True
+        now = datetime.now()
+        self.last_auto = datetime(now.year, now.month, now.day) + target_time
+        self.interval_auto_hours = interval_hours
+
+    def stop_auto(self):
+        self.auto = False
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Professor):
+            return [obj.contact] if obj.contact is not None else []
+
+        raise NotImplementedError(type(obj))
+
+
+class DataView(Base, _DBNamedObject):
+    # TODO _TRACKED
+    __tablename__ = "data_views"
+
+    script_path = Column(String(500))
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        return obj.session().query(DataView).all()
+
+
+class ContactViews(Base, _DBTrackedObject):
+    __tablename__ = 'emails_views'
+
+    contact_info_id = Column(Integer, ForeignKey('contacts.id'))
+    data_view_id = Column(Integer, ForeignKey('data_views.id'))
+
+    _view = relationship('DataView')
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Professor):
+            return ContactViews.of(ContactInfo.of(obj))
+
+        if isinstance(obj, ContactInfo):
+            return obj._views
+
+        raise NotImplementedError(type(obj))
+
+
 class Faculty(Base, _DBEmailObject, _DBNamedObject):
     __tablename__ = "faculties"
     type_name = "Факультет"
 
     groups: List['Group'] = relationship('Group', backref=backref('faculty'))
+    admins: List['Administration'] = association_proxy('_admins', 'admin')
 
     @classmethod
     @listed
@@ -607,6 +646,14 @@ class FacultyAdministrations(Base, _DBObject):
 
     faculty = relationship('Faculty', backref=backref('_admins'))
     admin = relationship('Administration', backref=backref('_faculties'))
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Professor):
+            raise UnauthorizedError()
+
+        raise NotImplementedError(type(obj))
 
 
 class Department(Base, _DBNamedObject, _DBEmailObject):
@@ -654,6 +701,14 @@ class DepartmentProfessors(Base, _DBObject):
 
     department = relationship('Department', backref=backref('_professors'))
     professor = relationship('Professor', backref=backref('_department'))
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Professor):
+            return obj._department
+
+        raise NotImplementedError(type(obj))
 
 
 class StudentsGroups(Base, _DBTrackedObject):
@@ -719,17 +774,9 @@ class StudentsParents(Base, _DBTrackedObject):
     @listed
     def of(cls, obj, *args, **kwargs):
         if isinstance(obj, Professor):
-            return obj.session() \
-                .query(StudentsParents) \
-                .distinct(StudentsParents.id) \
-                .join(Student) \
-                .join(StudentsGroups) \
-                .join(Group) \
-                .join(LessonsGroups) \
-                .join(Lesson) \
-                .join(Professor) \
-                .filter(Professor.id == obj.id) \
-                .all()
+            return StudentsParents.of(Student.of(obj))
+        if isinstance(obj, Student):
+            return obj._parents
         raise NotImplementedError(obj)
 
 
@@ -933,10 +980,10 @@ class Semester(Base, _DBNamed):
     first_week_index: int = Column(Integer, default=0, nullable=False)
 
     def full_name(self, case=None):
-        if 1<self.start_date.month<9:
-            return f'2 семестр, {self.start_date.year-1}-{self.start_date.year}'
+        if 1 < self.start_date.month < 9:
+            return f'2 семестр, {self.start_date.year - 1}-{self.start_date.year}'
         else:
-            return f'1 семестр, {self.start_date.year}-{self.start_date.year+1}'
+            return f'1 семестр, {self.start_date.year}-{self.start_date.year + 1}'
 
     @classmethod
     @listed
@@ -987,8 +1034,8 @@ class Lesson(Base, _DBTrackedObject):
     date: datetime = Column(DateTime, nullable=False)
     completed: bool = Column(Boolean, nullable=False, default=False)
     room_id: str = Column(String(40), nullable=False)
-    _semester = Column('semester', Integer, ForeignKey('semesters.id'))
-    semester = relationship('Semester', backref=backref('lessons'))
+    semester_id = Column(Integer, ForeignKey('semesters.id'))
+    semester: Semester = relationship('Semester', backref=backref('lessons'))
 
     discipline: Discipline
 
@@ -1023,9 +1070,7 @@ class Lesson(Base, _DBTrackedObject):
 
     @property
     def week(self):
-        if self._week is None:
-            self._week = study_week(self.date)
-        return self._week
+        return floor((self.date - self.semester.start_date).days / 7) + self.semester.first_week_index
 
     def repr(self):
         from Domain.Data import names_of_groups
@@ -1037,12 +1082,12 @@ class Lesson(Base, _DBTrackedObject):
         кабинет: {self.room_id}"""
 
     @classmethod
+    @sorter
     @filter_deleted
     @listed
     def of(cls, obj, *args, **kwargs) -> List['Lesson']:
         """
 
-        :param intersect:
         :param obj: объект или спсиок объектов базы данных
         :return: список родителей, отоносящихся к объекту
         """
@@ -1069,10 +1114,6 @@ class Administration(Base, _DBPerson):
     __tablename__ = 'administrations'
     type_name = 'Представитель администрации'
 
-    notification = relationship('NotificationParam', backref=backref("admin", cascade="all,delete"),
-                                passive_updates=False)
-    professors = association_proxy('notification', 'professor')
-
     def __repr__(self):
         return f"<Administration(id={self.id}, card_id={self.email}, " \
             f"last_name={self.last_name}, first_name={self.first_name}, " \
@@ -1085,27 +1126,13 @@ class Administration(Base, _DBPerson):
         """
         Возвращает список Администраторов, которые относятся к переданому объекту
         :param obj: Объект базы данных
-        :param with_deleted: список включает удаленные объекты
         :return: список
         """
         if isinstance(obj, Professor):
+            return Administration.of(Faculty.of(obj))
+
+        if isinstance(obj, Faculty):
             return obj.admins
-
-        if isinstance(obj, NotificationParam):
-            return [obj.admin]
-
-        raise NotImplementedError(type(obj))
-
-    @staticmethod
-    def active_of(obj):
-        """
-
-        :param obj: объект или спсиок объектов базы данных
-        :return: спсиок активных оповещений
-        """
-        if isinstance(obj, Professor):
-            nps = list(filter(lambda np: np.active, NotificationParam.of(obj)))
-            return Administration.of(nps)
 
         raise NotImplementedError(type(obj))
 
@@ -1121,9 +1148,6 @@ class Professor(Base, _DBPerson):
     _last_update_out = Column(DateTime)
 
     lessons: List[Lesson] = relationship("Lesson", backref=backref('professor'), order_by="Lesson.date")
-
-    _admins = relationship('NotificationParam', backref="professor")
-    admins: List[Administration] = association_proxy('_admins', 'admin')
 
     departments: List[Department] = association_proxy('_department', 'department')
 
@@ -1144,14 +1168,9 @@ class Professor(Base, _DBPerson):
         :param with_deleted: включать ли в список удаленные объекты
         :return: список преподавателей, отоносящихся к объекту
         """
-        if isinstance(obj, (Lesson, NotificationParam)):
-            return [obj.professor]
 
         if isinstance(obj, Visitation):
             return [lesson.professor for lesson in obj.lesson]
-
-        if isinstance(obj, Administration):
-            return obj.professors
 
         if isinstance(obj, Student):
             return Professor.of(obj.groups)
@@ -1176,15 +1195,6 @@ class Professor(Base, _DBPerson):
             удаленные объекты этим преподавтелем с момента последней отправки
         """
 
-        if last_in is None:
-            created_cond = lambda item: item._created and item._created >= self._last_update_out
-            updated_cond = lambda item: item._updated and item._updated >= self._last_update_out
-            deleted_cond = lambda item: item._deleted and item._is_deleted and item._deleted >= self._last_update_out
-        else:
-            created_cond = lambda item: item._created and item._created >= last_in
-            updated_cond = lambda item: item._updated and item._updated >= last_in
-            deleted_cond = lambda item: item._deleted and item._is_deleted and item._deleted >= last_in
-
         created = {}
         updated = {}
         deleted = {}
@@ -1192,64 +1202,23 @@ class Professor(Base, _DBPerson):
         if self._last_update_out is None:
             self._last_update_out = datetime(2008, 1, 1)
 
-        classes = _DBTrackedObject.subclasses()
+        for cls in _DBTrackedObject.subclasses():
+            updated[cls.__name__] = self.session() \
+                .query(cls) \
+                .filter(cls._updated > self._last_update_out) \
+                .all()
 
-        if Auth in classes:
-            classes.remove(Auth)
-        if Professor in classes:
-            classes.remove(Professor)
+            created[cls.__name__] = self.session() \
+                .query(cls) \
+                .filter(cls._created > self._last_update_out) \
+                .all()
 
-        for class_ in classes:
-            data: List[_DBTrackedObject] = DBList(class_.of(self, with_deleted=True), flat=True, unique=True)
-
-            created[class_.__name__] = [data.pop(i) for i in range(len(data) - 1, -1, -1) if created_cond(data[i])]
-            updated[class_.__name__] = [data.pop(i) for i in range(len(data) - 1, -1, -1) if updated_cond(data[i])]
-            deleted[class_.__name__] = [data.pop(i) for i in range(len(data) - 1, -1, -1) if deleted_cond(data[i])]
+            deleted[cls.__name__] = self.session() \
+                .query(cls) \
+                .filter(cls._deleted > self._last_update_out) \
+                .all()
 
         return dict(created=created, updated=updated, deleted=deleted)
-
-
-class NotificationParam(Base, _DBTrackedObject):
-    """
-    Таблица парметров оповещений
-    """
-
-    __tablename__ = 'notifications'
-    __table_args__ = (
-        UniqueConstraint('professor_id', 'admin_id', name='notification_param_UK'),
-        _DBObject.__table_args__
-    )
-
-    professor_id = Column(Integer, ForeignKey('professors.id'))
-    admin_id = Column(Integer, ForeignKey('administrations.id'))
-    active = Column(Boolean)
-    show_groups = Column(Boolean, default=False)
-    show_disciplines = Column(Boolean, default=False)
-    show_students = Column(Boolean, default=True)
-    show_progress = Column(Boolean, default=False)
-
-    @classmethod
-    @filter_deleted
-    @listed
-    def of(cls, obj, *args, **kwargs) -> List['NotificationParam']:
-        """
-
-        :param obj: Объект базы данных или список объектов
-        :param with_deleted: включать ли в список удаленные объекты
-        :return: список Парааметров оповещений, которые отностятся к переданному объекту
-        """
-
-        if isinstance(obj, Professor):
-            return obj._admins
-
-        if isinstance(obj, Administration):
-            return obj.notification
-
-        raise NotImplementedError(type(obj))
-
-    def __repr__(self):
-        return f"<NotificationParam (id={self.id}, professor_id={self.professor_id}, admin_id={self.admin_id}, " \
-            f"active={self.active})>"
 
 
 class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):

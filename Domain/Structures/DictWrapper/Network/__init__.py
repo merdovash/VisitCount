@@ -1,7 +1,8 @@
 from typing import Dict, List, Callable, Type
 
 from DataBase2 import _DBObject, _DBTrackedObject, StudentsGroups, Student, Group, Discipline, Professor, Auth, \
-    LessonsGroups, Lesson, Visitation, Administration, NotificationParam, Parent, StudentsParents, _DBPerson
+    LessonsGroups, Lesson, Visitation, Administration, Parent, StudentsParents, _DBPerson, Semester, Faculty, \
+    Department, DepartmentProfessors, DataView, ContactInfo, ContactViews
 from Domain.Structures.DictWrapper import HiddenStructure, Structure
 
 DBSlice = Dict[str, List[_DBObject or Dict]]
@@ -9,17 +10,23 @@ DBSlice = Dict[str, List[_DBObject or Dict]]
 
 class TablesData(HiddenStructure):
     DEFAULT_ORDER = [i.__name__ for i in [
+        DataView,
+        ContactInfo,
+        ContactViews,
+        Faculty,
+        Department,
         Auth,
         Professor,
+        DepartmentProfessors,
         Discipline,
         Group,
         Student,
         StudentsGroups,
+        Semester,
         Lesson,
         LessonsGroups,
         Visitation,
         Administration,
-        NotificationParam,
         Parent,
         StudentsParents
     ]]

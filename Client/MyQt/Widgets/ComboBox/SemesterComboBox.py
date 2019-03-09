@@ -29,7 +29,7 @@ class SemesterComboBox(MComboBox):
         super().__init__(parent, int)
 
     def init(self, professor):
-        self.lessons = Lesson.of(professor)
+        self.lessons = Lesson.of(professor, sort=lambda x: x.date)
         self.on_parent_change(self.lessons, None)
 
 

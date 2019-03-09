@@ -3,7 +3,7 @@ from typing import List
 
 from sqlalchemy.ext.associationproxy import _AssociationList
 
-from DataBase2 import Student, Group, Lesson, Visitation, Administration, Discipline, Professor, NotificationParam, \
+from DataBase2 import Student, Group, Lesson, Visitation, Administration, Discipline, Professor, \
     StudentsGroups, LessonsGroups
 
 
@@ -14,24 +14,6 @@ def select_by_id(session, mapper, ID):
         return select_by_id(session, locate(f'DataBase2.{mapper}'), ID)
     else:
         return session.query(mapper).filter(mapper.id == ID).first()
-
-
-def select(session, mapper, mapping):
-    if mapper == Visitation:
-        return session \
-            .query(Visitation) \
-            .filter(Visitation.lesson_id == mapping['lesson_id'],
-                    Visitation.student_id == mapping['student_id']) \
-            .first()
-    elif mapper in [Administration, NotificationParam]:
-        return session \
-            .query(mapper) \
-            .filter(mapper.id == mapping['id']) \
-            .first()
-    elif isinstance(mapper, str):
-        return select(session, locate(f'DataBase2.{mapper}'), mapping)
-    else:
-        raise NotImplementedError(mapper)
 
 
 def valid_card(user):
@@ -67,40 +49,3 @@ def lessons_of(professor, groups=None, discipline=None, semester=None):
         total = [item for item in total if item.semester == semester]
 
     return sorted(total, key=lambda x: x.date)
-
-
-def get_db_object(base, object_, session):
-    """
-
-    :param base:
-    :param object_:
-    :param session:
-    :return: возвращает такой же объект в БД
-    """
-    if isinstance(object_, Visitation):
-        old = session \
-            .query(Visitation) \
-            .filter(Visitation.lesson_id == object_.lesson_id, Visitation.student_id == object_.student_id).first()
-
-        return old is not None, old
-    elif isinstance(object_, (Student, Professor, Lesson, Discipline, Group, Administration)):
-        old = session.query(base).filter(base.id == object_.id).first()
-        return old is not None, old
-    elif isinstance(object_, NotificationParam):
-        old = session.query(NotificationParam) \
-            .filter(NotificationParam.professor_id == object_.professor_id) \
-            .filter(NotificationParam.admin_id == object_.admin_id) \
-            .first()
-        return old is not None, old
-    elif isinstance(object_, StudentsGroups):
-        old = session.query(StudentsGroups) \
-            .filter(StudentsGroups.student_id == object_.student_id, StudentsGroups.group_id == object_.group_id) \
-            .first()
-        return old is not None, old
-    elif isinstance(object_, LessonsGroups):
-        old = session.query(LessonsGroups) \
-            .filter(LessonsGroups.lesson_id == object_.lesson_id, LessonsGroups.group_id == object_.group_id) \
-            .first()
-        return old is not None, old
-    else:
-        raise NotImplementedError(type(object_))

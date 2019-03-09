@@ -1,4 +1,5 @@
 from datetime import date
+from math import floor
 from typing import Callable, List
 
 from matplotlib.axes import Axes, SubplotBase
@@ -21,11 +22,20 @@ def post_ax(ax, groups_count=1):
         ax.legend(bbox_to_anchor=(1, 1))
 
 
+def cumsum(df, second_group_by) -> DataFrame:
+    visit = df.groupby(['group_by', second_group_by])['visit'].sum().groupby(['group_by']).cumsum()
+    total = df.groupby(['group_by', second_group_by])['total'].sum().groupby(['group_by']).cumsum()
+    res = DataFrame()
+    res['rate'] = visit / total * 100
+    return res
+
+
 def prepare_data(user, semester, group_by: Callable[[Lesson], List]):
     lessons = Lesson.of(user)
 
     data = []
     year = None
+    print(Student.of(user))
 
     for lesson in lessons:
         if lesson.semester == semester and lesson.completed:
@@ -33,13 +43,14 @@ def prepare_data(user, semester, group_by: Callable[[Lesson], List]):
             lesson_visitation = set(Visitation.of(lesson)) & set(Visitation.of(user))
             lesson_students = set(Student.of(lesson)) & set(Student.of(user))
             for item in list(set(group_by(lesson)) & set(group_by(user))):
-                data.append([
-                    len(set(Visitation.of(item)) & lesson_visitation),
-                    len(set(Student.of(item)) & lesson_students),
-                    lesson.date,
-                    item.short_name(),
-                    lesson.date.timetuple().tm_yday
-                ])
+                data.append({
+                    'visit': len(set(Visitation.of(item)) & lesson_visitation),
+                    'total': len(set(Student.of(item)) & lesson_students),
+                    'date': lesson.date,
+                    'group_by': item.short_name(),
+                    'day': lesson.date.timetuple().tm_yday,
+                    'week': lesson.week
+                })
     return data, year
 
 
@@ -51,15 +62,11 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
     if len(data) == 0:
         return fig
     df = DataFrame(data)
-    df.rename(index=str, columns={0: 'visit', 1: 'total', 2: 'date', 3: 'group_by', 4: 'day'}, inplace=True)
     df.sort_values('day', 0, inplace=True)
 
     if plot_type == 'distribution':
 
-        visit = df.groupby(['group_by', 'day'])['visit'].sum().groupby(['group_by']).cumsum()
-        total = df.groupby(['group_by', 'day'])['total'].sum().groupby(['group_by']).cumsum()
-        res = DataFrame()
-        res['rate'] = visit / total * 100
+        res = cumsum(df, 'day')
         grouped = res.groupby(['group_by'])
 
         ax = default_ax(fig, len(grouped.groups))
@@ -67,7 +74,6 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         for i, g in grouped:
             g = g.reset_index()
             g['day'] = g['day'].apply(lambda x: date(year, 1, 1) + relativedelta(days=x - 1))
-            print(g)
             g.plot(x='day', y='rate', ax=ax, label=str(i), alpha=0.6)
 
         ax.set_ylim([-1, 101])
@@ -78,7 +84,7 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         post_ax(ax, len(grouped.groups))
 
     if plot_type == 'bar_week':
-        df['week'] = df['date'].dt.week
+        print(df)
         visit = df.groupby(['group_by', 'week'])['visit'].sum()
         total = df.groupby(['group_by', 'week'])['total'].sum()
 
@@ -195,4 +201,3 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_ylabel('Посещения, %')
 
     return fig
-

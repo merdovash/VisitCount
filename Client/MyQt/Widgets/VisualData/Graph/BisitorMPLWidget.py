@@ -3,8 +3,10 @@ from typing import Type, List
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QPushButton
 
+from Client.MyQt.Widgets.ComboBox.CheckComboBox import CheckableComboBox
 from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox
 from Client.MyQt.Widgets.ExtendedComboBox import ExtendedCombo
+from Client.MyQt.Widgets.QLoadingIndicator import QtWaitingSpinner
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
 from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department, Semester
@@ -23,6 +25,7 @@ class BisitorMPLWidget(QWidget):
             "Итоговое (по алфавиту)": 'total_alphabetic',
             "Итоговое (по возрастанию)": 'total_rated'
         }
+        self.items = []
 
         main_layout = QVBoxLayout()
 
@@ -32,7 +35,7 @@ class BisitorMPLWidget(QWidget):
         selector_layout.addWidget(QLabel('Данные по'), alignment=Qt.AlignVCenter | Qt.AlignRight)
         selector_layout.addWidget(data_selector)
 
-        item_selector = ExtendedCombo([])
+        item_selector = CheckableComboBox(with_all=True)
         item_selector_label = QLabel()
         # selector_layout.addWidget(item_selector_label, alignment=Qt.AlignVCenter | Qt.AlignRight)
         selector_layout.addWidget(item_selector)
@@ -62,16 +65,18 @@ class BisitorMPLWidget(QWidget):
             item_selector_label.setText(data_groups[index].__name__)
             show_btn.setEnabled(True)
 
-        def update_semester_selector(index):
+        def update_semester_selector(items):
+            print('update', items)
             semester_selector.clear()
-            semester_selector.loads(self.items[index])
+            new_semesters = Semester.of(items)
+            semester_selector.addItems(new_semesters)
 
         def update_group_by_slector(index):
             group_by_selector.clear()
             group_by_selector.addItems([s.__name__ if i != index else 'нет' for i, s in enumerate(data_groups)])
 
         data_selector.currentIndexChanged.connect(update_item_selector)
-        item_selector.currentIndexChanged.connect(update_semester_selector)
+        item_selector.currentChanged.connect(update_semester_selector)
         data_selector.currentIndexChanged.connect(update_group_by_slector)
 
         main_layout.addLayout(selector_layout)
@@ -85,9 +90,9 @@ class BisitorMPLWidget(QWidget):
         def show():
             self.plot.deleteLater()
             main_layout.removeWidget(self.plot)
-
+            print('show', item_selector.current())
             self.plot = MyMplCanvas(
-                self.items[item_selector.currentIndex()],
+                item_selector.current(),
                 data_groups[group_by_selector.currentIndex()].of,
                 plot_types[plot_type_selector.currentText()],
                 semester=semester_selector.current())

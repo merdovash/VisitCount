@@ -1,6 +1,9 @@
 from pathlib import Path
 
-done_img = str(Path(__file__).with_name('done.png'))
+_file = Path(__file__)
+
+done_img = str(_file.with_name('done.png'))
+loading_gif = str(_file.with_name('loader.gif'))
 
 if __name__ == '__main__':
     print(done_img)
