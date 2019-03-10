@@ -17,6 +17,7 @@ from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.VisualData.Graph.BisitorMPLWidget import BisitorMPLWidget
 from Client.MyQt.Widgets.VisualData.VisualMenu import VisualWidget
 from Client.MyQt.Window import AbstractWindow
+from Client.MyQt.Window.ContactManager import QContactManagerWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
 from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
@@ -168,13 +169,17 @@ class MainWindow(AbstractWindow):
 
     def _init_menu_updates(self):
         def update_db_action():
-            self.update_action_dialog = SendUpdatesWidget(self.program)
+            self.update_action_dialog = SendUpdatesWidget(self.program.professor)
             self.update_action_dialog.show()
 
         def show_loader_widget():
             self.loader_Widget = LoadingWizardWindow(self.professor)
             self.loader_Widget.data_loaded.connect(self.refresh_data)
             self.loader_Widget.show()
+
+        def show_contact_manager_widget():
+            self.contact_manager_widget = QContactManagerWindow(self.professor)
+            self.contact_manager_widget.show()
 
         updates = self.menu_bar.addMenu("Данные")
 
@@ -184,8 +189,12 @@ class MainWindow(AbstractWindow):
         load_new_action = QAction("Загрузить данные", self)
         load_new_action.triggered.connect(show_loader_widget)
 
+        contact_manager_action = QAction('Настройки рассылки', self)
+        contact_manager_action.triggered.connect(show_contact_manager_widget)
+
         updates.addAction(updates_action)
         updates.addAction(load_new_action)
+        updates.addAction(contact_manager_action)
 
 
 class MainWindowWidget(QWidget, UI_TableWindow):

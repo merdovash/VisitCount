@@ -1,9 +1,10 @@
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTableView, QLabel
 
 from Client.MyQt.Widgets.Network.Request import RequestWidget
 from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes
 from Modules.Synch.ClientSide import Updater
+from Parser import client_args
 
 
 class UpdatesModel(QAbstractTableModel):
@@ -57,11 +58,10 @@ class UpdatesModel(QAbstractTableModel):
 
 
 class SendUpdatesWidget(QWidget):
-    def __init__(self, program, flags=None, *args, **kwargs):
+    start = pyqtSignal()
+    def __init__(self, professor, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
         self.setMinimumWidth(600)
-
-        professor = program.professor
 
         l = QVBoxLayout()
 
@@ -79,11 +79,12 @@ class SendUpdatesWidget(QWidget):
                         updates=updates,
                         last_update_in=professor._last_update_in,
                         last_update_out=professor._last_update_out),
-                    program.host
+                    client_args.host
                 ),
                 text_button='Начать'
             )
             widget.setMinimumWidth(500)
+            self.start.connect(widget.send)
 
             widget.finish.connect(on_finish_update)
 

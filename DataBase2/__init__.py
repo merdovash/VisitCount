@@ -552,7 +552,7 @@ class ContactInfo(Base, _DBTrackedObject):
     interval_auto_hours = Column(Integer)
 
     _views = relationship('ContactViews', backref='contact')
-    views: List['DataView'] = association_proxy('_views', '_view')
+    views: List['DataView'] = association_proxy('_views', '_view', creator=lambda x: ContactViews(_view=x))
 
     def start_auto(self, target_time: datetime.time, interval_hours: int):
         self.auto = True
@@ -581,11 +581,29 @@ class DataView(Base, _DBNamedObject):
     @classmethod
     @listed
     def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, (Professor)):
+            return DataView.of(ContactViews.of(obj))
+
+        if isinstance(obj, ContactViews):
+            return obj._view
+
+        if isinstance(obj, ContactInfo):
+            return obj.views
+
         return obj.session().query(DataView).all()
+
+    @staticmethod
+    def all():
+        session = Session()
+        return session.query(DataView).all()
 
 
 class ContactViews(Base, _DBTrackedObject):
     __tablename__ = 'emails_views'
+    __table_args__ = (
+        UniqueConstraint('contact_info_id', 'data_view_id', name='contact_views_UK'),
+        _DBObject.__table_args__,
+    )
 
     contact_info_id = Column(Integer, ForeignKey('contacts.id'))
     data_view_id = Column(Integer, ForeignKey('data_views.id'))
@@ -593,6 +611,7 @@ class ContactViews(Base, _DBTrackedObject):
     _view = relationship('DataView')
 
     @classmethod
+    @filter_deleted
     @listed
     def of(cls, obj, *args, **kwargs):
         if isinstance(obj, Professor):
@@ -600,6 +619,9 @@ class ContactViews(Base, _DBTrackedObject):
 
         if isinstance(obj, ContactInfo):
             return obj._views
+
+        if isinstance(obj, DataView):
+            return ContactViews.of()
 
         raise NotImplementedError(type(obj))
 

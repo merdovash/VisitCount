@@ -1,7 +1,7 @@
 import sys
 from typing import TypeVar
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QModelIndex, QSize
 from PyQt5.QtGui import QStandardItemModel
 from PyQt5.QtWidgets import QComboBox, QApplication, QListView
 
@@ -23,12 +23,13 @@ class CheckableComboBox(QComboBox):
         if self.with_all:
             self.addItem('All')
 
-    def handleItemPressed(self, index):
+    def handleItemPressed(self, index: QModelIndex):
         def switch(item):
             if item.checkState() == Qt.Checked:
                 item.setCheckState(Qt.Unchecked)
             else:
                 item.setCheckState(Qt.Checked)
+
         print(index.row())
         if self.with_all and index.row() == 0:
             model: QStandardItemModel = self.model()
@@ -45,9 +46,18 @@ class CheckableComboBox(QComboBox):
 
         self.currentChanged.emit(self.current())
 
+    def setChecked(self, s_item):
+        for index, item in enumerate(self.items):
+            if item.id == s_item.id:
+                index = self.model().index(index, 0)
+                print('set', index)
+                self.handleItemPressed(index)
+                return
+        raise IndexError(f'no item {s_item} in {self.items}')
+
     def current(self):
         checkedItems = []
-        for index in range(1, self.count()):
+        for index in range(1 if self.with_all else 0, self.count()):
             item = self.model().item(index)
             if item.checkState() == Qt.Checked:
                 checkedItems.append(self.items[index])
@@ -59,6 +69,7 @@ class CheckableComboBox(QComboBox):
         item = self.model().item(self.count() - 1, 0)
         item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
         item.setCheckState(Qt.Unchecked)
+        item.setSizeHint(QSize(self.width(), 25))
 
     def setItems(self, items):
         for item in items:

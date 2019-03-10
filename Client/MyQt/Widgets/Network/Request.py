@@ -42,7 +42,7 @@ class Requset_Ui:
 
 
 class RequestWidget(QWidget, Requset_Ui):
-    send = pyqtSignal(bool)
+    send = pyqtSignal()
     read_response = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
     finish = pyqtSignal('PyQt_PyObject')
     exit = pyqtSignal(bool)

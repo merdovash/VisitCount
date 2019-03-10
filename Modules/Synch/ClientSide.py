@@ -13,6 +13,8 @@ class Updater(ClientWorker):
     def __init__(self, professor, data, host):
         super().__init__()
         self.data = BaseRequest(professor, data)
+        if host[:4] != 'http':
+            host = 'http://' + host
         self.address = host + address
         self.professor = professor
 
@@ -42,6 +44,7 @@ class Updater(ClientWorker):
         :param progress_bar:
         :return:
         """
+
         def creating_new_items(item_data: Dict, class_: Type[_DBTrackedObject]):
             """
             Создает новый элент класса class_ на основании данных item_data
@@ -96,7 +99,7 @@ class Updater(ClientWorker):
 
         def change_id_to_temp(change_id: ChangeId, class_: Type[_DBTrackedObject]):
             item = class_.get(session, id=change_id.from_id)
-            item.id = item.id*(-1)
+            item.id = item.id * (-1)
             change_id.from_id = item.id
 
             progress_bar.increment()
@@ -114,7 +117,7 @@ class Updater(ClientWorker):
 
         # Обновление id
         length = len(data.changed_id)
-        progress_bar.set_part(PART_SIZE, length*2, "Синхронизация созданных данных")
+        progress_bar.set_part(PART_SIZE, length * 2, "Синхронизация созданных данных")
         data.changed_id.foreach(change_id_to_temp)  # присвоение времнных ID
         session.commit()
         data.changed_id.foreach(change_id_to_global)  # присвоение реальных ID
