@@ -230,10 +230,10 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
             for group in self.students_lists.keys():
                 self.managers.append(
                     BisitorRequest(
-                        address='http://localhost:5000/api/group',
+                        address='/api/group',
                         user=self.professor,
                         data={'name': group.name},
-                        callback=apply_response
+                        on_finish=apply_response
                     )
                 )
 

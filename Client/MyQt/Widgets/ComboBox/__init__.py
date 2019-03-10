@@ -60,6 +60,8 @@ class MComboBox(QComboBox):
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='on_parent_change')
     def on_parent_change(self, lessons, parent_value):
         self.lessons = lessons
+        if lessons is None or len(lessons) == 0:
+            return
 
         data = sorted(list(set([self.extractor(item) for item in self.lessons])), key=self.sorter)
         self.set_items(data)
@@ -98,6 +100,9 @@ class MComboBox(QComboBox):
 
     @pyqtSlot('PyQt_PyObject', name='setCurrent')
     def setCurrent(self, item: T):
+        if len(self.items) == 0:
+            return
+
         if isinstance(item, list):
             item = item[0]
 

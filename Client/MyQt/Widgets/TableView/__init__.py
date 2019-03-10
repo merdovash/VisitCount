@@ -90,6 +90,9 @@ class VisitTableWidget(QWidget):
             ROW_HEIGHT * 2 + SCROLL_BAR_SIZE)
 
     def setData(self, lessons, groups):
+        if groups is None or len(groups) == 0 or lessons is None or len(lessons) == 0:
+            return
+
         students = sorted(Student.of(groups), key=lambda x: format_name(x))
         model = VisitModel(lessons, students)
         self.new_visit.connect(model.on_new_visit)
