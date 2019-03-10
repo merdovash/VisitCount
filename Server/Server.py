@@ -14,6 +14,7 @@ from Modules.Index import ServerSide as Index
 from Modules.Notification.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
+from Modules.NewProfessor import ServerSide as NewProfessor
 from Parser import server_args
 
 path, file = os.path.split(os.path.abspath(__file__))
@@ -28,6 +29,7 @@ SourceChecker.init(app)
 Cabinet.init(app)
 Index.init(app)
 VisitLandingPage.init(app)
+NewProfessor.init(app, request)
 SynchModule(app, request)
 API.init(app, request)
 

@@ -4,7 +4,7 @@ from datetime import timedelta, datetime, time
 from typing import List
 
 from DataBase2 import _DBEmailObject, Session, ContactInfo
-from Domain.Notification.ExcelResult import MessageMaker
+from Domain.Notification.Report import MessageMaker
 
 
 def init(loop: asyncio.AbstractEventLoop = None):
@@ -16,6 +16,8 @@ def init(loop: asyncio.AbstractEventLoop = None):
             sleep_until+=timedelta(0, 60 * 60 * contact.interval_auto_hours)
         # sleep_until: datetime = contact.last_auto + timedelta(0, 60 * 60 * contact.interval_auto_hours)
         send_message = MessageMaker.auto(receiver, sleep_until)
+        if send_message is None:
+            return
         sleep_time: int = (sleep_until - datetime.now()).total_seconds()
         logger.info(f'prepared for {receiver}, '
                     f'sleep {sleep_time}s., '

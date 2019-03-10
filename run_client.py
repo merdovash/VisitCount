@@ -7,24 +7,18 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory
 
 from Client.IProgram import IProgram
 from Client.Program import MyProgram
+from Parser import client_args
 
 pyqt = os.path.dirname(PyQt5.__file__)
 QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process parameters")
-    parser.add_argument('--host', metavar='H', default='http://bisitor.itut.ru', type=str, help='you can specify server host address')
-    parser.add_argument('--test', type=bool, default=False, help='for testing without Reader')
-    parser.add_argument('--css', type=bool, default=True, help='you can disable css')
-
-    args = parser.parse_args()
-
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory().create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
-    print(args)
-    program: IProgram = MyProgram(css=args.css, test=args.test, host=args.host)
+    print(client_args)
+    program: IProgram = MyProgram(css=client_args.css, test=client_args.test, host=client_args.host)
 
     old_hook = sys.excepthook
 
