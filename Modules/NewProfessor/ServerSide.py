@@ -1,4 +1,4 @@
-from DataBase2 import Session, Auth, Professor
+from DataBase2 import Session, Auth, Professor, ContactInfo
 from Modules.NewProfessor import address, NewProfessorResponse
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
@@ -21,6 +21,12 @@ def init(app, request):
                                   first_name=data['data']['first_name'],
                                   last_name=data['data']['last_name'],
                                   middle_name=data['data']['middle_name'])
+
+        contact = ContactInfo.new(session,
+                                  email=data['data']['email'])
+
+        professor.contact = contact
+
         session.commit()
 
         auth = Auth.new(session,
@@ -28,6 +34,7 @@ def init(app, request):
                         password=data['data']['password'],
                         user_type=Auth.Type.PROFESSOR,
                         user_id=professor.id)
+
         session.commit()
 
         response.set_data({'ok': 'ok'}, NewProfessorResponse)
