@@ -55,6 +55,8 @@ class Ui_AuthWindow(object):
         self.verticalLayout.addLayout(self.formLayout)
         self.auth_btn = QtWidgets.QPushButton(self.centralwidget)
         self.verticalLayout.addWidget(self.auth_btn)
+        self.create_auth_btn = QtWidgets.QPushButton('Создать аккаунт')
+        self.verticalLayout.addWidget(self.create_auth_btn)
         self.verticalLayout_2.addLayout(self.verticalLayout)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
