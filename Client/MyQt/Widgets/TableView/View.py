@@ -14,6 +14,7 @@ from Domain.functools.Format import agree_to_gender
 
 class VisitView(QTableView):
     show_student_card_id = pyqtSignal('PyQt_PyObject')
+    show_student_summary = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject')
     set_current_lesson = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
     select_current_lesson = pyqtSignal('PyQt_PyObject')
 
@@ -102,13 +103,20 @@ class VisitView(QTableView):
     def verticalHeaderMenuRequested(self, pos: QPoint):
         index = self.indexAt(pos)
         student = self.model().headerData(index.row(), Qt.Vertical, VisitModel.ValueRole)
+        discipline = self.model().headerData(index.row(), Qt.Horizontal, VisitModel.ValueRole).discipline
+        professor = self.model().headerData(index.row(), Qt.Horizontal, VisitModel.ValueRole).professor
 
         menu = QMenu(self)
 
         menu.addSection('Показать данные')
         menu.addAction(
-            'Показать карту',
+            'Информация о карте',
             lambda: self.show_student_card_id.emit(student))
+
+        menu.addAction(
+            'Сводка',
+            lambda: self.show_student_summary.emit(student, professor, discipline)
+        )
 
         if not self.lesson_started:
             menu.addSection('Изменить данные')

@@ -7,7 +7,10 @@ from PyQt5.QtWidgets import QApplication, QWidget, \
 
 from Client.MyQt.Widgets.TableView.Model import PercentHorizontalModel, PercentVerticalModel, VisitModel
 from Client.MyQt.Widgets.TableView.View import VisitView, PercentView, PercentHorizontalView
-from DataBase2 import Lesson, Auth, Student, Group
+from DataBase2 import Lesson, Auth, Student, Group, Visitation
+from Domain.Aggregation.Lessons import intersect_lessons_of
+from Domain.Aggregation.Visitations import all_visitations
+from Domain.functools.Format import agree_to_number, agree_to_gender
 from Domain.functools.Format import format_name
 
 COLUMN_WIDTH = 48
@@ -61,6 +64,19 @@ class VisitTableWidget(QWidget):
                 f'Карта студента {format_name(x, {"gent"})}:\n'
                 f'{"не зарегистрирована" if x.card_id is None else x.card_id}')
         )
+
+        def student_summary(student, professor, discipline):
+            lessons = list(filter(lambda x: x.completed, intersect_lessons_of(professor, discipline, student)))
+            visitation = all_visitations(student, lessons)
+            QMessageBox().information(
+                self,
+                "Информация",
+                f'Студент {student.full_name()} {agree_to_gender("посетил", student.full_name())} '
+                f'{len(visitation)} из {len(lessons)} {agree_to_number("занятий", len(lessons))} '
+                f'({round(len(visitation)/len(lessons)*100 if len(visitation) else 0)})'
+                + (' превысив допустимое количество пропусков.' if len(visitation)<len(lessons)-3 else '.')
+            )
+        self.view.show_student_summary.connect(student_summary)
 
         self.lesson_start.connect(self.on_lesson_start)
         self.lesson_start.connect(self.view.lesson_start)
