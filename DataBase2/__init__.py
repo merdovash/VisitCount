@@ -593,8 +593,9 @@ class DataView(Base, _DBNamedObject):
         return obj.session().query(DataView).all()
 
     @staticmethod
-    def all():
-        session = Session()
+    def all(session=None):
+        if session is None:
+            session = Session()
         return session.query(DataView).all()
 
 
