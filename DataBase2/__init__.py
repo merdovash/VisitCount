@@ -1129,6 +1129,14 @@ class Lesson(Base, _DBTrackedObject):
 
         raise NotImplementedError(type(obj))
 
+    @classmethod
+    def intersect(cls, *args)-> List['Lesson']:
+        lsns = set(Lesson.of(args[0]))
+        for arg in args[1:]:
+            lsns &= set(Lesson.of(arg))
+
+        return list(lsns)
+
 
 class Administration(Base, _DBPerson):
     """

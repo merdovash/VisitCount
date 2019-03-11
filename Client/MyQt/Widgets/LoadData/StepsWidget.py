@@ -2,6 +2,7 @@ from collections import namedtuple
 from typing import List
 
 from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
+from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QApplication, QLayout, QSpacerItem
 
 from Client.MyQt.Widgets import QImageWidget
@@ -32,6 +33,10 @@ class QStepsWidget(QWidget):
         self._load_steps(steps)
 
         self.setLayout(super_layout)
+        palette = QPalette()
+        palette.setColor(QPalette.Background, QColor(200,200,200))
+        self.setAutoFillBackground(True)
+        self.setPalette(palette)
 
     def _load_steps(self, steps):
         for step in steps:
