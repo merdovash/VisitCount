@@ -23,7 +23,7 @@ class QBisitorAccessManager(QNetworkAccessManager):
     response = pyqtSignal('PyQt_PyObject')
     error = pyqtSignal('PyQt_PyObject')
 
-    def __init__(self, professor):
+    def __init__(self, professor, response_type):
         super().__init__()
 
         if professor is not None:
@@ -32,7 +32,7 @@ class QBisitorAccessManager(QNetworkAccessManager):
             }
         else:
             self.data = {}
-
+        self.response_type = response_type
         self.finished.connect(self.on_finish)
 
     def post(self, request: QNetworkRequest, data=None, *__args):
@@ -44,7 +44,7 @@ class QBisitorAccessManager(QNetworkAccessManager):
         if reply.error() == QNetworkReply.NoError:
             bytes_string = reply.readAll()
             data = JsonParser.read(str(bytes_string, 'utf-8'))
-            response = Response.load(**data)
+            response = Response.load(**data, class_=self.response_type)
             if response.status == response.Status.OK:
                 self.response.emit(response.data)
             else:
@@ -56,17 +56,28 @@ class QBisitorAccessManager(QNetworkAccessManager):
         self.deleteLater()
 
 
-def BisitorRequest(address, user, data, on_finish, on_error=None)-> QBisitorAccessManager:
-    host = client_args.host
-    if host[:4] != 'http':
-        host = 'http://' + host
-    url = host+address
-    manager = QBisitorAccessManager(user)
-    request = QBisitorRequest(url)
-    manager.response.connect(on_finish)
-    if on_error is not None:
-        manager.error.connect(on_error)
-    else:
-        manager.error.connect(lambda x: QMessageBox().information(None, "Загрузка информации с сервера", x.message))
-    manager.post(request, data)
-    return manager
+class _BisitorRequest:
+    response_type = None
+
+    def __call__(self, address, user, data, on_finish, on_error=None, response_type=None):
+        host = client_args.host
+        if host[:4] != 'http':
+            host = 'http://' + host
+        url = host + address
+        manager = QBisitorAccessManager(user, response_type if response_type is not None else self.response_type)
+        request = QBisitorRequest(url)
+        manager.response.connect(on_finish)
+        if on_error is not None:
+            manager.error.connect(on_error)
+        else:
+            manager.error.connect(lambda x: QMessageBox().information(None, "Загрузка информации с сервера", x.message))
+        manager.post(request, data)
+        return manager
+
+    def __getitem__(self, response_type):
+        temp = _BisitorRequest()
+        temp.response_type = response_type
+        return temp
+
+
+BisitorRequest = _BisitorRequest()

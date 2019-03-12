@@ -19,31 +19,13 @@ class Structure(IJSON):
         return str(cls).split("'")[1]
 
     @staticmethod
-    def load(data: dict, type_name: str = None,  class_: Type['Structure'] = None)->'Structure':
-        def import_string(dotted_path: str):
-            """
-            Import a dotted module path and return the attribute/class designated by the
-            last name in the path. Raise ImportError if the import failed.
-            """
-            try:
-                module_path, class_name = dotted_path.rsplit('.', 1)
-            except ValueError:
-                msg = "%s doesn't look like a module path" % dotted_path
-                six.reraise(ImportError, ImportError(msg), sys.exc_info()[2])
-
-            module = import_module(module_path)
-
-            try:
-                return getattr(module, class_name)
-            except AttributeError:
-                msg = 'Module "%s" does not define a "%s" attribute/class' % (
-                    module_path, class_name)
-                six.reraise(ImportError, ImportError(msg), sys.exc_info()[2])
-
+    def load(data: dict, type_name: str = None, class_: Type['Structure'] = None) -> 'Structure':
         if class_ is None and type_name is not None:
-            class_: Type[Structure] = import_string(type_name)
+            class_: Type[Structure] = eval(list(filter(
+                lambda x: x == type_name,
+                [str(t).split('\'')[1] for t in Structure.__subclasses__()]))[0])
         if class_ is None:
-            raise TypeError('could not find class')
+            raise TypeError(f'could not find class {type_name}')
 
         if issubclass(class_, HiddenStructure):
             return class_(data)
