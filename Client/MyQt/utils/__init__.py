@@ -17,7 +17,7 @@ def check_connection() -> bool:
         # connect to the host -- tells us if the host is actually
         # reachable
         import socket
-        from Parser import client_args
+        from Parser.client import client_args
         from urllib import parse
         url = parse.urlparse(client_args.host)
         if url.netloc =='':

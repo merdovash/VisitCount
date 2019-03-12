@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory
 
 from Client.IProgram import IProgram
 from Client.Program import MyProgram
-from Parser import client_args
+from Parser.client import client_args
 
 pyqt = os.path.dirname(PyQt5.__file__)
 QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))

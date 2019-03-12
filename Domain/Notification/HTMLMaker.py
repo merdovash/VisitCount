@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from Parser import server_args
+from Parser.server import server_args
 from Domain.functools.Format import inflect
 
 

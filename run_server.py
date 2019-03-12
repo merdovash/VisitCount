@@ -12,7 +12,7 @@ import Server.Server as Server
 from Modules import AutoNotification
 
 if __name__ == "__main__":
-    from Parser import server_args
+    from Parser.server import server_args
 
     BisitorLogger.init()
 

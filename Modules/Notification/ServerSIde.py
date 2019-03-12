@@ -11,7 +11,7 @@ from Domain.Structures.DictWrapper.Network.Notification import Reciever, Notific
 from Domain.functools.Format import format_name
 from Modules import Module
 from Modules.Notification import address
-from Parser import server_args
+from Parser.server import server_args
 from Server import Response
 
 

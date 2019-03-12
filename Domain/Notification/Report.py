@@ -21,7 +21,7 @@ from DataBase2 import _DBEmailObject, Student, Professor, Group, _DBPerson, Cont
 from Domain.Aggregation.Loss import student_loss
 from Domain.Notification.HTMLMaker import HTMLMaker
 from Domain.functools.Format import Case
-from Parser import server_args
+from Parser.server import server_args
 
 
 class MessageMaker(ABC):

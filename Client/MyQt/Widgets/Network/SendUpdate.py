@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTableView, QLabel
 from Client.MyQt.Widgets.Network.Request import RequestWidget
 from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes
 from Modules.Synch.ClientSide import Updater
-from Parser import client_args
+from Parser.client import client_args
 
 
 class UpdatesModel(QAbstractTableModel):

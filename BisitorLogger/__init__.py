@@ -1,6 +1,6 @@
 import logging
 
-from Parser import server_args
+from Parser.server import server_args
 
 
 def init():

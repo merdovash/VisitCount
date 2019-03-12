@@ -16,7 +16,7 @@ from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
 from Modules.NewProfessor import ServerSide as NewProfessor
 from Modules.UpdateDataViews import ServerSide as GetDataViews
-from Parser import server_args
+from Parser.server import server_args
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"

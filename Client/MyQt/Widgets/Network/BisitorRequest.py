@@ -5,7 +5,7 @@ from PyQt5.QtCore import QUrl, pyqtSignal
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 from PyQt5.QtWidgets import QMessageBox
 
-from Parser import client_args
+from Parser.client import client_args
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
