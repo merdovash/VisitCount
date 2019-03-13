@@ -22,6 +22,12 @@ class CheckableComboBox(QComboBox):
         self.items = []
         if self.with_all:
             self.addItem('All')
+        self.setEditable(True)
+        def set_current_text(current):
+            value = ', '.join(i.short_name() for i in current)
+            print('set', value)
+            self.setCurrentText(value)
+        self.currentChanged.connect(set_current_text)
 
     def handleItemPressed(self, index: QModelIndex):
         def switch(item):
