@@ -15,6 +15,8 @@ from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty,
 class BisitorMPLWidget(QWidget):
     def __init__(self, user=None, flags=None):
         super().__init__(flags)
+        with open('Client/src/style.qss', 'r') as style_file:
+            self.setStyleSheet(style_file.read())
         data_groups: List[Type[_DBObject]] = [Student, Group, Professor, Discipline, Faculty, Department, Semester]
         plot_types = {
             "Посещения по неделям": 'bar_week',

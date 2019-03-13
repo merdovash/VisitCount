@@ -112,20 +112,20 @@ class MComboBox(QComboBox):
         else:
             raise ValueError(f"{item} not in items")
 
-    def paintEvent(self, QPaintEvent):
-        p = QPainter(self)
-
-        rect = QRectF(0, 0, self.width(), self.height())
-
-        # p.fillRect(rect, Color.secondary)
-
-        p.setPen(self.default_pen if not self.underMouse() else self.hovered_pen)
-        p.drawLine(0, rect.height() - 3, rect.width(), rect.height() - 3)
-
-        p.setPen(self.default_pen)
-        p.drawText(rect, Qt.AlignCenter, self.currentText())
-
-        p.drawImage(rect.width() - self.image.width(), self.height() // 2 - self.image.height() // 2, self.image)
+    #def paintEvent(self, QPaintEvent):
+    #    p = QPainter(self)
+    #
+    #    rect = QRectF(0, 0, self.width(), self.height())
+    #
+    #    # p.fillRect(rect, Color.secondary)
+    #
+    #    p.setPen(self.default_pen if not self.underMouse() else self.hovered_pen)
+    #    p.drawLine(0, rect.height() - 3, rect.width(), rect.height() - 3)
+    #
+    #    p.setPen(self.default_pen)
+    #    p.drawText(rect, Qt.AlignCenter, self.currentText())
+    #
+    #    p.drawImage(rect.width() - self.image.width(), self.height() // 2 - self.image.height() // 2, self.image)
 
     def set_items(self, items):
         self.blockSignals(True)

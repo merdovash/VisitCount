@@ -1215,6 +1215,9 @@ class Professor(Base, _DBPerson):
         if isinstance(obj, Department):
             return obj.professors
 
+        if isinstance(obj, Lesson):
+            return [obj.professor]
+
         raise NotImplementedError(type(obj))
 
     def updates(self, last_in: datetime = None) -> Dict[str, Dict[str, List]]:

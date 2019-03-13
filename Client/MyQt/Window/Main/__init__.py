@@ -53,7 +53,8 @@ class MainWindow(AbstractWindow):
 
     def __init__(self, program: IProgram, professor: Professor):
         AbstractWindow.__init__(self)
-
+        with open('Client/src/style.qss', 'r') as style_file:
+            self.setStyleSheet(style_file.read())
         self.program: IProgram = program
 
         self.professor = professor
@@ -207,6 +208,8 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
     def __init__(self, program: IProgram, professor: Professor, parent=None):
         super().__init__(parent)
+        with open('Client/src/style.qss', 'r') as style_file:
+            self.setStyleSheet(style_file.read())
 
         self.program: IProgram = program
         self.professor = professor

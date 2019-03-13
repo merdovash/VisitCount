@@ -18,7 +18,9 @@ class QContactManagerWindow(QWidget):
     def __init__(self, user: _DBEmailObject, flags=None, *args, **kwargs):
         assert isinstance(user, _DBEmailObject)
         super().__init__(flags, *args, **kwargs)
-        self.setMinimumWidth(400)
+        with open('Client/src/style.qss', 'r') as style_file:
+            self.setStyleSheet(style_file.read())
+        self.setMinimumWidth(500)
 
         if user.contact is None:
             contact = ContactInfo.new(user.session())

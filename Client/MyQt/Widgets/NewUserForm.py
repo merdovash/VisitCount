@@ -9,6 +9,8 @@ from Modules.NewProfessor import NewProfessorResponse
 class NewUserForm(QWidget):
     def __init__(self, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
+        with open('Client/src/style.qss', 'r') as style_file:
+            self.setStyleSheet(style_file.read())
 
         layout = QVBoxLayout()
 
