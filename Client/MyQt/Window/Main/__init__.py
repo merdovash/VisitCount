@@ -15,7 +15,6 @@ from Client.IProgram import IProgram
 from Client.MyQt.Widgets.LoadData import LoadingWizardWindow
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.VisualData.Graph.BisitorMPLWidget import BisitorMPLWidget
-from Client.MyQt.Widgets.VisualData.VisualMenu import VisualWidget
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ContactManager import QContactManagerWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget

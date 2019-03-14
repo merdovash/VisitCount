@@ -2,12 +2,13 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from Client.IProgram import IProgram
+from Client.MyQt.Widgets import Message
 from Client.MyQt.Widgets.Network.Request import first_load
 from Client.MyQt.Widgets.NewUserForm import NewUserForm
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Auth.UiAuth import Ui_AuthWindow
 from DataBase2 import Auth
-from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException
+from Domain.Exception.Authentication import InvalidLoginException
 
 
 class AuthWindow(AbstractWindow, Ui_AuthWindow):
@@ -18,6 +19,7 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
         self.setupUi(self)
         with open('Client/src/style.qss', 'r') as style_file:
             self.setStyleSheet(style_file.read())
+        self.setWindowTitle('СПбГУТ - Система учета посещаемости')
         self.retranslateUi(self)
 
         self.program: IProgram = program
@@ -39,14 +41,17 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
     def auth(self, *args):
         login = self.login_input.login()
         password = self.password_input.text()
-        try:
-            a = Auth.log_in(login, password)
+        if login == '' or password == '':
+            Message().information(self, 'Вход в систему', 'Укажите логин и пароль.')
+        else:
+            try:
+                a = Auth.log_in(login, password)
 
-            self.auth_success.emit(dict(login=login, password=password))
-        except InvalidLoginException:
-            self.centralwidget.layout().addWidget(
-                first_load(self.program.host, login, password,
-                           on_close=lambda: self.auth_success.emit(dict(login=login, password=password))))
+                self.auth_success.emit(dict(login=login, password=password))
+            except InvalidLoginException:
+                self.centralwidget.layout().addWidget(
+                    first_load(self.program.host, login, password,
+                               on_close=lambda: self.auth_success.emit(dict(login=login, password=password))))
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         if a0.key() + 1 == QtCore.Qt.Key_Enter:

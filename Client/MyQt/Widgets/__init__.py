@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QLabel, QWidget, QFrame
+from PyQt5.QtWidgets import QLabel, QWidget, QFrame, QMessageBox
 
 
 class QImageWidget(QLabel):
@@ -27,3 +27,10 @@ def QSeparator(orientation)->QFrame:
         frame.setFrameShadow(QFrame.Sunken)
         return frame
     raise ValueError(orientation)
+
+
+class Message(QMessageBox):
+    def __init__(self, *__args):
+        super().__init__(*__args)
+        with open('Client/src/style.qss', 'r') as style_file:
+            self.setStyleSheet(style_file.read())
