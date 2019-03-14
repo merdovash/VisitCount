@@ -2,12 +2,20 @@ from datetime import date
 from math import floor
 from typing import Callable, List
 
+import pandas
 from matplotlib.axes import Axes, SubplotBase
 from matplotlib.figure import Figure
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat, Series
 from pandas._libs.tslibs.offsets import relativedelta
+import numpy as np
+from scipy import stats
+from scipy.optimize import curve_fit
 
 from DataBase2 import Lesson, Visitation, Student
+
+
+def gaussian(x, mean, amplitude=0., standard_deviation=1.):
+    return amplitude * np.exp( - ((x - mean) / standard_deviation) ** 2)
 
 
 def default_ax(fig: Figure, groups_count: int = 1) -> Axes:
@@ -36,13 +44,14 @@ def prepare_data(user, semester, group_by: Callable[[Lesson], List]):
     data = []
     year = None
     print(Student.of(user))
+    groups = set(group_by(user))
 
     for lesson in lessons:
         if lesson.semester == semester and lesson.completed:
             year = lesson.date.year
             lesson_visitation = set(Visitation.of(lesson)) & set(Visitation.of(user))
             lesson_students = set(Student.of(lesson)) & set(Student.of(user))
-            for item in list(set(group_by(lesson)) & set(group_by(user))):
+            for item in list(set(group_by(lesson)) & groups):
                 data.append({
                     'visit': len(set(Visitation.of(item)) & lesson_visitation),
                     'total': len(set(Student.of(item)) & lesson_students),
@@ -117,17 +126,13 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         res.set_index(res['week_day'], inplace=True)
 
         res = res.pivot(columns='group_by', values='rate')
-        print(res)
+        res.sort_index(inplace=True)
+
         ax = default_ax(fig, len(res.columns))
-        res.plot.bar(ax=ax, alpha=0.7)
+        res.plot.bar(x='week_day_name', ax=ax, alpha=0.7)
 
-        # set ticks
-        labels = ax.get_xticks().tolist()
         weekdays = 'пн.вт.ср.чт.пт.сб.вс'.split('.')
-        for i in range(len(labels)):
-            labels[i] = weekdays[labels[i]]
-
-        ax.set_xticklabels(labels)
+        ax.set_xticklabels([weekdays[i] for i in res.reset_index().week_day])
         ax.set_ylim([-1, 101])
         ax.set_ylabel('Посещения, %')
         ax.set_xlabel('День недели')
@@ -162,11 +167,24 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
 
         ax = default_ax(fig)
 
-        res.hist(ax=ax, alpha=0.7, bins=25)
+        bin_heights, bin_borders, _ = ax.hist(res.rate, alpha=0.7, bins=50, label='Гистограма', density=True)
+
+        xt = ax.get_xticks()
+        xmin, xmax = min(xt), max(xt)
+        lnspc = np.linspace(xmin, xmax, res.shape[0])
+
+        m, s = stats.norm.fit(res.rate)  # get mean and standard deviation
+        pdf_g = stats.norm.pdf(lnspc, m, s)  # now get theoretical values in our interval
+        ax.plot(lnspc, pdf_g, label="Norm")  # plot it
+
+        ag, bg, cg = stats.gamma.fit(res.rate)
+        pdf_gamma = stats.gamma.pdf(lnspc, ag, bg, cg)
+        ax.plot(lnspc, pdf_gamma, label="Gamma")
 
         ax.set_xlim([-1, 101])
-        ax.set_ylabel('Количество')
+        ax.set_ylabel(f'Вероятность (из {len(res)})')
         ax.set_xlabel('Посещения, %')
+        ax.legend()
 
         post_ax(ax)
 
@@ -199,5 +217,29 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
 
         ax.set_ylim([-1, 101])
         ax.set_ylabel('Посещения, %')
+
+    if plot_type == 'scatter':
+        group = df.groupby(['group_by'])
+        res = DataFrame()
+        res['rate']: DataFrame = group.visit.sum() / group.total.sum() * 100
+        res.sort_values('rate', inplace=True)
+        res.reset_index(inplace=True)
+        res.index.name = 'index'
+        res.reset_index(inplace=True)
+        res.index= res.index+1
+        print(res)
+
+        params = np.polyfit(res.index, res.rate, 2)
+        trend = DataFrame()
+        trend['x'] = np.linspace(0, res.shape[0], res.shape[0])
+        trend['y'] = np.polyval(params, trend['x'])
+
+        ax = default_ax(fig, res.shape[0])
+
+        res.plot.scatter(x='index', y='rate', ax=ax)
+        trend.plot(x='x', y='y', ax=ax, label='Линия тренда')
+        ax.set_ylim([-1, 101])
+        ax.set_ylabel('Посещения, %')
+        ax.set_xlabel('Студенты (по возрастанию посещаемости)')
 
     return fig

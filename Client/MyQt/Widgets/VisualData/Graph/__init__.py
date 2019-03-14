@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-import os
 import sys
 
 import matplotlib
@@ -11,11 +10,8 @@ from DataBase2 import Professor, Group
 from Domain.Plot.plot import plot
 
 matplotlib.use('Qt5Agg')
-# Uncomment this line before running, it breaks sphinx-gallery builds
-# from PyQt5 import QtCore, QtWidgets
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 
 
 class MyMplCanvas(FigureCanvas):

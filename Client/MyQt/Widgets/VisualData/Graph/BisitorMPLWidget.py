@@ -5,8 +5,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel
 
 from Client.MyQt.Widgets.ComboBox.CheckComboBox import CheckableComboBox
 from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox
-from Client.MyQt.Widgets.ExtendedComboBox import ExtendedCombo
-from Client.MyQt.Widgets.QLoadingIndicator import QtWaitingSpinner
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
 from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department, Semester
@@ -25,7 +23,8 @@ class BisitorMPLWidget(QWidget):
             "Посещения по занятиям": "bar_lesson",
             "Гистограма": 'hist',
             "Итоговое (по алфавиту)": 'total_alphabetic',
-            "Итоговое (по возрастанию)": 'total_rated'
+            "Итоговое (по возрастанию)": 'total_rated',
+            "Общий тренд": 'scatter'
         }
         self.items = []
 
