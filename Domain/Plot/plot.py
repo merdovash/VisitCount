@@ -47,7 +47,8 @@ def prepare_data(user, semester, group_by: Callable[[Lesson], List]):
     groups = set(group_by(user))
 
     for lesson in lessons:
-        if lesson.semester == semester and lesson.completed:
+        if (lesson.semester == semester or (isinstance(semester, (set, list)) and lesson.semester in semester)) \
+                and lesson.completed:
             year = lesson.date.year
             lesson_visitation = set(Visitation.of(lesson)) & set(Visitation.of(user))
             lesson_students = set(Student.of(lesson)) & set(Student.of(user))
@@ -93,7 +94,6 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         post_ax(ax, len(grouped.groups))
 
     if plot_type == 'bar_week':
-        print(df)
         visit = df.groupby(['group_by', 'week'])['visit'].sum()
         total = df.groupby(['group_by', 'week'])['total'].sum()
 
@@ -116,7 +116,6 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
 
     if plot_type == 'bar_weekday':
         df['week_day'] = df['date'].dt.weekday
-        print(df)
         visit = df.groupby(['group_by', 'week_day'])['visit'].sum()
         total = df.groupby(['group_by', 'week_day'])['total'].sum()
 
@@ -227,14 +226,13 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         res.index.name = 'index'
         res.reset_index(inplace=True)
         res.index= res.index+1
-        print(res)
 
         params = np.polyfit(res.index, res.rate, 2)
         trend = DataFrame()
         trend['x'] = np.linspace(0, res.shape[0], res.shape[0])
         trend['y'] = np.polyval(params, trend['x'])
 
-        ax = default_ax(fig, res.shape[0])
+        ax = default_ax(fig, 1)
 
         res.plot.scatter(x='index', y='rate', ax=ax)
         trend.plot(x='x', y='y', ax=ax, label='Линия тренда')

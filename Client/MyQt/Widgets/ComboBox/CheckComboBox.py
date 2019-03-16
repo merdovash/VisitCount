@@ -56,7 +56,6 @@ class CheckableComboBox(QComboBox):
         for index, item in enumerate(self.items):
             if item.id == s_item.id:
                 index = self.model().index(index, 0)
-                print('set', index)
                 self.handleItemPressed(index)
                 return
         raise IndexError(f'no item {s_item} in {self.items}')

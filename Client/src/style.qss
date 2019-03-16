@@ -68,7 +68,7 @@ QComboBox:item {
 
 	background-color: #fefefe;
 
-	color: #434A54;
+	color: #232527;
 }
 
 QComboBox:item:selected {
@@ -77,4 +77,18 @@ QComboBox:item:selected {
 
 QLabel {
     color: #232527;
+}
+
+QListView {
+    background: #ffffff;
+    color: #232527;
+}
+
+QListView:item {
+    border: 0.5px solid #CCD1D9;
+	border-radius: 4px;
+}
+
+QListView:item:hover {
+    background: #CCD1D9;
 }

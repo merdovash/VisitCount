@@ -3,6 +3,7 @@ import os
 import sys
 
 import PyQt5
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QStyleFactory
 
 from Client.IProgram import IProgram
@@ -14,6 +15,10 @@ QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    font = QFont('Roboto')
+    font.setPixelSize(12)
+    font.setStyleName('Regular')
+    app.setFont(font)
     app.setStyle(QStyleFactory().create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 

@@ -127,7 +127,7 @@ class MainWindow(AbstractWindow):
         def show():
             if not hasattr(self, 'visual') or self.visual is None:
                 self.visual = BisitorMPLWidget(self.professor)
-            self.visual.show()
+            self.visual.showMaximized()
 
         analysis = self.menu_bar.addMenu("Анализ")
 

@@ -34,3 +34,16 @@ class Message(QMessageBox):
         super().__init__(*__args)
         with open('Client/src/style.qss', 'r') as style_file:
             self.setStyleSheet(style_file.read())
+
+
+class BisitorWidget(QWidget):
+    _style_text: str = None
+
+    def __init__(self, flags=None, *args, **kwargs):
+        super().__init__(flags, *args, **kwargs)
+
+        if BisitorWidget._style_text is None:
+            with open('Client/src/style.qss', 'r') as style_file:
+                BisitorWidget._style_text = style_file.read()
+        self.setStyleSheet(BisitorWidget._style_text)
+
