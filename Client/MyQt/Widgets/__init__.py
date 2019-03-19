@@ -2,6 +2,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QLabel, QWidget, QFrame, QMessageBox
 
+from Client.src import src
+
 
 class QImageWidget(QLabel):
     def __init__(self, img_path):
@@ -43,7 +45,7 @@ class BisitorWidget(QWidget):
         super().__init__(flags, *args, **kwargs)
 
         if BisitorWidget._style_text is None:
-            with open('Client/src/style.qss', 'r') as style_file:
+            with open(src.qss, 'r') as style_file:
                 BisitorWidget._style_text = style_file.read()
         self.setStyleSheet(BisitorWidget._style_text)
 
