@@ -28,6 +28,11 @@ class CheckableComboBox(QComboBox):
             print('set', value)
             self.setCurrentText(value)
         self.currentChanged.connect(set_current_text)
+        self.setMouseTracking(True)
+
+    def mousePressEvent(self, event):
+        print(event)
+        self.showPopup()
 
     def handleItemPressed(self, index: QModelIndex):
         def switch(item):

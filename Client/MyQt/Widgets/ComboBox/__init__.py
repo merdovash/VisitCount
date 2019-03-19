@@ -1,15 +1,14 @@
 import collections
-import datetime
-from typing import List, Dict, TypeVar, Any, Callable
+from typing import List, TypeVar, Any, Callable
 
-from PyQt5.QtCore import QRectF, pyqtSignal, pyqtSlot, QModelIndex, QSize, QSortFilterProxyModel
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QImage, QPen, QColor, QStandardItemModel
-from PyQt5.QtWidgets import QComboBox, QWidget, QHBoxLayout, QLabel, QListView, QCompleter
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QModelIndex, QSize
+from PyQt5.QtGui import QImage, QPen, QColor, QStandardItemModel
+from PyQt5.QtWidgets import QComboBox, QWidget, QHBoxLayout, QLabel, QListView, QLineEdit
 
 from Client.MyQt.ColorScheme import Color
+from DataBase2 import Lesson, _DBPerson
 from Domain.functools.List import closest_lesson
-from DataBase2 import Discipline, Group, Lesson, _DBPerson
 
 compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
 
@@ -120,7 +119,7 @@ class MComboBox(QComboBox):
         else:
             raise ValueError(f"{item} not in items")
 
-    #def paintEvent(self, QPaintEvent):
+    # def paintEvent(self, QPaintEvent):
     #    p = QPainter(self)
     #
     #    rect = QRectF(0, 0, self.width(), self.height())
@@ -147,6 +146,15 @@ class MComboBox(QComboBox):
         self.on_parent_change(self.lessons, None)
 
 
+class ClickableLineEdit(QLineEdit):
+    def __init__(self, callback, *__args):
+        super().__init__(*__args)
+        self.callback = callback
+
+    def mouseReleaseEvent(self, QMouseEvent):
+        self.callback()
+
+
 class MCheckedComboBox(MComboBox):
     currentChanged = pyqtSignal('PyQt_PyObject')
 
@@ -160,12 +168,15 @@ class MCheckedComboBox(MComboBox):
         if self.with_all:
             self.addItem('All')
 
+        self.setLineEdit(ClickableLineEdit(lambda: self.showPopup()))
         self.setEditable(True)
         self.lineEdit().setReadOnly(True)
+        print(self.lineEdit().mousePressEvent)
+
         self.editTextChanged.connect(lambda x: None)
 
         def set_current_text(current):
-            if current is None or (isinstance(current, list) and len(current)==0):
+            if current is None or (isinstance(current, list) and len(current) == 0):
                 self.lineEdit().setText('None')
             elif isinstance(current, collections.Iterable):
                 value = ', '.join(i.short_name() for i in current)
