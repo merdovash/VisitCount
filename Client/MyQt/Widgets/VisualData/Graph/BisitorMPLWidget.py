@@ -19,14 +19,15 @@ class SettingWidget(BisitorWidget):
         super().__init__(*args, **kwargs)
         data_groups: List[Type[_DBObject]] = [Student, Group, Professor, Discipline, Faculty, Department, Semester]
         plot_types = {
-            "Посещения по неделям": 'bar_week',
-            'Распределение': 'distribution',
-            "Посещения по дням недели": "bar_weekday",
-            "Посещения по занятиям": "bar_lesson",
-            "Гистограма": 'hist',
-            "Итоговое (по алфавиту)": 'total_alphabetic',
-            "Итоговое (по возрастанию)": 'total_rated',
-            "Общий тренд": 'scatter'
+            "Посещения по неделям": ('bar_week', "Показывает уровень посещений на каждой неделе"),
+            'Распределение': ('distribution', "Показывает итговый уровень посещений на дату"),
+            "Посещения по дням недели": ("bar_weekday", "Показывает уровень посещений по дням недели"),
+            "Посещения по занятиям": ("bar_lesson", "Показывает уровень посещения по времени начала начала занятия"),
+            "Гистограма": ('hist', "Показывает частоту каждого уровня посещений"),
+            "Итоговое (по алфавиту)": ('total_alphabetic', "Итоговое посещений на данный момент, отсортированное в алфавитном пордке"),
+            "Итоговое (по возрастанию)": ('total_rated', "Итоговое посещений на данный момент, отсортированное в порядке возрастания процента посещений"),
+            "Общий тренд": ('scatter', "Показывает итоговое посещение на данный момент и график тренда"),
+            "Отклонения по дням": ("deviation", "Показывает изменение процента посещений относительно предыдущего дня")
         }
         self.items = []
 
@@ -63,9 +64,17 @@ class SettingWidget(BisitorWidget):
         main_layout.addLayout(plot_type_layout)
 
         plot_type_selector = QComboBox()
-        plot_type_selector.addItems(plot_types.keys())
+
         plot_type_layout.addWidget(QLabel('Тип'), alignment=Qt.AlignVCenter | Qt.AlignLeft, stretch=1)
         plot_type_layout.addWidget(plot_type_selector, stretch=8)
+
+        description_layout = QHBoxLayout()
+        description = QLabel()
+        description_layout.addWidget(QLabel('Описание'), stretch=1)
+        description_layout.addWidget(description, stretch=8)
+        main_layout.addLayout(description_layout)
+
+        plot_type_selector.currentTextChanged.connect(lambda x: description.setText(plot_types[x][1]))
 
         button_layout = QHBoxLayout()
         main_layout.addLayout(button_layout)
@@ -103,13 +112,15 @@ class SettingWidget(BisitorWidget):
             self.accept.emit(
                 item_selector.current(),
                 data_groups[group_by_selector.currentIndex()].of,
-                plot_types[plot_type_selector.currentText()],
+                plot_types[plot_type_selector.currentText()][0],
                 semester_selector.current()
             )
 
         show_btn.clicked.connect(show)
 
         self.setLayout(main_layout)
+
+        plot_type_selector.addItems(plot_types.keys())
 
 
 class BisitorMPLWidget(BisitorWidget):
@@ -120,7 +131,7 @@ class BisitorMPLWidget(BisitorWidget):
 
         tabs = QTabWidget()
         tabs.setTabsClosable(True)
-        tabs.tabCloseRequested.connect(lambda x: tabs.removeTab(x) if x!=0 else None)
+        tabs.tabCloseRequested.connect(lambda x: tabs.removeTab(x) if x != 0 else None)
         main_layout.addWidget(tabs)
 
         setting_widget = SettingWidget(user)

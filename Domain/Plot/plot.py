@@ -15,7 +15,7 @@ from DataBase2 import Lesson, Visitation, Student
 
 
 def gaussian(x, mean, amplitude=0., standard_deviation=1.):
-    return amplitude * np.exp( - ((x - mean) / standard_deviation) ** 2)
+    return amplitude * np.exp(- ((x - mean) / standard_deviation) ** 2)
 
 
 def default_ax(fig: Figure, groups_count: int = 1) -> Axes:
@@ -28,6 +28,16 @@ def post_ax(ax, groups_count=1):
     ax.grid(True)
     if groups_count > 4:
         ax.legend(bbox_to_anchor=(1, 1))
+
+
+def rate(df: DataFrame, second_group_by: str = None):
+    res = DataFrame()
+    if second_group_by is not None:
+        group = df.groupby(['group_by', second_group_by])
+    else:
+        group = df.groupby('group_by')
+    res['rate'] = group.visit.sum() / group.total.sum()
+    return res.reset_index()
 
 
 def cumsum(df, second_group_by) -> DataFrame:
@@ -44,6 +54,7 @@ def prepare_data(user, semester, group_by: Callable[[Lesson], List]):
     data = []
     year = None
     print(Student.of(user))
+    print(group_by(user))
     groups = set(group_by(user))
 
     for lesson in lessons:
@@ -128,7 +139,7 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         res.sort_index(inplace=True)
 
         ax = default_ax(fig, len(res.columns))
-        res.plot.bar(x='week_day_name', ax=ax, alpha=0.7)
+        res.plot.bar(ax=ax, alpha=0.7)
 
         weekdays = 'пн.вт.ср.чт.пт.сб.вс'.split('.')
         ax.set_xticklabels([weekdays[i] for i in res.reset_index().week_day])
@@ -225,7 +236,7 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         res.reset_index(inplace=True)
         res.index.name = 'index'
         res.reset_index(inplace=True)
-        res.index= res.index+1
+        res.index = res.index + 1
 
         params = np.polyfit(res.index, res.rate, 2)
         trend = DataFrame()
@@ -239,5 +250,26 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_ylim([-1, 101])
         ax.set_ylabel('Посещения, %')
         ax.set_xlabel('Студенты (по возрастанию посещаемости)')
+
+    if plot_type == 'deviation':
+        res = cumsum(df, 'day')
+        grouped = res.groupby(['group_by'])
+
+        ax = default_ax(fig, len(grouped.groups))
+
+        for i, g in grouped:
+            g = g.reset_index()
+            g['day'] = g['day'].apply(lambda x: date(year, 1, 1) + relativedelta(days=x - 1))
+            g.rate = g.rate.pct_change()
+            g = g.fillna(0)
+
+            g.plot(x='day', y='rate', ax=ax, label=str(i), alpha=0.6)
+
+        # ax.set_ylim([-1, 1])
+        ax.set_ylabel('Изменение уровня посещения, %')
+        ax.set_xlabel('Дата')
+        ax.tick_params(axis='x', rotation=30)
+
+        post_ax(ax, len(grouped.groups))
 
     return fig
