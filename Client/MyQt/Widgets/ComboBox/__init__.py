@@ -3,7 +3,7 @@ from typing import List, TypeVar, Any, Callable
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QModelIndex, QSize
-from PyQt5.QtGui import QImage, QPen, QColor, QStandardItemModel
+from PyQt5.QtGui import QImage, QPen, QColor, QStandardItemModel, QMouseEvent
 from PyQt5.QtWidgets import QComboBox, QWidget, QHBoxLayout, QLabel, QListView, QLineEdit
 
 from Client.MyQt.ColorScheme import Color
@@ -87,7 +87,6 @@ class MComboBox(QComboBox):
         self.pending = None
 
     def addItems(self, iterable: List[T], p_str=None) -> None:
-        print(iterable)
         for i, value in enumerate(iterable):
             # print(i, value)
             self.items.append(value)
@@ -101,7 +100,6 @@ class MComboBox(QComboBox):
             return None
 
     def clear(self):
-        print('clear', type(self))
         super().clear()
         self.items = []
 
@@ -151,7 +149,7 @@ class ClickableLineEdit(QLineEdit):
         super().__init__(*__args)
         self.callback = callback
 
-    def mouseReleaseEvent(self, QMouseEvent):
+    def mouseReleaseEvent(self, event:QMouseEvent):
         self.callback()
 
 
