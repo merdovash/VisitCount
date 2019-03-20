@@ -32,7 +32,7 @@ class TablesData(HiddenStructure):
     ]]
 
     def foreach(self, callback: Callable[[Dict, Type[_DBObject]], None]):
-        for class_name in self.DEFAULT_ORDER:
+        for class_name in (self.DEFAULT_ORDER if not self._reverse else reversed(self.DEFAULT_ORDER)):
             if class_name in self._data.keys():
                 class_: Type[_DBTrackedObject] = _DBObject.class_(class_name)
 
@@ -40,7 +40,8 @@ class TablesData(HiddenStructure):
                     if item_dict is not None:
                         callback({key: class_.column_type(key)(value) for key, value in item_dict.items()}, class_)
 
-    def __init__(self, data: DBSlice):
+    def __init__(self, data: DBSlice, reverse=False):
+        self._reverse = reverse
         self._data: DBSlice = data
 
 
