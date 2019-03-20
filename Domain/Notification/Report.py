@@ -30,7 +30,8 @@ class MessageMaker(ABC):
 
     Subject: Dict[Type[_DBEmailObject], str] = {
         Faculty: "Пропуски занятий студентами",
-        Administration: "Пропуски занятий студентами"
+        Administration: "Пропуски занятий студентами",
+        Professor: "Пропуски ваших занятий"
     }
 
     @abstractmethod
