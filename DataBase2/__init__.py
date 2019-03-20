@@ -1239,17 +1239,17 @@ class Professor(Base, _DBPerson):
         for cls in filter(lambda x: x != Auth, _DBTrackedObject.subclasses()):
             updated[cls.__name__] = self.session() \
                 .query(cls) \
-                .filter(cls._updated > self._last_update_out) \
+                .filter(cls._updated > (self._last_update_out if last_in is None else last_in)) \
                 .all()
 
             created[cls.__name__] = self.session() \
                 .query(cls) \
-                .filter(cls._created > self._last_update_out) \
+                .filter(cls._created > (self._last_update_out if last_in is None else last_in)) \
                 .all()
 
             deleted[cls.__name__] = self.session() \
                 .query(cls) \
-                .filter(cls._deleted > self._last_update_out) \
+                .filter(cls._deleted > (self._last_update_out if last_in is None else last_in)) \
                 .all()
 
         return dict(created=created, updated=updated, deleted=deleted)

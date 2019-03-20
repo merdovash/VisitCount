@@ -9,7 +9,8 @@ from Client.MyQt.Widgets.ComboBox import MComboBox
 from Client.Reader.SerialReader import RFIDReader
 from DataBase2 import Lesson, Student, Visitation
 from Domain.Data import names_of_groups
-from Domain.Exception import StudentNotFoundException, TooManyStudentsFoundException
+from Domain.Exception import StudentNotFoundException, TooManyStudentsFoundException, BisitorException
+from Parser.client import client_args
 
 
 class StudentSelector(QWidget):
@@ -64,8 +65,14 @@ class MarkVisitProcess(QObject):
 
     def __init__(self, students: List[Student], lesson: Lesson, **kwargs):
         super().__init__()
-        self.reader = RFIDReader.instance("начать регистрацию студентов", **kwargs)
-        self.reader.card_id.connect(self._new_visit)
+        try:
+            self.reader = RFIDReader.instance("начать регистрацию студентов", **kwargs)
+            self.reader.card_id.connect(self._new_visit)
+        except BisitorException as be:
+            if client_args.test:
+                pass
+            else:
+                raise be
 
         self.students = sorted(
                 students,
@@ -105,4 +112,10 @@ class MarkVisitProcess(QObject):
             raise TooManyStudentsFoundException(students)
 
     def stop(self):
-        self.reader.card_id.disconnect(self._new_visit)
+        try:
+            self.reader.card_id.disconnect(self._new_visit)
+        except AttributeError as attr_err:
+            if client_args.test:
+                pass
+            else:
+                raise attr_err
