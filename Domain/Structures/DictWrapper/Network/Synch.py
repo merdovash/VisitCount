@@ -76,4 +76,4 @@ class ServerUpdateData(Structure):
         if isinstance(skiped, TablesData):
             self.skiped = skiped
         else:
-            self.skiped = TablesData(**skiped)
+            self.skiped = TablesData(skiped)
