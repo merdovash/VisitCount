@@ -55,6 +55,7 @@ class SynchModule(Module):
             item: _DBTrackedObject = class_.get(session, id=item_data['id'])
             if item is None:
                 skiped[class_.__name__].append(item_data)
+                return
             if not item._updated or item._updated < item_data['_updated']:
                 for key in item_data.keys():
                     current_value = getattr(item, key)
