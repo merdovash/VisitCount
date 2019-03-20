@@ -70,7 +70,7 @@ class Updater(ClientWorker):
 
             progress_bar.increment()
 
-        def update_exsiting_rows(item_data: Dict, class_: Type[_DBTrackedObject]):
+        def update_existing_rows(item_data: Dict, class_: Type[_DBTrackedObject]):
             """
             Обновляет данные элемента класса class_ на основании данных item_data
 
@@ -78,6 +78,9 @@ class Updater(ClientWorker):
             :param class_: класс мапппер orm sqlalchemy
             """
             item = class_.get(session, id=item_data['id'])
+            if item is None:
+                creating_new_items(item_data, class_)
+                return
 
             for key in item_data:
                 if getattr(item, key) != item_data[key]:
@@ -133,7 +136,7 @@ class Updater(ClientWorker):
 
         # применение изменений записей
         progress_bar.set_part(PART_SIZE, len(data.updates.updated), "Принятие изменений")
-        data.updates.updated.foreach(update_exsiting_rows)
+        data.updates.updated.foreach(update_existing_rows)
         session.flush()
 
         # применение удалений

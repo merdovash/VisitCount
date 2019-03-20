@@ -1130,7 +1130,7 @@ class Lesson(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
     @classmethod
-    def intersect(cls, *args)-> List['Lesson']:
+    def intersect(cls, *args) -> List['Lesson']:
         lsns = set(Lesson.of(args[0]))
         for arg in args[1:]:
             lsns &= set(Lesson.of(arg))
@@ -1236,7 +1236,7 @@ class Professor(Base, _DBPerson):
         if self._last_update_out is None:
             self._last_update_out = datetime(2008, 1, 1)
 
-        for cls in _DBTrackedObject.subclasses():
+        for cls in filter(lambda x: x != Auth, _DBTrackedObject.subclasses()):
             updated[cls.__name__] = self.session() \
                 .query(cls) \
                 .filter(cls._updated > self._last_update_out) \
