@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Type, Dict
+from typing import Type, Dict, Any
 
 from DataBase2 import _DBTrackedObject, Visitation
 from Domain.Structures.DictWrapper.Network import BaseRequest
@@ -110,6 +110,10 @@ class Updater(ClientWorker):
 
             progress_bar.increment()
 
+        def delay_skipped(item_data: Dict[str, Any], class_: Type[_DBTrackedObject]):
+            item = class_.get(session, id=item_data['id'])
+            item._updated = datetime.now()
+
         PART_SIZE = progress_bar.last() / 4
 
         session = self.professor.session()
@@ -136,6 +140,9 @@ class Updater(ClientWorker):
         progress_bar.set_part(PART_SIZE, len(data.updates.deleted), "Удаление записей")
         data.updates.deleted.foreach(delete_item)
         session.flush()
+
+        # TODO разобраться с пропускамемыми записями
+        data.skiped.foreach(delay_skipped)
 
         session.commit()
 

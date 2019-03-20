@@ -53,6 +53,8 @@ class SynchModule(Module):
             :param class_: класс мапппер orm sqlalchemy
             """
             item: _DBTrackedObject = class_.get(session, id=item_data['id'])
+            if item is None:
+                skiped[class_.__name__].append(item_data)
             if not item._updated or item._updated < item_data['_updated']:
                 for key in item_data.keys():
                     current_value = getattr(item, key)
@@ -75,6 +77,8 @@ class SynchModule(Module):
 
         professor: Professor = auth.user
         session = professor.session()
+
+        skiped = defaultdict(list)
 
         received_updates = ClientUpdateData(**data)
         server_updates = Changes(**professor.updates(last_in=received_updates.last_update_in))
@@ -101,4 +105,4 @@ class SynchModule(Module):
         session.commit()
 
         # формируем ответ клиенту
-        response.set_data(ServerUpdateData(changed_id=changed, updates=server_updates))
+        response.set_data(ServerUpdateData(changed_id=changed, updates=server_updates, skiped=skiped))

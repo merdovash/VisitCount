@@ -63,11 +63,17 @@ class ClientUpdateData(Structure):
 class ServerUpdateData(Structure):
     changed_id: IDChanges
     updates: Changes
+    skiped: TablesData
 
-    def __init__(self, changed_id, updates):
+    def __init__(self, changed_id, updates, skiped):
         self.changed_id = IDChanges(changed_id)
 
         if isinstance(updates, Changes):
             self.updates = updates
         else:
             self.updates = Changes(**updates)
+
+        if isinstance(skiped, TablesData):
+            self.skiped = skiped
+        else:
+            self.skiped = TablesData(**skiped)
