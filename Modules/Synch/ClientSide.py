@@ -115,7 +115,10 @@ class Updater(ClientWorker):
 
         def delay_skipped(item_data: Dict[str, Any], class_: Type[_DBTrackedObject]):
             item = class_.get(session, id=item_data['id'])
-            item._updated = datetime.now()
+            if item is not None:
+                item._updated = datetime.now()
+            else:
+                print('неопредел`нный элемент', class_, item_data)
 
         PART_SIZE = progress_bar.last() / 4
 

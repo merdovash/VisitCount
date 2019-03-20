@@ -145,6 +145,7 @@ class VisitModel(QAbstractTableModel):
                     item._is_deleted = False
             else:
                 item.delete()
+                item.session().commit()
 
             self.item_changed.emit(index.row(), index.column())
 
