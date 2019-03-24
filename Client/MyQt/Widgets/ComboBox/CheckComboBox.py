@@ -24,7 +24,7 @@ class CheckableComboBox(QComboBox):
             self.addItem('All')
         self.setEditable(True)
         def set_current_text(current):
-            value = ', '.join(i.short_name() for i in current)
+            value = ', '.join(i.short_name() if len(i.full_name())>30 else i.full_name() for i in current)
             print('set', value)
             self.setCurrentText(value)
         self.currentChanged.connect(set_current_text)

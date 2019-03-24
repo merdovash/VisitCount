@@ -2,7 +2,7 @@ from typing import Dict, List, Callable, Type
 
 from DataBase2 import _DBObject, _DBTrackedObject, StudentsGroups, Student, Group, Discipline, Professor, Auth, \
     LessonsGroups, Lesson, Visitation, Administration, Parent, StudentsParents, _DBPerson, Semester, Faculty, \
-    Department, DepartmentProfessors, DataView, ContactInfo, ContactViews
+    Department, DepartmentProfessors, DataView, ContactInfo, ContactViews, LessonType, Room, Building
 from Domain.Structures.DictWrapper import HiddenStructure, Structure
 
 DBSlice = Dict[str, List[_DBObject or Dict]]
@@ -23,6 +23,9 @@ class TablesData(HiddenStructure):
         Student,
         StudentsGroups,
         Semester,
+        Building,
+        Room,
+        LessonType,
         Lesson,
         LessonsGroups,
         Visitation,

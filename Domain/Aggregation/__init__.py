@@ -65,43 +65,6 @@ class VisitationsRateByStudents:
         return res
 
 
-class Lessons:
-    @staticmethod
-    def by_professor(professor: Professor, groups=None, disciplines=None) -> DataFrame:
-        assert isinstance(professor, Professor), f'object {professor} is not Professor'
-
-        lessons = Lesson.of(professor)
-        if groups is not None:
-            lessons = list(set(lessons).intersection(set(Lesson.of(groups))))
-        if disciplines is not None:
-            lessons = list(set(lessons).intersection(set(Lesson.of(disciplines))))
-
-        visit_rates = []
-        for lesson in lessons:
-            students = Student.of(lesson)
-            if groups is not None:
-                students = list(set(students).intersection(set(Student.of(groups))))
-
-            visits = Visitation.of(lesson)
-            if groups is not None:
-                visits = list(set(visits).intersection(set(Visitation.of(students))))
-
-            row = [
-                lesson.date,
-                lesson.type,
-                lesson.discipline.name,
-                len(visits),
-                len(students)
-            ]
-
-            visit_rates.append(row)
-
-        data_frame = DataFrame(visit_rates,
-                               columns=[Column.date, Column.type, Column.discipline, Column.visit_count,
-                                        Column.student_count])
-        return data_frame
-
-
 class GroupAggregation:
     @staticmethod
     def by_professor(professor: Professor, html=False):

@@ -153,7 +153,7 @@ class OneListStudentsTotalLoss(Report):
                 'student': student.full_name(),
                 'group': group.short_name(),
                 'date': lesson.date,
-                'type': str(lesson.type),
+                'type': lesson.type.short_name(),
                 'completed': lesson.completed,
                 'discipline': lesson.discipline.short_name(),
                 'visited': len(set(Visitation.of(student)) & set(Visitation.of(lesson))),

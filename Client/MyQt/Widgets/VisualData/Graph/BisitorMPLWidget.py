@@ -9,7 +9,7 @@ from Client.MyQt.Widgets.ComboBox.CheckComboBox import CheckableComboBox
 from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox, StudentComboBox
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
-from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department, Semester
+from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department, Semester, _DBRoot
 
 
 class SettingWidget(BisitorWidget):
@@ -17,7 +17,7 @@ class SettingWidget(BisitorWidget):
 
     def __init__(self, user: _DBObject, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        data_groups: List[Type[_DBObject]] = [Student, Group, Professor, Discipline, Faculty, Department, Semester]
+        data_groups: List[Type[_DBRoot or _DBObject]] = sorted(_DBRoot.__subclasses__(), key=lambda x: x.type_name)
         plot_types = {
             "Посещения по неделям": ('bar_week', "Показывает уровень посещений на каждой неделе"),
             'Распределение': ('distribution', "Показывает итоговый уровень посещений на дату"),
@@ -96,7 +96,7 @@ class SettingWidget(BisitorWidget):
 
         def update_group_by_slector(index):
             group_by_selector.clear()
-            group_by_selector.addItems([s.__name__ if i != index else 'нет' for i, s in enumerate(data_groups)])
+            group_by_selector.addItems([s.type_name if i != index else 'нет' for i, s in enumerate(data_groups)])
 
         data_selector.currentIndexChanged.connect(update_item_selector)
         item_selector.currentChanged.connect(update_semester_selector)
@@ -106,12 +106,12 @@ class SettingWidget(BisitorWidget):
 
         main_layout.addWidget(self.plot, stretch=99)
 
-        data_selector.addItems([s.__name__ for s in data_groups])
+        data_selector.addItems([s.type_name for s in data_groups])
 
         def show():
             self.accept.emit(
                 item_selector.current(),
-                data_groups[group_by_selector.currentIndex()].of,
+                data_groups[group_by_selector.currentIndex()],
                 plot_types[plot_type_selector.currentText()][0],
                 semester_selector.current()
             )

@@ -1,10 +1,11 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 
 import pymorphy2
 
-from DataBase2 import Professor, Student, _DBPerson
+from DataBase2 import Professor, Student, _DBPerson, _DBObject, _DBNamed, _DBRoot
 from Domain.Exception.Constraint import ConstraintBasenameException, ConstraintDictNameException, \
     ConstraintNotEmptyException
+from Domain.functools.Decorator import is_iterable
 from Domain.functools.Function import None_or_empty
 
 
@@ -120,3 +121,25 @@ def agree_to_gender(word, to):
     to = list(filter(lambda x: x.tag.case == 'nomn', morph.parse(to)))[0]
     word = morph.parse(word)[0]
     return word.inflect({to.tag.gender}).word
+
+
+def names(args: List[_DBNamed]):
+    if any(len(s.full_name()) > 25 for s in args):
+        return ', '.join(s.short_name() for s in args)
+    return ', '.join(s.full_name() for s in args)
+
+
+def type_name(value: Any) -> str:
+    if isinstance(value, type):
+        if issubclass(value, (_DBRoot, _DBNamed)):
+            return value.type_name
+        else:
+            return value.__name__
+    if is_iterable(value):
+        if all(type(v) == type(value[0]) for v in value):
+            if isinstance(value[0], (_DBRoot, _DBNamed)):
+                return value[0].type_name
+            else:
+                return type(value[0]).__name__
+        else:
+            return ', '.join(v.type_name if isinstance(v, (_DBRoot, _DBNamed)) else type(v).__name__ for v in value)

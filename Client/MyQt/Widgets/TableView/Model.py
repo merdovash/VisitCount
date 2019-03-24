@@ -314,7 +314,7 @@ def rept(lesson):
     return f"{lesson.week}\n" \
         f"{lesson.date.day:02d}.{lesson.date.month:02d}\n" \
         f"{lesson.date.hour}:{lesson.date.minute}\n" \
-        f"{['Л', 'лр', 'пр'][lesson.type]}"
+        f"{lesson.type.abbreviation}"
 
 
 class VisitItemDelegate(QStyledItemDelegate):

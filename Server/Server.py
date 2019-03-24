@@ -11,7 +11,6 @@ from Modules import SourceChecker
 from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.Index import ServerSide as Index
-from Modules.Notification.ServerSIde import NotificationModule
 from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
 from Modules.NewProfessor import ServerSide as NewProfessor
@@ -36,7 +35,6 @@ GetDataViews.init(app, request)
 API.init(app, request)
 
 FirstLoadModule(app, request)
-NotificationModule(app, request)
 
 print(path)
 

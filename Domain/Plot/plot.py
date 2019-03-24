@@ -1,6 +1,6 @@
 from datetime import date
 from math import floor
-from typing import Callable, List
+from typing import Callable, List, Type
 
 import pandas
 from matplotlib.axes import Axes, SubplotBase
@@ -11,7 +11,9 @@ import numpy as np
 from scipy import stats
 from scipy.optimize import curve_fit
 
-from DataBase2 import Lesson, Visitation, Student
+from DataBase2 import Lesson, Visitation, Student, _DBObject
+from Domain.functools.Decorator import is_iterable
+from Domain.functools.Format import names, agree_to_number, inflect, type_name
 
 
 def gaussian(x, mean, amplitude=0., standard_deviation=1.):
@@ -19,15 +21,17 @@ def gaussian(x, mean, amplitude=0., standard_deviation=1.):
 
 
 def default_ax(fig: Figure, groups_count: int = 1) -> Axes:
-    ax: Axes = fig.add_axes([0.06, 0.15, 0.90 if groups_count <= 4 else 0.70, 0.83])
+    ax: Axes = fig.add_axes([0.06, 0.15, 0.90 if groups_count <= 4 else 0.70, 0.78])
 
     return ax
 
 
-def post_ax(ax, groups_count=1):
+def post_ax(ax, groups_count=1, title='groups'):
     ax.grid(True)
     if groups_count > 4:
-        ax.legend(bbox_to_anchor=(1, 1))
+        ax.legend(bbox_to_anchor=(1, 1), title=title)
+    else:
+        ax.legend(title=title)
 
 
 def rate(df: DataFrame, second_group_by: str = None):
@@ -48,34 +52,35 @@ def cumsum(df, second_group_by) -> DataFrame:
     return res
 
 
-def prepare_data(user, semester, group_by: Callable[[Lesson], List]):
-    lessons = Lesson.of(user)
-
+def prepare_data(root, semester, group_by: Type[_DBObject]):
     data = []
     year = None
-    print(Student.of(user))
-    print(group_by(user))
-    groups = set(group_by(user))
+    for user in root:
+        user_name = user.short_name()
+        lessons = Lesson.of(user)
 
-    for lesson in lessons:
-        if (lesson.semester == semester or (isinstance(semester, (set, list)) and lesson.semester in semester)) \
-                and lesson.completed:
-            year = lesson.date.year
-            lesson_visitation = set(Visitation.of(lesson)) & set(Visitation.of(user))
-            lesson_students = set(Student.of(lesson)) & set(Student.of(user))
-            for item in list(set(group_by(lesson)) & groups):
-                data.append({
-                    'visit': len(set(Visitation.of(item)) & lesson_visitation),
-                    'total': len(set(Student.of(item)) & lesson_students),
-                    'date': lesson.date,
-                    'group_by': item.short_name(),
-                    'day': lesson.date.timetuple().tm_yday,
-                    'week': lesson.week
-                })
+        groups = set(group_by.of(user))
+
+        for lesson in lessons:
+            if (lesson.semester == semester or (isinstance(semester, (set, list)) and lesson.semester in semester)) \
+                    and lesson.completed:
+                year = lesson.date.year
+                lesson_visitation = set(Visitation.of(lesson)) & set(Visitation.of(user))
+                lesson_students = set(Student.of(lesson)) & set(Student.of(user))
+                for item in list(set(group_by.of(lesson)) & groups):
+                    data.append({
+                        'user': user_name,
+                        'visit': len(set(Visitation.of(item)) & lesson_visitation),
+                        'total': len(set(Student.of(item)) & lesson_students),
+                        'date': lesson.date,
+                        'group_by': item.short_name(),
+                        'day': lesson.date.timetuple().tm_yday,
+                        'week': lesson.week
+                    })
     return data, year
 
 
-def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribution'):
+def plot(user, semester, group_by: Type[_DBObject], plot_type='distribution'):
     fig = Figure()
     # fig = Figure(figsize=(width, height), dpi=dpi, )
     data, year = prepare_data(user, semester, group_by)
@@ -102,9 +107,12 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_xlabel('Дата')
         ax.tick_params(axis='x', rotation=30)
 
-        post_ax(ax, len(grouped.groups))
+        post_ax(ax, len(grouped.groups), type_name(user))
+        ax.set_title(f'Комулятивный уровень посещений всех занятий '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
 
-    if plot_type == 'bar_week':
+    elif plot_type == 'bar_week':
         visit = df.groupby(['group_by', 'week'])['visit'].sum()
         total = df.groupby(['group_by', 'week'])['total'].sum()
 
@@ -123,9 +131,12 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_ylabel('Посещения, %')
         ax.set_xlabel('Номер недели')
 
-        post_ax(ax, len(res.columns))
+        post_ax(ax, len(res.columns), type_name(group_by))
+        ax.set_title(f'Уровень посещений по неделям всех занятий '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
 
-    if plot_type == 'bar_weekday':
+    elif plot_type == 'bar_weekday':
         df['week_day'] = df['date'].dt.weekday
         visit = df.groupby(['group_by', 'week_day'])['visit'].sum()
         total = df.groupby(['group_by', 'week_day'])['total'].sum()
@@ -147,9 +158,12 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_ylabel('Посещения, %')
         ax.set_xlabel('День недели')
 
-        post_ax(ax, len(res.columns))
+        post_ax(ax, len(res.columns), type_name(group_by))
+        ax.set_title(f'Уровень посещений по дням недели всех занятий '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
 
-    if plot_type == "bar_lesson":
+    elif plot_type == "bar_lesson":
         df['lesson'] = df['date'].dt.time
         visit = df.groupby(['group_by', 'lesson'])['visit'].sum()
         total = df.groupby(['group_by', 'lesson'])['total'].sum()
@@ -167,9 +181,12 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_ylabel('Посещения, %')
         ax.set_xlabel('Занятие')
 
-        post_ax(ax, len(res.columns))
+        post_ax(ax, len(res.columns), type_name(group_by))
+        ax.set_title(f'Уровень посещений по времени занятия всех занятий'
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
 
-    if plot_type == 'hist':
+    elif plot_type == 'hist':
         visit = df.groupby(['group_by'])['visit'].sum().groupby(['group_by']).cumsum()
         total = df.groupby(['group_by'])['total'].sum().groupby(['group_by']).cumsum()
         res = DataFrame()
@@ -196,39 +213,56 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_xlabel('Посещения, %')
         ax.legend()
 
-        post_ax(ax)
+        post_ax(ax,1, type_name(group_by))
 
-    if plot_type == 'total_alphabetic':
-        visit = df.groupby(['group_by'])['visit'].sum().groupby(['group_by']).cumsum()
-        total = df.groupby(['group_by'])['total'].sum().groupby(['group_by']).cumsum()
+        ax.set_title(f'Вероятности уровня посещений для '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
+
+    elif plot_type == 'total_alphabetic':
+        visit = df.groupby(['group_by', 'user'])['visit'].sum().groupby(['group_by']).cumsum()
+        total = df.groupby(['group_by', 'user'])['total'].sum().groupby(['group_by']).cumsum()
         res = DataFrame()
         res['rate'] = visit / total * 100
         res.reset_index(inplace=True)
 
         ax = default_ax(fig, len(res.groupby('group_by')))
-
-        res.plot.bar(ax=ax, x='group_by', y='rate', alpha=0.7)
+        res = res.pivot(index='user', columns='group_by', values='rate')
+        res.plot.bar(ax=ax, alpha=0.7)
 
         ax.set_ylim([-1, 101])
         ax.set_ylabel('Посещения, %')
+        ax.set_xlabel(type_name(user))
 
-        post_ax(ax, len(res.groupby('group_by')))
+        post_ax(ax, res.shape[1], type_name(group_by))
 
-    if plot_type == 'total_rated':
-        visit = df.groupby(['group_by'])['visit'].sum().groupby(['group_by']).cumsum()
-        total = df.groupby(['group_by'])['total'].sum().groupby(['group_by']).cumsum()
+        ax.set_title(f'Уровень посещений всех занятий '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
+
+    elif plot_type == 'total_rated':
+        visit = df.groupby(['group_by', 'user'])['visit'].sum().groupby(['group_by']).cumsum()
+        total = df.groupby(['group_by', 'user'])['total'].sum().groupby(['group_by']).cumsum()
         res = DataFrame()
         res['rate'] = visit / total * 100
         res = res.reset_index().sort_values('rate', axis=0)
 
         ax = default_ax(fig, len(res.columns))
-
-        res.plot.bar(ax=ax, x='group_by', y='rate', alpha=0.7)
+        
+        res = res.pivot(index='user', columns='group_by', values='rate')
+        res.plot.bar(ax=ax, alpha=0.7)
 
         ax.set_ylim([-1, 101])
         ax.set_ylabel('Посещения, %')
+        ax.set_xlabel(f'{type_name(user)} по возрастанию посещаемости')
 
-    if plot_type == 'scatter':
+        post_ax(ax, 1, type_name(group_by))
+
+        ax.set_title(f'Уровень посещений всех занятий '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
+
+    elif plot_type == 'scatter':
         group = df.groupby(['group_by'])
         res = DataFrame()
         res['rate']: DataFrame = group.visit.sum() / group.total.sum() * 100
@@ -251,7 +285,11 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_ylabel('Посещения, %')
         ax.set_xlabel('Студенты (по возрастанию посещаемости)')
 
-    if plot_type == 'deviation':
+        ax.set_title(f'Уровень посещений всех занятий '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
+
+    elif plot_type == 'deviation':
         res = cumsum(df, 'day')
         grouped = res.groupby(['group_by'])
 
@@ -270,6 +308,15 @@ def plot(user, semester, group_by: Callable[[Lesson], List], plot_type='distribu
         ax.set_xlabel('Дата')
         ax.tick_params(axis='x', rotation=30)
 
-        post_ax(ax, len(grouped.groups))
+        post_ax(ax, len(grouped.groups), type_name(group_by))
+        ax.set_title(f'Изменение уровня посещений с течением времени для '
+                     f'{agree_to_number(inflect(type(user[0] if is_iterable(user) else user).type_name, {"gent"}), len(user) if is_iterable(user) else 1)} '
+                     f'{names(user) if type(user[0])!=group_by else ""}')
+
+
+    else:
+        raise ValueError(f'no such plot type "{plot_type}"')
+
+
 
     return fig

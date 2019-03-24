@@ -113,48 +113,8 @@ def is_None(x):
     return x in [None, 'None', 'null']
 
 
-class _ListedValues(int, IJSON):
-    __values__ = {}
-
-    def __new__(cls, inst):
-        # assert all(isinstance(key, int) for key in cls.__values__),
-        if isinstance(inst, int):
-            return super(_ListedValues, cls).__new__(cls, inst)
-        elif isinstance(inst, str):
-            for key, value in cls.__values__.items():
-                if inst == value:
-                    return super(_ListedValues, cls).__new__(cls, key)
-            if inst.isnumeric():
-                return super(_ListedValues, cls).__new__(cls, int(inst))
-        raise ValueError('unacceptable value')
-
-    def to_json(self):
-        return self.__repr__()
-
-    def __str__(self):
-        return self.__values__[self]
-
-    @classmethod
-    def types(cls):
-        return cls.__values__
-
-    @classmethod
-    def derived(self, obj) -> Type:
-        if isinstance(obj, _DBObject) or issubclass(obj, _DBObject):
-            if hasattr(obj, 'Type'):
-                return obj.Type
-        raise ValueError(f'No type inside class {obj}')
-
-    @classmethod
-    def from_str(cls, string: str):
-        for key, value in cls.__values__.items():
-            if value == string:
-                return cls(key)
-        else:
-            raise ValueError(f'no such case: {string}')
-
-
 class _DBObject(IJSON):
+    __tablename__: str
     __table_args__ = {
         'mysql_engine': 'InnoDB',
         'mysql_charset': 'utf8',
@@ -183,8 +143,6 @@ class _DBObject(IJSON):
         :param name: имя атрибута
         :return: callable
         """
-        if name == 'type':
-            return _ListedValues.derived(cls)
         python_type = cls.table().c[name].type.python_type
         if python_type == datetime:
             return Get.datetime
@@ -368,6 +326,10 @@ class _DBObject(IJSON):
         return self.__repr__()
 
 
+class _DBRoot:
+    type_name: str
+
+
 class _DBTrackedObject(_DBObject):
     _created = Column(DateTime, default=datetime.now)
     _updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
@@ -542,6 +504,14 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         return session.query(cls).filter(cls.id == kwargs.get('id')).first()
 
 
+class _DBList:
+    @classmethod
+    def all(cls, session: ISession = None):
+        if session is None:
+            session = Session()
+        return session.query(cls).all()
+
+
 class ContactInfo(Base, _DBTrackedObject):
     __tablename__ = "contacts"
 
@@ -572,7 +542,7 @@ class ContactInfo(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
-class DataView(Base, _DBNamedObject):
+class DataView(Base, _DBNamedObject, _DBList):
     # TODO _TRACKED
     __tablename__ = "data_views"
 
@@ -591,12 +561,6 @@ class DataView(Base, _DBNamedObject):
             return obj.views
 
         return obj.session().query(DataView).all()
-
-    @staticmethod
-    def all(session=None):
-        if session is None:
-            session = Session()
-        return session.query(DataView).all()
 
 
 class ContactViews(Base, _DBTrackedObject):
@@ -627,7 +591,7 @@ class ContactViews(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
-class Faculty(Base, _DBEmailObject, _DBNamedObject):
+class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = "faculties"
     type_name = "Факультет"
 
@@ -649,7 +613,7 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject):
         if isinstance(obj, Department):
             return [obj.faculty]
 
-        if isinstance(obj, (Professor, Semester)):
+        if isinstance(obj, (Professor, Semester, Room)):
             return Faculty.of(obj.lessons)
 
         if isinstance(obj, Lesson):
@@ -679,7 +643,7 @@ class FacultyAdministrations(Base, _DBObject):
         raise NotImplementedError(type(obj))
 
 
-class Department(Base, _DBNamedObject, _DBEmailObject):
+class Department(Base, _DBNamedObject, _DBEmailObject, _DBList, _DBRoot):
     __tablename__ = "departments"
 
     type_name = "Кафедра"
@@ -700,14 +664,15 @@ class Department(Base, _DBNamedObject, _DBEmailObject):
         if isinstance(obj, Professor):
             return obj.departments
 
-        if isinstance(obj, Group):
+        if isinstance(obj, (Group, Room, Semester)):
             return Department.of(obj.lessons)
 
         if isinstance(obj, Student):
             return Department.of(Professor.of(obj))
 
-        if isinstance(obj, Semester):
-            return Department.of(obj.lessons)
+        if isinstance(obj, Building):
+            return Department.of(obj.rooms)
+
 
         raise NotImplementedError(type(obj))
 
@@ -780,6 +745,69 @@ class LessonsGroups(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
+class Building(Base, _DBNamed, _DBList, _DBRoot):
+    __tablename__ = 'building'
+    type_name = 'Корпус'
+    address = Column(String(500))
+    abbreviation = Column(String(16))
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Lesson):
+            return [obj.room.building]
+
+        if isinstance(obj, (Professor, LessonType, Group, LessonType)):
+            return Building.of(obj.lessons)
+
+        if isinstance(obj, Student):
+            return Building.of(obj.groups)
+
+        if isinstance(obj, Room):
+            return [obj.building]
+
+        raise NotImplementedError(type(obj))
+
+    def short_name(self):
+        return self.abbreviation
+
+    def full_name(self, case=None):
+        return self.address
+
+
+class Room(Base, _DBNamed, _DBRoot):
+    __tablename__ = 'room'
+    type_name = 'Аудитория'
+    building_id = Column(Integer, ForeignKey('building.id'))
+    room_number = Column(Integer)
+    reader_id = Column(Integer)
+
+    building: Building = relationship('Building', backref=backref('rooms'))
+
+    def full_name(self, case=None):
+        return f'{self.room_number}/{self.building.short_name()}'
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Lesson):
+            return [obj.room]
+
+        if isinstance(obj, (Professor, Room, LessonType, Group, Semester)):
+            return Room.of(obj.lessons)
+
+        if isinstance(obj, Student):
+            return Room.of(obj.groups)
+
+        if isinstance(obj, Department):
+            return Room.of(obj.professors)
+
+        if isinstance(obj, Building):
+            return obj.rooms
+
+        raise NotImplementedError(type(obj))
+
+
 class StudentsParents(Base, _DBTrackedObject):
     """
     Ассоциативная таблица Студентов - Родителей
@@ -837,11 +865,14 @@ class Visitation(Base, _DBTrackedObject):
         if isinstance(obj, Group):
             return Visitation.of(obj.students)
 
-        if isinstance(obj, (Professor, Discipline, Faculty, Department)):
+        if isinstance(obj, (Professor, Discipline, Faculty, Department, Room)):
             return Visitation.of(Lesson.of(obj))
 
-        if isinstance(obj, Semester):
+        if isinstance(obj, (Semester, Room, LessonType)):
             return Visitation.of(obj.lessons)
+
+        if isinstance(obj, Building):
+            return Visitation.of(obj.rooms)
 
         raise NotImplementedError(type(obj))
 
@@ -951,7 +982,7 @@ class Auth(Base, _DBTrackedObject):
         }
 
 
-class Discipline(Base, _DBTrackedObject, _DBNamedObject):
+class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
     """
     Таблица дисциплин
     """
@@ -981,11 +1012,14 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
         if isinstance(obj, Lesson):
             return [obj.discipline]
 
-        if isinstance(obj, Professor):
-            return [lesson.discipline for lesson in obj.lessons]
+        if isinstance(obj, (Professor, Room, Group, LessonType)):
+            return Discipline.of(obj.lessons)
 
-        if isinstance(obj, (Student, Group)):
-            return Discipline.of(Lesson.of(obj))
+        if isinstance(obj, Student):
+            return Discipline.of(obj.groups)
+
+        if issubclass(obj, Building):
+            return Discipline.of(obj.rooms)
 
         if isinstance(obj, Department):
             return obj.disciplines
@@ -996,8 +1030,9 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject):
         raise NotImplementedError(type(obj))
 
 
-class Semester(Base, _DBNamed):
+class Semester(Base, _DBNamed, _DBRoot):
     __tablename__ = "semesters"
+    type_name = 'Семестр'
 
     start_date: datetime = Column(DateTime, nullable=False, unique=True)
     first_week_index: int = Column(Integer, default=0, nullable=False)
@@ -1029,21 +1064,32 @@ class Semester(Base, _DBNamed):
         raise NotImplementedError(type(obj))
 
 
+class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
+    __tablename__ = 'lesson_type'
+    type_name = 'Вид занятия'
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, (Professor, Room, Semester, Discipline, Group)):
+            return LessonType.of(obj.lessons)
+
+        if isinstance(obj, Student):
+            return LessonType.of(obj.groups)
+
+        if isinstance(obj, Lesson):
+            return [obj.type]
+
+        if isinstance(obj, LessonType):
+            return [obj]
+
+        raise NotImplementedError(type(obj))
+
+
 class Lesson(Base, _DBTrackedObject):
     """
     Lesson
     """
-
-    class Type(_ListedValues):
-        Lecture = 0
-        Lab = 1
-        Practice = 2
-
-        __values__ = {
-            Lecture: "Лекция",
-            Practice: "Практика",
-            Lab: "Лабораторная работа"
-        }
 
     __tablename__ = 'lessons'
     __table_args__ = (
@@ -1053,32 +1099,21 @@ class Lesson(Base, _DBTrackedObject):
 
     professor_id: int = Column(Integer, ForeignKey('professors.id'), nullable=False)
     discipline_id: int = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
-    _type: int = Column('type', Integer, nullable=False, default=Type.Lecture)
+    type_id: int = Column(Integer, ForeignKey('lesson_type.id'), nullable=False)
     date: datetime = Column(DateTime, nullable=False)
     completed: bool = Column(Boolean, nullable=False, default=False)
-    room_id: str = Column(String(40), nullable=False)
+    room_id: int = Column(Integer, ForeignKey('room.id'), nullable=False)
     semester_id = Column(Integer, ForeignKey('semesters.id'))
     semester: Semester = relationship('Semester', backref=backref('lessons'))
 
     discipline: Discipline
 
-    @property
-    def type(self) -> 'Lesson.Type':
-        return self.Type(self._type)
+    room: Room = relationship('Room', backref=backref('lessons'))
 
-    @type.setter
-    def type(self, value: 'Lesson.Type' or int or str):
-        if isinstance(value, int):
-            self._type = value
-        elif isinstance(value, str):
-            int_value = Get.int(value)
-            if int_value is not None:
-                self._type = int_value
-            else:
-                self._type = Lesson.Type.from_str(value)
+    type: LessonType = relationship('LessonType', backref=backref('lessons'))
 
     _groups = relationship('LessonsGroups', backref=backref('lesson'))
-    groups = association_proxy('_groups', 'group',
+    groups: List['Group'] = association_proxy('_groups', 'group',
                                creator=lambda group: LessonsGroups(group=group))
 
     visitations = relationship('Visitation', backref=backref('lesson'))
@@ -1086,7 +1121,7 @@ class Lesson(Base, _DBTrackedObject):
     def __repr__(self):
         return f"<Lesson(id={self.id}, professor_id={self.professor_id}," \
             f" discipline_id={self.discipline_id}, " \
-            f"date={self.date}, type={self.type}," \
+            f"date={self.date}, type={self.type.full_name()}," \
             f" completed={self.completed})>"
 
     _week = None
@@ -1098,11 +1133,11 @@ class Lesson(Base, _DBTrackedObject):
     def repr(self):
         from Domain.Data import names_of_groups
 
-        return f"""{str(self.type)} {self.date}
+        return f"""{self.type.full_name()} {self.date}
         дисциплина: {self.discipline.name}
         преподаватель: {self.professor.full_name()}
         группы: {names_of_groups(self.groups)}
-        кабинет: {self.room_id}"""
+        кабинет: {self.room.short_name()}"""
 
     @classmethod
     @sorter
@@ -1124,8 +1159,11 @@ class Lesson(Base, _DBTrackedObject):
         if isinstance(obj, Department):
             return Lesson.of(Professor.of(obj))
 
-        if isinstance(obj, Semester):
+        if isinstance(obj, (Semester, LessonType, Room)):
             return obj.lessons
+
+        if isinstance(obj, Building):
+            return Lesson.of(obj.rooms)
 
         raise NotImplementedError(type(obj))
 
@@ -1168,7 +1206,7 @@ class Administration(Base, _DBPerson):
         raise NotImplementedError(type(obj))
 
 
-class Professor(Base, _DBPerson):
+class Professor(Base, _DBPerson, _DBRoot):
     """
     Таблица преподавателей
     """
@@ -1255,7 +1293,7 @@ class Professor(Base, _DBPerson):
         return dict(created=created, updated=updated, deleted=deleted)
 
 
-class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
+class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
     """
     Таблица групп
     """
@@ -1288,7 +1326,7 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
         if isinstance(obj, Lesson):
             return obj.groups
 
-        if isinstance(obj, (Discipline, Semester)):
+        if isinstance(obj, (Discipline, Semester, Room, LessonType)):
             return Group.of(obj.lessons)
 
         if isinstance(obj, Student):
@@ -1303,13 +1341,16 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject):
         if isinstance(obj, Department):
             return Group.of(Discipline.of(obj))
 
+        if isinstance(obj, Building):
+            return Group.of(obj.rooms)
+
         if isinstance(obj, Group):
             return [obj]
 
         raise NotImplementedError(type(obj))
 
 
-class Student(Base, _DBPerson):
+class Student(Base, _DBPerson, _DBRoot):
     """
     Таблица студентов
     """
@@ -1345,20 +1386,23 @@ class Student(Base, _DBPerson):
         if isinstance(obj, Group):
             return obj.students
 
-        if isinstance(obj, Lesson):
-            return list(chain.from_iterable([Student.of(group) for group in obj.groups]))
+        if isinstance(obj, (Faculty, Lesson)):
+            return Student.of(obj.groups)
 
-        if isinstance(obj, (Professor, Discipline, Semester)):
+        if isinstance(obj, (Professor, Discipline, Semester, LessonType)):
             return Student.of(obj.lessons)
 
         if isinstance(obj, Department):
             return Student.of(Discipline.of(obj))
 
-        if isinstance(obj, Faculty):
-            return Student.of(Group.of(obj))
-
         if isinstance(obj, Student):
             return [obj]
+
+        if isinstance(obj, Room):
+            return Student.of(obj.lessons)
+
+        if isinstance(obj, Building):
+            return Student.of(obj.rooms)
 
         raise NotImplementedError(type(obj))
 
