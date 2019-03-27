@@ -19,7 +19,7 @@ a = Analysis(['run_client.py'],
 import pymorphy2_dicts
 
 a.datas += [Tree('Client/src', 'Client/src'),
-            Tree(pymorphy2_dicts.__path__+'/data', '/pymorphy_dicts/data')]
+            Tree(pymorphy2_dicts.__path__[0]+'/data', '/pymorphy_dicts/data')]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
