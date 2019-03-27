@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['run_client.py'],
-             pathex=['/home/vlad/PycharmProjects/VisitCount'],
+             pathex=['/'],
              binaries=[],
              datas=[],
              hiddenimports=[],
