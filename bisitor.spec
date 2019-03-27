@@ -15,8 +15,11 @@ a = Analysis(['run_client.py'],
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
+
+import pymorphy2_dicts
+
 a.datas += [Tree('Client/src', 'Client/src'),
-            Tree('venv/lib/python3.6/site-packages/pymorphy2_dicts/data', '/pymorphy_dicts/data')]
+            Tree(pymorphy2_dicts.__path__+'/data', '/pymorphy_dicts/data')]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
