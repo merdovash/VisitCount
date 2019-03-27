@@ -78,11 +78,6 @@ def create():
     else:
         db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db2.db'))
 
-        engine = create_engine(db_path,
-                               echo=True if get_argv('--db-echo') else False,
-                               poolclass=StaticPool,
-                               connect_args={'check_same_thread': False})
-
         try:
             fh = open(db_path.split('///')[1], 'r')
             fh.close()
@@ -91,6 +86,13 @@ def create():
             fh = open(db_path.split('///')[1], 'w+')
             fh.close()
             _new = True
+
+        engine = create_engine(db_path,
+                               echo=True if get_argv('--db-echo') else False,
+                               poolclass=StaticPool,
+                               connect_args={'check_same_thread': False})
+
+
 
     Base = declarative_base(bind=engine)
 
