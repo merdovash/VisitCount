@@ -18,8 +18,8 @@ a = Analysis(['run_client.py'],
 
 import pymorphy2_dicts
 
-a.datas += [('Client/src/*', 'Client/src'),
-            (pymorphy2_dicts.__path__[0]+'/data/*', '/pymorphy_dicts/data')]
+a.datas += [('Client/src/*', 'Client/src', 'data'),
+            (pymorphy2_dicts.__path__[0]+'/data/*', 'pymorphy_dicts/data', 'data')]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
