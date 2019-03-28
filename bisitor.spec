@@ -8,8 +8,8 @@ import pymorphy2_dicts
 a = Analysis(['run_client.py'],
              pathex=['\\'],
              binaries=[],
-             datas=[('Client\\src\\*', 'Client\\src', 'data'),
-                    (pymorphy2_dicts.__path__[0]+'\\data\\*', 'pymorphy_dicts\\data', 'data')],
+             datas=[('Client\\src', 'Client\\src'),
+                    (pymorphy2_dicts.__path__[0]+'\\data', 'pymorphy_dicts\\data')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -20,7 +20,7 @@ a = Analysis(['run_client.py'],
              noarchive=False)
 
 
-a.datas += []
+a.datas += [('Client\\style.css', 'Client\\style.css', 'data')]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
