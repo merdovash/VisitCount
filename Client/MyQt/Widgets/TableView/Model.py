@@ -11,7 +11,6 @@ from DataBase2 import Visitation, Lesson, Student
 from Domain.Validation.Values import Validate
 from Domain.functools.Format import format_name
 
-
 COLUMN_WIDTH = 48
 ROW_HEIGHT = 20
 HEADER_HEIGHT = 65
@@ -64,7 +63,8 @@ class PercentHorizontalModel(AbstractPercentModel):
                 visitations = [visit for visit in lesson.visitations if not visit._is_deleted]
                 if index.row() == 0:
                     return round(100 / len(self.students) * len([item for item in visitations
-                                                                 if item.student in self.students])) if len(self.students) else 0
+                                                                 if item.student in self.students])) if len(
+                        self.students) else 0
                 if index.row() == 1:
                     return len([item for item in visitations if item.student in self.students])
 
@@ -172,7 +172,7 @@ class VisitModel(QAbstractTableModel):
         self.dataChanged.emit(
             index,
             index,
-            [Qt.DisplayRole | Qt.BackgroundColorRole | VisitModel.VisitRole]*9)
+            [Qt.DisplayRole | Qt.BackgroundColorRole | VisitModel.VisitRole] * 9)
 
         self.item_changed.emit(index.row(), index.column())
 
@@ -182,7 +182,7 @@ class VisitModel(QAbstractTableModel):
 
         self.dataChanged.emit(
             self.createIndex(0, column),
-            self.createIndex(self.rowCount()-1, column),
+            self.createIndex(self.rowCount() - 1, column),
             [Qt.DisplayRole | VisitModel.LessonCompletedRole] * self.rowCount()
         )
 
@@ -267,6 +267,7 @@ class VisitModel(QAbstractTableModel):
                         return True
 
     def headerData(self, p_int, orientation, role=None):
+        assert p_int < [None, len(self.students), len(self.lessons)][orientation]
         if role == Qt.DisplayRole:
             if orientation == Qt.Vertical:
                 return format_name(self.students[p_int])

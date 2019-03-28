@@ -103,8 +103,8 @@ class VisitView(QTableView):
     def verticalHeaderMenuRequested(self, pos: QPoint):
         index = self.indexAt(pos)
         student = self.model().headerData(index.row(), Qt.Vertical, VisitModel.ValueRole)
-        discipline = self.model().headerData(index.row(), Qt.Horizontal, VisitModel.ValueRole).discipline
-        professor = self.model().headerData(index.row(), Qt.Horizontal, VisitModel.ValueRole).professor
+        discipline = self.model().headerData(index.column(), Qt.Horizontal, VisitModel.ValueRole).discipline
+        professor = self.model().headerData(index.column(), Qt.Horizontal, VisitModel.ValueRole).professor
 
         menu = QMenu(self)
 
