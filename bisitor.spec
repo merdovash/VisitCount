@@ -3,6 +3,8 @@
 block_cipher = None
 
 
+import pymorphy2_dicts
+
 a = Analysis(['run_client.py'],
              pathex=['\\'],
              binaries=[],
@@ -17,7 +19,6 @@ a = Analysis(['run_client.py'],
              cipher=block_cipher,
              noarchive=False)
 
-import pymorphy2_dicts
 
 a.datas += []
 
