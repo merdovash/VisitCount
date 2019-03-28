@@ -267,9 +267,7 @@ class VisitModel(QAbstractTableModel):
                         lesson.completed = True
                         return True
 
-    @try_catch(IndexError, out=lambda x: QMessageBox().critical(None, 'Ошибка модели', x))
     def headerData(self, p_int, orientation, role=None):
-        assert p_int < [None, len(self.students), len(self.lessons)][orientation]
         if role == Qt.DisplayRole:
             if orientation == Qt.Vertical:
                 return format_name(self.students[p_int])
