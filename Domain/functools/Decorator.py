@@ -99,8 +99,23 @@ def sorter(func):
     return __wrapper__
 
 
+def try_catch(*exc, out=print):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exc as e:
+                out(f'Во время вызова функции {func} c параметрами {*args, kwargs} было получено исключение {e}')
+        return wrapper
+    return decorator
+
+
+
+
 if __name__ == '__main__':
     from DataBase2 import Parent, Professor, Student, Lesson, Group, Discipline
 
     print(Group.of(Professor.get(id=1)))
     print(Group.of(Discipline.of(Professor.get(id=1))))
+
+

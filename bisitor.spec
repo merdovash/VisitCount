@@ -6,7 +6,8 @@ block_cipher = None
 a = Analysis(['run_client.py'],
              pathex=['\\'],
              binaries=[],
-             datas=[],
+             datas=[('Client\\src\\*', 'Client\\src', 'data'),
+                    (pymorphy2_dicts.__path__[0]+'\\data\\*', 'pymorphy_dicts\\data', 'data')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -18,8 +19,7 @@ a = Analysis(['run_client.py'],
 
 import pymorphy2_dicts
 
-a.datas += [('Client\\src\\*', 'Client\\src', 'data'),
-            (pymorphy2_dicts.__path__[0]+'\\data\\*', 'pymorphy_dicts\\data', 'data')]
+a.datas += []
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
