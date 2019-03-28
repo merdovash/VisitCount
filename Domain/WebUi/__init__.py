@@ -4,7 +4,8 @@ from random import randint
 from typing import List, Any
 
 from Domain.Validation.Values import Get
-from Domain.functools.Format import format_name, js_format
+from Domain.functools.Format import format_name
+from Domain.functools.format import js_format
 from Domain.functools.List import without_None
 
 

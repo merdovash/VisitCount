@@ -5,6 +5,7 @@ import sys
 import PyQt5
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QStyleFactory
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 from Client.IProgram import IProgram
 from Client.Program import MyProgram

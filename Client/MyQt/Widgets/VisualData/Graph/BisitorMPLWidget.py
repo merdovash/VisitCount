@@ -10,6 +10,7 @@ from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox, Stud
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
 from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department, Semester, _DBRoot
+from Domain.Plotting.View import BokehPlot
 
 
 class SettingWidget(BisitorWidget):
@@ -138,13 +139,19 @@ class BisitorMPLWidget(BisitorWidget):
         tabs.addTab(setting_widget, "Настройки")
 
         def on_accept(items, group_by, plot_type, semester):
-            plot = MyMplCanvas(
-                items,
-                group_by,
-                plot_type,
-                semester=semester)
-            tabs.addTab(plot, 'График')
-            tabs.setCurrentWidget(plot)
+            if plot_type == 'distribution':
+                plot = BokehPlot.distribution(user=items, group=group_by, semester=semester)
+                plot.create()
+                widget = plot.widget()
+
+            else:
+                widget = MyMplCanvas(
+                    items,
+                    group_by,
+                    plot_type,
+                    semester=semester)
+            tabs.addTab(widget, 'График')
+            tabs.setCurrentWidget(widget)
 
         setting_widget.accept.connect(on_accept)
 

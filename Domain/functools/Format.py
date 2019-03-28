@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 
 import pymorphy2
 
-from DataBase2 import Professor, Student, _DBPerson, _DBObject, _DBNamed, _DBRoot
+from DataBase2 import Professor, Student, _DBPerson, _DBNamed, _DBRoot
 from Domain.Exception.Constraint import ConstraintBasenameException, ConstraintDictNameException, \
     ConstraintNotEmptyException
 from Domain.functools.Decorator import is_iterable
@@ -84,13 +84,6 @@ def format_name(user: Dict[str, str] or Professor or Student, case: set = None, 
     if small:
         return ' '.join([f.capitalize() if i == 0 else f.capitalize()[0] + '.' for i, f in enumerate(fio)])
     return ' '.join([f.capitalize() for f in fio])
-
-
-def js_format(js: str, **kwargs):
-    for key, val in kwargs.items():
-        js = js.replace('{' + key + '}', str(val))
-
-    return js
 
 
 def agree_to_number(word: str, number: int) -> str:
