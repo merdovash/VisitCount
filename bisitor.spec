@@ -3,10 +3,13 @@
 block_cipher = None
 
 
+import pymorphy2_dicts
+
 a = Analysis(['run_client.py'],
              pathex=['\\'],
              binaries=[],
-             datas=[],
+             datas=[('Client\\src', 'Client\\src'),
+                    (pymorphy2_dicts.__path__[0]+'\\data', 'pymorphy2_dicts\\data')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -16,10 +19,8 @@ a = Analysis(['run_client.py'],
              cipher=block_cipher,
              noarchive=False)
 
-import pymorphy2_dicts
 
-a.datas += [('Client\\src\\*', 'Client\\src', 'data'),
-            (pymorphy2_dicts.__path__[0]+'\\data\\*', 'pymorphy_dicts\\data', 'data')]
+a.datas += [('Client\\style.css', 'Client\\style.css', 'data')]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
@@ -32,7 +33,7 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=False )
+          console=True )
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
