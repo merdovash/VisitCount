@@ -1,10 +1,12 @@
 import random
 from collections import Callable
 
+from bokeh.core.property.dataspec import value
 from bokeh.embed import components
-from bokeh.models import HoverTool, DatetimeTickFormatter
+from bokeh.models import HoverTool, DatetimeTickFormatter, ColumnDataSource, Range
 from bokeh.plotting import Figure, figure
 from bokeh.resources import CDN
+from bokeh.transform import dodge
 from pandas import DataFrame
 
 from Domain.Plotting import PlotInfo, src
@@ -18,30 +20,88 @@ class BokehPlot(PlotInfo):
     def get_plotter(cls, name):
         if name == 'distribution':
             return cls.plot_line
+        if name in ('bar_week',):
+            return cls.plot_categorical_bar
         raise NotImplementedError(name)
 
-    @classmethod
-    def plot_line(cls, plot: Figure, data, x, y, legend, color):
-        return plot.line(x=data[x], y=data[y],
-                         legend=legend, name=legend,
-                         line_color=color, line_width=2)
+    def plot_line(self, data, x, y, legend):
+        plot = figure(tools='box_zoom,save,reset', x_axis_type='datetime', y_range=(0, 100), title=self.title,
+                      sizing_mode='stretch_both',
+                      x_axis_label=self.x_axis_label, y_axis_label=self.y_axis_label)
+
+        colors = self.colors(len(data))
+        for df, legend, color in zip(data, legend, colors):
+            l = plot.line(x=df[x], y=df[y], legend=legend, color=color, name=legend, line_width=2)
+
+        plot.xaxis.formatter = DatetimeTickFormatter(
+            hours=["%d.%m.%Y"],
+            days=["%d.%m.%Y"],
+            months=["%d.%m.%Y"],
+            years=["%d.%m.%Y"],
+        )
+
+        plot.add_tools(HoverTool(
+            tooltips=[
+                (self.x_axis_label, "@x{%F}"),
+                (self.y_axis_label, "@y"),
+                ('Имя', "$name")
+            ],
+            point_policy='follow_mouse',
+            formatters={"x": "datetime"}
+        ))
+
+        return plot
+
+    def plot_categorical_bar(self, data, x, y, legend):
+        plot = figure(tools='box_zoom,save,reset', y_range=(0, 100), x_range=legend, title=self.title,
+                      sizing_mode='stretch_both',
+                      x_axis_label=self.x_axis_label, y_axis_label=self.y_axis_label)
+
+        source = ColumnDataSource(data=data)
+        count = data.shape[1]
+        colors = self.colors(count)
+        print(data)
+        for i, name in enumerate(data.columns.values.tolist()):
+            plot.vbar(x=dodge(x, 0.25 + 0.5 * (i / max((count - 1), 1)), range=plot.x_range), top=name,
+                      width=max(0.6 / count, 0.1),
+                      source=source,
+                      color=colors[i], legend=value(name), name=name)
+        plot.x_range.range_padding = 0.1
+        plot.xgrid.grid_line_color = None
+
+        plot.add_tools(HoverTool(
+            tooltips=[
+                (self.x_axis_label, "$index"),
+                (self.y_axis_label, "@$name"),
+                ('Имя', "$name")
+            ],
+            point_policy='follow_mouse',
+            formatters={"x": "datetime"}
+        ))
+
+        return plot
 
     @classmethod
     def colors(cls, n):
-        ret = []
-        r = int(random.random() * 256)
-        g = int(random.random() * 256)
-        b = int(random.random() * 256)
-        step = 256 / n
-        for i in range(n):
-            r += step*(n-1)
-            g += step*(n-1)
-            b += step*(n-1)
-            r = int(r) % 256
-            g = int(g) % 256
-            b = int(b) % 256
-            ret.append((r,g,b))
-        return ret
+        colors = [
+            (255, 87, 51),
+            (240, 98, 146),
+            (186, 104, 200),
+            (149, 117, 205),
+            (63, 81, 181),
+            (66, 165, 245),
+            (0, 150, 136),
+            (76, 175, 80),
+            (124, 179, 66),
+            (175, 180, 43),
+            (255, 235, 59),
+            (245, 124, 0),
+            (244, 81, 30),
+            (121, 85, 72),
+        ]
+        if n > len(colors):
+            return [random.choice(colors)] * n
+        return random.sample(colors, n)
 
     def widget(self):
         from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -50,32 +110,10 @@ class BokehPlot(PlotInfo):
         return widget
 
     def create(self) -> str:
-        import locale
-        locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-        plot = figure(tools='box_zoom,save,reset', x_axis_type='datetime', y_range=(0, 100), title=self.title,
-                      sizing_mode='stretch_both',
-                      x_axis_label=self.x_axis_label, y_axis_label=self.y_axis_label)
 
-        func: Callable[[Figure, DataFrame, str, str, str, str], None] = self.get_plotter(self.plot_type)
-        colors = self.colors(len(self.data))
-        for df, legend, color in zip(self.data, self.legend, colors):
-            l = func(plot=plot, data=df, x=self.x, y=self.y, legend=legend, color=color)
+        func: Callable[[DataFrame, str, str, str, str], None] = self.get_plotter(self.plot_type)
 
-        plot.xaxis.formatter = DatetimeTickFormatter(
-            hours=["%d %B %Y"],
-            days=["%d %B %Y"],
-            months=["%d %B %Y"],
-            years=["%d %B %Y"],
-        )
-        plot.add_tools(HoverTool(
-            tooltips=[
-                (self.y_axis_label, "@x{%F}"),
-                (self.y_axis_label, "@y"),
-                ('Имя', "$name")
-            ],
-            point_policy='follow_mouse',
-            formatters={"x": "datetime"}
-        ))
+        plot = func(self, self.data, self.x, self.y, self.legend)
 
         plot.legend.click_policy = "hide"
         plot.legend.location = "bottom_right"

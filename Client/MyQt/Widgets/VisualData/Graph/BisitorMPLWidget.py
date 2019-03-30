@@ -144,6 +144,11 @@ class BisitorMPLWidget(BisitorWidget):
                 plot.create()
                 widget = plot.widget()
 
+            elif plot_type == 'bar_week':
+                plot = BokehPlot.bar_week(user=items, group=group_by, semesters=semester)
+                plot.create()
+                widget = plot.widget()
+
             else:
                 widget = MyMplCanvas(
                     items,

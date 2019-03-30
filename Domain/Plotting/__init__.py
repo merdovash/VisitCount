@@ -1,12 +1,13 @@
 import sys
 from datetime import date
-from typing import Type, List
+from typing import Type, List, Tuple
 
 from PyQt5.QtWidgets import QApplication
 from pandas import DataFrame
 from pandas._libs.tslibs.offsets import relativedelta
 
 from DataBase2 import Group, Discipline, Semester, _DBRoot, Semester, Lesson, Visitation, Student, _DBObject
+from Domain.Exception.Aggregation import NoDataError
 from Domain.functools.Decorator import is_iterable
 from Domain.functools.Format import inflect, agree_to_number, names
 
@@ -29,7 +30,7 @@ class PlotInfo:
         raise NotImplementedError()
 
     @classmethod
-    def prepare_data(cls, root, semester, group_by: Type[_DBObject]):
+    def prepare_data(cls, root, semester, group_by: Type[_DBObject]) -> Tuple[DataFrame, int]:
         data = []
         year = None
         for user in root:
@@ -54,7 +55,7 @@ class PlotInfo:
                             'day': lesson.date.date(),
                             'week': lesson.week
                         })
-        return data, year
+        return DataFrame(data), year
 
     @classmethod
     def cumsum(cls, df, second_group_by) -> DataFrame:
@@ -72,17 +73,18 @@ class PlotInfo:
             agree_to_number(inflect(type(user_type).type_name, {"gent"}), len(user) if is_iterable(user) else 1),
             names(user) if type(user[0]) != group else "",
         )
-        if group != user_type:
+        if group != type(user_type):
             title += " сгруппированные по {} [{}].".format(
-               inflect(agree_to_number(group.type_name, len(labels)), {'datv'}),
+                inflect(agree_to_number(group.type_name, len(labels)), {'datv'}),
                 ', '.join(labels)
             )
         return title
 
     @classmethod
     def distribution(cls, user: List[_DBRoot], group: Type[_DBRoot], semester: List[Semester]) -> 'PlotInfo':
-        data, year = cls.prepare_data(user, semester, group)
-        df = DataFrame(data)
+        df, year = cls.prepare_data(user, semester, group)
+        if df.shape[0] == 0:
+            raise NoDataError('')
         df.sort_values('day', 0, inplace=True)
         res = cls.cumsum(df, 'day')
         grouped = res.groupby(['group_by'])
@@ -104,4 +106,29 @@ class PlotInfo:
             y_axis_label='Процент посещений',
             legend=legend,
             plot_type='distribution'
+        )
+
+    @classmethod
+    def bar_week(cls, user, group, semesters):
+        df, year = cls.prepare_data(user, group_by=group, semester=semesters)
+        if df.shape[0]==0:
+            raise NoDataError('')
+        visit = df.groupby(['group_by', 'week'])['visit'].sum()
+        total = df.groupby(['group_by', 'week'])['total'].sum()
+
+        res = DataFrame()
+        res['rate'] = visit / total * 100
+        res.reset_index(inplace=True)
+        res.set_index(res.week, inplace=True)
+
+        res = res.pivot(columns='group_by', values='rate')
+        return cls(
+            data=res,
+            x='week',
+            y=None,
+            x_axis_label='Неделя',
+            y_axis_label='Посещения, %',
+            title=cls.make_title(user, group, list(res)),
+            plot_type='bar_week',
+            legend=[str(i) for i in list(res.index)]
         )
