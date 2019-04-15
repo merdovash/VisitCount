@@ -14,6 +14,10 @@ class AbstractWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(QMainWindow, self).__init__()
 
+        if 'css' in kwargs:
+            with open(kwargs['css'], 'r') as style:
+                self.setStyleSheet(style.read())
+
         self.error.connect(self.on_error)
         self.message.connect(self.on_show_message)
         self.ok_message.connect(self.on_ok_message)

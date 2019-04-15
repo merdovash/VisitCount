@@ -4,23 +4,25 @@ This module contains class wrapper of all global variables
 import os
 from pathlib import PurePath
 
+from PyQt5.QtCore import QObject
+
 from Client.IProgram import IProgram
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.Main import MainWindow
 from Client.Reader import IReader
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
+from Client.src import src
 from DataBase2 import Session, Auth
 from Domain.functools.Url import to_standart_http
 
 
-class MyProgram(IProgram):
-    __slots__ = ()
+class MyProgram(IProgram, QObject):
     """
     Wrapper of all global variables
     """
 
-    def __init__(self, widget: AbstractWindow = None, test=False,
-                 css=True, host='http://bisitor.itut.ru'):
+    def __init__(self, widget: AbstractWindow = None, test=False, css: str = src.qss, host='http://bisitor.itut.ru'):
+        super().__init__()
         self._state = {'marking_visits': False,
                        'host': 'http://bisitor.itut.ru',
                        'date_format': '%Y-%m-%d %H:%M:%S'}
@@ -35,11 +37,7 @@ class MyProgram(IProgram):
 
         self.auth = None
 
-        if css:
-            with open(PurePath(os.path.dirname(__file__), 'style.css'), 'r+') as f:
-                self.css = f.read()
-        else:
-            self.css = None
+        self.css = css
 
         if widget is None:
             from Client.MyQt.Window.Auth import AuthWindow
@@ -87,10 +85,4 @@ class MyProgram(IProgram):
         Log out from MainWindow and shows AuthenticationWindow
         """
         from Client.MyQt.Window.Auth import AuthWindow
-        self.set_window(AuthWindow(self))
-
-    def __setitem__(self, key, value):
-        self._state[key] = value
-
-    def __getitem__(self, item):
-        return self._state.get(item, None)
+        self.set_window(AuthWindow(self, css=self.css))

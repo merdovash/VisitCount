@@ -50,10 +50,8 @@ class MainWindow(AbstractWindow):
     log_out = pyqtSignal()
     refresh_data = pyqtSignal()
 
-    def __init__(self, program: IProgram, professor: Professor):
-        AbstractWindow.__init__(self)
-        with open('Client/src/style.qss', 'r') as style_file:
-            self.setStyleSheet(style_file.read())
+    def __init__(self, program: IProgram, professor: Professor, **kwargs):
+        AbstractWindow.__init__(self, **kwargs)
         self.program: IProgram = program
 
         self.professor = professor

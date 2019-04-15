@@ -17,8 +17,6 @@ class AuthWindow(AbstractWindow, Ui_AuthWindow):
     def __init__(self, program, flags=None, *args, **kwargs):
         super().__init__(flags, *args, **kwargs)
         self.setupUi(self)
-        with open('Client/src/style.qss', 'r') as style_file:
-            self.setStyleSheet(style_file.read())
         self.setWindowTitle('СПбГУТ - Система учета посещаемости')
         self.retranslateUi(self)
 
