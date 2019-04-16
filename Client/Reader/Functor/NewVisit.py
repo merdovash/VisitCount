@@ -1,8 +1,7 @@
 from typing import List
 
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QTableWidget, QTableWidgetItem, QComboBox, QPushButton, QLabel, QVBoxLayout, \
-    QHBoxLayout, QCheckBox
+from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QCheckBox
 from sqlalchemy import inspect
 
 from Client.MyQt.Widgets.ComboBox import MComboBox
@@ -29,7 +28,7 @@ class StudentSelector(QWidget):
         self.label = QLabel("Для введенной карты не обнаружен студент.\n"
                             "Выберите студента для введеной карты из списка ниже.")
 
-        self.combo = MComboBox(self, Student)
+        self.combo = MComboBox(Student)
         self.combo.formatter = lambda student: f'{names_of_groups(student.groups)} | {student.full_name()}'
 
         self.show_all_students = QCheckBox("Показать всех студентов")

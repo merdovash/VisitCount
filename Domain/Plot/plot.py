@@ -245,11 +245,12 @@ def plot(user, semester, group_by: Type[_DBObject], plot_type='distribution'):
         total = df.groupby(['group_by', 'user'])['total'].sum().groupby(['group_by']).cumsum()
         res = DataFrame()
         res['rate'] = visit / total * 100
-        res = res.reset_index().sort_values('rate', axis=0)
+        res = res.reset_index()
 
         ax = default_ax(fig, len(res.columns))
         
         res = res.pivot(index='user', columns='group_by', values='rate')
+        res = res.reindex(res.mean().sort_values(ascending=False).index, axis=1)
         res.plot.bar(ax=ax, alpha=0.7)
 
         ax.set_ylim([-1, 101])

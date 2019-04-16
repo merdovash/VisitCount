@@ -4,11 +4,11 @@ from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QTabWidget, QVBoxLayout
 
 from Client.IProgram import IProgram
-from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox, DisciplineComboBox, GroupComboBox, \
-    LessonComboBox
+from Client.MyQt.Widgets.ComboBox import MComboBox
+from Client.MyQt.Widgets.ComboBox.MComboBox import MMultipleComboBox
 from Client.MyQt.Widgets.TableView import VisitTableWidget
 from Client.Reader.Functor.NewVisit import MarkVisitProcess
-from DataBase2 import Professor, Student
+from DataBase2 import Professor, Student, Lesson, Group, Discipline, Semester
 
 CurrentData = namedtuple('CurrentData', 'discipline groups lesson')
 
@@ -52,7 +52,7 @@ class Selector(QWidget):
         main_layout.addWidget(self.tabs, stretch=95)
 
         # semester
-        self.semester = SemesterComboBox(self)
+        self.semester = MComboBox(parent=self, type_=Semester)
         sem_label = QLabel('Семестр')
         sem_label.setAlignment(Qt.AlignRight)
 
@@ -60,7 +60,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.semester, 2)
 
         # discipline
-        self.discipline = DisciplineComboBox(self)
+        self.discipline = MComboBox(parent=self, type_=Discipline)
         disc_label = QLabel("Дисциплина")
         disc_label.setAlignment(Qt.AlignRight)
 
@@ -68,7 +68,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.discipline, 2)
 
         # group
-        self.group = GroupComboBox(self)
+        self.group = MMultipleComboBox(parent=self, type_=Group)
         group_label = QLabel("Группа")
         group_label.setAlignment(Qt.AlignRight)
 
@@ -76,7 +76,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.group, 2)
 
         # lesson
-        self.lesson = LessonComboBox(self)
+        self.lesson = MComboBox(parent=self, type_=Lesson)
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
 
@@ -100,7 +100,7 @@ class Selector(QWidget):
         self.last_lesson = 0
 
         self.connect()
-        self.semester.init(self.professor)
+        self.semester.loads(self.professor)
 
     def connect(self):
         self.semester.current_changed.connect(self.discipline.on_parent_change)

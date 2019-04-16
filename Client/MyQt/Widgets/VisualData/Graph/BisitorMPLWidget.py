@@ -1,15 +1,14 @@
 from typing import Type, List
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QPushButton, QTabWidget
+from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, QPushButton, QTabWidget, QGridLayout, \
+    QCheckBox
 
 from Client.MyQt.Widgets import BisitorWidget
-from Client.MyQt.Widgets.ComboBox import MCheckedComboBox
-from Client.MyQt.Widgets.ComboBox.CheckComboBox import CheckableComboBox
-from Client.MyQt.Widgets.ComboBox.SemesterComboBox import SemesterComboBox, StudentComboBox
+from Client.MyQt.Widgets.ComboBox import MCheckedComboBox, MComboBox
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
-from DataBase2 import Discipline, Professor, Group, Student, _DBObject, Faculty, Department, Semester, _DBRoot
+from DataBase2 import Professor, Student, _DBObject, Semester, _DBRoot
 
 
 class SettingWidget(BisitorWidget):
@@ -31,59 +30,52 @@ class SettingWidget(BisitorWidget):
         }
         self.items = []
 
-        main_layout = QVBoxLayout()
+        main_layout = QGridLayout()
 
-        item_select_layout = QHBoxLayout()
-        main_layout.addLayout(item_select_layout)
+        data_selector = MComboBox(_DBRoot)
+        main_layout.addWidget(QLabel('Данные по'), 0, 0)
+        main_layout.addWidget(data_selector, 0, 1, 1, 2)
 
-        data_selector = QComboBox()
-        item_select_layout.addWidget(QLabel('Данные по'), alignment=Qt.AlignVCenter | Qt.AlignLeft, stretch=1)
-        item_select_layout.addWidget(data_selector, stretch=2)
-
-        item_selector = MCheckedComboBox(self, with_all=True, type_=StudentComboBox())
+        item_selector = MCheckedComboBox(self, with_all=True, type_=Student)
         item_selector_label = QLabel()
         # selector_layout.addWidget(item_selector_label, alignment=Qt.AlignVCenter | Qt.AlignRight)
-        item_select_layout.addWidget(item_selector, stretch=6)
+        main_layout.addWidget(QLabel('Выбор'), 0, 3)
+        main_layout.addWidget(item_selector, 0, 4, 1, 2)
 
-        semester_select_layout = QHBoxLayout()
-        main_layout.addLayout(semester_select_layout)
-
-        semester_selector = MCheckedComboBox(self, False, SemesterComboBox())
-        semester_select_layout.addWidget(QLabel('за'), alignment=Qt.AlignVCenter | Qt.AlignLeft, stretch=1)
-        semester_select_layout.addWidget(semester_selector, stretch=8)
+        semester_selector = MCheckedComboBox(self, False, Semester)
+        main_layout.addWidget(QLabel('за'), 1, 0)
+        main_layout.addWidget(semester_selector, 1, 1, 1, 2)
         semester_selector.loads(user)
 
-        group_by_layout = QHBoxLayout()
-        main_layout.addLayout(group_by_layout)
-
-        group_by_selector = QComboBox()
-        group_by_layout.addWidget(QLabel('группированные по'), alignment=Qt.AlignVCenter | Qt.AlignLeft, stretch=1)
-        group_by_layout.addWidget(group_by_selector, stretch=8)
-
-        plot_type_layout = QHBoxLayout()
-        main_layout.addLayout(plot_type_layout)
+        group_by_selector = MComboBox(_DBRoot)
+        group_by_selector.setEnabled(False)
+        main_layout.addWidget(QLabel('Группировать'), 2, 0)
+        group_by_checkbox = QCheckBox('включить')
+        group_by_checkbox.stateChanged.connect(group_by_selector.setEnabled)
+        main_layout.addWidget(group_by_checkbox, 2, 1, 1, 2)
+        main_layout.addWidget(QLabel('по'), 2, 3)
+        main_layout.addWidget(group_by_selector, 2, 4, 1, 2)
 
         plot_type_selector = QComboBox()
 
-        plot_type_layout.addWidget(QLabel('Тип'), alignment=Qt.AlignVCenter | Qt.AlignLeft, stretch=1)
-        plot_type_layout.addWidget(plot_type_selector, stretch=8)
+        main_layout.addWidget(QLabel('Тип'), 3, 0)
+        main_layout.addWidget(plot_type_selector, 3, 1, 1, 2)
 
-        description_layout = QHBoxLayout()
         description = QLabel()
-        description_layout.addWidget(QLabel('Описание'), stretch=1)
-        description_layout.addWidget(description, stretch=8)
-        main_layout.addLayout(description_layout)
+        description.setWordWrap(True)
+        main_layout.addWidget(QLabel('Описание'), 3, 3)
+        main_layout.addWidget(description, 3, 4, 3, 2, Qt.AlignTop)
 
         plot_type_selector.currentTextChanged.connect(lambda x: description.setText(plot_types[x][1]))
 
-        button_layout = QHBoxLayout()
-        main_layout.addLayout(button_layout)
-
+        for i in range(6):
+            main_layout.setRowStretch(i, 1)
         show_btn = QPushButton('Построить')
         show_btn.setEnabled(False)
-        button_layout.addWidget(show_btn, alignment=Qt.AlignBottom)
+        main_layout.addWidget(show_btn, 5, 2, 1, 2)
 
         def update_item_selector(index):
+            item_selector.setEngine(data_selector.current())
             item_selector.clear()
             self.items = data_groups[index].of(user, sort=lambda x: x.full_name())
             item_selector.set_items(self.items)
@@ -96,22 +88,18 @@ class SettingWidget(BisitorWidget):
 
         def update_group_by_slector(index):
             group_by_selector.clear()
-            group_by_selector.addItems([s.type_name if i != index else 'нет' for i, s in enumerate(data_groups)])
+            group_by_selector.addItems([s for i, s in enumerate(data_groups) if i != index])
 
         data_selector.currentIndexChanged.connect(update_item_selector)
         item_selector.currentChanged.connect(update_semester_selector)
         data_selector.currentIndexChanged.connect(update_group_by_slector)
 
-        self.plot = QWidget()
-
-        main_layout.addWidget(self.plot, stretch=99)
-
-        data_selector.addItems([s.type_name for s in data_groups])
+        data_selector.addItems([s for s in data_groups])
 
         def show():
             self.accept.emit(
                 item_selector.current(),
-                data_groups[group_by_selector.currentIndex()],
+                group_by_selector.current() if group_by_checkbox.isChecked() else data_selector.current(),
                 plot_types[plot_type_selector.currentText()][0],
                 semester_selector.current()
             )

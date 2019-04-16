@@ -1,16 +1,14 @@
 import sys
+from pathlib import Path
 from typing import List
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QApplication
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QFileDialog, QApplication
 
-from Client.MyQt.Widgets.ComboBox import Selector
-from Client.MyQt.Widgets.ComboBox.SemesterComboBox import GroupComboBox, DisciplineComboBox
-from Client.MyQt.Widgets.LoadData import AbstractLoadingWizard, Step, WizardWidget, LoadingWizardWidget, \
-    LoadingWizardWindow
-from DataBase2 import Lesson, Professor
-from pathlib import Path
-
+from Client.MyQt.Widgets.ComboBox import MComboBox
+from Client.MyQt.Widgets.ComboBox.Selector import Selector
+from Client.MyQt.Widgets.LoadData import AbstractLoadingWizard, Step, LoadingWizardWindow
+from DataBase2 import Lesson, Professor, Group, Discipline
 from Domain.Loader.VisitationLoader import VisitationExcelLoader
 
 
@@ -26,8 +24,8 @@ class VisitationLoadingWidget(AbstractLoadingWizard):
         super().__init__(flags, *args, **kwargs)
 
         main_layout = QVBoxLayout()
-        group = GroupComboBox(self)
-        discipline = DisciplineComboBox(self)
+        group = MComboBox(Group)
+        discipline = MComboBox(Discipline)
 
         main_layout.addWidget(Selector([discipline, group], professor), alignment=Qt.AlignTop)
 

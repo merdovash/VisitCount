@@ -6,6 +6,7 @@ import os
 import pathlib
 import sys
 from datetime import datetime
+from inspect import isclass
 from itertools import chain
 from math import floor
 from typing import List, Union, Dict, Any, Type, Callable
@@ -92,8 +93,6 @@ def create():
                                poolclass=StaticPool,
                                connect_args={'check_same_thread': False})
 
-
-
     Base = declarative_base(bind=engine)
 
     if mysql:
@@ -113,6 +112,33 @@ Session: Callable[[], ISession] = Session
 
 def is_None(x):
     return x in [None, 'None', 'null']
+
+
+def name(obj):
+    if is_iterable(obj):
+        return ', '.join([name(o) for o in obj])
+    if isinstance(obj, _Displayable):
+        return obj._name()
+    if isinstance(obj, _DBNamed):
+        return obj.full_name()
+    if issubclass(obj, _DBNamed):
+        return obj.type_name
+    raise NotImplementedError()
+
+
+def filter_lessons(obj, lessons) -> List['Lesson']:
+    """
+    Возвращает список занятий, содержащий только занятия lessons и занятия принадлежащие к obj
+    :param obj:
+    :param lessons:
+    :return:
+    """
+    if isclass(obj):
+        return lessons
+    if is_iterable(obj):
+        from Domain.Aggregation.Lessons import intersect_lessons_of
+        return list(intersect_lessons_of(*obj) & set(lessons))
+    return [l for l in lessons if obj in type(obj).of(l)]
 
 
 class _DBObject(IJSON):
@@ -328,7 +354,26 @@ class _DBObject(IJSON):
         return self.__repr__()
 
 
-class _DBRoot:
+class _Displayable:
+    def _name(self) -> str:
+        if hasattr(self, 'full_name'):
+            return self.full_name()
+        if hasattr(self, 'short_name'):
+            return self.short_name
+        if hasattr(self, 'repr'):
+            return self.repr()
+        raise NotImplementedError()
+
+    def __gt__(self, other):
+        return self._name() > other._name()
+
+    def filter(self, lessons: List['Lesson']) -> List['Lesson']:
+        assert all(isinstance(lesson, Lesson) for lesson in lessons)
+        filtered = [l for l in lessons if self.of(l)[0] == self]
+        return filtered
+
+
+class _DBRoot(_Displayable):
     type_name: str
 
 
@@ -626,6 +671,9 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
 
         raise NotImplementedError(type(obj))
 
+    def __gt__(self, other):
+        return self.full_name() > other.full_name()
+
 
 class FacultyAdministrations(Base, _DBObject):
     __tablename__ = "faculty_administrations"
@@ -674,7 +722,6 @@ class Department(Base, _DBNamedObject, _DBEmailObject, _DBList, _DBRoot):
 
         if isinstance(obj, Building):
             return Department.of(obj.rooms)
-
 
         raise NotImplementedError(type(obj))
 
@@ -1020,7 +1067,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
         if isinstance(obj, Student):
             return Discipline.of(obj.groups)
 
-        if issubclass(obj, Building):
+        if isinstance(obj, Building):
             return Discipline.of(obj.rooms)
 
         if isinstance(obj, Department):
@@ -1065,6 +1112,9 @@ class Semester(Base, _DBNamed, _DBRoot):
 
         raise NotImplementedError(type(obj))
 
+    def __gt__(self, other):
+        return self.start_date > other.start_date
+
 
 class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = 'lesson_type'
@@ -1088,7 +1138,7 @@ class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
         raise NotImplementedError(type(obj))
 
 
-class Lesson(Base, _DBTrackedObject):
+class Lesson(Base, _DBTrackedObject, _Displayable):
     """
     Lesson
     """
@@ -1116,7 +1166,7 @@ class Lesson(Base, _DBTrackedObject):
 
     _groups = relationship('LessonsGroups', backref=backref('lesson'))
     groups: List['Group'] = association_proxy('_groups', 'group',
-                               creator=lambda group: LessonsGroups(group=group))
+                                              creator=lambda group: LessonsGroups(group=group))
 
     visitations = relationship('Visitation', backref=backref('lesson'))
 
@@ -1131,6 +1181,9 @@ class Lesson(Base, _DBTrackedObject):
     @property
     def week(self):
         return floor((self.date - self.semester.start_date).days / 7) + self.semester.first_week_index
+
+    def _name(self):
+        return self.date.strftime("%Y.%m.%d %H:%M")
 
     def repr(self):
         from Domain.Data import names_of_groups
@@ -1167,6 +1220,9 @@ class Lesson(Base, _DBTrackedObject):
         if isinstance(obj, Building):
             return Lesson.of(obj.rooms)
 
+        if isinstance(obj, Lesson):
+            return [obj]
+
         raise NotImplementedError(type(obj))
 
     @classmethod
@@ -1176,6 +1232,9 @@ class Lesson(Base, _DBTrackedObject):
             lsns &= set(Lesson.of(arg))
 
         return list(lsns)
+
+    def __gt__(self, other):
+        return self.date > other.date
 
 
 class Administration(Base, _DBPerson):
@@ -1351,6 +1410,8 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
 
         raise NotImplementedError(type(obj))
 
+    def filter(self, lessons: List['Lesson']):
+        return [l for l in lessons if self in Group.of(l)]
 
 class Student(Base, _DBPerson, _DBRoot):
     """
