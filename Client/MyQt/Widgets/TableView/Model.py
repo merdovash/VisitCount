@@ -151,6 +151,7 @@ class VisitModel(QAbstractTableModel):
         self.students: List[Student] = students
 
         self.current_lesson: Lesson = lessons[0]
+        self.selected_row = None
 
     def setData(self, index: QModelIndex, value, role=None):
         if role == Qt.EditRole:
@@ -175,6 +176,26 @@ class VisitModel(QAbstractTableModel):
                 item.session().commit()
 
             self.item_changed.emit(index.row(), index.column())
+
+    @pyqtSlot(int, name='select_row')
+    def select_row(self, row: int):
+        if self.selected_row == row:
+            self.selected_row = None
+            self.dataChanged.emit(
+                self.index(row, 0),
+                self.index(row, len(self.lessons)),
+                (Qt.BackgroundColorRole,))
+        else:
+            if self.selected_row is not None:
+                self.dataChanged.emit(
+                    self.index(self.selected_row, 0),
+                    self.index(self.selected_row, len(self.lessons)),
+                    (Qt.BackgroundColorRole,))
+            self.selected_row = row
+            self.dataChanged.emit(
+                self.index(self.selected_row, 0),
+                self.index(self.selected_row, len(self.lessons)),
+                (Qt.BackgroundColorRole,))
 
     @pyqtSlot('PyQt_PyObject', str, name='on_lesson_change')
     def on_lesson_change(self, lesson, field):
@@ -234,11 +255,12 @@ class VisitModel(QAbstractTableModel):
             return ['-', '+', ''][item()]
 
         if role == Qt.BackgroundColorRole:
-            return (
+            main_color = (
                 (QColor(255, 255, 255), QColor(225, 225, 255)),
                 (QColor(255, 255, 0, 200), QColor(255, 255, 0)),
                 (QColor(200, 200, 200, 255), QColor(255, 255, 255))
             )[status][int(is_current)]
+            return main_color if index.row() != self.selected_row else Color.to_accent(main_color)
 
         if role == Qt.TextAlignmentRole:
             return xor(Qt.AlignHCenter, Qt.AlignVCenter)

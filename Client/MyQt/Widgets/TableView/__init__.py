@@ -128,6 +128,8 @@ class VisitTableWidget(QWidget):
 
         model.item_changed.connect(percent_horizontal_model.data_updated)
         model.item_changed.connect(percent_vertical_model.data_updated)
+        self.view.select_row.connect(model.select_row)
+        # self.view.select_row.connect(percent_vertical_model.select_row)
 
 
 if __name__ == '__main__':
