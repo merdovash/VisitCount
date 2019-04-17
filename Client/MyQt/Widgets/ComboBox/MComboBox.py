@@ -52,8 +52,6 @@ class MComboBox(QComboBox):
             return
 
         data = sorted(self.type.of(lessons))
-        if any([is_iterable(i) for i in data]):
-            print(data)
         self.set_items(data)
         self.setCurrent(self.type.of(closest_lesson(lessons))[0])
 
@@ -74,7 +72,7 @@ class MComboBox(QComboBox):
 
     def addItems(self, iterable: List[T], p_str=None) -> None:
         for i, value in enumerate(iterable):
-            print(i, value)
+            # print(i, value)
             self.items.append(value)
         else:
             super().addItems([name(i) for i in iterable])

@@ -82,8 +82,8 @@ class PercentVerticalModel(AbstractPercentModel):
     @pyqtSlot(bool, name='view_show_color_rate')
     def view_show_color_rate(self, state: bool):
         PercentVerticalModel.color_rate = state
-        print('style_changed', state)
-        self.dataChanged.emit(self.index(0,0), self.index(len(self.students)-1, 1), (Qt.BackgroundColorRole, ))
+        # print('style_changed', state)
+        self.dataChanged.emit(self.index(0, 0), self.index(len(self.students) - 1, 1), (Qt.BackgroundColorRole,))
 
     @pyqtSlot(int, int, name='data_updated')
     def data_updated(self, row, col):

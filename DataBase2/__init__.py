@@ -1082,9 +1082,9 @@ class Semester(Base, _DBNamed, _DBRoot):
 
     def full_name(self, case=None):
         if 1 < self.start_date.month < 9:
-            return f'2 семестр, {self.start_date.year - 1}-{self.start_date.year}'
+            return f'2 семестр {self.start_date.year - 1}-{self.start_date.year}'
         else:
-            return f'1 семестр, {self.start_date.year}-{self.start_date.year + 1}'
+            return f'1 семестр {self.start_date.year}-{self.start_date.year + 1}'
 
     @classmethod
     @listed
