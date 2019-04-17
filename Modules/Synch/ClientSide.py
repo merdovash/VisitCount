@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Type, Dict, Any
 
@@ -66,6 +67,7 @@ class Updater(ClientWorker):
                            for key, value in item_data.items()
                            if not None_or_empty(value)}
                 class_.new(session, **created)
+                logging.getLogger('synch').debug(f'save new: {created}')
                 session.flush()
 
             progress_bar.increment()
@@ -81,10 +83,11 @@ class Updater(ClientWorker):
             if item is None:
                 creating_new_items(item_data, class_)
                 return
-
+            logging.getLogger("synch").info(f'item updated: {item}')
             for key in item_data:
                 if getattr(item, key) != item_data[key]:
                     setattr(item, key, item_data[key])
+                    logging.getLogger("synch").debug(f'key:{key} changed value to {item_data[key]}')
 
             progress_bar.increment()
 
@@ -104,12 +107,13 @@ class Updater(ClientWorker):
             item = class_.get(session, id=change_id.from_id)
             item.id = item.id * (-1)
             change_id.from_id = item.id
-
+            logging.getLogger("synch").debug(f'changed {item} id to temp {item.id}')
             progress_bar.increment()
 
         def change_id_to_global(change_id: ChangeId, class_: Type[_DBTrackedObject]):
             item = class_.get(session, id=change_id.from_id)
             item.id = change_id.to_id
+            logging.getLogger("synch").debug(f'changed {item} id to global id={change_id}')
 
             progress_bar.increment()
 
@@ -118,7 +122,7 @@ class Updater(ClientWorker):
             if item is not None:
                 item._updated = datetime.now()
             else:
-                print('неопредел`нный элемент', class_, item_data)
+                print('неопределённый элемент', class_, item_data)
 
         PART_SIZE = progress_bar.last() / 4
 

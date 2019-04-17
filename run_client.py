@@ -30,6 +30,8 @@ if __name__ == "__main__":
     app.setStyle(QStyleFactory().create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
+    from BisitorLogger.client import init as LoggerInit
+    LoggerInit()
     from Client.IProgram import IProgram
     from Client.Program import MyProgram
     from Parser.client import client_args

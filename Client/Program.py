@@ -13,6 +13,7 @@ from Client.Reader import IReader
 from Client.Reader.SerialReader import RFIDReader, RFIDReaderNotFoundException
 from Client.src import src
 from DataBase2 import Session, Auth
+from Debug.WrongId import debug
 from Domain.functools.Url import to_standart_http
 
 
@@ -78,6 +79,7 @@ class MyProgram(IProgram, QObject):
         """
         self.auth = Auth.log_in(**auth)
         self.professor = self.auth.user
+        debug(self.auth.user)
         self.set_window(MainWindow(program=self, professor=self.professor))
 
     def change_user(self, *args):
