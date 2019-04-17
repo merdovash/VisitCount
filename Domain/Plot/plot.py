@@ -89,12 +89,19 @@ def plot(user: List[_DBRoot], semester: List[Semester], group_by: Type[_DBRoot],
     user_type = (type(user[0]) if is_iterable(user) else type(user))
     enable_group_by = user_type != group_by
 
+    # тип исследуемых объектов
     type_description = agree_to_number(inflect(user_type.type_name, {"gent"}), len(user) if is_iterable(user) else 1)
+
+    # имена исследуемых объектов
     user_names = name(user)
     if len(user_names) > 40:
         user_names = ""
+
+    # описание группировок
     group_by_description = f"группированные по {agree_to_number(inflect(group_by.type_name, {'datv'}), 2)}" \
         if enable_group_by else ""
+
+    # описание интервала
     interval_description = f'за {name(semester)}'
 
     if len(data) == 0:
@@ -250,7 +257,7 @@ def plot(user: List[_DBRoot], semester: List[Semester], group_by: Type[_DBRoot],
         if enable_group_by:
             res = res.pivot(index='user', columns='group_by', values='rate')
             res = res.reindex(res.mean().sort_values(ascending=False).index, axis=1)
-            res.plot.bar(ax=ax, alpha=0.7)
+            res.plot.bar(ax=ax, alpha=0.7, width=0.99, align='center')
         else:
             res = res.sort_values(by='rate')
             res.plot.bar(ax=ax, x='user', y='rate')
@@ -310,6 +317,6 @@ def plot(user: List[_DBRoot], semester: List[Semester], group_by: Type[_DBRoot],
         raise ValueError(f'no such plot type "{plot_type}"')
 
     ax.set_title(' '.join((title, type_description, user_names, group_by_description, interval_description)),
-             {'fontsize': 11})
+                 {'fontsize': 11})
 
     return fig
