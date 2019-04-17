@@ -19,11 +19,13 @@ SCROLL_BAR_SIZE = 20
 
 
 class AbstractPercentModel(QAbstractTableModel):
+    color_rate: bool = False
+
     def __init__(self, lessons, students):
         super().__init__()
 
-        self.lessons = lessons
-        self.students = students
+        self.lessons: List[Lesson] = lessons
+        self.students: List[Student] = students
 
         self.other_model = None
 
@@ -77,6 +79,12 @@ class PercentHorizontalModel(AbstractPercentModel):
 
 
 class PercentVerticalModel(AbstractPercentModel):
+    @pyqtSlot(bool, name='view_show_color_rate')
+    def view_show_color_rate(self, state: bool):
+        PercentVerticalModel.color_rate = state
+        print('style_changed', state)
+        self.dataChanged.emit(self.index(0,0), self.index(len(self.students)-1, 1), (Qt.BackgroundColorRole, ))
+
     @pyqtSlot(int, int, name='data_updated')
     def data_updated(self, row, col):
         self.dataChanged.emit(
@@ -84,15 +92,33 @@ class PercentVerticalModel(AbstractPercentModel):
             self.createIndex(row, self.columnCount() - 1),
             [Qt.EditRole] * self.columnCount())
 
+    def count_visits(self, row: int) -> int:
+        """
+        Возвращает количество посещений для указанной строки
+        :param row: индекс строки
+        :return: колчиество посещений
+        """
+        return len([item for item in Visitation.of(self.lessons) if item.student_id == self.students[row].id])
+
     def data(self, index: QModelIndex, role=None):
+        if role == Qt.TextAlignmentRole:
+            return Qt.AlignHCenter
         if role == Qt.DisplayRole:
-            visits = len(
-                [item for item in Visitation.of(self.lessons) if item.student_id == self.students[index.row()].id])
+            visits = self.count_visits(index.row())
             count = len(list(filter(lambda x: x.completed, self.lessons)))
             if index.column() == 0:
                 return round(100 * visits // count) if count else 0
             if index.column() == 1:
                 return visits
+        if role == Qt.BackgroundColorRole:
+            if PercentVerticalModel.color_rate:
+                total = len([l for l in self.lessons if l.completed])
+                visit = self.count_visits(index.row())
+                if total <= visit + 3:
+                    return QColor("#388E3C")
+                elif visit / total < 0.5 if total > 0 else False:
+                    return QColor("#e53935")
+        return QVariant()
 
     def columnCount(self, parent=None, *args, **kwargs):
         return 2

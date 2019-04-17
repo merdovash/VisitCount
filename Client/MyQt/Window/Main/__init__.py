@@ -163,7 +163,12 @@ class MainWindow(AbstractWindow):
         view.addMenu(data)
 
         view.addSeparator()
-        view.addAction('Отображать перекрестие', self.centralWidget().switch_show_table_cross)
+        switch_color_rate_action = QAction('Выделять цветом итог студентов', self)
+        switch_color_rate_action.setCheckable(True)
+        switch_color_rate_action.setToolTip("Выделяет зелёным цветом студентов, пропустивших 3 или меньше занятия.\n "
+                                            "Выделяет красным цветом студентов, посетивших меньше половины занятий.")
+        switch_color_rate_action.triggered.connect(self.centralWidget().view_show_color_rate)
+        view.addAction(switch_color_rate_action)
 
     def _init_menu_updates(self):
         def update_db_action():
@@ -203,6 +208,8 @@ class MainWindowWidget(QWidget, UI_TableWindow):
     table_changed = pyqtSignal()
     start_sync = pyqtSignal()
 
+    view_show_color_rate = pyqtSignal(bool)
+
     def __init__(self, program: IProgram, professor: Professor, parent=None):
         super().__init__(parent)
         with open('Client/src/style.qss', 'r') as style_file:
@@ -217,6 +224,7 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
         self.selector.set_up.emit(self.professor)
         self.selector.reader_required.connect(self.on_ok_message)
+        self.view_show_color_rate.connect(self.selector.view_show_color_rate)
 
     @pyqtSlot(name='on_refresh_data')
     def on_refresh_data(self):

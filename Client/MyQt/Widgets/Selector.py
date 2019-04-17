@@ -27,6 +27,8 @@ class Selector(QWidget):
     lesson_started = pyqtSignal('PyQt_PyObject')
     lesson_finished = pyqtSignal()
 
+    view_show_color_rate = pyqtSignal(bool)  # управляет цветовой подсветкой результатов студентов
+
     professor: Professor = None
 
     visitMarker: MarkVisitProcess = None
@@ -120,6 +122,8 @@ class Selector(QWidget):
         self.end_button.clicked.connect(self.user_stop_lesson)
         self.lesson_finished.connect(self.end_lesson)
         self.lesson_finished.connect(self.table.lesson_finish)
+
+        self.view_show_color_rate.connect(self.table.view_show_color_rate)
 
     @pyqtSlot(bool, name='user_start_lesson')
     def user_start_lesson(self, status):
