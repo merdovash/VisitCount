@@ -115,15 +115,18 @@ def is_None(x):
 
 
 def name(obj):
+    """
+    Возвращает удобочитаемое описание объекта
+    :param obj: объект
+    :return: строка
+    """
     if is_iterable(obj):
         return ', '.join([name(o) for o in obj])
-    if isinstance(obj, _Displayable):
-        return obj._name()
     if isinstance(obj, _DBNamed):
         return obj.full_name()
-    if issubclass(obj, _DBNamed):
+    if isclass(obj) and issubclass(obj, _DBNamed):
         return obj.type_name
-    raise NotImplementedError()
+    return str(obj)
 
 
 def filter_lessons(obj, lessons) -> List['Lesson']:
@@ -208,7 +211,7 @@ class _DBObject(IJSON):
 
     def dict(self):
         """
-        Возвращает словарь {атрибут:значение}
+        Возвращает словарь {атрибут:значение} всех полей записи таблицы
         :return:
         """
         return {key: item for key, item in self._dict().items() if key[0] != '_'}
@@ -355,22 +358,13 @@ class _DBObject(IJSON):
 
 
 class _Displayable:
-    def _name(self) -> str:
-        if hasattr(self, 'full_name'):
-            return self.full_name()
-        if hasattr(self, 'short_name'):
-            return self.short_name
-        if hasattr(self, 'repr'):
-            return self.repr()
-        raise NotImplementedError()
-
     def __gt__(self, other):
-        return self._name() > other._name()
-
-    def filter(self, lessons: List['Lesson']) -> List['Lesson']:
-        assert all(isinstance(lesson, Lesson) for lesson in lessons)
-        filtered = [l for l in lessons if self.of(l)[0] == self]
-        return filtered
+        """
+        Сравнивает названия объектов для их отображения в ComboBox в алфавитном порядке
+        :param other: другой объект
+        :return: bool
+        """
+        return name(self) > name(other)
 
 
 class _DBRoot(_Displayable):
@@ -1236,6 +1230,9 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
     def __gt__(self, other):
         return self.date > other.date
 
+    def __str__(self):
+        return f"{self.type.abbreviation} {self.date}"
+
 
 class Administration(Base, _DBPerson):
     """
@@ -1412,6 +1409,7 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
 
     def filter(self, lessons: List['Lesson']):
         return [l for l in lessons if self in Group.of(l)]
+
 
 class Student(Base, _DBPerson, _DBRoot):
     """
