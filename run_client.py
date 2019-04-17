@@ -22,6 +22,8 @@ if __name__ == "__main__":
     app.setStyle(QStyleFactory().create('Fusion'))
     app.setApplicationName("СПбГУТ - Учет посещений")
 
+    from BisitorLogger.client import init as LoggerInit
+    LoggerInit()
     print(client_args)
     program: IProgram = MyProgram(css=client_args.css, test=client_args.test, host=client_args.host)
 
