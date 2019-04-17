@@ -2,7 +2,6 @@ import logging
 import os
 import smtplib
 from abc import ABC, abstractmethod
-from collections import namedtuple
 from datetime import datetime, timedelta
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
@@ -11,16 +10,13 @@ from email.mime.text import MIMEText
 from os.path import basename
 from pathlib import Path
 from typing import List, TypeVar, Type, Callable, Dict, Tuple
-from Domain.functools.Format import agree_to_number
 
-import jinja2
 from pandas import DataFrame
 
-from DataBase2 import _DBEmailObject, Student, Professor, Group, _DBPerson, ContactInfo, Visitation, Lesson, Faculty, \
+from DataBase2 import _DBEmailObject, Professor, ContactInfo, Visitation, Lesson, Faculty, \
     Administration, Semester
-from Domain.Aggregation.Loss import student_loss
 from Domain.Notification.HTMLMaker import HTMLMaker
-from Domain.functools.Format import Case
+from Domain.functools.Format import agree_to_number
 from Parser.server import server_args
 
 
@@ -60,7 +56,7 @@ class MessageMaker(ABC):
             logging.getLogger('notification').debug(f'TRYING use {name} on {receiver}')
             try:
                 maker_class: Type[MessageMaker] = eval(name)
-                print(maker_class)
+                print('\t\t\t', maker_class)
                 maker: MessageMaker = maker_class(receiver, target_time)
                 add, attached_files = maker.update(mime, html)
                 have_data_to_show |= add
@@ -80,6 +76,7 @@ class MessageMaker(ABC):
                 logging.getLogger('notification').info(f'send result to {receiver.full_name()}')
                 smtp.close()
             except Exception as e:
+                print(e)
                 logging.getLogger('notification').error(e)
 
             else:
@@ -130,7 +127,6 @@ class Report(MessageMaker, ABC):
 
     def __init__(self, receiver: _DBEmailObject, target_time: datetime):
         self.receiver = receiver
-        print(self.receiver)
         self.target_time = target_time
 
     def update(self, mime: MIMEMultipart, html: HTMLMaker) -> Tuple[bool, List[str]]:
@@ -146,6 +142,74 @@ class Report(MessageMaker, ABC):
         return (True, []) if self.file_name is None else (True, [self.file_name])
 
 
+class BadRate(Report):
+    def prepare_data(self):
+        data = []
+        for lesson in Lesson.of(self.receiver):
+            if not lesson._is_deleted and lesson.completed:
+                discipline_name = lesson.discipline.full_name()
+                visitations = Visitation.of(lesson)
+                for group in lesson.groups:
+                    group_name = group.full_name()
+                    for student in group.students:
+                        data.append({
+                            'semester': lesson.semester,
+                            'student': student.full_name(),
+                            'group': group_name,
+                            'date': lesson.date,
+                            'completed': lesson.completed,
+                            'discipline': discipline_name,
+                            'visited': len([v for v in visitations if v.student_id==student.id]),
+                            'updated': max(lesson._updated, lesson._created)
+                        })
+        df = DataFrame(data)
+        print(df)
+        # фильтруем занятия
+        current_semester = Semester.current(self.receiver)
+        df_new: DataFrame = df.loc[
+            (df['completed'] == True)
+            & (df['visited'] == 0)
+            & (df['updated'] > self.receiver.contact.last_auto)
+            & (df['semester'] == current_semester)
+            ]
+        print(df_new)
+
+        df: DataFrame = df.loc[(df['student'].isin(df_new['student'].unique()))]
+        print(df)
+        res = DataFrame()
+        group_by = df.groupby(['semester', 'group', 'student', 'discipline'])
+        res['visited']: DataFrame = group_by['visited'].count() - group_by['visited'].sum()
+        res['rate'] = group_by['visited'].mean()*100
+        res: DataFrame = res.reset_index()
+        res.rename(columns={'group': "Группа",
+                            'student': "Студент",
+                            'visited': "Пропусков",
+                            'discipline': "Дисциплина",
+                            'rate': "Посещения, %"},
+                   inplace=True)
+        print(res)
+        if len(res) > 0:
+            self.file_name = f'{self.receiver.short_name()}' \
+                f'_{self.target_time}' \
+                f'-{self.target_time + timedelta(0, self.receiver.contact.interval_auto_hours * 3600)}.xlsx'
+            res.to_excel(self.file_name, columns=['№', 'Студент', 'Группа', 'Дисциплина', "Пропусков", "Посещения, %"],
+                         index=None)
+
+        else:
+            self.nothing_to_show = True
+
+        return res
+
+    def append_data(self, html: HTMLMaker):
+        html.add_content(
+            f"Оперативная информация о посещении занятий студентами факультета {','.join(Faculty.of(self.receiver))} "
+            f"на {self.target_time} находится в прикрепленном файле.")
+        # html.add_to_footer(
+        #     "Данное письмо рассылается автоматизированной системой и не предполагает ответа.")
+        # html.add_to_footer(
+        #     f"При наличии вопросов по содержанию письма или по работе системы обращаться по адрессу {server_args.help_email}")
+
+
 class OneListStudentsTotalLoss(Report):
     def prepare_data(self):
         df = DataFrame(
@@ -159,7 +223,7 @@ class OneListStudentsTotalLoss(Report):
                 'visited': len(set(Visitation.of(student)) & set(Visitation.of(lesson))),
                 'semester': str(lesson.semester),
                 'updated': max(lesson._updated, lesson._created)
-            } for lesson in Lesson.of(self.receiver) for group in lesson.groups for student in group
+            } for lesson in Lesson.of(self.receiver) for group in lesson.groups for student in group.students
             if not lesson._is_deleted
         )
 
@@ -186,7 +250,7 @@ class OneListStudentsTotalLoss(Report):
         return df
 
     def append_data(self, html: HTMLMaker):
-        if isinstance(self.receiver, Faculty):
+        if isinstance(self.receiver, (Faculty, Administration)):
             html.add_content(
                 f'Оперативная информация о пропусках занятий студентами факультета {self.receiver.short_name()}  '
                 f'на {self.target_time} размещена в прикрепленном файле')
@@ -194,7 +258,7 @@ class OneListStudentsTotalLoss(Report):
             html.add_content(f'Оперативная информация о пропусках занятий Преподавателя {self.receiver.short_name()}  '
                              f'на {self.target_time} размещена в прикрепленном файле')
         else:
-            raise NotImplementedError(type(self.receiver))
+            raise NotImplementedError(f'OneListStudentsTotalLoss append data not implemented for {type(self.receiver)}')
 
 
 class ProgramProcess(Report):
@@ -214,8 +278,8 @@ class ProgramProcess(Report):
         self.leak = df.loc[(df['completed'] == False) & (df['date'] < now)].shape[0]
 
     def append_data(self, html: HTMLMaker):
-        html.add_content(f'Прогресс выполнения программы {round(self.rate*100)}%.')
-        if self.leak>0:
+        html.add_content(f'Прогресс выполнения программы {round(self.rate * 100)}%.')
+        if self.leak > 0:
             html.add_content(f'Отставание от программы: {self.leak} {agree_to_number("занятие", self.leak)}')
 
 

@@ -92,8 +92,6 @@ def create():
                                poolclass=StaticPool,
                                connect_args={'check_same_thread': False})
 
-
-
     Base = declarative_base(bind=engine)
 
     if mysql:
@@ -624,6 +622,9 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
         if isinstance(obj, Faculty):
             return [obj]
 
+        if isinstance(obj, Administration):
+            return obj.faculties
+
         raise NotImplementedError(type(obj))
 
 
@@ -633,8 +634,8 @@ class FacultyAdministrations(Base, _DBObject):
     faculty_id = Column('Faculty', ForeignKey('faculties.id'))
     admin_id = Column('Administration', ForeignKey('administrations.id'))
 
-    faculty = relationship('Faculty', backref=backref('_admins'))
-    admin = relationship('Administration', backref=backref('_faculties'))
+    faculty: Faculty = relationship('Faculty', backref=backref('_admins'))
+    admin: 'Administration' = relationship('Administration', backref=backref('_faculties'))
 
     @classmethod
     @listed
@@ -674,7 +675,6 @@ class Department(Base, _DBNamedObject, _DBEmailObject, _DBList, _DBRoot):
 
         if isinstance(obj, Building):
             return Department.of(obj.rooms)
-
 
         raise NotImplementedError(type(obj))
 
@@ -1065,6 +1065,11 @@ class Semester(Base, _DBNamed, _DBRoot):
 
         raise NotImplementedError(type(obj))
 
+    @classmethod
+    def current(cls, obj) -> 'Semester':
+        now = datetime.now()
+        return list(filter(lambda x: x.date < now, sorted(Lesson.of(obj), key=lambda x: x.date)))[-1].semester
+
 
 class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = 'lesson_type'
@@ -1116,7 +1121,7 @@ class Lesson(Base, _DBTrackedObject):
 
     _groups = relationship('LessonsGroups', backref=backref('lesson'))
     groups: List['Group'] = association_proxy('_groups', 'group',
-                               creator=lambda group: LessonsGroups(group=group))
+                                              creator=lambda group: LessonsGroups(group=group))
 
     visitations = relationship('Visitation', backref=backref('lesson'))
 
@@ -1167,6 +1172,9 @@ class Lesson(Base, _DBTrackedObject):
         if isinstance(obj, Building):
             return Lesson.of(obj.rooms)
 
+        if isinstance(obj, Administration):
+            return Lesson.of(obj.faculties)
+
         raise NotImplementedError(type(obj))
 
     @classmethod
@@ -1184,6 +1192,8 @@ class Administration(Base, _DBPerson):
     """
     __tablename__ = 'administrations'
     type_name = 'Представитель администрации'
+
+    faculties: List[Faculty] = association_proxy('_faculties', 'faculty')
 
     def __repr__(self):
         return f"<Administration(id={self.id}, card_id={self.email}, " \
