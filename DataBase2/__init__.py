@@ -663,6 +663,9 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
         if isinstance(obj, Faculty):
             return [obj]
 
+        if isinstance(obj, Administration):
+            return obj.faculties
+
         raise NotImplementedError(type(obj))
 
     def __gt__(self, other):
@@ -675,8 +678,8 @@ class FacultyAdministrations(Base, _DBObject):
     faculty_id = Column('Faculty', ForeignKey('faculties.id'))
     admin_id = Column('Administration', ForeignKey('administrations.id'))
 
-    faculty = relationship('Faculty', backref=backref('_admins'))
-    admin = relationship('Administration', backref=backref('_faculties'))
+    faculty: Faculty = relationship('Faculty', backref=backref('_admins'))
+    admin: 'Administration' = relationship('Administration', backref=backref('_faculties'))
 
     @classmethod
     @listed
@@ -1109,6 +1112,11 @@ class Semester(Base, _DBNamed, _DBRoot):
     def __gt__(self, other):
         return self.start_date > other.start_date
 
+    @classmethod
+    def current(cls, obj) -> 'Semester':
+        now = datetime.now()
+        return list(filter(lambda x: x.date < now, sorted(Lesson.of(obj), key=lambda x: x.date)))[-1].semester
+
 
 class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = 'lesson_type'
@@ -1217,6 +1225,9 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         if isinstance(obj, Lesson):
             return [obj]
 
+        if isinstance(obj, Administration):
+            return Lesson.of(obj.faculties)
+
         raise NotImplementedError(type(obj))
 
     @classmethod
@@ -1240,6 +1251,8 @@ class Administration(Base, _DBPerson):
     """
     __tablename__ = 'administrations'
     type_name = 'Представитель администрации'
+
+    faculties: List[Faculty] = association_proxy('_faculties', 'faculty')
 
     def __repr__(self):
         return f"<Administration(id={self.id}, card_id={self.email}, " \

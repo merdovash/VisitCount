@@ -2,7 +2,7 @@ import argparse
 import logging
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--logging_level', metavar="select logging level", default=logging.INFO, type=int)
+parser.add_argument('--logging-level', metavar="select logging level", default=logging.INFO, type=int)
 
 # SYSTEM
 parser.add_argument('-system-name', type=str, dest='system_name', default='Система Учета Посещаемости')

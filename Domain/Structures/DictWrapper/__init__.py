@@ -1,12 +1,7 @@
-import inspect
-import sys
-from importlib import import_module
 from typing import Dict, Type
 
-import six
-
-from Parser import IJSON
 import Parser.JsonParser
+from Parser import IJSON
 
 
 class Structure(IJSON):
@@ -20,6 +15,7 @@ class Structure(IJSON):
 
     @staticmethod
     def load(data: dict, type_name: str = None, class_: Type['Structure'] = None) -> 'Structure':
+        import Modules
         if class_ is None and type_name is not None:
             class_: Type[Structure] = eval(list(filter(
                 lambda x: x == type_name,
