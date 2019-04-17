@@ -201,8 +201,11 @@ class BadRate(Report):
         return res
 
     def append_data(self, html: HTMLMaker):
+        faculties = Faculty.of(self.receiver)
         html.add_content(
-            f"Оперативная информация о посещении занятий студентами факультета {','.join(Faculty.of(self.receiver))} "
+            f"Оперативная информация о посещении занятий студентами "
+            f"{agree_to_number('факультета', len(faculties))} "
+            f"{', '.join([ f.full_name() for f in faculties])} "
             f"на {self.target_time} находится в прикрепленном файле.")
         # html.add_to_footer(
         #     "Данное письмо рассылается автоматизированной системой и не предполагает ответа.")
