@@ -417,6 +417,9 @@ class _DBEmailObject(_DBNamed):
             res.extend(class_.email_subclasses())
         return res
 
+    def appeal(self, case: set = None)-> str:
+        raise NotImplementedError()
+
 
 class _DBPerson(_DBEmailObject, _DBTrackedObject):
     type_name: str
@@ -427,6 +430,13 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
     _card_id = Column('card_id', String(16), unique=True)
 
     _auth = None
+
+    def appeal(self, case = None):
+        if case is not None:
+            from Domain.functools.Format import inflect
+            return f"{inflect(self.type_name, case)} {self.full_name(case)}"
+        else:
+            return f"{self.type_name} {self.full_name()}"
 
     def __init__(self, **kwargs):
         super().__init__(
@@ -481,7 +491,7 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         if case is not None:
             name = inflect(name, case)
 
-        return name
+        return name.title()
 
     def short_name(self):
         return f'{self.last_name} {self.first_name[0]}.' + (f' {self.middle_name[0]}.' if len(self.middle_name) else '')
@@ -558,7 +568,7 @@ class DataView(Base, _DBNamedObject, _DBList):
             return obj._view
 
         if isinstance(obj, ContactInfo):
-            return obj.views
+            return DataView.of(ContactViews.of(obj))
 
         return obj.session().query(DataView).all()
 
@@ -594,6 +604,13 @@ class ContactViews(Base, _DBTrackedObject):
 class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = "faculties"
     type_name = "Факультет"
+
+    def appeal(self, case=None):
+        if case is not None:
+            from Domain.functools.Format import inflect
+            return f"{inflect('методист', case)} {self.full_name({'gent'})}"
+        else:
+            return f"методист {self.full_name({'gent'})}"
 
     groups: List['Group'] = relationship('Group', backref=backref('faculty'))
     admins: List['Administration'] = association_proxy('_admins', 'admin')
@@ -1194,6 +1211,13 @@ class Administration(Base, _DBPerson):
     type_name = 'Представитель администрации'
 
     faculties: List[Faculty] = association_proxy('_faculties', 'faculty')
+
+    def appeal(self, case=None):
+        if case is not None:
+            from Domain.functools.Format import inflect
+            return f"{inflect('представитель', case)} администрации {self.full_name(case)}"
+        else:
+            return f"{self.type_name} {self.full_name()}"
 
     def __repr__(self):
         return f"<Administration(id={self.id}, card_id={self.email}, " \

@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import timedelta, datetime, time
 from typing import List
+from time import sleep
 
 from DataBase2 import _DBEmailObject, Session, ContactInfo
 from Domain.Notification.Report import MessageMaker
@@ -34,6 +35,8 @@ def init(loop: asyncio.AbstractEventLoop = None):
 
     async def look():
         while 1:
+            tasks = []
+
             now = datetime.now()
             next_loop = datetime.now() + timedelta(0, ((55 if now.minute < 55 else 115) - now.minute - 1) * 60 + (
                     60 - now.second))
@@ -42,17 +45,17 @@ def init(loop: asyncio.AbstractEventLoop = None):
             search_start = datetime.now()
             for class_ in _DBEmailObject.email_subclasses():
                 if len(class_.__subclasses__()) == 0:
-                    print(class_)
                     items: List[_DBEmailObject] = session.query(class_).all()
                     stats[class_.__name__] = dict(total=0, prepared=[])
                     stats[class_.__name__]['total'] = len(items)
                     for item in items:
-                        print('\t', item)
                         contact: ContactInfo = item.contact
                         if contact is not None and contact.auto:
-                            print('\t\t', 'prepare')
                             logger.info(f'receiver {item.full_name()} is active')
-                            await prepare(item, next_loop)
+                            tasks.append(loop.create_task(prepare(item, next_loop)))
+
+            for task in tasks:
+                await task
 
             sleep = (next_loop - datetime.now()).total_seconds()
             logger.debug(stats)

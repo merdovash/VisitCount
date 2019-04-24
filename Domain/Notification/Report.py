@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import smtplib
@@ -14,21 +15,17 @@ from typing import List, TypeVar, Type, Callable, Dict, Tuple
 from pandas import DataFrame
 
 from DataBase2 import _DBEmailObject, Professor, ContactInfo, Visitation, Lesson, Faculty, \
-    Administration, Semester
+    Administration, Semester, DataView
+from Domain.Notification import src
 from Domain.Notification.HTMLMaker import HTMLMaker
-from Domain.functools.Format import agree_to_number
+from Domain.functools.Format import agree_to_number, inflect
 from Parser.server import server_args
 
+# a_v_i@spbgut.ru
 
 class MessageMaker(ABC):
     file_name: str
     receiver: _DBEmailObject
-
-    Subject: Dict[Type[_DBEmailObject], str] = {
-        Faculty: "Пропуски занятий студентами",
-        Administration: "Пропуски занятий студентами",
-        Professor: "Пропуски ваших занятий"
-    }
 
     @abstractmethod
     def update(self, mime: MIMEMultipart, html: HTMLMaker) -> List[str]:
@@ -40,31 +37,33 @@ class MessageMaker(ABC):
         contact: ContactInfo = receiver.contact
         target_time = target_time
 
+        with open(src.data) as data_json:
+            data = json.load(data_json)
+
         mime = MIMEMultipart()
-        mime['From'] = "Администрация СПбГУТ"
+        mime['From'] = data['from']
         mime['To'] = receiver.contact.email
         mime['Date'] = str(target_time)
-        mime['Subject'] = cls.Subject[type(receiver)]
+        mime['Subject'] = data['subject'].format(appeal=receiver.appeal({'gent'}))
 
-        html = HTMLMaker()
+        html = HTMLMaker(data)
 
         logging.getLogger('notification').debug(f'{receiver}: {contact.views}')
         files = []
         have_data_to_show = False
-        for view in contact.views:
-            if not view.is_deleted():
-                name: str = view.script_path
-                logging.getLogger('notification').debug(f'TRYING use {name} on {receiver}')
-                try:
-                    maker_class: Type[MessageMaker] = eval(name)
-                    print('\t\t\t', maker_class)
-                    maker: MessageMaker = maker_class(receiver, target_time)
-                    add, attached_files = maker.update(mime, html)
-                    have_data_to_show |= add
-                    files.extend(attached_files)
-                except Exception as e:
-                    print(e)
-                    logging.getLogger('notification').error(e)
+        for view in DataView.of(contact):
+            name: str = view.script_path
+            logging.getLogger('notification').debug(f'TRYING use {name} on {receiver}')
+            try:
+                maker_class: Type[MessageMaker] = eval(name)
+                print(receiver, '\t\t\t', maker_class)
+                maker: MessageMaker = maker_class(receiver, target_time, data)
+                add, attached_files = maker.update(mime, html)
+                have_data_to_show |= add
+                files.extend(attached_files)
+            except Exception as e:
+                print(e)
+                logging.getLogger('notification').error(e)
         mime.attach(MIMEText(str(html), 'html'))
 
         async def send():
@@ -126,9 +125,10 @@ class Report(MessageMaker, ABC):
     def append_data(self, html: HTMLMaker):
         pass
 
-    def __init__(self, receiver: _DBEmailObject, target_time: datetime):
+    def __init__(self, receiver: _DBEmailObject, target_time: datetime, data: dict):
         self.receiver = receiver
         self.target_time = target_time
+        self.data = data
 
     def update(self, mime: MIMEMultipart, html: HTMLMaker) -> Tuple[bool, List[str]]:
         self.prepare_data()
@@ -148,7 +148,7 @@ class BadRate(Report):
         data = []
         for lesson in Lesson.of(self.receiver):
             if not lesson._is_deleted and lesson.completed:
-                discipline_name = lesson.discipline.full_name()
+                discipline_name = lesson.discipline.short_name()
                 visitations = Visitation.of(lesson)
                 for group in lesson.groups:
                     group_name = group.full_name()
@@ -160,11 +160,10 @@ class BadRate(Report):
                             'date': lesson.date,
                             'completed': lesson.completed,
                             'discipline': discipline_name,
-                            'visited': len([v for v in visitations if v.student_id==student.id]),
+                            'visited': len([v for v in visitations if v.student_id == student.id]),
                             'updated': max(lesson._updated, lesson._created)
                         })
         df = DataFrame(data)
-        print(df)
         # фильтруем занятия
         current_semester = Semester.current(self.receiver)
         df_new: DataFrame = df.loc[
@@ -173,18 +172,20 @@ class BadRate(Report):
             & (df['updated'] > self.receiver.contact.last_auto)
             & (df['semester'] == current_semester)
             ]
-        print(df_new)
 
         df: DataFrame = df.loc[(df['student'].isin(df_new['student'].unique()))]
-        print(df)
         res = DataFrame()
         group_by = df.groupby(['semester', 'group', 'student', 'discipline'])
-        res['visited']: DataFrame = group_by['visited'].count() - group_by['visited'].sum()
-        res['rate'] = group_by['visited'].mean()*100
+        res['loss']: DataFrame = group_by['visited'].count() - group_by['visited'].sum()
+        res['rate'] = group_by['visited'].mean() * 100
+        res = res[res['loss'] > 2]  # выбираем студентов у котоырх больше двух пропусков
+        res['rate'] = res['rate'].round()  # округляем значение столбца rate
+        res = res.sort_values('rate', ascending=True)  # сортируем по возрастанию уровня посещений
         res: DataFrame = res.reset_index()
+        res['№'] = res.index+1
         res.rename(columns={'group': "Группа",
                             'student': "Студент",
-                            'visited': "Пропусков",
+                            'loss': "Пропусков",
                             'discipline': "Дисциплина",
                             'rate': "Посещения, %"},
                    inplace=True)
@@ -193,8 +194,10 @@ class BadRate(Report):
             self.file_name = f'{self.receiver.short_name()}' \
                 f'_{self.target_time}' \
                 f'-{self.target_time + timedelta(0, self.receiver.contact.interval_auto_hours * 3600)}.xlsx'
-            res.to_excel(self.file_name, columns=['№', 'Студент', 'Группа', 'Дисциплина', "Пропусков", "Посещения, %"],
-                         index=None)
+            res.to_excel(self.file_name,
+                         columns=['№', 'Студент', 'Группа', 'Дисциплина', "Пропусков", "Посещения, %"],
+                         index=None,
+                         freeze_panes=(0, 5))
 
         else:
             self.nothing_to_show = True
@@ -202,16 +205,10 @@ class BadRate(Report):
         return res
 
     def append_data(self, html: HTMLMaker):
-        faculties = Faculty.of(self.receiver)
         html.add_content(
             f"Оперативная информация о посещении занятий студентами "
-            f"{agree_to_number('факультета', len(faculties))} "
-            f"{', '.join([ f.full_name() for f in faculties])} "
+            f"{self.receiver.short_name() if isinstance(self.receiver, Faculty) else ''} СПбГУТ"
             f"на {self.target_time} находится в прикрепленном файле.")
-        # html.add_to_footer(
-        #     "Данное письмо рассылается автоматизированной системой и не предполагает ответа.")
-        # html.add_to_footer(
-        #     f"При наличии вопросов по содержанию письма или по работе системы обращаться по адрессу {server_args.help_email}")
 
 
 class OneListStudentsTotalLoss(Report):

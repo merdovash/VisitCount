@@ -4,17 +4,21 @@ from Domain.functools.Format import inflect
 
 
 class HTMLMaker:
-    def __init__(self):
+    def __init__(self, data):
         with open('Server/templates/default_email.html', 'r') as file:
             self.html = BeautifulSoup(file.read(), 'html.parser')
 
         self.content = self.html.find('div', id='content')
         self.footer = self.html.find('div', id='footer')
         self.header = self.html.find('div', id='header')
+        self.signature = self.html.find('div', id='signature')
+
+        self.add_to_header(data['greeting'])
 
         self.add_to_footer('Данное письмо рассылается автоматически. Отвечать на него не надо.')
         self.add_to_footer(f'Вопросы и предложения по работе {inflect(server_args.system_name, {"gent"})} '
                            f'отправлять на адрес {server_args.help_email}')
+        self.add_to_signature(data['sign'])
 
     def add_content(self, text):
         p = self.html.new_tag('p')
@@ -25,6 +29,11 @@ class HTMLMaker:
     def add_to_footer(self, text):
         p = self.html.new_tag('p')
         self.footer.append(p)
+        p.string = text
+
+    def add_to_signature(self, text):
+        p = self.html.new_tag('p')
+        self.signature.append(p)
         p.string = text
 
     def add_to_header(self, text):
