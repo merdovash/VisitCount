@@ -52,18 +52,19 @@ class MessageMaker(ABC):
         files = []
         have_data_to_show = False
         for view in contact.views:
-            name: str = view.script_path
-            logging.getLogger('notification').debug(f'TRYING use {name} on {receiver}')
-            try:
-                maker_class: Type[MessageMaker] = eval(name)
-                print('\t\t\t', maker_class)
-                maker: MessageMaker = maker_class(receiver, target_time)
-                add, attached_files = maker.update(mime, html)
-                have_data_to_show |= add
-                files.extend(attached_files)
-            except Exception as e:
-                print(e)
-                logging.getLogger('notification').error(e)
+            if not view.is_deleted():
+                name: str = view.script_path
+                logging.getLogger('notification').debug(f'TRYING use {name} on {receiver}')
+                try:
+                    maker_class: Type[MessageMaker] = eval(name)
+                    print('\t\t\t', maker_class)
+                    maker: MessageMaker = maker_class(receiver, target_time)
+                    add, attached_files = maker.update(mime, html)
+                    have_data_to_show |= add
+                    files.extend(attached_files)
+                except Exception as e:
+                    print(e)
+                    logging.getLogger('notification').error(e)
         mime.attach(MIMEText(str(html), 'html'))
 
         async def send():
