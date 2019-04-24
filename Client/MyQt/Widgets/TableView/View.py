@@ -18,6 +18,8 @@ class VisitView(QTableView):
     set_current_lesson = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
     select_current_lesson = pyqtSignal('PyQt_PyObject')
 
+    select_row = pyqtSignal(int)
+
     lesson_start = pyqtSignal("PyQt_PyObject")
     lesson_finish = pyqtSignal()
 
@@ -41,6 +43,8 @@ class VisitView(QTableView):
 
         self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.verticalHeader().customContextMenuRequested.connect(self.verticalHeaderMenuRequested)
+        self.verticalHeader().sectionClicked.connect(self.select_row)
+        self.clicked.connect(lambda x: print(f'dsfdsf{x}'))
 
         self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.horizontalHeader().customContextMenuRequested.connect(self.horizontalHeaderMenuRequested)

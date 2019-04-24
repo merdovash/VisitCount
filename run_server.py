@@ -8,13 +8,14 @@ import sys
 from threading import Thread
 
 import BisitorLogger
+import BisitorLogger.server
 import Server.Server as Server
 from Modules import AutoNotification
 
 if __name__ == "__main__":
     from Parser.server import server_args
 
-    BisitorLogger.init()
+    BisitorLogger.server.init()
 
     server_thread = Thread(target=Server.run)
     notification_thread = Thread(target=AutoNotification.init)

@@ -26,6 +26,8 @@ class VisitTableWidget(QWidget):
     lesson_start = pyqtSignal('PyQt_PyObject')
     lesson_finish = pyqtSignal()
 
+    view_show_color_rate = pyqtSignal(bool)  # управляет цветовой подсветкой результатов студентов
+
     @pyqtSlot('PyQt_PyObject', name='on_lesson_start')
     def on_lesson_start(self, lesson):
         lesson.completed = True
@@ -117,6 +119,7 @@ class VisitTableWidget(QWidget):
 
         percent_vertical_model = PercentVerticalModel(lessons, students)
         percent_vertical_model.mimic(self.view.model())
+        self.view_show_color_rate.connect(percent_vertical_model.view_show_color_rate)
         self.percent_vertical_view.setModel(percent_vertical_model)
 
         percent_horizontal_model = PercentHorizontalModel(lessons, students)
@@ -125,6 +128,8 @@ class VisitTableWidget(QWidget):
 
         model.item_changed.connect(percent_horizontal_model.data_updated)
         model.item_changed.connect(percent_vertical_model.data_updated)
+        self.view.select_row.connect(model.select_row)
+        # self.view.select_row.connect(percent_vertical_model.select_row)
 
 
 if __name__ == '__main__':
