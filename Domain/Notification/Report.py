@@ -21,7 +21,6 @@ from Domain.Notification.HTMLMaker import HTMLMaker
 from Domain.functools.Format import agree_to_number, inflect
 from Parser.server import server_args
 
-# a_v_i@spbgut.ru
 
 class MessageMaker(ABC):
     file_name: str
@@ -151,7 +150,7 @@ class BadRate(Report):
                 discipline_name = lesson.discipline.short_name()
                 visitations = Visitation.of(lesson)
                 for group in lesson.groups:
-                    group_name = group.full_name()
+                    group_name = group.short_name()
                     for student in group.students:
                         data.append({
                             'semester': lesson.semester,
@@ -207,8 +206,10 @@ class BadRate(Report):
     def append_data(self, html: HTMLMaker):
         html.add_content(
             f"Оперативная информация о посещении занятий студентами "
-            f"{self.receiver.short_name() if isinstance(self.receiver, Faculty) else ''} СПбГУТ"
+            f"{inflect(self.receiver.type_name, {'gent'})} "
+            f"{self.receiver.short_name() if isinstance(self.receiver, Faculty) else ''} СПбГУТ "
             f"на {self.target_time} находится в прикрепленном файле.")
+        html.add_content("В список включены студенты, имеющие более двух пропусков по одной из дисциплин.")
 
 
 class OneListStudentsTotalLoss(Report):
