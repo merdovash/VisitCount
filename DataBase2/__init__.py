@@ -5,7 +5,7 @@ safsdf
 import os
 import pathlib
 import sys
-from datetime import datetime
+from datetime import datetime, time
 from inspect import isclass
 from itertools import chain
 from math import floor
@@ -458,7 +458,7 @@ class _DBEmailObject(_DBNamed):
             res.extend(class_.email_subclasses())
         return res
 
-    def appeal(self, case: set = None)-> str:
+    def appeal(self, case: set = None) -> str:
         raise NotImplementedError()
 
 
@@ -472,7 +472,7 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
 
     _auth = None
 
-    def appeal(self, case = None):
+    def appeal(self, case=None):
         if case is not None:
             from Domain.functools.Format import inflect
             return f"{inflect(self.type_name, case)} {self.full_name(case)}"
@@ -1200,6 +1200,16 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
     @property
     def week(self):
         return floor((self.date - self.semester.start_date).days / 7) + self.semester.first_week_index
+
+    def index(self):
+        return {
+            time(9, 0): 0,
+            time(10, 45): 1,
+            time(13, 0): 2,
+            time(14, 45): 3,
+            time(16, 30): 4,
+            time(18, 15): 5
+        }[self.date.time()]
 
     def _name(self):
         return self.date.strftime("%Y.%m.%d %H:%M")

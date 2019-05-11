@@ -3,7 +3,7 @@ from typing import Sequence, List, Set
 from DataBase2 import Lesson, _DBObject
 
 
-def intersect_lessons_of(*args: Sequence[_DBObject])-> Set[Lesson]:
+def intersect_lessons_of(*args: Sequence[_DBObject]) -> Set[Lesson]:
     res = set()
     if len(args) > 0:
         res = set(Lesson.of(args[0]))
@@ -17,11 +17,16 @@ def divide_by_date(lessons, date):
     before = []
     after = []
     for lesson in lessons:
-        if lesson._created and lesson._created>date:
+        if lesson._created and lesson._created > date:
             after.append(lesson)
-        elif lesson._updated and lesson._updated>date:
+        elif lesson._updated and lesson._updated > date:
             after.append(lesson)
         else:
             before.append(lesson)
 
     return before, after
+
+
+def lessons_by_date(obj: _DBObject, date)-> Set[Lesson]:
+    lessons = Lesson.of(obj)
+    return set([x for x in lessons if x.date.date() == date])
