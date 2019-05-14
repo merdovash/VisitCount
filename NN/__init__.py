@@ -1,6 +1,6 @@
 import numpy as np
 
-from DataBase2 import Student, Semester, Professor
+from DataBase2 import Student, Semester, Professor, Group
 from NN.OneHot import OneHotLessonIndex, OneHotLessonType, OneHotLessonWeek, OneHot, Inputer
 
 
@@ -83,9 +83,9 @@ def analyze(obj, semester):
         X, Y = np.array(X), np.array(Y)
 
         for i in range(10):
-            res = model.fit(X, Y, epochs=500+i*500, initial_epoch=i*500, shuffle=True, verbose=0)
+            res = model.fit(X, Y, epochs=500 + i * 500, initial_epoch=i * 500, shuffle=True, verbose=0)
             acc = model.evaluate(X, Y)
-            if acc <= 0.05:
+            if acc <= 0.01:
                 break
 
         mean.add(data.description(), model.evaluate(X, Y))
@@ -98,4 +98,6 @@ if __name__ == '__main__':
     df, acc = analyze(professor, Semester.of(professor))
 
     df.to_excel('res.xlsx')
+    df = df.loc[df['Влияние'].abs() > 0.05].sort_values('Влияние')
+    df.to_excel('res-filtered.xlsx')
     print(acc)
