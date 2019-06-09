@@ -1127,6 +1127,9 @@ class Semester(Base, _DBNamed, _DBRoot):
         if isinstance(obj, Semester):
             return [obj]
 
+        if isinstance(obj, Visitation):
+            return Semester.of(obj.lesson)
+
         raise NotImplementedError(type(obj))
 
     def __gt__(self, other):
