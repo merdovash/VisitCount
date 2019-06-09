@@ -96,9 +96,10 @@ def filter_semester(func):
     :param func: декорируемая функция
     :return: новая функция
     """
-    from DataBase2 import Semester
 
     def __wrapper__(self, value, semester=None, *args, **kwargs):
+        from DataBase2 import Semester
+
         res = func(self, value, *args, **kwargs)
         if semester is None:
             return res
