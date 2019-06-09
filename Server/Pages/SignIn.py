@@ -8,6 +8,7 @@ from DataBase2 import Session, Auth
 
 Material(app)
 
+
 class SignInForm(FlaskForm):
     user_name = StringField('Логин', [validators.required()])
     password = PasswordField('Пароль', [validators.required()])
@@ -20,6 +21,7 @@ class SignInForm(FlaskForm):
         user = session.query(Auth).filter(Auth.login==self.user_name.data).filter(Auth.password==self.password.data).first()
 
         return user
+
 
 @app.route('/cabinet', methods=['GET', 'POST'])
 def cabinet():

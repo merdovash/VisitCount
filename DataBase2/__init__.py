@@ -3,32 +3,28 @@
 safsdf
 """
 import os
-import pathlib
 import sys
 from datetime import datetime
 from inspect import isclass
-from itertools import chain
-from math import floor
+from pathlib import PurePath, Path
 from typing import List, Union, Dict, Any, Type, Callable
 from warnings import warn
 
+from math import floor
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
-from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
-from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool, QueuePool
+from sqlalchemy.pool import SingletonThreadPool, StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
 from sqlalchemy.util import ThreadLocalRegistry
 
 from DataBase2.SessionInterface import ISession
-
 from Domain.ArgPars import get_argv
-from Domain.Date import study_week, study_semester
 from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException, \
     UnauthorizedError
 from Domain.Validation.Values import Get
 from Domain.functools.Decorator import listed, filter_deleted, sorter, is_iterable
-from Domain.functools.List import DBList
 from Parser import IJSON
 
 try:
@@ -42,7 +38,7 @@ datetime_format = "%Y-%m-%d %H:%M:%S"
 
 
 def create_threaded():
-    db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
+    db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db2.db'))
 
     engine = create_engine(db_path, echo=False, poolclass=SingletonThreadPool)
 
@@ -67,9 +63,12 @@ def create_threaded():
 def create():
     _new = False
     mysql = root != 'run_client.py' and os.name != 'nt'
+
+
+
     if mysql:
         from DataBase2.config2 import Config
-        engine = create_engine(Config.connection_string,
+        engine = create_engine(Config().connection_string,
                                pool_pre_ping=False,
                                echo=False,
                                poolclass=QueuePool,
@@ -77,18 +76,20 @@ def create():
                                connect_args=dict(use_unicode=True))
 
     else:
-        db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db2.db'))
+        db_path = Path.cwd() / 'DataBase2' / 'db2.db'
+        db_connection_string = 'sqlite:///{}'.format(str(db_path))
 
         try:
-            fh = open(db_path.split('///')[1], 'r')
+            fh = open(str(db_path.absolute()), 'r+')
             fh.close()
         except FileNotFoundError:
-            os.mkdir('DataBase2')
-            fh = open(db_path.split('///')[1], 'w+')
+            if not (Path.cwd() / 'DataBase2').exists():
+                os.mkdir('DataBase2')
+            fh = open(str(db_path.absolute()), 'w+')
             fh.close()
             _new = True
 
-        engine = create_engine(db_path,
+        engine = create_engine(db_connection_string,
                                echo=True if get_argv('--db-echo') else False,
                                poolclass=StaticPool,
                                connect_args={'check_same_thread': False})
