@@ -5,3 +5,8 @@ sqlalchemy
 pyserial
 xlrd
 requests
+six
+python-docx
+matplotlib
+pandas
+scipy
