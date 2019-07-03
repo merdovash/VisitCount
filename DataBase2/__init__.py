@@ -1,34 +1,33 @@
 """
 
-safsdf
+Файл с описанием базы данных
 """
 import os
-import pathlib
 import sys
 from datetime import datetime
 from inspect import isclass
-from itertools import chain
-from math import floor
 from typing import List, Union, Dict, Any, Type, Callable
 from warnings import warn
+from pathlib import Path
 
-from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, String, ForeignKey, Boolean, DateTime, inspect
-from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
+from math import floor
+from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, \
+    String, ForeignKey, Boolean, DateTime, inspect
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
-from sqlalchemy.pool import SingletonThreadPool, StaticPool, NullPool, QueuePool
+from sqlalchemy.pool import SingletonThreadPool, StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
 from sqlalchemy.util import ThreadLocalRegistry
 
 from DataBase2.SessionInterface import ISession
-
 from Domain.ArgPars import get_argv
-from Domain.Date import study_week, study_semester
-from Domain.Exception.Authentication import InvalidPasswordException, InvalidLoginException, InvalidUidException, \
+from Domain.Exception.Authentication import InvalidPasswordException, \
+    InvalidLoginException, InvalidUidException, \
     UnauthorizedError
 from Domain.Validation.Values import Get
-from Domain.functools.Decorator import listed, filter_deleted, sorter, is_iterable
-from Domain.functools.List import DBList
+from Domain.functools.Decorator import listed, filter_deleted, sorter, \
+    is_iterable
 from Parser import IJSON
 
 try:
@@ -39,6 +38,30 @@ except AttributeError:
 root = os.path.basename(root)
 
 datetime_format = "%Y-%m-%d %H:%M:%S"
+
+
+def make_database_file(path: Path):
+    """
+    Проверяет создан ли файл базы данных
+
+    :param path: путь к файлу базы данных
+    :return: прилось ли создавать новый файл
+    """
+    if path.exists():
+        return False
+
+    path_to_create = []
+
+    parent_path: Path = path.parent
+    while not parent_path.exists():
+        path_to_create.append(parent_path)
+
+    for pp in path_to_create:
+        pp.mkdir()
+
+    fh = open(str(path), 'w+')
+    fh.close()
+    return True
 
 
 def create_threaded():
@@ -77,18 +100,12 @@ def create():
                                connect_args=dict(use_unicode=True))
 
     else:
-        db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db2.db'))
+        db_path = Path(__file__).parent / 'db2.db'
+        connection_string = 'sqlite:///{}'.format(db_path)
 
-        try:
-            fh = open(db_path.split('///')[1], 'r')
-            fh.close()
-        except FileNotFoundError:
-            os.mkdir('DataBase2')
-            fh = open(db_path.split('///')[1], 'w+')
-            fh.close()
-            _new = True
+        _new = make_database_file(db_path)
 
-        engine = create_engine(db_path,
+        engine = create_engine(connection_string,
                                echo=True if get_argv('--db-echo') else False,
                                poolclass=StaticPool,
                                connect_args={'check_same_thread': False})
