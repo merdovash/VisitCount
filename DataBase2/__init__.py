@@ -6,7 +6,7 @@ import os
 import sys
 from datetime import datetime
 from inspect import isclass
-from typing import List, Union, Dict, Any, Type, Callable
+from typing import List, Union, Dict, Any, Type, Callable, Set
 from warnings import warn
 from pathlib import Path
 
@@ -31,13 +31,12 @@ from Domain.functools.Decorator import listed, filter_deleted, sorter, \
 from Parser import IJSON
 
 try:
-    root = sys.modules['__main__'].__file__
+    _root = sys.modules['__main__'].__file__
 except AttributeError:
-    root = "run_client.py"
+    _root = "run_client.py"
 
-root = os.path.basename(root)
-
-datetime_format = "%Y-%m-%d %H:%M:%S"
+_root = os.path.basename(_root)
+_new = False
 
 
 def make_database_file(path: Path):
@@ -64,71 +63,47 @@ def make_database_file(path: Path):
     return True
 
 
-def create_threaded():
-    db_path = 'sqlite:///{}'.format(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.db'))
+_is_mysql = _root != 'run_client.py' and os.name != 'nt'
+if _is_mysql:
+    from DataBase2.config2 import Config
+    engine = create_engine(Config.connection_string,
+                           pool_pre_ping=False,
+                           echo=False,
+                           poolclass=QueuePool,
+                           pool_recycle=3600,
+                           connect_args=dict(use_unicode=True))
 
-    engine = create_engine(db_path, echo=False, poolclass=SingletonThreadPool)
+else:
+    db_path = Path(__file__).parent / 'db2.db'
+    connection_string = 'sqlite:///{}'.format(db_path)
 
-    Base = declarative_base(bind=engine)
+    _new = make_database_file(db_path)
 
-    try:
-        fh = open(db_path.split('///')[1], 'r')
-        fh.close()
-    except FileNotFoundError:
-        fh = open(db_path.split('///')[1], 'w+')
-        fh.close()
-        _new = True
+    engine = create_engine(connection_string,
+                           echo=True if get_argv('--db-echo') else False,
+                           poolclass=StaticPool,
+                           connect_args={'check_same_thread': False})
 
-    Session = scoped_session(sessionmaker(bind=engine, autoflush=False))
-    # session = Session()
+Base = declarative_base(bind=engine)
 
-    metadata = Base.metadata
+if _is_mysql:
+    Session = ThreadLocalRegistry(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
+else:
+    Session = scoped_session(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
 
-    return Session, Base, metadata, engine
-
-
-def create():
-    _new = False
-    mysql = root != 'run_client.py' and os.name != 'nt'
-    if mysql:
-        from DataBase2.config2 import Config
-        engine = create_engine(Config.connection_string,
-                               pool_pre_ping=False,
-                               echo=False,
-                               poolclass=QueuePool,
-                               pool_recycle=3600,
-                               connect_args=dict(use_unicode=True))
-
-    else:
-        db_path = Path(__file__).parent / 'db2.db'
-        connection_string = 'sqlite:///{}'.format(db_path)
-
-        _new = make_database_file(db_path)
-
-        engine = create_engine(connection_string,
-                               echo=True if get_argv('--db-echo') else False,
-                               poolclass=StaticPool,
-                               connect_args={'check_same_thread': False})
-
-    Base = declarative_base(bind=engine)
-
-    if mysql:
-        Session = ThreadLocalRegistry(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
-    else:
-        Session = scoped_session(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
-
-    metadata = Base.metadata
-
-    return Session, Base, metadata, engine, _new
-
-
-Session, Base, metadata, engine, _new = create()
+metadata = Base.metadata
 
 Session: Callable[[], ISession] = Session
 
 
-def is_None(x):
-    return x in [None, 'None', 'null']
+def is_none(x):
+    """
+    Проверяет значение x на None во всех возможных формах
+
+    :param x: Any
+    :return: bool
+    """
+    return x in {None, 'None', 'null'}
 
 
 def name(obj):
@@ -144,21 +119,6 @@ def name(obj):
     if isclass(obj) and issubclass(obj, _DBNamed):
         return obj.type_name
     return str(obj)
-
-
-def filter_lessons(obj, lessons) -> List['Lesson']:
-    """
-    Возвращает список занятий, содержащий только занятия lessons и занятия принадлежащие к obj
-    :param obj:
-    :param lessons:
-    :return:
-    """
-    if isclass(obj):
-        return lessons
-    if is_iterable(obj):
-        from Domain.Aggregation.Lessons import intersect_lessons_of
-        return list(intersect_lessons_of(*obj) & set(lessons))
-    return [l for l in lessons if obj in type(obj).of(l)]
 
 
 class _DBObject(IJSON):
@@ -210,7 +170,7 @@ class _DBObject(IJSON):
         python_type = cls.table().c[name].type.python_type
         if python_type == datetime:
             def datetime_to_str(x):
-                if is_None(x):
+                if is_none(x):
                     return str(None)
                 return x.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -447,7 +407,7 @@ class _DBNamedObject(_DBNamed):
         return name.title()
 
     def short_name(self) -> str:
-        if is_None(self.abbreviation):
+        if is_none(self.abbreviation):
             return self.name
         return self.abbreviation
 
@@ -541,7 +501,7 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         :return: str
         """
         from Domain.functools.Format import inflect
-        if is_None(self.middle_name):
+        if is_none(self.middle_name):
             name = f"{self.last_name} {self.first_name}"
         else:
             name = f'{self.last_name} {self.first_name} {self.middle_name}'
@@ -1265,12 +1225,28 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         raise NotImplementedError(type(obj))
 
     @classmethod
-    def intersect(cls, *args) -> List['Lesson']:
+    def intersect(cls, *args) -> Set['Lesson']:
         lsns = set(Lesson.of(args[0]))
         for arg in args[1:]:
             lsns &= set(Lesson.of(arg))
 
-        return list(lsns)
+        return lsns
+
+    @staticmethod
+    def filter_lessons(obj, lessons) -> List['Lesson']:
+        """
+        Возвращает список занятий, содержащий только занятия lessons и занятия принадлежащие к self
+        :param obj:
+        :param lessons:
+        :return: Пересечение множества lessons и Lesson.of(obj)
+        """
+        if isclass(obj):
+            warn(f"Зачем фильтровать занятия по классу {obj}???")
+            return lessons
+
+        if is_iterable(obj):
+            return list(Lesson.intersect(*obj) & set(lessons))
+        return [l for l in lessons if obj in type(obj).of(l)]
 
     def __gt__(self, other):
         return self.date > other.date

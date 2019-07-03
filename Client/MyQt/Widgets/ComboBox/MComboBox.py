@@ -1,15 +1,12 @@
-from itertools import chain
-from typing import Callable, Any, List, TypeVar
+from typing import Any, List, TypeVar
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QImage, QPen, QColor
 from PyQt5.QtWidgets import QComboBox
 
 from Client.MyQt.ColorScheme import Color
-from DataBase2 import Lesson, _Displayable, name, filter_lessons
-from Domain.Aggregation.Lessons import intersect_lessons_of
-from Domain.Data import names_of_groups, lessons_of
-from Domain.functools.Decorator import is_iterable
+from DataBase2 import Lesson, _Displayable, name
+from Domain.Data import names_of_groups
 from Domain.functools.List import closest_lesson
 
 T = TypeVar('T')
@@ -41,7 +38,7 @@ class MComboBox(QComboBox):
     def resignal(self):
         if self.lessons is not None:
             self.current_changed.emit(
-                filter_lessons(self.current(), self.lessons),
+                Lesson.filter_lessons(self.current(), self.lessons),
                 self.current()
             )
 

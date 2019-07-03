@@ -1,6 +1,6 @@
 import xlrd
 
-from DataBase2 import Lesson, is_None, Student, Visitation
+from DataBase2 import Lesson, is_none, Student, Visitation
 from Domain.Data import lessons_of
 from Domain.Loader import ExcelReader, Loader
 
