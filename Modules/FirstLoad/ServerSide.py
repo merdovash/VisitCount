@@ -1,5 +1,5 @@
 from DataBase2 import Professor, Lesson, Group, LessonsGroups, \
-    StudentsGroups, Student, Discipline, Visitation, Auth, Administration, Parent, _DBObject, _DBList
+    StudentsGroups, Student, Discipline, Visitation, Auth, Administration, Parent, _DBObject, _DBList, Semester
 from Domain.Exception.Authentication import UnauthorizedError
 from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
 from Modules import Module
@@ -22,6 +22,7 @@ class FirstLoadModule(Module):
         professor = auth.user
         professor_id = professor.id
         main_data = dict()
+        current_semester = Semester.current(professor)
 
         for cls in _DBObject.subclasses():
             if cls.__name__ == Auth.__name__:
@@ -35,7 +36,7 @@ class FirstLoadModule(Module):
                     if issubclass(cls, _DBList):
                         main_data[cls.__name__] = cls.all(professor.session())
                     else:
-                        main_data[cls.__name__] = cls.of(professor)
+                        main_data[cls.__name__] = cls.of(professor, semester=current_semester)
                 except UnauthorizedError:
                     pass
 

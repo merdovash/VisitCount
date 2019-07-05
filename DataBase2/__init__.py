@@ -890,6 +890,7 @@ class Visitation(Base, _DBTrackedObject):
             f' lesson_id={self.lesson_id})>'
 
     @classmethod
+    @filter_semester
     @filter_deleted
     @listed
     def of(cls, obj, *args, **kwargs) -> List['Visitation']:
@@ -1042,6 +1043,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
 
     @classmethod
     @filter_deleted
+    @filter_semester
     @listed
     def of(cls, obj, *args, **kwargs) -> List['Discipline']:
         """
@@ -1101,6 +1103,9 @@ class Semester(Base, _DBNamed, _DBRoot):
         if isinstance(obj, Semester):
             return [obj]
 
+        if isinstance(obj, Visitation):
+            return Semester.of(obj.lesson)
+
         raise NotImplementedError(type(obj))
 
     def __gt__(self, other):
@@ -1108,8 +1113,22 @@ class Semester(Base, _DBNamed, _DBRoot):
 
     @classmethod
     def current(cls, obj) -> 'Semester':
+        """
+
+        Выбирает текущий семестр для любого объекта из списка занятий объекта по следующим правилам:
+            - дата занятия не превышает текущую дату;
+            - дата занятия максимальна.
+
+        :param obj: _DBObject
+        :return: Semester
+        """
         now = datetime.now()
-        return list(filter(lambda x: x.date < now, sorted(Lesson.of(obj), key=lambda x: x.date)))[-1].semester
+        max: Lesson = None
+        for lesson in Lesson.of(obj):
+            if max is None or (lesson.date < now and lesson.date>max.date):
+                max = lesson
+
+        return max.semester
 
 
 class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
@@ -1193,6 +1212,7 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
     @classmethod
     @sorter
     @filter_deleted
+    @filter_semester
     @listed
     def of(cls, obj, *args, **kwargs) -> List['Lesson']:
         """
@@ -1317,6 +1337,7 @@ class Professor(Base, _DBPerson, _DBRoot):
 
     @classmethod
     @filter_deleted
+    @filter_semester
     @listed
     def of(cls, obj, *args, **kwargs) -> List['Professor']:
         """
@@ -1403,6 +1424,7 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
 
     @classmethod
     @filter_deleted
+    @filter_semester
     @listed
     def of(cls, obj, *args, **kwargs) -> List['Group'] or List[List['Group']]:
         """
@@ -1464,6 +1486,7 @@ class Student(Base, _DBPerson, _DBRoot):
 
     @classmethod
     @filter_deleted
+    @filter_semester
     @sorter
     @listed
     def of(cls, obj, *args, **kwargs) -> List['Student']:

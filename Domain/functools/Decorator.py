@@ -90,6 +90,25 @@ def filter_deleted(func):
     return __wrapper__
 
 
+def filter_semester(func):
+    """
+    Декорирует функцию выборки на фильтрацию по сместрам
+    :param func: декорируемая функция
+    :return: новая функция
+    """
+
+    def __wrapper__(self, value, semester=None, *args, **kwargs):
+        from DataBase2 import Semester
+
+        res = func(self, value, *args, **kwargs)
+        if semester is None:
+            return res
+        else:
+            return list(filter(lambda x: semester in Semester.of(x), res))
+
+    return __wrapper__
+
+
 def sorter(func):
     def __wrapper__(self, value, sort=None, *args, **kwargs):
         res = func(self, value, *args, **kwargs)

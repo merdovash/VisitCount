@@ -1,5 +1,5 @@
 
-db.db
+.vscode/*
 *.pyc
 *.dll
 *.pyi
@@ -7,9 +7,6 @@ db.db
 Test/build/exe.win-amd64-3.6/lib/pydoc_data/_pydoc.css
 Test/build/exe.win-amd64-3.6/lib/library.zip
 Test/build/exe.win-amd64-3.6/lib/email/architecture.rst
-db.db
-db.db
-db.db
 .idea/*
 venv/*
 *.db
