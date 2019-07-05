@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTableView, QLabel
 from Client.MyQt.Widgets.Network.Request import RequestWidget
 from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes
 from Modules.Synch.ClientSide import Updater
-from Parser.client import client_args
+from Parser import Args
 
 
 class UpdatesModel(QAbstractTableModel):
@@ -79,7 +79,7 @@ class SendUpdatesWidget(QWidget):
                         updates=updates,
                         last_update_in=professor._last_update_in,
                         last_update_out=professor._last_update_out),
-                    client_args.host
+                    Args().host
                 ),
                 text_button='Начать'
             )

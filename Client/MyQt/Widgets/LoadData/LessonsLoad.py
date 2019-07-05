@@ -11,8 +11,7 @@ from Client.MyQt.Widgets.LoadData.AbstractWizard import Step, AbstractLoadingWiz
 from Client.MyQt.Widgets.Network.BisitorRequest import BisitorRequest
 from Client.MyQt.Widgets.Table.NewItemsTable import QNewItemsTable
 from Client.MyQt.interface import IAcceptDrop, ISelectFile
-from DataBase2 import Group, Student
-from Domain.Date import semester_start
+from DataBase2 import Group, Student, Semester
 from Domain.Loader.GroupLoader.GroupLoader import GroupLoader
 from Domain.Loader.LessonLoader import LessonLoader
 from Modules.API import GroupApi
@@ -36,7 +35,7 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
         date_input_layout = QHBoxLayout()
 
         self.select_date_label = QLabel("Выберите дату начала семестра")
-        self.date_input = QDateTimeEdit(semester_start().date())
+        self.date_input = QDateTimeEdit(Semester.closest_semester_start().date())
         self.date_input.setCalendarPopup(True)
         self.accept_date_button = QPushButton("Подтвердить")
 

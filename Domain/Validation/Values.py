@@ -53,7 +53,7 @@ class Get:
             raise NotImplementedError(type(val))
 
     @staticmethod
-    def int(val)->int or None:
+    def int(val) -> int or None:
         if val in [None, 'None', 'null']:
             return None
         if isinstance(val, int):
@@ -68,7 +68,7 @@ class Get:
         raise NotImplementedError(type(val))
 
     @staticmethod
-    def card_id(val)->int or None:
+    def card_id(val) -> int or None:
         if isinstance(val, str):
             try:
                 return int(val)
@@ -81,4 +81,3 @@ class Get:
         if val is None:
             return None
         raise NotImplementedError()
-

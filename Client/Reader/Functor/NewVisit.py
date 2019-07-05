@@ -9,7 +9,8 @@ from Client.Reader.SerialReader import RFIDReader
 from DataBase2 import Lesson, Student, Visitation
 from Domain.Data import names_of_groups
 from Domain.Exception import StudentNotFoundException, TooManyStudentsFoundException, BisitorException
-from Parser.client import client_args
+
+from Parser import Args
 
 
 class StudentSelector(QWidget):
@@ -68,7 +69,7 @@ class MarkVisitProcess(QObject):
             self.reader = RFIDReader.instance("начать регистрацию студентов", **kwargs)
             self.reader.card_id.connect(self._new_visit)
         except BisitorException as be:
-            if client_args.test:
+            if Args().test:
                 pass
             else:
                 raise be
@@ -114,7 +115,7 @@ class MarkVisitProcess(QObject):
         try:
             self.reader.card_id.disconnect(self._new_visit)
         except AttributeError as attr_err:
-            if client_args.test:
+            if Args().test:
                 pass
             else:
                 raise attr_err

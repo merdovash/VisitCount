@@ -4,7 +4,7 @@
 """
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from inspect import isclass
 from typing import List, Union, Dict, Any, Type, Callable, Set
 from warnings import warn
@@ -27,7 +27,7 @@ from Domain.Exception.Authentication import InvalidPasswordException, \
     UnauthorizedError
 from Domain.Validation.Values import Get
 from Domain.functools.Decorator import listed, filter_deleted, sorter, \
-    is_iterable
+    is_iterable, filter_semester
 from Parser import IJSON
 
 try:
@@ -1130,6 +1130,20 @@ class Semester(Base, _DBNamed, _DBRoot):
 
         return max.semester
 
+    @staticmethod
+    def closest_semester_start(now=None):
+        if now is None:
+            now = datetime.now()
+        year = now.year
+        month = now.month
+
+        if month > 6:
+            return datetime(year, 9, 1)
+        else:
+            temp = datetime(year, 2, 7)
+            temp += timedelta(7 - temp.weekday())
+            return temp
+
 
 class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = 'lesson_type'
@@ -1246,9 +1260,11 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
 
     @classmethod
     def intersect(cls, *args) -> Set['Lesson']:
-        lsns = set(Lesson.of(args[0]))
-        for arg in args[1:]:
-            lsns &= set(Lesson.of(arg))
+        lsns = set()
+        if len(args):
+            lsns = set(Lesson.of(args[0]))
+            for arg in args[1:]:
+                lsns &= set(Lesson.of(arg))
 
         return lsns
 
@@ -1261,7 +1277,6 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         :return: Пересечение множества lessons и Lesson.of(obj)
         """
         if isclass(obj):
-            warn(f"Зачем фильтровать занятия по классу {obj}???")
             return lessons
 
         if is_iterable(obj):
@@ -1343,7 +1358,6 @@ class Professor(Base, _DBPerson, _DBRoot):
         """
 
         :param obj: объект или спсиок объектов базы данных
-        :param with_deleted: включать ли в список удаленные объекты
         :return: список преподавателей, отоносящихся к объекту
         """
 
@@ -1383,7 +1397,9 @@ class Professor(Base, _DBPerson, _DBRoot):
         if self._last_update_out is None:
             self._last_update_out = datetime(2008, 1, 1)
 
-        for cls in filter(lambda x: x != Auth, _DBTrackedObject.subclasses()):
+        updateable: List[Type[_DBTrackedObject]] = [x for x in _DBTrackedObject.subclasses() if x != Auth]
+
+        for cls in updateable:
             updated[cls.__name__] = self.session() \
                 .query(cls) \
                 .filter(cls._updated > (self._last_update_out if last_in is None else last_in)) \
@@ -1493,7 +1509,6 @@ class Student(Base, _DBPerson, _DBRoot):
         """
 
         :param obj: объект или спсиок объектов базы данных
-        :param with_deleted: включать ли в список удаленные объекты
         :return: список студентов, отоносящихся к объекту
         """
 
@@ -1537,7 +1552,6 @@ class Parent(Base, _DBPerson):
         """
 
         :param obj: объект или спсиок объектов базы данных
-        :param with_deleted: включать ли в список удаленные объекты
         :return: список родителей, отоносящихся к объекту
         """
 
@@ -1550,10 +1564,5 @@ class Parent(Base, _DBPerson):
         raise NotImplementedError(type(obj))
 
 
-if _new:
-    Base.metadata.create_all(engine)
-else:
-    try:
-        p = Auth.log_in_by_uid(-1)
-    except:
-        Base.metadata.create_all(engine)
+Base.metadata.create_all(engine)
+

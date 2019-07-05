@@ -2,6 +2,8 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
+from Parser import Args
+
 
 def simple_show(widget_class, *args, **kwargs):
     app = QApplication(sys.argv)
@@ -17,13 +19,12 @@ def check_connection() -> bool:
         # connect to the host -- tells us if the host is actually
         # reachable
         import socket
-        from Parser.client import client_args
         from urllib import parse
-        url = parse.urlparse(client_args.host)
+        url = parse.urlparse(Args().host)
         if url.netloc =='':
-            socket.create_connection((client_args.host.split(':')[0], client_args.host.split(':')[1]))
+            socket.create_connection((Args().host.split(':')[0], Args().host.split(':')[1]))
         else:
-            socket.create_connection((client_args.host, 80))
+            socket.create_connection((Args().host, 80))
         return True
     except OSError:
         pass

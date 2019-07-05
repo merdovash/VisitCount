@@ -1,8 +1,7 @@
-import time
-
 from PyQt5.QtCore import Qt
 
 from Client.src import src
+from Parser import Args
 
 if __name__ == "__main__":
     import os
@@ -14,7 +13,7 @@ if __name__ == "__main__":
 
     pyqt = os.path.dirname(PyQt5.__file__)
     QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
-
+    Args('client')  # инициализация
     app = QApplication(sys.argv)
 
     splash_pix = QPixmap(src.preload_image)
@@ -34,10 +33,8 @@ if __name__ == "__main__":
     LoggerInit()
     from Client.IProgram import IProgram
     from Client.Program import MyProgram
-    from Parser.client import client_args
 
-    print(client_args)
-    program: IProgram = MyProgram(css=client_args.css, test=client_args.test, host=client_args.host)
+    program: IProgram = MyProgram(css=Args().css, test=Args().test, host=Args().host)
 
     old_hook = sys.excepthook
 

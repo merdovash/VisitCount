@@ -19,7 +19,7 @@ from DataBase2 import _DBEmailObject, Professor, ContactInfo, Visitation, Lesson
 from Domain.Notification import src
 from Domain.Notification.HTMLMaker import HTMLMaker
 from Domain.functools.Format import agree_to_number, inflect
-from Parser.server import server_args
+from Parser import Args
 
 
 class MessageMaker(ABC):
@@ -67,11 +67,11 @@ class MessageMaker(ABC):
 
         async def send():
             try:
-                smtp = smtplib.SMTP(server_args.smtp_server)
+                smtp = smtplib.SMTP(Args().smtp_server)
                 smtp.ehlo()
                 smtp.starttls()
-                smtp.login(server_args.notification_email, server_args.notification_password)
-                smtp.sendmail(server_args.notification_email, receiver.contact.email, mime.as_string())
+                smtp.login(Args().notification_email, Args().notification_password)
+                smtp.sendmail(Args().notification_email, receiver.contact.email, mime.as_string())
                 logging.getLogger('notification').info(f'send result to {receiver.full_name()}')
                 smtp.close()
             except Exception as e:

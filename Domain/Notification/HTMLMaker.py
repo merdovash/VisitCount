@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-from Parser.server import server_args
 from Domain.functools.Format import inflect
 
 
@@ -16,8 +15,8 @@ class HTMLMaker:
         self.add_to_header(data['greeting'])
 
         self.add_to_footer('Данное письмо рассылается автоматически. Отвечать на него не надо.')
-        self.add_to_footer(f'Вопросы и предложения по работе {inflect(server_args.system_name, {"gent"})} '
-                           f'отправлять на адрес {server_args.help_email}')
+        self.add_to_footer(f'Вопросы и предложения по работе {inflect(Args().system_name, {"gent"})} '
+                           f'отправлять на адрес {Args().help_email}')
         self.add_to_signature(data['sign'])
 
     def add_content(self, text):
