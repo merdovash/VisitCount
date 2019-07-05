@@ -12,3 +12,5 @@ db.db
 db.db
 .idea/*
 venv/*
+*.db
+*.log
