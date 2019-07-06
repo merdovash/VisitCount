@@ -1,6 +1,6 @@
-from Parser.server import server_args
+from Parser import Args
 
 
 class Config:
     schemas = {'mysql': 'mysql+pymysql'}
-    connection_string = f"{schemas[server_args.database_server]}://{server_args.database_login}:{server_args.database_password}@{server_args.database_host}/{server_args.database_database}?charset=utf8"
+    connection_string = f"{schemas[Args().database_server]}://{Args().database_login}:{Args().database_password}@{Args().database_host}/{Args().database_database}?charset=utf8"

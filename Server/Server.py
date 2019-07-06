@@ -15,7 +15,7 @@ from Modules.Synch.ServerSide import SynchModule
 from Modules.VisitLandingPage import ServerSide as VisitLandingPage
 from Modules.NewProfessor import ServerSide as NewProfessor
 from Modules.UpdateDataViews import ServerSide as GetDataViews
-from Parser.server import server_args
+from Parser import Args
 
 path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
@@ -222,4 +222,5 @@ def run():
     """
     run server
     """
-    app.run(host=server_args.server_host, port=server_args.server_port)
+    Args('server')
+    app.run(host=Args().server_host, port=Args().server_port)

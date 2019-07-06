@@ -63,7 +63,7 @@ class PercentHorizontalModel(AbstractPercentModel):
         lesson = self.lessons[index.column()]
         if index.isValid():
             if role == Qt.DisplayRole:
-                visitations = [visit for visit in lesson.visitations if not visit._is_deleted]
+                visitations = Visitation.of(lesson)
                 if index.row() == 0:
                     return round(100 / len(self.students) * len([item for item in visitations
                                                                  if item.student in self.students])) if len(
@@ -136,6 +136,7 @@ class VisitModel(QAbstractTableModel):
     NotVisited = 0
     Visited = 1
     NotCompleted = 2
+    REASON = 3
 
     LessonCompletedRole = Qt.UserRole + 1
     VisitRole = Qt.UserRole + 2
@@ -239,11 +240,12 @@ class VisitModel(QAbstractTableModel):
 
     def data(self, index: QModelIndex, role=None):
         def item() -> int:
-            lesson = self.lessons[index.column()]
             if lesson.completed:
                 d = self.itemData(index)
                 if d is not None and not d._is_deleted:
                     return VisitModel.Visited
+                if len([x for x in lesson.loss_reasons if x.student == student]):
+                    return VisitModel.REASON
                 return VisitModel.NotVisited
             return VisitModel.NotCompleted
 
@@ -252,13 +254,14 @@ class VisitModel(QAbstractTableModel):
         status = item()
         is_current = self.current_lesson == lesson
         if role == Qt.DisplayRole:
-            return ['-', '+', ''][item()]
+            return ['-', '+', '', ''][item()]
 
         if role == Qt.BackgroundColorRole:
             main_color = (
                 (QColor(255, 255, 255), QColor(225, 225, 255)),
                 (QColor(255, 255, 0, 200), QColor(255, 255, 0)),
-                (QColor(200, 200, 200, 255), QColor(255, 255, 255))
+                (QColor(200, 200, 200, 255), QColor(255, 255, 255)),
+                (QColor(255, 254, 173), QColor(222, 221, 133))
             )[status][int(is_current)]
             return main_color if index.row() != self.selected_row else Color.to_accent(main_color)
 
@@ -283,7 +286,8 @@ class VisitModel(QAbstractTableModel):
             return (
                 'Не посещено',
                 'Посещено',
-                'Не проведено'
+                'Не проведено',
+                'Не посещено (уважительная причина)'
             )[status]
 
     def itemData(self, index: QModelIndex):

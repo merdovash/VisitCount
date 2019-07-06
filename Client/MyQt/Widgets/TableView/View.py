@@ -3,12 +3,14 @@ from typing import List
 from PyQt5.QtCore import pyqtSignal, Qt, pyqtSlot, QPoint, QModelIndex
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QTableView, QHeaderView, QMenu, QMessageBox, QInputDialog
+from datetime import date, timedelta, datetime
 
+from Client.MyQt.Widgets.Dialogs.QAddLossReason import QAddLossReason
 from Client.MyQt.Widgets.Dialogs.QRequesUncompleteLesson import QRequestUncompleteLesson
 from Client.MyQt.Widgets.TableView import VisitModel
 from Client.MyQt.Widgets.TableView.Model import VisitItemDelegate
 from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
-from DataBase2 import Lesson, Visitation, Student
+from DataBase2 import Lesson, Visitation, Student, VisitationLossReason
 from Domain.functools.Format import agree_to_gender
 
 
@@ -77,9 +79,17 @@ class VisitView(QTableView):
             elif self.model().data(index, role=VisitModel.VisitRole):
                 msg = f"Студент {student.full_name()} {agree_to_gender('посетил', student.last_name)} {lesson.repr()}"
             else:
-                msg = f"Студент {student.full_name()} не {agree_to_gender('посетил', student.last_name)} {lesson.repr()}"
+                msg = f"Студент {student.full_name()} не {agree_to_gender('посетил', student.last_name)} "
+                if r is not None:
+                    msg += f'по уважиетльной причине ({r.reason.value}) '
+
+                msg += lesson.repr()
 
             QMessageBox().information(self, "Информация о посещении", msg)
+
+        def addLossReason():
+            self.add_loss_reason_window = QAddLossReason(lesson, student)
+            self.add_loss_reason_window.show()
 
         index: QModelIndex = self.indexAt(pos)
 
@@ -87,6 +97,7 @@ class VisitView(QTableView):
 
         lesson = self.model().headerData(index.column(), Qt.Horizontal, VisitModel.ValueRole)
         student = self.model().headerData(index.row(), Qt.Vertical, VisitModel.ValueRole)
+        r = VisitationLossReason.get(lesson_id=lesson.id, student_id=student.id)
 
         menu.addSection("Информация")
         menu.addAction("Показать статус", show_status)
@@ -94,11 +105,14 @@ class VisitView(QTableView):
         if self.model().data(index, role=VisitModel.LessonCompletedRole) \
                 and (not self.lesson_started or self.current_lesson_started == lesson):
             menu.addSection('Изменить данные')
-            print(self.model().data(index, role=VisitModel.VisitRole))
+
             if self.model().data(index, role=VisitModel.VisitRole):
                 menu.addAction('Исключить посещение', lambda: self.model().setData(index, False, Qt.EditRole))
             else:
-                menu.addAction('Отметить посещение', lambda: self.model().setData(index, True, Qt.EditRole))
+                if datetime.now() - lesson.date < timedelta(minutes=90):
+                    menu.addAction('Отметить посещение', lambda: self.model().setData(index, True, Qt.EditRole))
+                else:
+                    menu.addAction(f'{"Изменить" if r is not None else "Отметить"} причину пропуска', addLossReason)
         else:
             menu.addSection('Занятие не проведено')
 

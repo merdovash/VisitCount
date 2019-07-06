@@ -1,6 +1,6 @@
 import logging
 
-from Parser.server import server_args
+from Parser import Args
 
 
 def init():
@@ -13,7 +13,7 @@ def init():
     server_logger.addHandler(server_fh)
 
     auto_notification_logger = logging.getLogger("notification")
-    auto_notification_logger.setLevel(server_args.logging_level)
+    auto_notification_logger.setLevel(Args().logging_level)
     auto_fh = logging.FileHandler("auto_notification.log")
     auto_fh.setLevel(logging.DEBUG)
     auto_fh.setFormatter(formatter)

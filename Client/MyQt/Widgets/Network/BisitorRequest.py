@@ -1,11 +1,8 @@
-import urllib
-from urllib import parse
-
 from PyQt5.QtCore import QUrl, pyqtSignal
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 from PyQt5.QtWidgets import QMessageBox
 
-from Parser.client import client_args
+from Parser import Args
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
@@ -60,7 +57,7 @@ class _BisitorRequest:
     response_type = None
 
     def __call__(self, address, user, data, on_finish, on_error=None, response_type=None):
-        host = client_args.host
+        host = Args().host
         if host[:4] != 'http':
             host = 'http://' + host
         url = host + address

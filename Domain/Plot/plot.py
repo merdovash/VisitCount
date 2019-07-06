@@ -1,19 +1,16 @@
 from datetime import date
-from math import floor
-from typing import Callable, List, Type
+from typing import List, Type
 
-import pandas
-from matplotlib.axes import Axes, SubplotBase
-from matplotlib.figure import Figure
-from pandas import DataFrame, concat, Series
-from pandas._libs.tslibs.offsets import relativedelta
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from pandas import DataFrame
+from pandas._libs.tslibs.offsets import relativedelta
 from scipy import stats
-from scipy.optimize import curve_fit
 
 from DataBase2 import Lesson, Visitation, Student, _DBObject, name, _DBRoot, Semester
 from Domain.functools.Decorator import is_iterable
-from Domain.functools.Format import names, agree_to_number, inflect, type_name
+from Domain.functools.Format import agree_to_number, inflect, type_name
 
 
 def gaussian(x, mean, amplitude=0., standard_deviation=1.):
