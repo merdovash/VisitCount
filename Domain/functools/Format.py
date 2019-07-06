@@ -1,4 +1,6 @@
+from itertools import chain
 from typing import Dict, List, Any
+from warnings import warn
 
 import pymorphy2
 
@@ -118,9 +120,17 @@ def inflect(text, case) -> str:
 
 def agree_to_gender(word, to):
     morph = pymorphy2.MorphAnalyzer()
-    to = list(filter(lambda x: x.tag.case == 'nomn', morph.parse(to)))[0]
-    word = morph.parse(word)[0]
-    return word.inflect({to.tag.gender}).word
+
+    to = [t for sub_word in to for t in morph.parse(sub_word) if t.tag.case == 'nomn']
+    if len(to):
+        to = to[0]
+
+        res = [morph.parse(w)[0].inflect({to.tag.gender}).word for w in word.split(' ')]
+
+        return ' '.join(res)
+
+    warn('Не удалось просклонять слово "{word}" к "{to}"')
+    return word
 
 
 def names(args: List[_DBNamed]):
