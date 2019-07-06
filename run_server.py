@@ -2,15 +2,17 @@
 """
     run
 """
-from threading import Thread
 
-import BisitorLogger.server
-import Server.Server as Server
-from Modules import AutoNotification
 from Parser import Args
 
+Args('server')
+
 if __name__ == "__main__":
-    Args('server')
+    from threading import Thread
+    import BisitorLogger.server
+    import Server.Server as Server
+    from Modules import AutoNotification
+
     BisitorLogger.server.init()
 
     server_thread = Thread(target=Server.run)
