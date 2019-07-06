@@ -2,21 +2,22 @@
 
 Файл с описанием базы данных
 """
+import enum
 import os
 import sys
 from datetime import datetime, timedelta
 from inspect import isclass
+from pathlib import Path
 from typing import List, Union, Dict, Any, Type, Callable, Set
 from warnings import warn
-from pathlib import Path
 
 from math import floor
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, \
-    String, ForeignKey, Boolean, DateTime, inspect
+    String, ForeignKey, Boolean, DateTime, inspect, Enum, Binary, LargeBinary
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
-from sqlalchemy.pool import SingletonThreadPool, StaticPool, QueuePool
+from sqlalchemy.pool import StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
 from sqlalchemy.util import ThreadLocalRegistry
 
@@ -112,6 +113,8 @@ def name(obj):
     :param obj: объект
     :return: строка
     """
+    if isinstance(obj, enum.Enum):
+        return obj.value
     if is_iterable(obj):
         return ', '.join([name(o) for o in obj])
     if isinstance(obj, _DBNamed):
@@ -269,6 +272,7 @@ class _DBObject(IJSON):
         """
         if session is None:
             session = Session()
+        # TODO сделать обработку на клиенте измененной БД
         return session.query(cls).filter_by(**kwargs).first()
 
     @classmethod
@@ -930,6 +934,41 @@ class Visitation(Base, _DBTrackedObject):
             .filter(Visitation.student_id == student_id) \
             .filter(Visitation.lesson_id == lesson_id) \
             .first()
+
+
+class LossReason(enum.Enum):
+    sick = 'Болезнь'
+    work = 'Работа'
+    science = 'Научная деятельность'
+    other = 'Другое'
+
+
+class VisitationLossReason(Base, _DBTrackedObject):
+    __tablename__ = "loss_reason"
+    __table_args__ = (
+        UniqueConstraint('lesson_id', 'student_id', name='loss_reason_UK'),
+        _DBObject.__table_args__,
+    )
+
+    id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, ForeignKey('lessons.id'))
+    student_id = Column(Integer, ForeignKey('students.id'))
+    reason = Column(Enum(LossReason), nullable=False)
+    file_ext = Column(String(10))
+    file = Column(LargeBinary)
+
+    student = relationship('Student', backref=backref('loss_reasons'))
+    lesson = relationship("Lesson", backref=backref('loss_reasons'))
+
+    def set_file(self, path:Path):
+        with open(str(path), 'rb') as file:
+            data = file.read()
+
+            if self.file != data:
+                self.file = data
+            suffix = path.suffix[1:] if path.suffix.startswith('.') else path.suffix
+            if self.file_ext != suffix:
+                self.file_ext = suffix
 
 
 class UserType(int):

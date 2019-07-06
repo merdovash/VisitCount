@@ -49,3 +49,9 @@ class TooManyStudentsFoundException(BisitorException):
     def __init__(self, students, msg=None):
         super().__init__(msg)
         self.students = students
+
+
+class BisitorNotImplementedError(BisitorException):
+    _title = "Ещё не реализованное действие"
+    _mask = "Не переживайте, ничего не сломалось. \n" \
+            "Вы попытались совершить действие которое еще не реализовано. "

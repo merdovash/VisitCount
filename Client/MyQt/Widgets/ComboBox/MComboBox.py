@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, List, TypeVar
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
@@ -64,12 +65,14 @@ class MComboBox(QComboBox):
 
         self.pending = None
 
+        if issubclass(type_, Enum):
+            self.addItems(type_)
+
     def setEngine(self, type_):
         self.type = type_
 
     def addItems(self, iterable: List[T], p_str=None) -> None:
         for i, value in enumerate(iterable):
-            # print(i, value)
             self.items.append(value)
         else:
             super().addItems([name(i) for i in iterable])
