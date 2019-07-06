@@ -4,7 +4,7 @@
 """
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from inspect import isclass
 from typing import List, Union, Dict, Any, Type, Callable, Set
 from warnings import warn
@@ -27,7 +27,7 @@ from Domain.Exception.Authentication import InvalidPasswordException, \
     UnauthorizedError
 from Domain.Validation.Values import Get
 from Domain.functools.Decorator import listed, filter_deleted, sorter, \
-    is_iterable
+    is_iterable, filter_semester
 from Parser import IJSON
 
 try:
@@ -66,6 +66,7 @@ def make_database_file(path: Path):
 _is_mysql = _root != 'run_client.py' and os.name != 'nt'
 if _is_mysql:
     from DataBase2.config2 import Config
+
     engine = create_engine(Config.connection_string,
                            pool_pre_ping=False,
                            echo=False,
@@ -435,8 +436,22 @@ class _DBEmailObject(_DBNamed):
             res.extend(class_.email_subclasses())
         return res
 
-    def appeal(self, case: set = None)-> str:
+    def appeal(self, case: set = None) -> str:
         raise NotImplementedError()
+
+    def has_lessons_since(self, td: timedelta or datetime) -> bool:
+        now = datetime.now()
+        if isinstance(td, timedelta):
+            since = now - td
+        elif isinstance(td, datetime):
+            since = td
+        else:
+            raise NotImplementedError(type(td))
+
+        for l in Lesson.of(self):
+            if since < l.date < now:
+                return True
+        return False
 
 
 class _DBPerson(_DBEmailObject, _DBTrackedObject):
@@ -449,7 +464,7 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
 
     _auth = None
 
-    def appeal(self, case = None):
+    def appeal(self, case=None):
         if case is not None:
             from Domain.functools.Format import inflect
             return f"{inflect(self.type_name, case)} {self.full_name(case)}"
@@ -1125,7 +1140,7 @@ class Semester(Base, _DBNamed, _DBRoot):
         now = datetime.now()
         max: Lesson = None
         for lesson in Lesson.of(obj):
-            if max is None or (lesson.date < now and lesson.date>max.date):
+            if max is None or (lesson.date < now and lesson.date > max.date):
                 max = lesson
 
         return max.semester

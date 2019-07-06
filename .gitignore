@@ -4,9 +4,7 @@
 *.dll
 *.pyi
 *.pyd
-Test/build/exe.win-amd64-3.6/lib/pydoc_data/_pydoc.css
-Test/build/exe.win-amd64-3.6/lib/library.zip
-Test/build/exe.win-amd64-3.6/lib/email/architecture.rst
+*/build/*
 .idea/*
 venv/*
 *.db
