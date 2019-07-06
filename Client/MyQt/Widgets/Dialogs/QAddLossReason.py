@@ -2,8 +2,9 @@ from pathlib import Path
 from typing import List
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton, QFileDialog, QMessageBox, QDialog
+from PyQt5.QtWidgets import QGridLayout, QLabel, QMessageBox
 
+from Client.MyQt.Widgets import BisitorWidget
 from Client.MyQt.Widgets.ComboBox import MComboBox
 from Client.MyQt.Widgets.Navigation import QAccentCancelButtons
 from Client.MyQt.Widgets.QAttachFile import QAttachFile
@@ -12,7 +13,7 @@ from Domain.FileManager import writeTempFile
 from Domain.functools.Format import inflect
 
 
-class QAddLossReason(QWidget):
+class QAddLossReason(BisitorWidget):
     def __init__(self, lesson: Lesson, student: Student):
         super().__init__()
         self.lesson = lesson
@@ -29,10 +30,14 @@ class QAddLossReason(QWidget):
         self.setWindowTitle("Добавить причину пропуска")
 
         self.grid.addWidget(QLabel('Студент'), 0, 0, 1, 2)
-        self.grid.addWidget(QLabel(student.short_name()), 0, 2, 1, 2)
+        student_name_label = QLabel(student.short_name())
+        student_name_label.setObjectName('InfoLabel')
+        self.grid.addWidget(student_name_label, 0, 2, 1, 2)
 
         self.grid.addWidget(QLabel('Занятие'), 1, 0, 1, 2)
-        self.grid.addWidget(QLabel(name(lesson)), 1, 2, 1, 2)
+        lesson_name_label = QLabel(name(lesson))
+        lesson_name_label.setObjectName('InfoLabel')
+        self.grid.addWidget(lesson_name_label, 1, 2, 1, 2)
 
         self.reason = MComboBox(LossReason)
         self.grid.addWidget(QLabel('Причина'), 2, 0, 1, 2)

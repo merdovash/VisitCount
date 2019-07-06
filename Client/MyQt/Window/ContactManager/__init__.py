@@ -22,7 +22,7 @@ class QContactManagerWindow(QWidget):
             self.setStyleSheet(style_file.read())
         self.setMinimumWidth(500)
 
-        if user.contact is None:
+        if not user.contact:
             contact = ContactInfo.new(user.session())
             user.contact = contact
             user.session().commit()
