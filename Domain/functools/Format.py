@@ -1,10 +1,9 @@
-from itertools import chain
 from typing import Dict, List, Any
 from warnings import warn
 
 import pymorphy2
 
-from DataBase2 import Professor, Student, _DBPerson, _DBObject, _DBNamed, _DBRoot
+from DataBase2 import Professor, Student, _DBPerson, _DBNamed, _DBRoot
 from Domain.Exception.Constraint import ConstraintBasenameException, ConstraintDictNameException, \
     ConstraintNotEmptyException
 from Domain.functools.Decorator import is_iterable

@@ -3,12 +3,10 @@ import sys
 import traceback
 from itertools import chain
 
-from Domain.functools.List import DBList
-
 
 def is_iterable(item):
     try:
-        iterator = iter(item)
+        iter(item)
     except TypeError:
         return False
     else:
@@ -84,7 +82,7 @@ def filter_deleted(func):
     def __wrapper__(self, value, with_deleted=False, *args, **kwargs):
         res = func(self, value, *args, **kwargs)
         if not with_deleted:
-            return list(filter(lambda x: not x._is_deleted, res))
+            return [r for r in res if r]
         else:
             return res
     return __wrapper__
@@ -132,7 +130,7 @@ def try_catch(*exc, out=print):
 
 
 if __name__ == '__main__':
-    from DataBase2 import Parent, Professor, Student, Lesson, Group, Discipline
+    from DataBase2 import Professor, Group, Discipline
 
     print(Group.of(Professor.get(id=1)))
     print(Group.of(Discipline.of(Professor.get(id=1))))

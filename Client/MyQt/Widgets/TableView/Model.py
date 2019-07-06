@@ -242,7 +242,7 @@ class VisitModel(QAbstractTableModel):
         def item() -> int:
             if lesson.completed:
                 d = self.itemData(index)
-                if d is not None and not d._is_deleted:
+                if d:
                     return VisitModel.Visited
                 if len([x for x in lesson.loss_reasons if x.student == student]):
                     return VisitModel.REASON
@@ -278,7 +278,7 @@ class VisitModel(QAbstractTableModel):
 
         if role == VisitModel.VisitRole:
             data = self.itemData(index)
-            if data is None or data._is_deleted:
+            if not data:
                 return VisitModel.NotVisited
             return VisitModel.Visited
 

@@ -146,7 +146,7 @@ class BadRate(Report):
     def prepare_data(self):
         data = []
         for lesson in Lesson.of(self.receiver):
-            if not lesson._is_deleted and lesson.completed:
+            if lesson and lesson.completed:
                 discipline_name = lesson.discipline.short_name()
                 visitations = Visitation.of(lesson)
                 for group in lesson.groups:
@@ -226,7 +226,7 @@ class OneListStudentsTotalLoss(Report):
                 'semester': str(lesson.semester),
                 'updated': max(lesson._updated, lesson._created)
             } for lesson in Lesson.of(self.receiver) for group in lesson.groups for student in group.students
-            if not lesson._is_deleted
+            if lesson
         )
 
         df_new: DataFrame = df.loc[

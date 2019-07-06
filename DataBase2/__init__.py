@@ -373,12 +373,8 @@ class _DBTrackedObject(_DBObject):
         self._deleted = None
         self._is_deleted = False
 
-    def is_deleted(self):
-        """
-        Сообщает удален ли элемент
-        :return: bool
-        """
-        return self._is_deleted
+    def __bool__(self):
+        return not self._is_deleted
 
 
 class _DBNamed(_DBObject):
@@ -1401,8 +1397,8 @@ class Professor(Base, _DBPerson, _DBRoot):
 
     def groups(self, with_deleted=False) -> List[List['Group']]:
         return [list(item)
-                for item in set([frozenset(filter(lambda group: not group._is_deleted | with_deleted, lesson.groups))
-                                 for lesson in self.lessons])]
+                for item in set(frozenset(g for g in lesson.groups if not g | with_deleted)
+                                for lesson in self.lessons)]
 
     @classmethod
     @filter_deleted

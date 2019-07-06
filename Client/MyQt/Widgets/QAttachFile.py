@@ -1,11 +1,12 @@
 from pathlib import Path
 
-from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QFileDialog, QGridLayout
+from PyQt5.QtWidgets import QPushButton, QLabel, QFileDialog, QGridLayout
 
+from Client.MyQt.Widgets import BisitorWidget
 from Domain.FileManager import openFile
 
 
-class QAttachFile(QWidget):
+class QAttachFile(BisitorWidget):
     filters = {
         'pdf': 'PDF Файлы (*.pdf)',
         'docx': 'Документы (*.docx, *.doc)',
