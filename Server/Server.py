@@ -4,7 +4,7 @@
 import os
 
 from flask import Flask, make_response, request, send_file, send_from_directory
-from flask_material import Material
+from flask_restful import Resource, Api
 
 from Modules import API
 from Modules import SourceChecker
@@ -21,7 +21,7 @@ path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static", template_folder=path + '/templates')
-Material(app)
+api = Api(app)
 
 # load modules
 

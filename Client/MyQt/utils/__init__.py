@@ -21,7 +21,7 @@ def check_connection() -> bool:
         import socket
         from urllib import parse
         url = parse.urlparse(Args().host)
-        if url.netloc =='':
+        if url.netloc == '':
             socket.create_connection((Args().host.split(':')[0], Args().host.split(':')[1]))
         else:
             socket.create_connection((Args().host, 80))

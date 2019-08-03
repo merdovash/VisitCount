@@ -78,7 +78,7 @@ class NewUserForm(QWidget):
                     f'Для продолжения необходимо заполнить поля {", ".join([key for key, value in val.items() if not value])}'
                 )
             else:
-                self.manager = BisitorRequest[NewProfessorResponse](
+                self.manager = BisitorRequest(
                     '/new_professor',
                     None,
                     {
@@ -90,7 +90,8 @@ class NewUserForm(QWidget):
                         'email': email.text()
                     },
                     on_success,
-                    on_error
+                    on_error,
+                    response_type=NewProfessorResponse
                 )
         ok_btn.clicked.connect(on_ok)
 

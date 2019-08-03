@@ -6,39 +6,24 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, QModelIndex, QSize
 from PyQt5.QtGui import QStandardItemModel, QMouseEvent
 from PyQt5.QtWidgets import QListView, QLineEdit
 
-from Client.MyQt.Widgets.ComboBox import MComboBox
-from Client.MyQt.Widgets.ComboBox.MComboBox import MComboBox
+from Client.MyQt.Widgets.ComboBox import QMComboBox
+from Client.MyQt.Widgets.ComboBox.MComboBox import QMComboBox
 
 compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
 
 T = TypeVar('T')
 
 
-class ComboBoxEngine():
-    def filer_cond(self, item)-> Callable:
-        raise NotImplementedError()
-
-    def extractor(self, item)-> T:
-        raise NotImplementedError()
-
-    def formatter(self, item)-> str:
-        raise NotImplementedError()
-
-    def sorter(self, item)->int or str:
-        raise NotImplementedError()
-
-
-
-class ClickableLineEdit(QLineEdit):
+class _ClickableLineEdit(QLineEdit):
     def __init__(self, callback, *__args):
         super().__init__(*__args)
         self.callback = callback
 
-    def mouseReleaseEvent(self, event:QMouseEvent):
+    def mouseReleaseEvent(self, event: QMouseEvent):
         self.callback()
 
 
-class MCheckedComboBox(MComboBox):
+class QMCheckedComboBox(QMComboBox):
     currentChanged = pyqtSignal('PyQt_PyObject')
 
     def __init__(self, parent, with_all, type_):
@@ -49,9 +34,9 @@ class MCheckedComboBox(MComboBox):
         self.with_all = with_all
         self.items = []
         if self.with_all:
-            self.addItem('All')
+            self.addItem('All', )
 
-        self.setLineEdit(ClickableLineEdit(lambda: self.showPopup()))
+        self.setLineEdit(_ClickableLineEdit(lambda: self.showPopup()))
         self.setEditable(True)
         self.lineEdit().setReadOnly(True)
         print(self.lineEdit().mousePressEvent)
@@ -111,9 +96,9 @@ class MCheckedComboBox(MComboBox):
                 checkedItems.append(self.items[index])
         return checkedItems
 
-    def addItem(self, item):
+    def addItem(self, item, **kwargs):
         self.items.append(item)
-        super(MCheckedComboBox, self).addItem(str(item))
+        super(QMCheckedComboBox, self).addItem(str(item))
         item = self.model().item(self.count() - 1, 0)
         item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
         item.setCheckState(Qt.Unchecked)
@@ -121,18 +106,16 @@ class MCheckedComboBox(MComboBox):
 
     def set_items(self, items):
         for item in items:
-            self.addItem(item)
+            self.addItem(item, )
 
     def clear(self):
         super().clear()
         self.setModel(QStandardItemModel(self))
         self.items = []
         if self.with_all:
-            self.addItem('All')
+            self.addItem('All', )
         self.setCurrentText('None')
 
     @pyqtSlot('PyQt_PyObject', name='setCurrent')
     def setCurrent(self, item: T):
         self.setChecked(item)
-
-

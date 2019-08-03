@@ -40,7 +40,7 @@ class LessonDateChanger(QWidget):
         d = self.calendar.selectedDate()
 
         dd = datetime(d.year(), d.month(), d.day())
-        dd += from_index_to_time(self.lesson_selector.currentIndex())
+        dd += Lesson.time_by_index(self.lesson_selector.currentIndex())
         self.program.window.message.emit("Занятие перенесено на {}".format(dd), False)
 
         self.lesson.date = dd

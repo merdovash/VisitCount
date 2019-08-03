@@ -4,7 +4,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QCheckBox
 from sqlalchemy import inspect
 
-from Client.MyQt.Widgets.ComboBox import MComboBox
+from Client.MyQt.Widgets.ComboBox import QMComboBox
 from Client.Reader.SerialReader import RFIDReader
 from DataBase2 import Lesson, Student, Visitation
 from Domain.Data import names_of_groups
@@ -29,7 +29,7 @@ class StudentSelector(QWidget):
         self.label = QLabel("Для введенной карты не обнаружен студент.\n"
                             "Выберите студента для введеной карты из списка ниже.")
 
-        self.combo = MComboBox(Student)
+        self.combo = QMComboBox(Student)
         self.combo.formatter = lambda student: f'{names_of_groups(student.groups)} | {student.full_name()}'
 
         self.show_all_students = QCheckBox("Показать всех студентов")

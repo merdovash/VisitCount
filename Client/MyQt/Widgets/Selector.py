@@ -4,8 +4,8 @@ from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QTabWidget, QVBoxLayout
 
 from Client.IProgram import IProgram
-from Client.MyQt.Widgets.ComboBox import MComboBox
-from Client.MyQt.Widgets.ComboBox.MComboBox import MMultipleComboBox
+from Client.MyQt.Widgets.ComboBox import QMComboBox
+from Client.MyQt.Widgets.ComboBox.MComboBox import QMMultipleComboBox
 from Client.MyQt.Widgets.TableView import VisitTableWidget
 from Client.Reader.Functor.NewVisit import MarkVisitProcess
 from DataBase2 import Professor, Student, Lesson, Group, Discipline, Semester
@@ -54,7 +54,7 @@ class Selector(QWidget):
         main_layout.addWidget(self.tabs, stretch=95)
 
         # semester
-        self.semester = MComboBox(parent=self, type_=Semester)
+        self.semester = QMComboBox(parent=self, type_=Semester)
         sem_label = QLabel('Семестр')
         sem_label.setAlignment(Qt.AlignRight)
 
@@ -62,7 +62,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.semester, 2)
 
         # discipline
-        self.discipline = MComboBox(parent=self, type_=Discipline)
+        self.discipline = QMComboBox(parent=self, type_=Discipline)
         disc_label = QLabel("Дисциплина")
         disc_label.setAlignment(Qt.AlignRight)
 
@@ -70,7 +70,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.discipline, 2)
 
         # group
-        self.group = MMultipleComboBox(parent=self, type_=Group)
+        self.group = QMMultipleComboBox(parent=self, type_=Group)
         group_label = QLabel("Группа")
         group_label.setAlignment(Qt.AlignRight)
 
@@ -78,7 +78,7 @@ class Selector(QWidget):
         selector_layout.addWidget(self.group, 2)
 
         # lesson
-        self.lesson = MComboBox(parent=self, type_=Lesson)
+        self.lesson = QMComboBox(parent=self, type_=Lesson)
         lesson_label = QLabel("Занятие")
         lesson_label.setAlignment(Qt.AlignRight)
 

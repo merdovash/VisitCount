@@ -13,7 +13,7 @@ from Domain.functools.List import closest_lesson
 T = TypeVar('T')
 
 
-class MComboBox(QComboBox):
+class QMComboBox(QComboBox):
     image = QImage('Client/MyQt/Window/Main/icons/baseline_arrow_drop_down_black_18dp.png')
 
     default_pen = QPen(QColor(0, 0, 0))
@@ -128,10 +128,10 @@ class MComboBox(QComboBox):
         self.on_parent_change(self.lessons, None)
 
     def __repr__(self):
-        return f"MComboBox of {self.type}"
+        return f"QMComboBox of {self.type}"
 
 
-class MMultipleComboBox(MComboBox):
+class QMMultipleComboBox(QMComboBox):
     def filter_lessons(self, lessons):
         return sorted([l for d, l in [(self.filter([l])[0], l) for l in lessons] if d == self.current()])
 

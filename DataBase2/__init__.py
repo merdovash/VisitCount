@@ -1309,7 +1309,12 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         raise NotImplementedError(type(obj))
 
     @classmethod
-    def intersect(cls, *args) -> Set['Lesson']:
+    def intersect(cls, *args: _DBObject) -> Set['Lesson']:
+        """
+        Возвращает набор занятий, которые есть у всех переданных обьектов
+        :param args: Любые сущности системы
+        :return: Набор занятий
+        """
         lsns = set()
         if len(args):
             lsns = set(Lesson.of(args[0]))
@@ -1332,6 +1337,44 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         if is_iterable(obj):
             return list(Lesson.intersect(*obj) & set(lessons))
         return [l for l in lessons if obj in type(obj).of(l)]
+
+    @staticmethod
+    def time_by_index(index: int) -> timedelta:
+        """
+        Возвращает время занятия по его индексу
+        :param index: номер пары
+        :return:
+        """
+        return [
+            timedelta(0, 9 * 3600 + 0 * 60),
+            timedelta(0, 10 * 3600 + 45 * 60),
+            timedelta(0, 13 * 3600 + 0 * 60),
+            timedelta(0, 14 * 3600 + 45 * 60),
+            timedelta(0, 16 * 3600 + 20 * 60),
+            timedelta(0, 18 * 3600 + 15 * 60),
+        ][index]
+
+    @staticmethod
+    def index_by_time(time: datetime) -> int:
+        """
+        Возвращает номер пары по его времени
+        :param time: время начала занятия
+        :return: номер пары
+        """
+        if time.hour == 9:
+            return 1
+        elif time.hour == 10:
+            return 2
+        elif time.hour == 13:
+            return 3
+        elif time.hour == 14:
+            return 4
+        elif time.hour == 16:
+            return 5
+        elif time.hour == 18:
+            return 6
+        else:
+            return -1
 
     def __gt__(self, other):
         return self.date > other.date

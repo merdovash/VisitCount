@@ -1,5 +1,5 @@
 flask
-Flask-Materialize
+flask-restfull
 pymorphy2
 sqlalchemy
 pyserial

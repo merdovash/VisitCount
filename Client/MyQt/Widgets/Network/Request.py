@@ -42,6 +42,9 @@ class Requset_Ui:
 
 
 class RequestWidget(QWidget, Requset_Ui):
+    """
+    Виджет выполнения запроса на сервер
+    """
     send = pyqtSignal()
     read_response = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
     finish = pyqtSignal('PyQt_PyObject')
@@ -104,15 +107,3 @@ class RequestWidget(QWidget, Requset_Ui):
         self.manager.post(self.request, bytearray(JsonParser.dump(self.worker.data), encoding='utf8'))
         self.progress_bar.increment()
         self.button.setEnabled(False)
-
-
-def first_load(host, login, password, on_close):
-    return RequestWidget(
-        InitialDataLoader(
-            login=login,
-            password=password,
-            host=host),
-        text_button="Загрузить данные",
-        title="загрузка данных",
-        on_close=on_close
-    )

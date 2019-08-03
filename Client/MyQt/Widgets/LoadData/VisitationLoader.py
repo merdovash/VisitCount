@@ -5,8 +5,8 @@ from typing import List
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QFileDialog, QApplication
 
-from Client.MyQt.Widgets.ComboBox import MComboBox
-from Client.MyQt.Widgets.ComboBox.Selector import Selector
+from Client.MyQt.Widgets.ComboBox import QMComboBox
+from Client.MyQt.Widgets.ComboBox.QMSelector import QMSelector
 from Client.MyQt.Widgets.LoadData import AbstractLoadingWizard, Step, LoadingWizardWindow
 from DataBase2 import Lesson, Professor, Group, Discipline
 from Domain.Loader.VisitationLoader import VisitationExcelLoader
@@ -24,10 +24,10 @@ class VisitationLoadingWidget(AbstractLoadingWizard):
         super().__init__(flags, *args, **kwargs)
 
         main_layout = QVBoxLayout()
-        group = MComboBox(Group)
-        discipline = MComboBox(Discipline)
+        group = QMComboBox(Group)
+        discipline = QMComboBox(Discipline)
 
-        main_layout.addWidget(Selector([discipline, group], professor), alignment=Qt.AlignTop)
+        main_layout.addWidget(QMSelector([discipline, group], professor), alignment=Qt.AlignTop)
 
         def on_group_select(lessons: List[Lesson], group):
             self.first_lesson = sorted(lessons, key=lambda lesson: lesson.date)[0]

@@ -39,11 +39,9 @@ if __name__ == "__main__":
 
     old_hook = sys.excepthook
 
-
     def catch_exceptions(exception_type, exception, tb):
         program.window.error.emit(exception_type, exception, tb)
         old_hook(exception_type, exception, tb)
-
 
     sys.excepthook = catch_exceptions
 

@@ -40,32 +40,3 @@ class InitialDataLoader(ClientWorker):
         professor._last_update_out = datetime.now()
 
         session.commit()
-
-
-class ApplyFirstLoadData:
-    def __init__(self):
-        pass
-
-    def __call__(self, received_data, progress_bar):
-        def create_row(item_data: Dict, class_: Type[_DBObject]):
-            class_.new(session, **item_data)
-            progress_bar.increment()
-
-        session = Session()
-        received_data = ServerFirstLoadData(**received_data)
-
-        TOTAL_LENGTH = progress_bar.last()
-        progress_bar.set_part(TOTAL_LENGTH, len(received_data.data), "Загрузка данных")
-
-        received_data.data.foreach(create_row)
-
-        Auth.new(session, **received_data.auth)
-        professor = Professor.new(session, **Map.item_type(received_data.professor, Professor))
-        professor._last_update_in = datetime.now()
-        professor._last_update_out = datetime.now()
-
-        session.commit()
-
-# if __name__ == "__main__":
-#     f = FirstLoad(card_id="61157", password="123456")
-#     f.run()

@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGridLayout, QLabel, QMessageBox
 
 from Client.MyQt.Widgets import BisitorWidget
-from Client.MyQt.Widgets.ComboBox import MComboBox
+from Client.MyQt.Widgets.ComboBox import QMComboBox
 from Client.MyQt.Widgets.Navigation import QAccentCancelButtons
 from Client.MyQt.Widgets.QAttachFile import QAttachFile
 from DataBase2 import VisitationLossReason, Student, Lesson, name, LossReason
@@ -39,7 +39,7 @@ class QAddLossReason(BisitorWidget):
         lesson_name_label.setObjectName('InfoLabel')
         self.grid.addWidget(lesson_name_label, 1, 2, 1, 2)
 
-        self.reason = MComboBox(LossReason)
+        self.reason = QMComboBox(LossReason)
         self.grid.addWidget(QLabel('Причина'), 2, 0, 1, 2)
         self.grid.addWidget(self.reason, 2, 2, 1, 2)
 

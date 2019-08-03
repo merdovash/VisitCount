@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, QPushButton, QTabWid
     QCheckBox
 
 from Client.MyQt.Widgets import BisitorWidget
-from Client.MyQt.Widgets.ComboBox import MCheckedComboBox, MComboBox
+from Client.MyQt.Widgets.ComboBox import QMCheckedComboBox, QMComboBox
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
 from DataBase2 import Professor, Student, _DBObject, Semester, _DBRoot
@@ -32,22 +32,22 @@ class SettingWidget(BisitorWidget):
 
         main_layout = QGridLayout()
 
-        data_selector = MComboBox(_DBRoot)
+        data_selector = QMComboBox(_DBRoot)
         main_layout.addWidget(QLabel('Данные по'), 0, 0)
         main_layout.addWidget(data_selector, 0, 1, 1, 2)
 
-        item_selector = MCheckedComboBox(self, with_all=True, type_=Student)
+        item_selector = QMCheckedComboBox(self, with_all=True, type_=Student)
         item_selector_label = QLabel()
         # selector_layout.addWidget(item_selector_label, alignment=Qt.AlignVCenter | Qt.AlignRight)
         main_layout.addWidget(QLabel('Выбор'), 0, 3)
         main_layout.addWidget(item_selector, 0, 4, 1, 2)
 
-        semester_selector = MCheckedComboBox(self, False, Semester)
+        semester_selector = QMCheckedComboBox(self, False, Semester)
         main_layout.addWidget(QLabel('за'), 1, 0)
         main_layout.addWidget(semester_selector, 1, 1, 1, 2)
         semester_selector.loads(user)
 
-        group_by_selector = MComboBox(_DBRoot)
+        group_by_selector = QMComboBox(_DBRoot)
         group_by_selector.setEnabled(False)
         main_layout.addWidget(QLabel('Группировать'), 2, 0)
         group_by_checkbox = QCheckBox('включить')

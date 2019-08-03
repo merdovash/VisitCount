@@ -6,13 +6,17 @@ from Server.Response import Response
 default_methods = ['POST']
 
 
-class Keys(str):
-    pass
-
-
 class Module:
-    def __init__(self, app, request, address, func=None,
-                 methods=default_methods, form=False):
+    """
+    Абстрактный класс
+    Определяет программный интерфейс модуля системы
+
+    Скрывает в себе следующие функции:
+        - аутентификация пользователя
+        - распаковка сообщения
+        - упакаовка сообщения
+    """
+    def __init__(self, app, request, address, func=None, methods=default_methods, form=False):
         self._is_form = form
 
         self.session = None

@@ -44,7 +44,3 @@ class AbstractWindow(QMainWindow):
     def on_ok_message(self, text):
         QMessageBox().information(self, "Сообщение", text)
 
-    @pyqtSlot(name='on_finish')
-    def on_finish(self):
-        self.ok_message.emit('Успешно сохранено')
-        self.program.session.expire_all()

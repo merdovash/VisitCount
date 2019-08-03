@@ -53,10 +53,10 @@ class QBisitorAccessManager(QNetworkAccessManager):
         self.deleteLater()
 
 
-class _BisitorRequest:
+class BisitorRequest:
     response_type = None
 
-    def __call__(self, address, user, data, on_finish, on_error=None, response_type=None):
+    def __init__(self, address, user, data, on_finish, on_error=None, response_type=None):
         host = Args().host
         if host[:4] != 'http':
             host = 'http://' + host
@@ -69,12 +69,3 @@ class _BisitorRequest:
         else:
             manager.error.connect(lambda x: QMessageBox().information(None, "Загрузка информации с сервера", x.message))
         manager.post(request, data)
-        return manager
-
-    def __getitem__(self, response_type):
-        temp = _BisitorRequest()
-        temp.response_type = response_type
-        return temp
-
-
-BisitorRequest = _BisitorRequest()
