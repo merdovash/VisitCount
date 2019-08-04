@@ -13,7 +13,7 @@ class RegisterCardProcess(QMessageBox):
     def __init__(self, user: _DBPerson, parent, *__args):
         super().__init__(parent)
 
-        self.reader = RFIDReader.instance(f"зарегистрировать карту {inflect(user.type_name, {'gent'})}")
+        self.reader = RFIDReader.instance(f"зарегистрировать карту {inflect(user.__type_name__, {'gent'})}")
         if self.reader is None:
             raise Exception()
         self.reader.card_id.connect(self.set_new_card_id)

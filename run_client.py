@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
 
-from Client.src import src
+from Client.MyQt.Window.Auth import AuthWindow
+from Client.src import src, resource
 from Parser import Args
 
 if __name__ == "__main__":
@@ -8,8 +9,8 @@ if __name__ == "__main__":
     import sys
 
     import PyQt5
-    from PyQt5.QtGui import QFont, QPixmap
-    from PyQt5.QtWidgets import QApplication, QStyleFactory, QSplashScreen
+    from PyQt5.QtGui import QFont, QFontDatabase
+    from PyQt5.QtWidgets import QApplication, QStyleFactory
     from PyQt5 import QtWebEngineWidgets # обязательно импортировать
 
     pyqt = os.path.dirname(PyQt5.__file__)
@@ -17,14 +18,11 @@ if __name__ == "__main__":
     Args('client')  # инициализация
     app = QApplication(sys.argv+["--disable-web-security"])
 
-    splash_pix = QPixmap(src.preload_image)
-    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setMask(splash_pix.mask())
-    splash.show()
-    app.processEvents()
+    id = QFontDatabase.addApplicationFont(str(resource("AlegreyaSans-Regular.ttf")))
+    family = QFontDatabase.applicationFontFamilies(id)[0]
 
-    font = QFont('Roboto')
-    font.setPixelSize(12)
+    font = QFont(family)
+    font.setPixelSize(14)
     font.setStyleName('Regular')
     app.setFont(font)
     app.setStyle(QStyleFactory().create('Fusion'))
@@ -32,19 +30,26 @@ if __name__ == "__main__":
 
     from BisitorLogger.client import init as LoggerInit
     LoggerInit()
-    from Client.IProgram import IProgram
-    from Client.Program import MyProgram
-
-    program: IProgram = MyProgram(css=Args().css, test=Args().test, host=Args().host)
 
     old_hook = sys.excepthook
 
     def catch_exceptions(exception_type, exception, tb):
-        program.window.error.emit(exception_type, exception, tb)
+        from Domain.Exception import BisitorException
+        if isinstance(exception, BisitorException):
+                exception.show(exception.window)
+        else:
+            from PyQt5.QtWidgets import QMessageBox
+            import traceback
+            QMessageBox().critical(None,
+                                   "Непредвиденная ошибка",
+                                   "Exception type: {},\n"
+                                   "value: {},\n"
+                                   "tb: {}".format(exception_type, exception, traceback.format_tb(tb)))
         old_hook(exception_type, exception, tb)
 
     sys.excepthook = catch_exceptions
 
     # test(program)
-    splash.finish(program.window)
+    auth = AuthWindow()
+    auth.show()
     sys.exit(app.exec_())

@@ -3,7 +3,7 @@ from typing import List
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
 
-from Client.MyQt.Widgets.ComboBox import QMComboBox
+from Client.MyQt.Widgets.ComboBox.MComboBox import QMComboBox
 from DataBase2 import _DBPerson
 
 

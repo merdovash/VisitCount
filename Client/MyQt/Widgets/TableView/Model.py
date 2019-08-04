@@ -3,13 +3,12 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSlot, Qt, QModelIndex, QAbstractTableModel, QVariant, QSize, pyqtSignal
 from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QStyledItemDelegate, QMessageBox
+from PyQt5.QtWidgets import QStyledItemDelegate
 from sqlalchemy import inspect
 
 from Client.MyQt.ColorScheme import Color
 from DataBase2 import Visitation, Lesson, Student
 from Domain.Validation.Values import Validate
-from Domain.functools.Decorator import try_catch
 from Domain.functools.Format import format_name
 
 COLUMN_WIDTH = 48

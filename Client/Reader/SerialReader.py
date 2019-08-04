@@ -1,4 +1,3 @@
-import threading
 from typing import Callable
 
 import serial
@@ -11,29 +10,6 @@ from Domain.Exception.RFIDReader import RFIDReaderNotFoundException, RFIDReaderH
 
 def nothing(card_id):
     print(card_id)
-
-
-class RFIDReaderFunction:
-    __slots__ = ('func', 'name', 'on_read', 'on_start', 'on_finish')
-
-    def __init__(self, func, name=None, msg_on_start=None, msg_on_read=None, msg_on_finish=None):
-        self.func = func
-        self.name = name if name is not None else func.__name__
-        self.on_start = msg_on_start
-        self.on_read = msg_on_read
-        self.on_finish = msg_on_finish
-
-    def start(self):
-        self.on_start()
-        RFIDReader.instance().on_read(self)
-
-    def finish(self):
-        self.on_finish()
-        RFIDReader.instance().stop_read()
-
-    def __call__(self, *args, **kwargs):
-        self.func(*args, **kwargs)
-        self.on_read(*args, **kwargs)
 
 
 class RFIDReader(IReader, QThread):
@@ -55,13 +31,16 @@ class RFIDReader(IReader, QThread):
                 # traceback.print_stack()
                 raise RFIDReaderNotFoundException(case, **kwargs)
 
-        RFIDReader.inst.case = case
+        RFIDReader.inst._case = case
         return RFIDReader.inst
 
     def __init__(self, **kwargs):
-        self.case = ''
-        self.state = True
-        self.connection = None
+        self._case = ''
+        self._state = True
+        self._connection = None
+
+        self._method = None
+        self._temp = None
         super().__init__()
         self.status = RFIDReader.NotFound
 
@@ -71,35 +50,35 @@ class RFIDReader(IReader, QThread):
 
         for i in range(12):
             try:
-                self.connection = serial.Serial(f'COM{i}')
+                self._connection = serial.Serial(f'COM{i}')
                 self.status = RFIDReader.Found
                 break
-            except serial.serialutil.SerialException as e:
+            except serial.serialutil.SerialException:
                 pass
 
             try:
-                self.connection = serial.Serial(f"/dev/ttyUSB{i}")
+                self._connection = serial.Serial(f"/dev/ttyUSB{i}")
                 self.status = RFIDReader.Found
                 break
-            except serial.serialutil.SerialException as e:
+            except serial.serialutil.SerialException:
                 pass
 
     def run(self):
-        while self.state:
+        while self._state:
             try:
-                if self.connection.read():
-                    a = self.connection.readline().decode('UTF-8')
+                if self._connection.read():
+                    a = self._connection.readline().decode('UTF-8')
                     if (len(a)) > 10:
                         number = a.split(",")[1].replace("\r\n", "")
                         self.card_id.emit(number)
-            except SerialException as serial_excpetion:
+            except SerialException as serial_exception:
                 RFIDReader.inst = None
-                if 'read failed' in str(serial_excpetion):
-                    self.state = False
+                if 'read failed' in str(serial_exception):
+                    self._state = False
                     RFIDReader.status = RFIDReader.NotFound
-                    raise RFIDReaderHasGoneAwayException(self.case, callback=self.error_callback)
+                    raise RFIDReaderHasGoneAwayException(self._case, callback=self.error_callback)
                 else:
-                    print(serial_excpetion)
+                    print(serial_exception)
 
         self.terminate()
         RFIDReader.inst = None
@@ -111,16 +90,16 @@ class RFIDReader(IReader, QThread):
         self._method = nothing
 
     def on_read_once(self, method):
-        self.temp = self._method
+        self._temp = self._method
 
         def f(card_id):
             method(card_id)
-            self._method = self.temp
+            self._method = self._temp
 
         self._method = f
 
     def remove_temporary_function(self):
-        self._method = self.temp
+        self._method = self._temp
 
     def close(self):
-        self.state = False
+        self._state = False

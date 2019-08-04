@@ -2,19 +2,17 @@ from datetime import datetime
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCalendarWidget, QComboBox, \
-    QHBoxLayout, QLabel, QPushButton
+    QHBoxLayout, QLabel, QPushButton, QMessageBox
 
-from Client.IProgram import IProgram
-from Client.MyQt.Time import from_index_to_time
 from DataBase2 import Lesson
 
 
 class LessonDateChanger(QWidget):
-    def __init__(self, program: IProgram, date: datetime, lesson: Lesson):
+    def __init__(self, lesson: Lesson, on_change=lambda: None):
         super().__init__(flags=QtCore.Qt.WindowStaysOnTopHint)
-        self.program: IProgram = program
         self.lesson = lesson
         self.l = QVBoxLayout()
+        self.on_change = on_change
 
         self.calendar = QCalendarWidget()
         # self.calendar.setSelectedDate(QDate=QDate(date.year, date.month, date.day))
@@ -41,11 +39,9 @@ class LessonDateChanger(QWidget):
 
         dd = datetime(d.year(), d.month(), d.day())
         dd += Lesson.time_by_index(self.lesson_selector.currentIndex())
-        self.program.window.message.emit("Занятие перенесено на {}".format(dd), False)
+        QMessageBox.information(self, "Успешно", "Занятие перенесено на {}".format(dd))
 
         self.lesson.date = dd
-        self.program.session.flush()
-        self.program.session.commit()
 
-        self.program.window.centralWidget().refresh_table()
+        self.on_change()
         self.close()

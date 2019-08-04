@@ -119,14 +119,17 @@ def name(obj):
     if is_iterable(obj):
         return ', '.join([name(o) for o in obj])
     if isinstance(obj, _DBNamed):
-        return obj.full_name()
+        full = obj.full_name()
+        if len(full) > 20:
+            return obj.short_name()
     if isclass(obj) and issubclass(obj, _DBNamed):
-        return obj.type_name
+        return obj.__type_name__
     return str(obj)
 
 
 class _DBObject(IJSON):
     __tablename__: str
+    __type_name__: str
     __table_args__ = {
         'mysql_engine': 'InnoDB',
         'mysql_charset': 'utf8',
@@ -149,13 +152,13 @@ class _DBObject(IJSON):
         return hash(f'{type(self).__name__}:{self.id}')
 
     @classmethod
-    def column_type(cls, name: str) -> callable or Type:
+    def column_type(cls, column_name: str) -> callable or Type:
         """
         Возвращает функцию, которая воспроизводит класс объекта для атрибута name
-        :param name: имя атрибута
+        :param column_name: имя атрибута
         :return: callable
         """
-        python_type = cls.table().c[name].type.python_type
+        python_type = cls.table().c[column_name].type.python_type
         if python_type == datetime:
             return Get.datetime
         if python_type == bool:
@@ -165,13 +168,13 @@ class _DBObject(IJSON):
         return python_type
 
     @classmethod
-    def column_str(cls, name):
+    def column_str(cls, column_name):
         """
         Возвращает строкое представление значения атрибута name
-        :param name: имя атрибута
+        :param column_name: имя атрибута
         :return: str
         """
-        python_type = cls.table().c[name].type.python_type
+        python_type = cls.table().c[column_name].type.python_type
         if python_type == datetime:
             def datetime_to_str(x):
                 if is_none(x):
@@ -185,9 +188,9 @@ class _DBObject(IJSON):
 
     def _dict(self) -> dict:
         return {
-            name: getattr(self, name)
-            for name in self.table().c.keys()
-            if len(name) < 16
+            column_name: getattr(self, column_name)
+            for column_name in self.table().c.keys()
+            if len(column_name) < 16
         }
 
     def dict(self):
@@ -297,13 +300,13 @@ class _DBObject(IJSON):
             return instance
 
     @classmethod
-    def class_(cls, name) -> Type['_DBObject']:
+    def class_(cls, cls_name) -> Type['_DBObject']:
         """
         Воспроизводит класс по его названию
-        :param name: имя класса
+        :param cls_name: имя класса
         :return: Type
         """
-        return eval(name)
+        return eval(cls_name)
 
     def __eq__(self, other):
         if isinstance(other, _DBObject):
@@ -315,7 +318,7 @@ class _DBObject(IJSON):
         super().__eq__(other)
 
     @classmethod
-    def subclasses(cls) -> List[Type['_DBObject']]:
+    def subclasses(cls) -> List[Type['_DBObject']] or List[type]:
         """
         :return: list of real subclasses
         """
@@ -350,7 +353,10 @@ class _Displayable:
 
 
 class _DBRoot(_Displayable):
-    type_name: str
+    """
+    Класс для обозначения классов для отобраения в статистике
+    """
+    pass
 
 
 class _DBTrackedObject(_DBObject):
@@ -378,8 +384,6 @@ class _DBTrackedObject(_DBObject):
 
 
 class _DBNamed(_DBObject):
-    type_name: str
-
     def full_name(self, case=None) -> str:
         raise NotImplementedError()
 
@@ -392,20 +396,19 @@ class _DBNamed(_DBObject):
 
 
 class _DBNamedObject(_DBNamed):
-    type_name: str
     name: str = Column(String(100), nullable=False)
     abbreviation: str = Column(String(16))
 
     def full_name(self, case=None) -> str:
         from Domain.functools.Format import inflect
         if case is not None:
-            if self.type_name in self.name:
-                name = f"{inflect(self.type_name, case)}{self.name.replace(self.type_name, '')}"
+            if self.__type_name__ in self.name:
+                res = f"{inflect(self.__type_name__, case)}{self.name.replace(self.__type_name__, '')}"
             else:
-                name = f"{inflect(self.type_name, case)}{self.name}"
+                res = f"{inflect(self.__type_name__, case)}{self.name}"
         else:
-            name = self.name
-        return name.title()
+            res = self.name
+        return res.title()
 
     def short_name(self) -> str:
         if is_none(self.abbreviation):
@@ -437,7 +440,9 @@ class _DBEmailObject(_DBNamed):
         return res
 
     def appeal(self, case: set = None) -> str:
-        raise NotImplementedError()
+        from Domain.functools.Format import inflect
+
+        return f"{inflect(self.__type_name__, case)} {self.short_name()}"
 
     def has_lessons_since(self, td: timedelta or datetime) -> bool:
         now = datetime.now()
@@ -455,8 +460,6 @@ class _DBEmailObject(_DBNamed):
 
 
 class _DBPerson(_DBEmailObject, _DBTrackedObject):
-    type_name: str
-
     last_name: str = Column(String(50), nullable=False)
     first_name: str = Column(String(50), nullable=False)
     middle_name: str = Column(String(50), default="")
@@ -467,9 +470,9 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
     def appeal(self, case=None):
         if case is not None:
             from Domain.functools.Format import inflect
-            return f"{inflect(self.type_name, case)} {self.full_name(case)}"
+            return f"{inflect(self.__type_name__, case)} {self.full_name(case)}"
         else:
-            return f"{self.type_name} {self.full_name()}"
+            return f"{self.__type_name__} {self.full_name()}"
 
     def __init__(self, **kwargs):
         super().__init__(
@@ -493,21 +496,21 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         self._card_id = Get.card_id(value)
 
     @classmethod
-    def get_by_id(cls, id):
+    def get_by_id(cls, object_id):
         """
         Возвращает Person по id
         Работает для всех наследников класса и возвращает объект наследника
-        :param id:
+        :param object_id:
         :return:
         """
         user_session = Session()
 
-        user = user_session.query(cls).filter(cls.id == id).first()
+        user = user_session.query(cls).filter(cls.id == object_id).first()
 
         if user is not None:
             return user
         else:
-            raise ValueError('user of {id} not found'.format(id=id))
+            raise ValueError('user of {id} not found'.format(id=object_id))
 
     def full_name(self, case=None):
         """
@@ -517,14 +520,14 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         """
         from Domain.functools.Format import inflect
         if is_none(self.middle_name):
-            name = f"{self.last_name} {self.first_name}"
+            res = f"{self.last_name} {self.first_name}"
         else:
-            name = f'{self.last_name} {self.first_name} {self.middle_name}'
+            res = f'{self.last_name} {self.first_name} {self.middle_name}'
 
         if case is not None:
-            name = inflect(name, case)
+            res = inflect(res, case)
 
-        return name.title()
+        return res.title()
 
     def short_name(self):
         return f'{self.last_name} {self.first_name[0]}.' + (f' {self.middle_name[0]}.' if len(self.middle_name) else '')
@@ -594,7 +597,7 @@ class DataView(Base, _DBNamedObject, _DBList):
     @classmethod
     @listed
     def of(cls, obj, *args, **kwargs):
-        if isinstance(obj, (Professor)):
+        if isinstance(obj, Professor):
             return DataView.of(ContactViews.of(obj))
 
         if isinstance(obj, ContactViews):
@@ -636,7 +639,7 @@ class ContactViews(Base, _DBTrackedObject):
 
 class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = "faculties"
-    type_name = "Факультет"
+    __type_name__ = "Факультет"
 
     def appeal(self, case=None):
         if case is not None:
@@ -702,7 +705,7 @@ class FacultyAdministrations(Base, _DBObject):
 class Department(Base, _DBNamedObject, _DBEmailObject, _DBList, _DBRoot):
     __tablename__ = "departments"
 
-    type_name = "Кафедра"
+    __type_name__ = "Кафедра"
 
     faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
 
@@ -802,7 +805,7 @@ class LessonsGroups(Base, _DBTrackedObject):
 
 class Building(Base, _DBNamed, _DBList, _DBRoot):
     __tablename__ = 'building'
-    type_name = 'Корпус'
+    __type_name__ = 'Корпус'
     address = Column(String(500))
     abbreviation = Column(String(16))
 
@@ -832,7 +835,7 @@ class Building(Base, _DBNamed, _DBList, _DBRoot):
 
 class Room(Base, _DBNamed, _DBRoot):
     __tablename__ = 'room'
-    type_name = 'Аудитория'
+    __type_name__ = 'Аудитория'
     building_id = Column(Integer, ForeignKey('building.id'))
     room_number = Column(Integer)
     reader_id = Column(Integer)
@@ -945,6 +948,10 @@ class Visitation(Base, _DBTrackedObject):
             .filter(Visitation.student_id == student_id) \
             .filter(Visitation.lesson_id == lesson_id) \
             .first()
+
+    @staticmethod
+    def journal(students, lessons) -> List['Visitation']:
+        return list(set(Visitation.of(students)) & set(Visitation.of(lessons)))
 
 
 class LossReason(enum.Enum):
@@ -1078,7 +1085,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
     Таблица дисциплин
     """
     __tablename__ = 'disciplines'
-    type_name = "Дисциплина"
+    __type_name__ = "Дисциплина"
 
     department_id = Column(Integer, ForeignKey('departments.id'))
     department: Department = relationship('Department', backref=backref('disciplines'))
@@ -1124,7 +1131,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
 
 class Semester(Base, _DBNamed, _DBRoot):
     __tablename__ = "semesters"
-    type_name = 'Семестр'
+    __type_name__ = 'Семестр'
 
     start_date: datetime = Column(DateTime, nullable=False, unique=True)
     first_week_index: int = Column(Integer, default=0, nullable=False)
@@ -1197,7 +1204,7 @@ class Semester(Base, _DBNamed, _DBRoot):
 
 class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
     __tablename__ = 'lesson_type'
-    type_name = 'Вид занятия'
+    __type_name__ = 'Вид занятия'
 
     @classmethod
     @listed
@@ -1223,6 +1230,7 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
     """
 
     __tablename__ = 'lessons'
+    __type_name__ = "Занятие"
     __table_args__ = (
         UniqueConstraint('professor_id', 'date', name='lesson_UK'),
         _DBObject.__table_args__
@@ -1376,6 +1384,21 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         else:
             return -1
 
+    @staticmethod
+    def closest_to_date(lessons: List['Lesson'], date=None):
+        """
+        Находит ближайшее занятие из списка занятий к указанной дате
+        Если дата не указана, то находит к текущей дате
+        :param date:
+        :param lessons: Список занятий
+        :return: closest lesson in list to current datetime
+        """
+        if len(lessons) == 0:
+            return None
+        date = date or datetime.now()
+        closest = min(lessons, key=lambda x: abs(date - x.date))
+        return closest
+
     def __gt__(self, other):
         return self.date > other.date
 
@@ -1397,7 +1420,7 @@ class Administration(Base, _DBPerson):
             from Domain.functools.Format import inflect
             return f"{inflect('представитель', case)} администрации {self.full_name(case)}"
         else:
-            return f"{self.type_name} {self.full_name()}"
+            return f"{self.__type_name__} {self.full_name()}"
 
     def __repr__(self):
         return f"<Administration(id={self.id}, card_id={self.email}, " \
@@ -1427,7 +1450,7 @@ class Professor(Base, _DBPerson, _DBRoot):
     Таблица преподавателей
     """
     __tablename__ = 'professors'
-    type_name = 'Преподаватель'
+    __type_name__ = 'Преподаватель'
 
     _last_update_in = Column(DateTime, default=datetime.now)
     _last_update_out = Column(DateTime)
@@ -1490,9 +1513,9 @@ class Professor(Base, _DBPerson, _DBRoot):
         if self._last_update_out is None:
             self._last_update_out = datetime(2008, 1, 1)
 
-        updateable: List[Type[_DBTrackedObject]] = [x for x in _DBTrackedObject.subclasses() if x != Auth]
+        tracked_classes: List[Type[_DBTrackedObject]] = [x for x in _DBTrackedObject.subclasses() if x != Auth]
 
-        for cls in updateable:
+        for cls in tracked_classes:
             updated[cls.__name__] = self.session() \
                 .query(cls) \
                 .filter(cls._updated > (self._last_update_out if last_in is None else last_in)) \
@@ -1516,7 +1539,7 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
     Таблица групп
     """
     __tablename__ = 'groups'
-    type_name = "Группа"
+    __type_name__ = "Группа"
 
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
 
@@ -1576,7 +1599,7 @@ class Student(Base, _DBPerson, _DBRoot):
     """
     Таблица студентов
     """
-    type_name = 'Студент'
+    __type_name__ = 'Студент'
 
     __tablename__ = 'students'
 

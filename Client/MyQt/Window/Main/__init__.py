@@ -8,19 +8,21 @@ import datetime
 from typing import List
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QDropEvent
-from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar, QMessageBox
+from PyQt5.QtGui import QDropEvent, QFont
+from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar, QMessageBox, QVBoxLayout, QHBoxLayout, QLabel, \
+    QApplication
 
-from Client.IProgram import IProgram
+from Client.MyQt.QtMyStatusBar import QStatusMessage
 from Client.MyQt.Widgets.LoadData import LoadingWizardWindow
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
+from Client.MyQt.Widgets.Selector import Selector
 from Client.MyQt.Widgets.VisualData.Graph.BisitorMPLWidget import BisitorMPLWidget
 from Client.MyQt.Window import AbstractWindow
 from Client.MyQt.Window.ContactManager import QContactManagerWindow
 from Client.MyQt.Window.ExcelLoadingWindow import ExcelLoadingWidget
-from Client.MyQt.Window.Main.UiTableWindow import UI_TableWindow
 from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
 from DataBase2 import Professor, Lesson
+from Parser import Args
 
 month_names = "0,Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь".split(
     ',')
@@ -50,14 +52,12 @@ class MainWindow(AbstractWindow):
     log_out = pyqtSignal()
     refresh_data = pyqtSignal()
 
-    def __init__(self, program: IProgram, professor: Professor, **kwargs):
+    def __init__(self, professor: Professor, **kwargs):
         AbstractWindow.__init__(self, **kwargs)
-        self.program: IProgram = program
 
         self.professor = professor
 
         self.central_widget = MainWindowWidget(
-            program=program,
             professor=professor,
             parent=self)
         self.refresh_data.connect(self.central_widget.on_refresh_data)
@@ -72,7 +72,17 @@ class MainWindow(AbstractWindow):
 
         self.setStatusBar(QStatusBar(self))
 
-        self.log_out.connect(lambda: self.program.change_user())
+        self.log_out.connect(self._quit_to_auth)
+
+    @pyqtSlot(name="_quit_to_auth")
+    def _quit_to_auth(self):
+        from Client.MyQt.Window.Auth import AuthWindow
+
+        self.auth = AuthWindow()
+        self.auth.show()
+
+        self.close()
+        QApplication.processEvents()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
@@ -92,23 +102,12 @@ class MainWindow(AbstractWindow):
             event.setDropAction(Qt.CopyAction)
             event.accept()
 
-            try:
+            if Args().test:
+                dialog = ExcelLoadingWidget(files=event.mimeData().urls())
+                dialog.show()
 
-                dialog=ExcelLoadingWidget(
-                    files=event.mimeData().urls(),
-                    program=self.program
-                )
-                self.dialog = dialog
-                self.dialog.showAsChild()
-
-            except Exception as e:
-                self.error.emit(str(e))
         else:
             event.ignore()
-
-    def closeEvent(self, *args, **kwargs):
-        if self.program.reader() is not None:
-            self.program.reader().close()
 
     def __init_menu__(self):
         menu_bar = self.menuBar()
@@ -138,7 +137,7 @@ class MainWindow(AbstractWindow):
         file = self.menu_bar.addMenu("Файл")
 
         file_change_user = QAction("Сменить пользоватлея", self)
-        file_change_user.triggered.connect(self.log_out)
+        file_change_user.triggered.connect(self._quit_to_auth)
 
         file.addAction(file_change_user)
 
@@ -172,7 +171,7 @@ class MainWindow(AbstractWindow):
 
     def _init_menu_updates(self):
         def update_db_action():
-            self.update_action_dialog = SendUpdatesWidget(self.program.professor)
+            self.update_action_dialog = SendUpdatesWidget(self.professor)
             self.update_action_dialog.show()
 
         def show_loader_widget():
@@ -200,7 +199,7 @@ class MainWindow(AbstractWindow):
         updates.addAction(contact_manager_action)
 
 
-class MainWindowWidget(QWidget, UI_TableWindow):
+class MainWindowWidget(QWidget):
     """
     contains select lesson menu and table
     """
@@ -210,15 +209,34 @@ class MainWindowWidget(QWidget, UI_TableWindow):
 
     view_show_color_rate = pyqtSignal(bool)
 
-    def __init__(self, program: IProgram, professor: Professor, parent=None):
+    def __init__(self, professor: Professor, parent=None):
         super().__init__(parent)
         with open('Client/src/style.qss', 'r') as style_file:
             self.setStyleSheet(style_file.read())
 
-        self.program: IProgram = program
         self.professor = professor
 
-        self.setupUi(self)
+        layout = QVBoxLayout(self)
+
+        info_layout = QHBoxLayout()
+
+        professor_label = QLabel(
+            professor.full_name()
+        )
+        professor_label.setFont(QFont('Calibri', 16))
+
+        self.info_label = QStatusMessage()
+
+        info_layout.addWidget(professor_label, alignment=Qt.AlignLeft)
+        info_layout.addWidget(self.info_label, alignment=Qt.AlignRight)
+
+        layout.addLayout(info_layout, stretch=1)
+
+        self.selector = Selector(professor)
+
+        layout.addWidget(self.selector, stretch=9999)
+
+        self.setLayout(layout)
 
         self.last_lesson = None
 

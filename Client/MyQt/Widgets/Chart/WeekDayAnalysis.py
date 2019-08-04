@@ -3,11 +3,11 @@ from Domain.Aggregation import WeekDaysAggregation, Column
 
 
 class WeekDayChart(QAnalysisDialog):
-    def __init__(self, program, parent=None):
+    def __init__(self, professor, parent=None):
         self.data_type = QAnalysisDialog.DataType.WEEK_DAY
-        super().__init__(program, parent)
+        super().__init__(professor, parent)
 
-        self.data = WeekDaysAggregation.by_professor(self.program.professor)
+        self.data = WeekDaysAggregation.by_professor(self.professor)
 
         self.draw()
 
@@ -17,7 +17,7 @@ class WeekDayChart(QAnalysisDialog):
         return self.data
 
     def refresh_data(self):
-        self.data = WeekDaysAggregation.by_professor(self.program.professor,
+        self.data = WeekDaysAggregation.by_professor(self.rofessor,
                                                      groups=[i for i in self.groups.keys() if self.groups[i]],
                                                      disciplines=[i for i in self.disciplines.keys() if self.disciplines[i]])
 

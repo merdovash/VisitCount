@@ -1,12 +1,30 @@
+from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtWidgets import QWidget, QTabWidget, QListWidget, QVBoxLayout
 
-from Client.MyQt.Window.UpdatesInfoWindow.Ui_UpdatesInfoWidget import Ui_UpdatesInfoWidget
+from Client.MyQt.Widgets.QEasyTable import QEasyTable
 
 
-class UpdatesInfoWidget(QWidget, Ui_UpdatesInfoWidget):
+class UpdatesInfoWidget(QWidget):
     def __init__(self, updates, flags=None, *args, **kwargs):
         QWidget.__init__(self, flags, *args, **kwargs)
-        Ui_UpdatesInfoWidget.setupUi(self, self)
+        layout = QVBoxLayout()
+
+        self.setWindowTitle('Информация об обновлениях (отправка)')
+
+        self.table = QEasyTable(header=[
+            dict(name='table',
+                 value='Таблица'),
+            dict(name='id',
+                 value='Строка'),
+            dict(name='type',
+                 value='Тип обновления'),
+            dict(name='date',
+                 value='Дата')
+        ])
+
+        layout.addWidget(self.table)
+
+        self.setLayout(layout)
 
         self.tabs = QTabWidget()
         for case in updates:
@@ -18,10 +36,3 @@ class UpdatesInfoWidget(QWidget, Ui_UpdatesInfoWidget):
         self.layout_ = QVBoxLayout()
         self.layout_.addWidget(self.tabs)
         self.setLayout(self.layout_)
-
-    def showAsChild(self, *args):
-        self.show()
-
-    def closeEvent(self, QCloseEvent):
-        self.closeSelf()
-        QWidget.closeEvent(self, QCloseEvent)

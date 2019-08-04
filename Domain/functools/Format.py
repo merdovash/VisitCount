@@ -3,7 +3,7 @@ from warnings import warn
 
 import pymorphy2
 
-from DataBase2 import Professor, Student, _DBPerson, _DBNamed, _DBRoot
+from DataBase2 import Professor, Student, _DBPerson, _DBNamed, _DBRoot, _DBObject
 from Domain.Exception.Constraint import ConstraintBasenameException, ConstraintDictNameException, \
     ConstraintNotEmptyException
 from Domain.functools.Decorator import is_iterable
@@ -140,15 +140,21 @@ def names(args: List[_DBNamed]):
 
 def type_name(value: Any) -> str:
     if isinstance(value, type):
-        if issubclass(value, (_DBRoot, _DBNamed)):
-            return value.type_name
+        if issubclass(value, _DBObject):
+            return value.__type_name__
         else:
             return value.__name__
+    if isinstance(value, _DBObject):
+        return value.__type_name__
     if is_iterable(value):
-        if all(type(v) == type(value[0]) for v in value):
-            if isinstance(value[0], (_DBRoot, _DBNamed)):
-                return value[0].type_name
+        if len(value) > 0:
+            if all(type(v) == type(value[0]) for v in value):
+                if isinstance(value[0], _DBObject):
+                    return value[0].__type_name__
+                else:
+                    return type(value[0]).__name__
             else:
-                return type(value[0]).__name__
+                return ', '.join(type_name(v) for v in value)
         else:
-            return ', '.join(v.type_name if isinstance(v, (_DBRoot, _DBNamed)) else type(v).__name__ for v in value)
+            return '[]'
+

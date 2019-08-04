@@ -7,6 +7,3 @@ loading_gif = str(_file.with_name('loader.gif'))
 qss = str(_file.with_name('style.qss'))
 drop_arrow = str(_file.with_name('drop_arrow.gif'))
 preload_image = str(_file.with_name('preloader.png'))
-
-if __name__ == '__main__':
-    print(done_img)

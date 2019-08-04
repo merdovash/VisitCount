@@ -206,7 +206,7 @@ class BadRate(Report):
     def append_data(self, html: HTMLMaker):
         html.add_content(
             f"Оперативная информация о посещении занятий студентами "
-            f"{inflect(self.receiver.type_name, {'gent'})} "
+            f"{inflect(self.receiver.__type_name__, {'gent'})} "
             f"{self.receiver.short_name() if isinstance(self.receiver, Faculty) else ''} СПбГУТ "
             f"на {self.target_time} находится в прикрепленном файле.")
         html.add_content("В список включены студенты, имеющие более двух пропусков по одной из дисциплин.")

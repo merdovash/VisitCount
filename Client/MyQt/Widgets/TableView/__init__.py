@@ -8,8 +8,6 @@ from PyQt5.QtWidgets import QApplication, QWidget, \
 from Client.MyQt.Widgets.TableView.Model import PercentHorizontalModel, PercentVerticalModel, VisitModel
 from Client.MyQt.Widgets.TableView.View import VisitView, PercentView, PercentHorizontalView
 from DataBase2 import Lesson, Auth, Student, Group, Visitation
-from Domain.Aggregation.Lessons import intersect_lessons_of
-from Domain.Aggregation.Visitations import all_visitations
 from Domain.functools.Format import agree_to_number, agree_to_gender
 from Domain.functools.Format import format_name
 
@@ -68,8 +66,8 @@ class VisitTableWidget(QWidget):
         )
 
         def student_summary(student, professor, discipline):
-            lessons = list(filter(lambda x: x.completed, intersect_lessons_of(professor, discipline, student)))
-            visitation = all_visitations(student, lessons)
+            lessons = list(filter(lambda x: x.completed, Lesson.intersect(professor, discipline, student)))
+            visitation = Visitation.journal(student, lessons)
             QMessageBox().information(
                 self,
                 "Информация",

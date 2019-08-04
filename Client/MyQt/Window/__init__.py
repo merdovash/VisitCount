@@ -28,7 +28,7 @@ class AbstractWindow(QMainWindow):
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject', name='on_error')
     def on_error(self, exception_type, exception, tb):
         if isinstance(exception, BisitorException):
-                exception.show(self)
+            exception.show(self)
         else:
             QMessageBox().critical(self,
                                    "Непредвиденная ошибка",

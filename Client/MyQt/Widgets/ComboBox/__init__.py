@@ -6,7 +6,6 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, QModelIndex, QSize
 from PyQt5.QtGui import QStandardItemModel, QMouseEvent
 from PyQt5.QtWidgets import QListView, QLineEdit
 
-from Client.MyQt.Widgets.ComboBox import QMComboBox
 from Client.MyQt.Widgets.ComboBox.MComboBox import QMComboBox
 
 compare = lambda x, y: collections.Counter(x) == collections.Counter(y)

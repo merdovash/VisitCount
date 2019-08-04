@@ -3,7 +3,6 @@ from collections import namedtuple
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton, QTabWidget, QVBoxLayout
 
-from Client.IProgram import IProgram
 from Client.MyQt.Widgets.ComboBox import QMComboBox
 from Client.MyQt.Widgets.ComboBox.MComboBox import QMMultipleComboBox
 from Client.MyQt.Widgets.TableView import VisitTableWidget
@@ -33,12 +32,11 @@ class Selector(QWidget):
 
     visitMarker: MarkVisitProcess = None
 
-    def __init__(self, program: IProgram):
+    def __init__(self, professor: Professor):
         super().__init__()
         self.setObjectName("Selector")
 
-        self.program: IProgram = program
-        self.professor = self.program.professor
+        self.professor = professor
 
         main_layout = QVBoxLayout()
 

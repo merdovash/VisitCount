@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QPushBut
 class ExcelLoadingWidget(QWidget):
     exit = pyqtSignal()
 
-    def __init__(self, files: List[QUrl], program, parent=None, *args, **kwargs):
+    def __init__(self, files: List[QUrl], parent=None, *args, **kwargs):
         QWidget.__init__(self, parent, *args, **kwargs)
 
         # self.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -15,8 +15,6 @@ class ExcelLoadingWidget(QWidget):
         self.setMinimumSize(300, 300)
 
         self.files = files
-
-        self.program = program
 
         layout = QVBoxLayout(self)
 
@@ -41,14 +39,6 @@ class ExcelLoadingWidget(QWidget):
 
     @pyqtSlot(name='run')
     def run(self):
-        def special_warning_handler(msg):
-            self.program.window.ok_message.emit(msg)
-            self.raise_()
-
-        def special_finish_handler(msg):
-            self.program.window.ok_message.emit(msg)
-            self.raise_()
-
         for file in self.files:
             raise NotImplementedError()
 

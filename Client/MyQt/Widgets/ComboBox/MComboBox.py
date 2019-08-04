@@ -1,14 +1,14 @@
 from enum import Enum
 from typing import Any, List, TypeVar
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QImage, QPen, QColor
 from PyQt5.QtWidgets import QComboBox
 
 from Client.MyQt.ColorScheme import Color
 from DataBase2 import Lesson, _Displayable, name
 from Domain.Data import names_of_groups
-from Domain.functools.List import closest_lesson
+from Domain.functools.Format import type_name
 
 T = TypeVar('T')
 
@@ -51,7 +51,7 @@ class QMComboBox(QComboBox):
 
         data = sorted(self.type.of(lessons))
         self.set_items(data)
-        self.setCurrent(self.type.of(closest_lesson(lessons))[0])
+        self.setCurrent(self.type.of(Lesson.closest_to_date(lessons))[0])
 
     def __init__(self, type_: T = None, parent=None):
         super().__init__()
@@ -74,6 +74,7 @@ class QMComboBox(QComboBox):
     def addItems(self, iterable: List[T], p_str=None) -> None:
         for i, value in enumerate(iterable):
             self.items.append(value)
+            self.setItemData(i, f"{type_name(value)}: {name(value)}", Qt.ToolTipRole);
         else:
             super().addItems([name(i) for i in iterable])
 
@@ -148,7 +149,7 @@ class QMMultipleComboBox(QMComboBox):
 
         data = self.filter(lessons)
         self.set_items(data)
-        self.setCurrent(self.filter([closest_lesson(lessons)]))
+        self.setCurrent(self.filter([Lesson.closest_to_date(lessons)]))
 
     @pyqtSlot(int, name='resignal')
     def resignal(self):

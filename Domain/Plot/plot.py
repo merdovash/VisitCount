@@ -87,7 +87,7 @@ def plot(user: List[_DBRoot], semester: List[Semester], group_by: Type[_DBRoot],
     enable_group_by = user_type != group_by
 
     # тип исследуемых объектов
-    type_description = agree_to_number(inflect(user_type.type_name, {"gent"}), len(user) if is_iterable(user) else 1)
+    type_description = agree_to_number(inflect(user_type.__type_name__, {"gent"}), len(user) if is_iterable(user) else 1)
 
     # имена исследуемых объектов
     user_names = name(user)
@@ -95,7 +95,7 @@ def plot(user: List[_DBRoot], semester: List[Semester], group_by: Type[_DBRoot],
         user_names = ""
 
     # описание группировок
-    group_by_description = f"группированные по {agree_to_number(inflect(group_by.type_name, {'datv'}), 2)}" \
+    group_by_description = f"группированные по {agree_to_number(inflect(group_by.__type_name__, {'datv'}), 2)}" \
         if enable_group_by else ""
 
     # описание интервала

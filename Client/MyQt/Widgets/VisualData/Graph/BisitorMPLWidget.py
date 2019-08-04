@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, QPushButton, QTabWid
     QCheckBox
 
 from Client.MyQt.Widgets import BisitorWidget
-from Client.MyQt.Widgets.ComboBox import QMCheckedComboBox, QMComboBox
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
 from DataBase2 import Professor, Student, _DBObject, Semester, _DBRoot
@@ -15,8 +14,10 @@ class SettingWidget(BisitorWidget):
     accept = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject')
 
     def __init__(self, user: _DBObject, *args, **kwargs):
+        from Client.MyQt.Widgets.ComboBox import QMCheckedComboBox, QMComboBox
+
         super().__init__(*args, **kwargs)
-        data_groups: List[Type[_DBRoot or _DBObject]] = sorted(_DBRoot.__subclasses__(), key=lambda x: x.type_name)
+        data_groups: List[Type[_DBRoot or _DBObject]] = sorted(_DBRoot.__subclasses__(), key=lambda x: x.__type_name__)
         plot_types = {
             "Посещения по неделям": ('bar_week', "Показывает уровень посещений на каждой неделе"),
             'Распределение': ('distribution', "Показывает итоговый уровень посещений на дату"),

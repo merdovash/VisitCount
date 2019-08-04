@@ -12,7 +12,7 @@ class BisitorException(Exception):
 
     _msg: str = None
 
-    def show(self, parent):
+    def show(self, parent=None):
         QMessageBox().critical(parent, self.title(), self.message())
         self._callback()
 
@@ -25,7 +25,8 @@ class BisitorException(Exception):
     def _callback(self):
         pass
 
-    def __init__(self, msg: str = "неуказанное действие", callback: Callable[[], None] = lambda: None, **kwargs):
+    def __init__(self, msg: str = "неуказанное действие", window=None, callback: Callable[[], None] = lambda: None, **kwargs):
+        self.window = window
         self._msg = msg
         self._callback = callback
 
