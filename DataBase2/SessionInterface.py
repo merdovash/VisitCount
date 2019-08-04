@@ -1,6 +1,5 @@
 from typing import TypeVar, Type, List
 
-
 DB = TypeVar('DB')
 
 
@@ -8,16 +7,7 @@ class ISession:
     def commit(self):
         pass
 
-    def query(self, table: Type[DB]):
-        class IJoinable:
-            def join(self, table: Type) -> 'IJoinable':
-                pass
-
-            def all(self)->List[DB]:
-                pass
-
-            def first(self) -> DB:
-                pass
+    def query(self, table: Type[DB]) -> 'IJoinable':
 
         return IJoinable()
 
@@ -31,4 +21,15 @@ class ISession:
         pass
 
     def close(self):
+        pass
+
+
+class IJoinable(ISession):
+    def join(self, table: Type) -> 'IJoinable':
+        pass
+
+    def all(self) -> List[DB]:
+        pass
+
+    def first(self) -> DB:
         pass
