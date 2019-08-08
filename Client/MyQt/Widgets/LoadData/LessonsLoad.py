@@ -14,7 +14,7 @@ from Client.MyQt.interface import IAcceptDrop, ISelectFile
 from DataBase2 import Group, Student, Semester
 from Domain.Loader.GroupLoader.GroupLoader import GroupLoader
 from Domain.Loader.LessonLoader import LessonLoader
-from Modules.API import GroupApi
+from Modules.API.Group import GroupApi
 
 
 class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):

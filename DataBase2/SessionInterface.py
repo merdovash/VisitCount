@@ -33,3 +33,9 @@ class IJoinable(ISession):
 
     def first(self) -> DB:
         pass
+
+    def filter(self, param) -> 'IJoinable':
+        pass
+
+    def filter_by(self, param) -> 'IJoinable':
+        pass

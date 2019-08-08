@@ -3,7 +3,7 @@ from warnings import warn
 
 import pymorphy2
 
-from DataBase2 import Professor, Student, _DBPerson, _DBNamed, _DBRoot, _DBObject
+from DataBase2 import Professor, Student, _DBPerson, _DBNamed, _DBObject
 from Domain.Exception.Constraint import ConstraintBasenameException, ConstraintDictNameException, \
     ConstraintNotEmptyException
 from Domain.functools.Decorator import is_iterable
@@ -22,10 +22,11 @@ class Case(object):
 def format_name(user: Dict[str, str] or Professor or Student, case: set = None, small=False) -> str:
     """
     Do format user data to readable string
+    :param small: в краткой форме
+    :param case: падеж
     :param user: dictionary that contains keys: [last_name, first_name, middle_name]
     :return: string like 'Mark A.F.'
     """
-    fio: List = []
     if isinstance(user, dict):
         try:
             if 'middle_name' in user.keys():

@@ -118,13 +118,13 @@ class BisitorMPLWidget(BisitorWidget):
 
         main_layout = QVBoxLayout()
 
-        tabs = QTabWidget()
-        tabs.setTabsClosable(True)
-        tabs.tabCloseRequested.connect(lambda x: tabs.removeTab(x) if x != 0 else None)
-        main_layout.addWidget(tabs)
+        self.tabs = QTabWidget()
+        self.tabs.setTabsClosable(True)
+        self.tabs.tabCloseRequested.connect(lambda x: self.tabs.removeTab(x) if x != 0 else None)
+        main_layout.addWidget(self.tabs)
 
         setting_widget = SettingWidget(user)
-        tabs.addTab(setting_widget, "Настройки")
+        self.tabs.addTab(setting_widget, "Настройки")
 
         def on_accept(items, group_by, plot_type, semester):
             plot = MyMplCanvas(
@@ -132,8 +132,8 @@ class BisitorMPLWidget(BisitorWidget):
                 group_by,
                 plot_type,
                 semester=semester)
-            tabs.addTab(plot, 'График')
-            tabs.setCurrentWidget(plot)
+            self.tabs.addTab(plot, 'График')
+            self.tabs.setCurrentWidget(plot)
 
         setting_widget.accept.connect(on_accept)
 

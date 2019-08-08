@@ -15,7 +15,7 @@ from Domain.Exception.Net import InvalidPOSTDataException
 from Domain.Structures.DictWrapper import Structure
 from Parser import IJSON
 
-date_format = "%Y-%m-%d %H:%M:%S"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 class JsonParser:
@@ -64,7 +64,6 @@ class JsonParser:
             """
             return val
 
-        res = ""
         if obj is None or obj == 'None':
             res = "null"
         elif isinstance(obj, dict):

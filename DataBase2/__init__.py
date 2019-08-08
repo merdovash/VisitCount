@@ -144,8 +144,8 @@ class _DBObject(IJSON):
     def __repr__(self):
         return "<{type}({fields})>".format(
             type=type(self).__name__,
-            fields=', '.join("{name}={value}".format(name=name, value=value)
-                             for name, value in self._dict().items())
+            fields=', '.join("{name}={value}".format(name=field_name, value=value)
+                             for field_name, value in self._dict().items())
         )
 
     def __hash__(self):
@@ -322,10 +322,11 @@ class _DBObject(IJSON):
         """
         :return: list of real subclasses
         """
-        return list(
-            filter(
-                lambda x: '_' != x.__name__[0],
-                set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in c.subclasses()])))
+        return [
+            x
+            for x in set(cls.__subclasses__()) | {s for class_ in cls.__subclasses__() for s in class_.subclasses()}
+            if not x.__name__.startswith('_')
+        ]
 
     def session(self) -> ISession:
         """
@@ -440,11 +441,21 @@ class _DBEmailObject(_DBNamed):
         return res
 
     def appeal(self, case: set = None) -> str:
+        """
+        Возвращает обращение к обьекту
+        :param case: падеж
+        :return: текст, используемый для обращения к обьекту, например в e-mail
+        """
         from Domain.functools.Format import inflect
 
         return f"{inflect(self.__type_name__, case)} {self.short_name()}"
 
     def has_lessons_since(self, td: timedelta or datetime) -> bool:
+        """
+        Определяет были ли проведены занятия у обьекта с указанной даты
+        :param td: дата, с которой проверять
+        :return: bool
+        """
         now = datetime.now()
         if isinstance(td, timedelta):
             since = now - td
@@ -987,13 +998,6 @@ class VisitationLossReason(Base, _DBTrackedObject):
             suffix = path.suffix[1:] if path.suffix.startswith('.') else path.suffix
             if self.file_ext != suffix:
                 self.file_ext = suffix
-
-
-class UserType(int):
-    STUDENT = 0
-    PROFESSOR = 1
-    PARENT = 2
-    ADMIN = 3
 
 
 class Auth(Base, _DBTrackedObject):

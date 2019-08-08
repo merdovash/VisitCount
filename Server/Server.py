@@ -4,7 +4,6 @@
 import os
 
 from flask import Flask, make_response, request, send_file, send_from_directory
-from flask_restful import Resource, Api
 
 from Modules import API
 from Modules import SourceChecker
@@ -21,7 +20,6 @@ path, file = os.path.split(os.path.abspath(__file__))
 templates_path = path + "/templates/"
 
 app = Flask(__name__, static_folder=path + "/static", template_folder=path + '/templates')
-api = Api(app)
 
 # load modules
 
@@ -48,20 +46,15 @@ def related(a):
     return os.path.join(path, a)
 
 
-def page(path, encoding='utf-8'):
+def page(file_path, encoding='utf-8'):
     """
 
     :param encoding:
-    :param path:
+    :param file_path:
     :return: complete html page
     """
-    with open(path, encoding=encoding) as file:
-        return file.read()
-
-
-@app.route('/TableFilter/<path:file_name>')
-def get_TableFilter_lib(file_name):
-    return send_file(path + '/TableFilter/' + file_name)
+    with open(file_path, encoding=encoding) as f:
+        return f.read()
 
 
 @app.route('/file/<path:file_name>')
@@ -109,113 +102,6 @@ def visit():
     """
     if request.method == 'GET':
         return page(f'{path}/templates/login2.htm')
-
-
-# def fix_request_args(args, user_type, user_id):
-#     """
-#
-#     Denies access to private fields
-#
-#     :param args: request's dict of args
-#     :param user_type: type of user access
-#     :param user_id: use ID
-#     :return: fixed dict of args
-#     """
-#     request_args = {key: args[key][0] if args[key] is list else args[key] for key in args}
-#
-#     if str(user_type) == "0":
-#         request_args["student_id"] = user_id
-#         request_args["user_type"] = 0
-#
-#     elif str(user_type) == "1":
-#         request_args["professor_id"] = user_id
-#         request_args["user_type"] = 1
-#
-#     elif str(user_type) == "2":
-#         request_args["admin_id"] = user_id
-#         request_args["user_type"] = 2
-#
-#     return request_args
-#
-#
-# def read_params(args, keys) -> dict:
-#     """
-#
-#     :param args: request's dict of args
-#     :param keys: function params
-#     :return:
-#     """
-#     intersect = list(set(keys) & set(args))
-#
-#     params = {keys[i]: None for i in range(len(keys))}
-#
-#     for i in range(len(params)):
-#         if keys[i] in intersect:
-#             params[keys[i]] = args[keys[i]]
-#             intersect.remove(keys[i])
-#
-#     return params
-#
-#
-# @app.route("/get")
-# def get_field():
-#     """
-#
-#     1)Запрос должен содержать поля data и uid;
-#     2)data может быть любым значением из possible_requests;
-#     3)аутентификация по uid;
-#     4)uid присваивает значение user_id в своответсвующее поле запроса автоматически,
-#     так что невохможно запросить данные для другого пользователя;
-#     5)Запрос может содержать дополнительные параметры, необходимые для запроса такие как
-#      student_id, professor_id и т.д.
-#
-#     :return: json string {
-#         "type": "get",
-#         "status":"OK/ERROR",
-#         "message": None if status="OK", "data": get_{$data}
-#     }
-#     """
-#     if request.method == "GET":
-#         res = Response("get")
-#         if "uid" in request.args:
-#             auth_status = db.auth(uid=request.args["uid"])
-#             if auth_status:
-#
-#                 user_type, user_id = auth_status["type"], auth_status["user_id"]
-#                 request_args = fix_request_args(request.args, user_type, user_id)
-#                 print(request_args)
-#                 possible_requests = ["students",
-#                                      "professors",
-#                                      "disciplines",
-#                                      "lessons",
-#                                      "groups",
-#                                      "visitations",
-#                                      "notification_params",
-#                                      "table",
-#                                      "total",
-#                                      "groups_of_total",
-#                                      "group_visit"]
-#                 if request.args["data"] in possible_requests:
-#                     get_func = getattr(db, "get_" + request.args["data"])
-#
-#                     keys = list(get_func.__code__.co_varnames)
-#                     for special in ["self", "request", "params"]:
-#                         if special in keys:
-#                             keys.remove(special)
-#
-#                     params = read_params(request_args, keys)
-#                     params = tuple(params[key] for key in keys)
-#                     print(params)
-#
-#                     res.set_data(get_func(*params))
-#                 else:
-#                     res.set_error("field data '{}' is not found".format(request.args["data"]))
-#             else:
-#                 res.set_error("auth failed")
-#         else:
-#             res.set_error("missing 'uid' argument")
-#
-#         return res()
 
 
 def run():

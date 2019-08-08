@@ -45,7 +45,7 @@ def safe(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except:
+        except Exception:
             exc_info = sys.exc_info()
             stack = traceback.extract_stack()
             tb = traceback.extract_tb(exc_info[2])
@@ -60,6 +60,15 @@ def safe(func):
 
 
 def listed(func):
+    """
+    Декоратор
+    Позволяет передавать в декорируемую функцию список значений первым аргументом
+    Превращает функцию в списочную
+
+    :param func: функция, которая принимает первым аргументом обьект, а возвращает список
+    :return: списочная функция (функция, которая принимает первым аргументом обьект или список обьектов,
+                                а вовзращает список)
+    """
     def __wrapper__(self, value, *args, **kwargs):
         if is_iterable(value):
             result = [func(self, v, *args, **kwargs) for v in value]
@@ -79,6 +88,12 @@ def listed(func):
 
 
 def filter_deleted(func):
+    """
+    Декоратор для списочной функции
+    Добавляет функционал к функции, наделяя ее возможностью фильтровать удаленные записи
+    :param func: списочная функция
+    :return: списочная функция
+    """
     def __wrapper__(self, value, with_deleted=False, *args, **kwargs):
         res = func(self, value, *args, **kwargs)
         if not with_deleted:
@@ -90,9 +105,10 @@ def filter_deleted(func):
 
 def filter_semester(func):
     """
-    Декорирует функцию выборки на фильтрацию по сместрам
-    :param func: декорируемая функция
-    :return: новая функция
+    Декоратор
+    Наделяет списочную функцию способностью фильтровать записи по семестрам
+    :param func: списочная функция
+    :return: списочная функция
     """
 
     def __wrapper__(self, value, semester=None, *args, **kwargs):
@@ -125,14 +141,3 @@ def try_catch(*exc, out=print):
                 out(f'Во время вызова функции {func} c параметрами {*args, kwargs} было получено исключение {e}')
         return wrapper
     return decorator
-
-
-
-
-if __name__ == '__main__':
-    from DataBase2 import Professor, Group, Discipline
-
-    print(Group.of(Professor.get(id=1)))
-    print(Group.of(Discipline.of(Professor.get(id=1))))
-
-

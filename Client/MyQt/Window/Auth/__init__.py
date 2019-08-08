@@ -66,7 +66,7 @@ class AuthWindow(BisitorWidget):
     @pyqtSlot('PyQt_PyObject')
     def on_auth_success(self, auth):
         from DataBase2 import Auth
-        from Debug.WrongId import debug
+        from Client.Debug.WrongId import debug
 
         auth = Auth.log_in(**auth)
         professor = auth.user
