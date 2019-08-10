@@ -12,7 +12,9 @@ from PyQt5.QtGui import QDropEvent, QFont
 from PyQt5.QtWidgets import QWidget, QAction, QMenu, QStatusBar, QMessageBox, QVBoxLayout, QHBoxLayout, QLabel, \
     QApplication
 
+from Client.MyQt.QObjects.QShowAction import QShowAction
 from Client.MyQt.QtMyStatusBar import QStatusMessage
+from Client.MyQt.Widgets.Dialogs.QViewSettings import QViewSettings
 from Client.MyQt.Widgets.LoadData import LoadingWizardWindow
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.Selector import Selector
@@ -160,6 +162,8 @@ class MainWindow(AbstractWindow):
 
         data = QMenu('Заголовок таблицы')
         view.addMenu(data)
+
+        view.addAction(QShowAction('Настройки', self, QViewSettings()))
 
         view.addSeparator()
         switch_color_rate_action = QAction('Выделять цветом итог студентов', self)

@@ -1,0 +1,54 @@
+{
+  "colors": {
+    "_type": "Area",
+    "title": "Цвета Журнала посещений",
+    "visit": {
+      "_type": "color",
+      "title": "Цвет посещения",
+      "value": "rgb(138, 226, 52)",
+      "default": "rgb(240, 240, 0)"
+    },
+    "sub_visit": {
+      "_type": "color",
+      "title": "Цвет уважительного пропуска",
+      "value": null,
+      "default": "rgb(255, 238, 238)"
+    },
+    "not_visited": {
+      "_type": "color",
+      "title": "Цвет пропуска",
+      "value": "rgb(226, 61, 135)",
+      "default": "rgb(255, 255, 255)"
+    },
+    "not_completed": {
+      "_type": "color",
+      "title": "Цвет непроведенного занятия",
+      "value": null,
+      "default": "rgb(199, 199, 199)"
+    },
+    "good_student": {
+      "_type": "color",
+      "title": "Цвет обозначения хорошего уровня посещений",
+      "value": "rgb(115, 210, 22)",
+      "default": "rgb(0, 255, 0)"
+    },
+    "bad_student": {
+      "_type": "color",
+      "title": "Цвет обозначения плохого уровня посещений",
+      "value": "rgb(239, 41, 41)",
+      "default": "rgb(255, 0, 0)"
+    },
+    "avg_student": {
+      "_type": "color",
+      "title": "Цвет обозначения среднего уровня посещений",
+      "value": null,
+      "default": "rgb(255, 255, 255)"
+    },
+    "missing_card": {
+      "_type": "color",
+      "title": "Цвет студентов без зарегистрованной карты",
+      "value": null,
+      "default": "rgb(121, 22, 22)"
+    }
+  }
+}

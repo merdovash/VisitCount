@@ -47,6 +47,9 @@ def init(loop: asyncio.AbstractEventLoop = None):
                     stats[class_.__name__]['total'] = len(receivers)
                     for receiver in receivers:
                         contact: ContactInfo = receiver.contact
+                        if contact is None:
+                            continue
+
                         is_time = contact.last_auto + timedelta(0, contact.interval_auto_hours * 3600) <= next_loop
                         has_lessons = receiver.has_lessons_since(contact.last_auto)
                         if contact is not None and contact.auto and is_time and has_lessons:

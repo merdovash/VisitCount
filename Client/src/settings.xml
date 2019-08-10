@@ -1,0 +1,9 @@
+<settings>
+    <main_table>
+        <colors>
+            <visit default="#a4a400" title="Цвет посещения"></visit>
+            <not_visit default="#ffffff" title="Цвет пропуска"></not_visit>
+            <sub_visit default="#ffeeee" title="Цвет уважительного пропуска"></sub_visit>
+        </colors>
+    </main_table>
+</settings>

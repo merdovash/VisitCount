@@ -45,7 +45,7 @@ def Args(side=None):
             parser.add_argument('-database-password', type=str, dest="database_password")
             parser.add_argument('-database-database', type=str, dest="database_database")
             parser.add_argument('--database-host', type=str, dest="database_host", default='localhost')
-            parser.add_argument('--database-server', type=str, dest="database_server", default='mysql', choices=['mysql'])
+            parser.add_argument('--database-server', type=str, dest="database_server", default='mysql', choices=['mysql', 'postgres'])
 
             _args = parser.parse_args()
         else:

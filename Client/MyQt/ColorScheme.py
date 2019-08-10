@@ -1,25 +1,39 @@
 from PyQt5.QtGui import QColor
 
+from Client.Settings import Settings
+
+
+def bound(number, start, end):
+    return min(end, max(start, number))
+
+
+def color_bound(number):
+    return bound(number, 0, 255)
+
 
 class Color:
 
     @classmethod
     def to_select(cls, color):
+        offset = -30
+
         c = QColor(color)
 
-        c.setBlue(max(color.blue() - 80, 0))
-        c.setGreen(max(color.green() - 80, 0))
-        c.setRed(0)
+        c.setBlue(color_bound(color.blue()*(offset/255+1)))
+        c.setGreen(color_bound(color.green()*(offset/255+1)))
+        c.setRed(color_bound(color.red()*(offset/255+1)))
 
         return c
 
     @classmethod
     def hover(cls, color):
+        offset = 30
+
         c = QColor(color)
 
-        c.setRed(min(color.red() + 16, 255))
-        c.setGreen(min(color.green() + 16, 255))
-        c.setBlue(min(color.blue() + 16, 255))
+        c.setRed(color_bound(color.red()*(offset/255+1)))
+        c.setGreen(color_bound(color.green()*(offset/255+1)))
+        c.setBlue(color_bound(color.blue()*(offset/255+1)))
 
         return c
 

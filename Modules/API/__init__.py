@@ -8,5 +8,7 @@ def init(app, request):
 
 
 class API(Module):
+    address = '/api'
+
     def __init__(self, app, request, address):
         super().__init__(app, request, '/api' + address)

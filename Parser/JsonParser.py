@@ -42,6 +42,7 @@ class JsonParser:
         res = None
 
         if text is not None and text != "":
+            print(decode(text))
             res = json.loads(decode(text))
         else:
             raise InvalidPOSTDataException(text)
@@ -71,7 +72,10 @@ class JsonParser:
             for key in obj.keys():
                 value = obj[key]
                 if isinstance(value, (int, str, bool, float)) or value is None:
-                    res += f'"{key}":"{value}",'
+                    if isinstance(obj, str):
+                        res += '"'+key+'":"' + value.replace("\"", "\\\"")+'",'
+                    else:
+                        res += f'"{key}":"{value}",'
                 else:
                     res += f'"{key}":{JsonParser.dump(obj[key])},'
             else:
@@ -94,7 +98,7 @@ class JsonParser:
             res = obj.to_json()
 
         elif isinstance(obj, (int, str, bool, float)) or obj is None:
-            res = f'"{obj}"'
+            res = "\"" + obj.replace("\"", "\\\"") if isinstance(obj, str) else str(obj) + "\""
 
         elif isinstance(obj, (datetime, date)):
             res = f'"{obj.strftime("%Y-%m-%d %H:%M:%S")}"'

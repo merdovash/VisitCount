@@ -3,6 +3,7 @@
 Файл с описанием базы данных
 """
 import enum
+import json
 import os
 import sys
 from datetime import datetime, timedelta
@@ -21,6 +22,7 @@ from sqlalchemy.pool import StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
 from sqlalchemy.util import ThreadLocalRegistry
 
+from Client.src import load_resource
 from DataBase2.SessionInterface import ISession
 from Domain.ArgPars import get_argv
 from Domain.Exception.Authentication import InvalidPasswordException, \
@@ -29,7 +31,7 @@ from Domain.Exception.Authentication import InvalidPasswordException, \
 from Domain.Validation.Values import Get
 from Domain.functools.Decorator import listed, filter_deleted, sorter, \
     is_iterable, filter_semester
-from Parser import IJSON
+from Parser import IJSON, Args
 
 try:
     _root = sys.modules['__main__'].__file__
@@ -68,12 +70,16 @@ _is_mysql = _root != 'run_client.py' and os.name != 'nt'
 if _is_mysql:
     from DataBase2.config2 import Config
 
+    connect_args = dict()
+    if Args().database_server == 'mysql':
+        connect_args.update(dict(use_unicode=True))
+
     engine = create_engine(Config.connection_string,
                            pool_pre_ping=False,
                            echo=False,
                            poolclass=QueuePool,
                            pool_recycle=3600,
-                           connect_args=dict(use_unicode=True))
+                           connect_args=connect_args)
 
 else:
     db_path = Path(__file__).parent / 'db2.db'
@@ -207,7 +213,10 @@ class _DBObject(IJSON):
         """
 
         def str_value(key):
-            return f'"{self.column_str(key)(r[key])}"'
+            value = self.column_str(key)(r[key])
+            if isinstance(value, dict):
+                value = str(value).replace('\'', '"').replace('"', '\\'+'"')
+            return f'"{value}"'
 
         r = self._dict()
         return '{' + ','.join([':'.join([f'"{key}"', str_value(key)]) for key, value in r.items()]) + '}'
@@ -382,6 +391,11 @@ class _DBTrackedObject(_DBObject):
 
     def __bool__(self):
         return not self._is_deleted
+
+    def has_local_updates(self, date=None):
+        if date is None:
+            date = datetime.now()
+        return any(date < i for i in (self._created,self._updated, self._deleted))
 
 
 class _DBNamed(_DBObject):
@@ -999,6 +1013,18 @@ class VisitationLossReason(Base, _DBTrackedObject):
             if self.file_ext != suffix:
                 self.file_ext = suffix
 
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Lesson):
+            return obj.loss_reasons
+
+        if isinstance(obj, Professor):
+            return VisitationLossReason.of(Lesson.of(obj))
+
+        raise NotImplementedError(type(obj))
+
+
 
 class Auth(Base, _DBTrackedObject):
     """
@@ -1449,7 +1475,7 @@ class Administration(Base, _DBPerson):
         raise NotImplementedError(type(obj))
 
 
-class Professor(Base, _DBPerson, _DBRoot):
+class Professor(Base, _DBPerson, _DBRoot, ):
     """
     Таблица преподавателей
     """
@@ -1459,6 +1485,8 @@ class Professor(Base, _DBPerson, _DBRoot):
     _last_update_in = Column(DateTime, default=datetime.now)
     _last_update_out = Column(DateTime)
 
+    _settings = Column('settings', String, default=load_resource('settings.json'), comment='Параметры интерфейса')
+
     lessons: List[Lesson] = relationship("Lesson", backref=backref('professor'), order_by="Lesson.date")
 
     departments: List[Department] = association_proxy('_department', 'department')
@@ -1467,8 +1495,17 @@ class Professor(Base, _DBPerson, _DBRoot):
 
     def groups(self, with_deleted=False) -> List[List['Group']]:
         return [list(item)
-                for item in set(frozenset(g for g in lesson.groups if not g | with_deleted)
+                for item in set(frozenset(g for g in lesson.groups if g or with_deleted)
                                 for lesson in self.lessons)]
+
+    @property
+    def settings(self):
+        string_value = self._settings
+        return json.loads(self._settings) if string_value not in ('None', None) else None
+
+    @settings.setter
+    def settings(self, value):
+        self._settings = value
 
     @classmethod
     @filter_deleted

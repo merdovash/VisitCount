@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QStyledItemDelegate
 from sqlalchemy import inspect
 
 from Client.MyQt.ColorScheme import Color
+from Client.Settings import Settings
 from DataBase2 import Visitation, Lesson, Student
 from Domain.Validation.Values import Validate
 from Domain.functools.Format import format_name
@@ -111,12 +112,19 @@ class PercentVerticalModel(AbstractPercentModel):
                 return visits
         if role == Qt.BackgroundColorRole:
             if PercentVerticalModel.color_rate:
+                s = Settings.inst().colors
                 total = len([l for l in self.lessons if l.completed])
                 visit = self.count_visits(index.row())
+
+                # если количество пропусков меньше 3х - студент хороший
                 if total <= visit + 3:
-                    return QColor("#388E3C")
+                    return QColor(s.good_student)
+
+                # если пропусков больше половины - студент плохой
                 elif visit / total < 0.5 if total > 0 else False:
-                    return QColor("#e53935")
+                    return QColor(s.bad_student)
+
+                return QColor(s.avg_student)
         return QVariant()
 
     def columnCount(self, parent=None, *args, **kwargs):
@@ -256,13 +264,23 @@ class VisitModel(QAbstractTableModel):
             return ['-', '+', '', ''][item()]
 
         if role == Qt.BackgroundColorRole:
+            s = Settings.inst().colors
             main_color = (
-                (QColor(255, 255, 255), QColor(225, 225, 255)),
-                (QColor(255, 255, 0, 200), QColor(255, 255, 0)),
-                (QColor(200, 200, 200, 255), QColor(255, 255, 255)),
-                (QColor(255, 254, 173), QColor(222, 221, 133))
-            )[status][int(is_current)]
-            return main_color if index.row() != self.selected_row else Color.to_accent(main_color)
+                s.not_visited,
+                s.visit,
+                s.not_completed,
+                s.sub_visit
+            )[status]
+
+            if is_current:
+                main_color = Color.to_select(main_color)
+            else:
+                main_color = QColor(main_color)
+
+            if index.row() != self.selected_row:
+                main_color = Color.to_accent(main_color)
+
+            return main_color
 
         if role == Qt.TextAlignmentRole:
             return xor(Qt.AlignHCenter, Qt.AlignVCenter)
@@ -334,6 +352,22 @@ class VisitModel(QAbstractTableModel):
                 return QVariant(QSize(COLUMN_WIDTH, HEADER_HEIGHT))
         if role == Qt.BackgroundColorRole:
             if orientation == Qt.Vertical:
+                s = Settings.inst().colors
+
+                if not Validate.card_id(self.students[p_int].card_id):
+                    return QColor(s.missing_card)
+
+                total = len([l for l in self.lessons if l.completed])
+                visit = len([item for item in Visitation.of(self.lessons) if item.student_id == self.students[p_int].id])
+
+                # если количество пропусков меньше 3х - студент хороший
+                if total <= visit + 3:
+                    return QColor(s.good_student)
+
+                # если пропусков больше половины - студент плохой
+                elif visit / total < 0.5 if total > 0 else False:
+                    return QColor(s.bad_student)
+
                 return [Color.primary_light, Color.secondary_light][Validate.card_id(self.students[p_int].card_id)]
             if orientation == Qt.Horizontal:
                 if self.current_lesson == self.lessons[p_int]:

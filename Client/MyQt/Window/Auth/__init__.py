@@ -3,6 +3,7 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from Client.MyQt.Widgets import Message, BisitorWidget
 from Client.MyQt.Window.Main import MainWindow
+from Client.Settings import Settings
 from Domain.Exception.Authentication import InvalidLoginException
 from Modules.FirstLoad.ClientSide import InitialDataLoader
 from Parser import Args
@@ -67,9 +68,9 @@ class AuthWindow(BisitorWidget):
     def on_auth_success(self, auth):
         from DataBase2 import Auth
         from Client.Debug.WrongId import debug
-
         auth = Auth.log_in(**auth)
         professor = auth.user
+        Settings.load(professor)
         debug(auth.user)
         window = MainWindow(professor=professor)
         window.show()
@@ -90,7 +91,7 @@ class AuthWindow(BisitorWidget):
 
                 self.auth_success.emit(dict(login=login, password=password))
             except InvalidLoginException:
-                self.centralwidget.layout().addWidget(
+                self.layout().addWidget(
                     RequestWidget(
                         InitialDataLoader(
                             login=login,
