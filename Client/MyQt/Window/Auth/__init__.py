@@ -5,6 +5,7 @@ from Client.MyQt.Widgets import Message, BisitorWidget
 from Client.MyQt.Window.Main import MainWindow
 from Client.Settings import Settings
 from Domain.Exception.Authentication import InvalidLoginException
+from Modules.API.Professor import ProfessorSettingsApi
 from Modules.FirstLoad.ClientSide import InitialDataLoader
 from Parser import Args
 
@@ -70,6 +71,9 @@ class AuthWindow(BisitorWidget):
         from Client.Debug.WrongId import debug
         auth = Auth.log_in(**auth)
         professor = auth.user
+
+        ProfessorSettingsApi.synch(professor)
+
         Settings.load(professor)
         debug(auth.user)
         window = MainWindow(professor=professor)

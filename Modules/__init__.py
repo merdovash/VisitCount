@@ -25,12 +25,15 @@ class Module:
         if func is not None:
             self.func = func
 
+        print(f'bind {address} to {address[1:]}')
+
         @app.route(address, methods=["POST"], endpoint=address[1:])
         def auth(**kwargs):
             self.session = Session()
             if 'POST' in methods:
                 if request.method == 'POST':
                     response = Response(request_type)
+
                     data = self._read(request)
                     if data is not None:
                         authentication = None

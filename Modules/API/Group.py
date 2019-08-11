@@ -7,6 +7,7 @@ from Server.Response import Response
 
 
 class GroupApi(API):
+    address = API.address + '/group'
     class GroupResponse(Structure):
         name: str
         students: List[Student]
@@ -21,9 +22,6 @@ class GroupApi(API):
                     {key: _DBObject.column_type(key)(value) for key, value in student.items()}
                     for student in students
                 ]
-
-    def __init__(self, app, request):
-        super().__init__(app, request, '/group')
 
     def post(self, data: dict, response: Response, auth: Auth, **kwargs):
         session = auth.session()

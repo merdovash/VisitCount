@@ -32,7 +32,6 @@ class QViewSettings(BisitorWidget):
 
         self.data = Settings.inst()
         data = self.data
-        print(data)
         row_count = 0
         for area_name, area in data.items():
             if area._type is None:
@@ -105,7 +104,6 @@ class QViewSettings(BisitorWidget):
         pass
 
     def _apply(self):
-        print(self.data)
         for section, values in self.changes.items():
             sub_settings = getattr(self.data, section)
             for value_name, new_value in values.items():

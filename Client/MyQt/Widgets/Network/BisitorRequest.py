@@ -7,7 +7,11 @@ from Parser.JsonParser import JsonParser
 from Server.Response import Response
 
 
-class QBisitorRequest(QNetworkRequest):
+def pack(user, data):
+    return dict(user=user.auth.data(), data=data)
+
+
+class _QBisitorRequest(QNetworkRequest):
     def __init__(self, *__args):
         url = __args[0]
         if isinstance(url, str):
@@ -53,19 +57,37 @@ class QBisitorAccessManager(QNetworkAccessManager):
         self.deleteLater()
 
 
-class BisitorRequest:
+class QBisitorRequest:
     response_type = None
 
     def __init__(self, address, user, data, on_finish, on_error=None, response_type=None):
         host = Args().host
         if host[:4] != 'http':
             host = 'http://' + host
-        url = host + address
+        if host not in address:
+            url = host + address
+        else:
+            url = address
+
         manager = QBisitorAccessManager(user, response_type if response_type is not None else self.response_type)
-        request = QBisitorRequest(url)
+        request = _QBisitorRequest(url)
         manager.response.connect(on_finish)
         if on_error is not None:
             manager.error.connect(on_error)
         else:
             manager.error.connect(lambda x: QMessageBox().information(None, "Загрузка информации с сервера", x.message))
-        manager.post(request, data)
+        result = manager.post(request, data)
+
+
+def BisitorRequest(address, user, data, on_finish=None, on_error=None):
+    from urllib.request import Request, urlopen
+
+    data = pack(user, data)
+    print(bytes(JsonParser.dump(data), encoding='utf8'))
+    request = Request(
+        address,
+        bytes(JsonParser.dump(data), encoding='utf8'),
+        headers={'Content-Type': 'application/json"'})
+    res = urlopen(request).read().decode()
+
+    return res

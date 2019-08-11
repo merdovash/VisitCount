@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayo
 
 from Client.MyQt.Widgets import QSeparator
 from Client.MyQt.Widgets.LoadData.AbstractWizard import Step, AbstractLoadingWizard
-from Client.MyQt.Widgets.Network.BisitorRequest import BisitorRequest
+from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
 from Client.MyQt.Widgets.Table.NewItemsTable import QNewItemsTable
 from Client.MyQt.interface import IAcceptDrop, ISelectFile
 from DataBase2 import Group, Student, Semester
@@ -228,7 +228,7 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
             self.managers = list()
             for group in self.students_lists.keys():
                 self.managers.append(
-                    BisitorRequest(
+                    QBisitorRequest(
                         address='/api/group',
                         user=self.professor,
                         data={'name': group.name},

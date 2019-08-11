@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFormLayout, QLineEdit
     QCheckBox, QTimeEdit, QSpinBox
 
 from Client.MyQt.Widgets.ComboBox.CheckComboBox import CheckableComboBox
-from Client.MyQt.Widgets.Network.BisitorRequest import BisitorRequest
+from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.Widgets.Network.UpdateDataViews import UpdateDataViews
 from Client.MyQt.utils import check_connection

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFormLayout, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, \
     QMessageBox
 
-from Client.MyQt.Widgets.Network.BisitorRequest import BisitorRequest
+from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
 from Client.MyQt.Widgets.QLink import QLink
 from Modules.NewProfessor import NewProfessorResponse
 
@@ -78,7 +78,7 @@ class NewUserForm(QWidget):
                     f'Для продолжения необходимо заполнить поля {", ".join([key for key, value in val.items() if not value])}'
                 )
             else:
-                self.manager = BisitorRequest(
+                self.manager = QBisitorRequest(
                     '/new_professor',
                     None,
                     {

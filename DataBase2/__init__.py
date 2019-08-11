@@ -22,6 +22,7 @@ from sqlalchemy.pool import StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
 from sqlalchemy.util import ThreadLocalRegistry
 
+from Client.Settings import Settings
 from Client.src import load_resource
 from DataBase2.SessionInterface import ISession
 from Domain.ArgPars import get_argv
@@ -31,6 +32,7 @@ from Domain.Exception.Authentication import InvalidPasswordException, \
 from Domain.Validation.Values import Get
 from Domain.functools.Decorator import listed, filter_deleted, sorter, \
     is_iterable, filter_semester
+from Domain.functools.List import without_None
 from Parser import IJSON, Args
 
 try:
@@ -215,7 +217,7 @@ class _DBObject(IJSON):
         def str_value(key):
             value = self.column_str(key)(r[key])
             if isinstance(value, dict):
-                value = str(value).replace('\'', '"').replace('"', '\\'+'"')
+                value = str(value).replace('\'', '"').replace('"', '\\' + '"')
             return f'"{value}"'
 
         r = self._dict()
@@ -392,10 +394,20 @@ class _DBTrackedObject(_DBObject):
     def __bool__(self):
         return not self._is_deleted
 
-    def has_local_updates(self, date=None):
-        if date is None:
-            date = datetime.now()
-        return any(date < i for i in (self._created,self._updated, self._deleted))
+    def has_local_updates(self, date: datetime):
+        """
+        Проверяет былили внесены изменения в запись после указанной даты
+        :param date:
+        :return:
+        """
+        return any(i is not None and date < i for i in (self._created, self._updated, self._deleted))
+
+    def last_update(self) -> datetime:
+        """
+        Находит дату последней модификации записи
+        :return: datetime
+        """
+        return max(without_None(self._updated, self._created, self._deleted))
 
 
 class _DBNamed(_DBObject):
@@ -930,7 +942,7 @@ class Visitation(Base, _DBTrackedObject):
 
     def __repr__(self):
         return f'<Visitation(id={self.id}, student_id={self.student_id},' \
-            f' lesson_id={self.lesson_id})>'
+               f' lesson_id={self.lesson_id})>'
 
     @classmethod
     @filter_semester
@@ -1003,7 +1015,7 @@ class VisitationLossReason(Base, _DBTrackedObject):
     student = relationship('Student', backref=backref('loss_reasons'))
     lesson = relationship("Lesson", backref=backref('loss_reasons'))
 
-    def set_file(self, path:Path):
+    def set_file(self, path: Path):
         with open(str(path), 'rb') as file:
             data = file.read()
 
@@ -1023,7 +1035,6 @@ class VisitationLossReason(Base, _DBTrackedObject):
             return VisitationLossReason.of(Lesson.of(obj))
 
         raise NotImplementedError(type(obj))
-
 
 
 class Auth(Base, _DBTrackedObject):
@@ -1099,8 +1110,8 @@ class Auth(Base, _DBTrackedObject):
 
     def __repr__(self):
         return f"<Auth(id={self.id}," \
-            f" user_type={self.user_type}," \
-            f" user_id={self.user_id})>"
+               f" user_type={self.user_type}," \
+               f" user_id={self.user_id})>"
 
     def data(self) -> Dict[str, str]:
         return {
@@ -1126,7 +1137,7 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
 
     def __repr__(self):
         return f"<Discipline(id={self.id}," \
-            f" name={self.name})>"
+               f" name={self.name})>"
 
     @classmethod
     @filter_deleted
@@ -1289,9 +1300,9 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
 
     def __repr__(self):
         return f"<Lesson(id={self.id}, professor_id={self.professor_id}," \
-            f" discipline_id={self.discipline_id}, " \
-            f"date={self.date}, type={self.type.full_name()}," \
-            f" completed={self.completed})>"
+               f" discipline_id={self.discipline_id}, " \
+               f"date={self.date}, type={self.type.full_name()}," \
+               f" completed={self.completed})>"
 
     _week = None
 
@@ -1454,8 +1465,8 @@ class Administration(Base, _DBPerson):
 
     def __repr__(self):
         return f"<Administration(id={self.id}, card_id={self.email}, " \
-            f"last_name={self.last_name}, first_name={self.first_name}, " \
-            f"middle_name={self.middle_name})>"
+               f"last_name={self.last_name}, first_name={self.first_name}, " \
+               f"middle_name={self.middle_name})>"
 
     @classmethod
     @filter_deleted
@@ -1473,6 +1484,12 @@ class Administration(Base, _DBPerson):
             return obj.admins
 
         raise NotImplementedError(type(obj))
+
+
+class UpdateDirection(Enum):
+    from_server_to_local = 2
+    from_local_to_server = 3
+    from_both_to_both = 6
 
 
 class Professor(Base, _DBPerson, _DBRoot, ):
@@ -1501,11 +1518,19 @@ class Professor(Base, _DBPerson, _DBRoot, ):
     @property
     def settings(self):
         string_value = self._settings
-        return json.loads(self._settings) if string_value not in ('None', None) else None
+        from Parser.JsonParser import JsonParser
+        return JsonParser.read(self._settings) if string_value not in ('None', None) else None
 
     @settings.setter
     def settings(self, value):
-        self._settings = value
+        if isinstance(value, str):
+            self._settings = value
+
+        elif isinstance(value, (dict, Settings)):
+            self._settings = json.dumps(value)
+
+        else:
+            raise NotImplementedError(type(value))
 
     @classmethod
     @filter_deleted
@@ -1537,6 +1562,28 @@ class Professor(Base, _DBPerson, _DBRoot, ):
             return [obj.professor]
 
         raise NotImplementedError(type(obj))
+
+    def update_directions(self, local: dict, local_last_update):
+        server = {
+            'in': self._last_update_in,
+            'out': self._last_update_out
+        }
+
+        res = 1
+
+        # локальное обновление происходило раньше чем последний раз сервер отправлял, значит сервер отправлял другому ПК
+        if local['in'] < server['out']:
+            res *= UpdateDirection.from_server_to_local
+
+        # возможно что-то не сохранилось на сервере
+        if local['out'] > server['in']:
+            res *= UpdateDirection.from_local_to_server
+
+        # если обновления данных на локлаьном пк свежее даты последнего обновления сервера
+        if local_last_update > server['in']:
+            res *= UpdateDirection.from_local_to_server
+
+        return res
 
     def updates(self, last_in: datetime = None) -> Dict[str, Dict[str, List]]:
         """
@@ -1654,8 +1701,8 @@ class Student(Base, _DBPerson, _DBRoot):
 
     def __repr__(self):
         return f"<Student(id={self.id}, card_id={self.card_id}," \
-            f" last_name={self.last_name}, first_name={self.first_name}, " \
-            f"middle_name={self.middle_name})>"
+               f" last_name={self.last_name}, first_name={self.first_name}, " \
+               f"middle_name={self.middle_name})>"
 
     @classmethod
     @filter_deleted
@@ -1722,4 +1769,3 @@ class Parent(Base, _DBPerson):
 
 
 Base.metadata.create_all(engine)
-

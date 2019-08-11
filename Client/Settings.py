@@ -183,7 +183,6 @@ class Settings(_Setting):
         if professor.settings is None or professor.settings=='None':
             professor.settings = load_resource('settings.json')
             professor.session().commit()
-        print(professor.settings, type(professor.settings))
         cls.__inst = Settings(professor.settings)
         cls.__inst.professor = professor
 
