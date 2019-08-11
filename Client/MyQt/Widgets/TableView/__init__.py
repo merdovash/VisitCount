@@ -55,33 +55,31 @@ class VisitTableWidget(QWidget):
 
         self.view.select_current_lesson.connect(self.select_current_lesson)
         self.set_current_lesson.connect(self.view.set_current_lesson)
-
-        self.view.show_student_card_id.connect(
-            lambda x:
-            QMessageBox().information(
-                self,
-                "Информация",
-                f'Карта студента {format_name(x, {"gent"})}:\n'
-                f'{"не зарегистрирована" if x.card_id is None else x.card_id}')
-        )
-
-        def student_summary(student, professor, discipline):
-            lessons = list(filter(lambda x: x.completed, Lesson.intersect(professor, discipline, student)))
-            visitation = Visitation.journal(student, lessons)
-            QMessageBox().information(
-                self,
-                "Информация",
-                f'Студент {student.full_name()} {agree_to_gender("посетил", student.full_name())} '
-                f'{len(visitation)} из {len(lessons)} {agree_to_number("занятий", len(lessons))} '
-                f'({round(len(visitation)/len(lessons)*100 if len(visitation) else 0)})'
-                + (' превысив допустимое количество пропусков.' if len(visitation)<len(lessons)-3 else '.')
-            )
-        self.view.show_student_summary.connect(student_summary)
-
+        self.view.show_student_card_id.connect(self.__show_student_card_info)
+        self.view.show_student_summary.connect(self.__show_student_summary)
         self.lesson_start.connect(self.on_lesson_start)
         self.lesson_start.connect(self.view.lesson_start)
         self.lesson_finish.connect(self.view.lesson_finish)
         self.lesson_finish.connect(self.on_lesson_stop)
+
+    def __show_student_card_info(self, student: Student):
+        QMessageBox().information(
+            self,
+            "Информация",
+            f'Карта студента {format_name(student, {"gent"})}:\n'
+            f'{"не зарегистрирована" if student.card_id is None else student.card_id}')
+
+    def __show_student_summary(self, student, professor, discipline):
+        lessons = list(filter(lambda x: x.completed, Lesson.intersect(professor, discipline, student)))
+        visitation = Visitation.journal(student, lessons)
+        QMessageBox().information(
+            self,
+            "Информация",
+            f'Студент {student.full_name()} {agree_to_gender("посетил", student.full_name())} '
+            f'{len(visitation)} из {len(lessons)} {agree_to_number("занятий", len(lessons))} '
+            f'({round(len(visitation) / len(lessons) * 100 if len(visitation) else 0)})'
+            + (' превысив допустимое количество пропусков.' if len(visitation) < len(lessons) - 3 else '.')
+        )
 
     def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)

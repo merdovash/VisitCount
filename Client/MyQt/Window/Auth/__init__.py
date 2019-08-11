@@ -76,8 +76,11 @@ class AuthWindow(BisitorWidget):
 
         Settings.load(professor)
         debug(auth.user)
-        window = MainWindow(professor=professor)
-        window.show()
+        # не смотря на то, что окно аутентификации больше не нужно, создав локальную переменную,
+        # мы заставим сборщик мусора удалить python wrapper of MainWindow поле выхода из функции,
+        # что поломает почти всё
+        self.window = MainWindow(professor=professor)
+        self.window.show()
 
         self.close()
 
