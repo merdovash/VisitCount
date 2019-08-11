@@ -121,7 +121,7 @@ class _SettingQColor(QColor, _SettingCustomLeaf):
 
     @classmethod
     def prepare_value(cls, color_text: str):
-        if color_text is None or color_text == '':
+        if color_text is None or color_text == '' or color_text == 'None':
             return None
 
         if len(color_text) == 7 and color_text[0] == "#":
@@ -132,7 +132,7 @@ class _SettingQColor(QColor, _SettingCustomLeaf):
             if res:
                 return [int(v) for v in res[0] if v != '']
 
-        raise NotImplementedError(f"Не определен способ разбора записи цвета: {color_text}")
+        raise NotImplementedError(f"Не определен способ разбора записи цвета: {color_text} {type(color_text)}")
 
 
 class _SettingInt(int, _SettingCustomLeaf):

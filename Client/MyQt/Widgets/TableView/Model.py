@@ -277,7 +277,7 @@ class VisitModel(QAbstractTableModel):
             else:
                 main_color = QColor(main_color)
 
-            if index.row() != self.selected_row:
+            if index.row() == self.selected_row:
                 main_color = Color.to_accent(main_color)
 
             return main_color

@@ -71,6 +71,7 @@ class ProfessorSettingsApi(ProfessorApi):
         if data['settings'] != professor.settings:
             if professor.settings is None:
                 professor.settings = data['settings']
+                professor.session().commit()
 
                 response.set_data({
                     'msg': 'OK'
@@ -82,6 +83,8 @@ class ProfessorSettingsApi(ProfessorApi):
                     })
                 else:
                     professor.settings = data['settings']
+                    professor.session().commit()
+
                     response.set_data({
                         'msg': 'OK'
                     })

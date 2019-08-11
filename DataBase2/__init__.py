@@ -400,7 +400,10 @@ class _DBTrackedObject(_DBObject):
         :param date:
         :return:
         """
-        return any(i is not None and date < i for i in (self._created, self._updated, self._deleted))
+        from Parser.JsonParser import DATE_FORMAT
+        date = date if isinstance(date, datetime) else datetime.strptime(date, DATE_FORMAT)
+        return any(date < (datetime.strptime(i, DATE_FORMAT) if isinstance(i, str) else i)
+                   for i in without_None(self._created, self._updated, self._deleted))
 
     def last_update(self) -> datetime:
         """
