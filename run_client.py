@@ -1,17 +1,16 @@
-from PyQt5.QtCore import Qt
-
-from Client.MyQt.Window.Auth import AuthWindow
-from Client.src import src, resource
-from Parser import Args
-
 if __name__ == "__main__":
     import os
     import sys
 
     import PyQt5
+
     from PyQt5.QtGui import QFont, QFontDatabase
     from PyQt5.QtWidgets import QApplication, QStyleFactory
     from PyQt5 import QtWebEngineWidgets # обязательно импортировать
+
+    from Client.MyQt.Window.Auth import AuthWindow
+    from Client.src import src, resource
+    from Parser import Args
 
     pyqt = os.path.dirname(PyQt5.__file__)
     QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
