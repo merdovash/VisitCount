@@ -10,7 +10,7 @@ from Client.MyQt.Widgets.Navigation import QAccentCancelButtons
 from Client.MyQt.Widgets.QAttachFile import QAttachFile
 from DataBase2 import VisitationLossReason, Student, Lesson, name, LossReason
 from Domain.FileManager import writeTempFile
-from Domain.functools.Format import inflect
+from Domain.MessageFormat import inflect
 
 
 class QAddLossReason(BisitorWidget):

@@ -40,12 +40,10 @@ class Module:
                         try:
                             authentication = Auth.log_in(**data['user'])
 
-                            self.post(data=data.get('data'), response=response,
-                                      auth=authentication, **kwargs)
+                            result = self.post(data=data.get('data'), auth=authentication, **kwargs)
 
-                        except InvalidLoginException as e:
-                            response.set_error(str(e))
-                        except InvalidPasswordException as e:
+                            response.set_data(result)
+                        except Exception as e:
                             response.set_error(str(e))
                         finally:
                             if authentication is not None:
@@ -67,12 +65,12 @@ class Module:
                 'data': {}
             }
         else:
-            return self.read_data(request.data)
+            return self.__read_data(request.data)
 
-    def post(self, data: dict, response: Response, auth: Auth, **kwargs):
+    def post(self, data: dict, auth: Auth, **kwargs):
         pass
 
-    def read_data(self, data: bytearray):
+    def __read_data(self, data: bytearray):
         return JsonParser.read(data.decode('utf8').replace("'", '"'))
 
 

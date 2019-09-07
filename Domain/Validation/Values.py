@@ -29,12 +29,10 @@ class Get:
         else:
             raise NotImplementedError()
 
-    @classmethod
-    def email(cls, user):
-        return ''
-
     @staticmethod
     def bool(val) -> bool or None:
+        if not val:
+            return False
         if val in ['True', 'true', '1', 1, True]:
             return True
         if val in [False, 'False', 'false', '0', 0, None, 'None', 'null', '']:

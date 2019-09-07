@@ -18,7 +18,7 @@ from DataBase2 import _DBEmailObject, Professor, ContactInfo, Visitation, Lesson
     Administration, Semester, DataView
 from Domain.Notification import src
 from Domain.Notification.HTMLMaker import HTMLMaker
-from Domain.functools.Format import agree_to_number, inflect
+from Domain.MessageFormat import agree_to_number, inflect
 from Parser import Args
 
 

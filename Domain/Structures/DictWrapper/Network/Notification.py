@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 
 from DataBase2 import _DBPerson
 from Domain.Structures.DictWrapper import Structure

@@ -8,8 +8,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, \
 from Client.MyQt.Widgets.TableView.Model import PercentHorizontalModel, PercentVerticalModel, VisitModel
 from Client.MyQt.Widgets.TableView.View import VisitView, PercentView, PercentHorizontalView
 from DataBase2 import Lesson, Auth, Student, Group, Visitation
-from Domain.functools.Format import agree_to_number, agree_to_gender
-from Domain.functools.Format import format_name
+from Domain.MessageFormat import agree_to_number, agree_to_gender, Case
 
 COLUMN_WIDTH = 48
 ROW_HEIGHT = 20
@@ -66,7 +65,7 @@ class VisitTableWidget(QWidget):
         QMessageBox().information(
             self,
             "Информация",
-            f'Карта студента {format_name(student, {"gent"})}:\n'
+            f'Карта студента {student.full_name(Case.РОДИТЕЛЬНЫЙ)}:\n'
             f'{"не зарегистрирована" if student.card_id is None else student.card_id}')
 
     def __show_student_summary(self, student, professor, discipline):
@@ -107,7 +106,7 @@ class VisitTableWidget(QWidget):
         if groups is None or len(groups) == 0 or lessons is None or len(lessons) == 0:
             return
 
-        students = sorted(Student.of(groups), key=lambda x: format_name(x))
+        students = sorted(Student.of(groups), key=lambda x: x.full_name())
         model = VisitModel(lessons, students)
         self.new_visit.connect(model.on_new_visit)
         self.lesson_start.connect(model.on_lesson_start)
@@ -135,7 +134,7 @@ if __name__ == '__main__':
     group = Group.of(auth.user)[0]
 
     v = VisitTableWidget()
-    v.setData(sorted(Lesson.of(group), key=lambda x: x.date), sorted(Student.of(group), key=lambda x: format_name(x)))
+    v.setData(Lesson.of(group), Student.of(group))
 
     v.view.selectColumn(2)
 

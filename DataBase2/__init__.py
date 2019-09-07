@@ -15,7 +15,8 @@ from warnings import warn
 from math import floor
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, \
     String, ForeignKey, Boolean, DateTime, inspect, Enum, Binary, LargeBinary
-from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import StaticPool, QueuePool
@@ -26,6 +27,7 @@ from Client.Settings import Settings
 from Client.src import load_resource
 from DataBase2.SessionInterface import ISession
 from Domain.ArgPars import get_argv
+from Domain.Exception import BisitorException
 from Domain.Exception.Authentication import InvalidPasswordException, \
     InvalidLoginException, InvalidUidException, \
     UnauthorizedError
@@ -33,6 +35,7 @@ from Domain.Validation.Values import Get
 from Domain.functools.Decorator import listed, filter_deleted, sorter, \
     is_iterable, filter_semester
 from Domain.functools.List import without_None
+from Domain.MessageFormat import Case, inflect
 from Parser import IJSON, Args
 
 try:
@@ -430,7 +433,6 @@ class _DBNamedObject(_DBNamed):
     abbreviation: str = Column(String(16))
 
     def full_name(self, case=None) -> str:
-        from Domain.functools.Format import inflect
         if case is not None:
             if self.__type_name__ in self.name:
                 res = f"{inflect(self.__type_name__, case)}{self.name.replace(self.__type_name__, '')}"
@@ -469,14 +471,12 @@ class _DBEmailObject(_DBNamed):
             res.extend(class_.email_subclasses())
         return res
 
-    def appeal(self, case: set = None) -> str:
+    def appeal(self, case: set or Case = None) -> str:
         """
         Возвращает обращение к обьекту
         :param case: падеж
         :return: текст, используемый для обращения к обьекту, например в e-mail
         """
-        from Domain.functools.Format import inflect
-
         return f"{inflect(self.__type_name__, case)} {self.short_name()}"
 
     def has_lessons_since(self, td: timedelta or datetime) -> bool:
@@ -507,9 +507,8 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
 
     _auth = None
 
-    def appeal(self, case=None):
+    def appeal(self, case: Case=None):
         if case is not None:
-            from Domain.functools.Format import inflect
             return f"{inflect(self.__type_name__, case)} {self.full_name(case)}"
         else:
             return f"{self.__type_name__} {self.full_name()}"
@@ -558,7 +557,6 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         :param case: падеж, по умолчанию Именительный
         :return: str
         """
-        from Domain.functools.Format import inflect
         if is_none(self.middle_name):
             res = f"{self.last_name} {self.first_name}"
         else:
@@ -570,7 +568,10 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         return res.title()
 
     def short_name(self):
-        return f'{self.last_name} {self.first_name[0]}.' + (f' {self.middle_name[0]}.' if len(self.middle_name) else '')
+        res = f'{self.last_name} {self.first_name[0]}.'
+        if self.middle_name:
+            res += f' {self.middle_name[0]}.'
+        return res
 
     @property
     def auth(self):
@@ -683,10 +684,9 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
 
     def appeal(self, case=None):
         if case is not None:
-            from Domain.functools.Format import inflect
-            return f"{inflect('методист', case)} {self.full_name({'gent'})}"
+            return f"{inflect('методист', case)} {self.full_name(Case.РОДИТЕЛЬНЫЙ)}"
         else:
-            return f"методист {self.full_name({'gent'})}"
+            return f"методист {self.full_name(Case.РОДИТЕЛЬНЫЙ)}"
 
     groups: List['Group'] = relationship('Group', backref=backref('faculty'))
     admins: List['Administration'] = association_proxy('_admins', 'admin')
@@ -1095,12 +1095,16 @@ class Auth(Base, _DBTrackedObject):
         sess = Session()
 
         query = sess.query(Auth).filter(Auth.login == login)
-        if query.first():
-            auth = query.filter(Auth.password == password).first()
-            if auth:
-                return auth
-            raise InvalidPasswordException()
-        raise InvalidLoginException()
+        try:
+            if query.first():
+                auth = query.filter(Auth.password == password).first()
+                if auth:
+                    return auth
+                raise InvalidPasswordException()
+            raise InvalidLoginException()
+        except OperationalError:
+            raise BisitorException("Локальная база дынных повреждена, удалите файл db.db")
+            # TODO разобраться с проблемой автоматически
 
     @staticmethod
     def log_in_by_uid(uid):
@@ -1317,12 +1321,10 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         return self.date.strftime("%Y.%m.%d %H:%M")
 
     def repr(self):
-        from Domain.Data import names_of_groups
-
         return f"""{self.type.full_name()} {self.date}
         дисциплина: {self.discipline.name}
         преподаватель: {self.professor.full_name()}
-        группы: {names_of_groups(self.groups)}
+        группы: {Group.names(self.groups)}
         кабинет: {self.room.short_name()}"""
 
     @classmethod
@@ -1461,7 +1463,6 @@ class Administration(Base, _DBPerson):
 
     def appeal(self, case=None):
         if case is not None:
-            from Domain.functools.Format import inflect
             return f"{inflect('представитель', case)} администрации {self.full_name(case)}"
         else:
             return f"{self.__type_name__} {self.full_name()}"
@@ -1684,6 +1685,15 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
 
     def filter(self, lessons: List['Lesson']):
         return [l for l in lessons if self in Group.of(l)]
+
+    @classmethod
+    def names(cls, groups: List['Group'] or 'Groups'):
+        if isinstance(groups, (list, set, _AssociationList, frozenset)):
+            return ', '.join([x.name for x in  groups])
+        elif isinstance(groups, Group):
+            return groups.name
+        else:
+            raise NotImplementedError(type(groups))
 
 
 class Student(Base, _DBPerson, _DBRoot):

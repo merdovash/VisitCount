@@ -6,8 +6,7 @@ from PyQt5.QtGui import QImage, QPen, QColor
 from PyQt5.QtWidgets import QComboBox
 
 from Client.MyQt.ColorScheme import Color
-from DataBase2 import Lesson, _Displayable, name
-from Domain.Data import names_of_groups
+from DataBase2 import Lesson, _Displayable, name, Group
 from Domain.functools.Format import type_name
 
 T = TypeVar('T')
@@ -137,7 +136,7 @@ class QMMultipleComboBox(QMComboBox):
         return sorted([l for d, l in [(self.filter([l])[0], l) for l in lessons] if d == self.current()])
 
     def filter(self, lessons):
-        data = sorted(list(set([frozenset(self.type.of(l)) for l in lessons])), key=names_of_groups)
+        data = sorted(list(set([frozenset(self.type.of(l)) for l in lessons])), key=Group.names)
         data = [list(d) for d in data]
         return data
 

@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-from Domain.functools.Format import inflect
+from Domain.MessageFormat import inflect
+from Parser import Args
 
 
 class HTMLMaker:

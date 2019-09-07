@@ -3,6 +3,7 @@ from sqlalchemy import or_
 from DataBase2 import Auth, Professor, _DBTrackedObject
 from Domain.Structures.DictWrapper.Network.Synch import Changes
 from Modules import Module
+from Modules.API import AccessError
 from Modules.LastUpdateInfo import address
 from Server.Response import Response
 
@@ -11,9 +12,10 @@ class LastUpdateInfo(Module):
     def __init__(self, app, request):
         super().__init__(app, request, address)
 
-    def post(self, data: dict, response: Response, auth: Auth, **kwargs):
+    def post(self, data: dict, auth: Auth, **kwargs):
         professor: Professor = auth.user
-        assert isinstance(professor, Professor)
+        if not isinstance(professor, Professor):
+            raise AccessError()
 
         last_update = professor._last_update_out
         items = {'created': {}, 'updated': {}, 'deleted': {}}

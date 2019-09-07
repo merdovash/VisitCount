@@ -23,19 +23,10 @@ def valid_card(user):
     return user.card_id is not None and user.card_id != 'None'
 
 
-def names_of_groups(groups: List[Group]) -> str:
-    if isinstance(groups, (list, set, _AssociationList, frozenset)):
-        return ', '.join(list(map(lambda x: x.name, groups)))
-    elif isinstance(groups, Group):
-        return groups.name
-    else:
-        raise NotImplementedError(type(groups))
-
-
 def student_info(student: Student) -> str:
     assert student is not None, f'student object {student} is None'
 
-    return f'{student.last_name} {student.first_name} {student.middle_name}, {names_of_groups(student.groups)}'
+    return f'{student.last_name} {student.first_name} {student.middle_name}, {Group.names(student.groups)}'
 
 
 def lessons_of(professor, groups=None, discipline=None, semester=None):

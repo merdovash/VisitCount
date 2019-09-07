@@ -10,7 +10,6 @@ from Client.MyQt.ColorScheme import Color
 from Client.Settings import Settings
 from DataBase2 import Visitation, Lesson, Student
 from Domain.Validation.Values import Validate
-from Domain.functools.Format import format_name
 
 COLUMN_WIDTH = 48
 ROW_HEIGHT = 20
@@ -307,7 +306,7 @@ class VisitModel(QAbstractTableModel):
                 'Не посещено (уважительная причина)'
             )[status]
 
-    def itemData(self, index: QModelIndex):
+    def itemData(self, index: QModelIndex) -> Visitation or None:
         lesson = self.lessons[index.column()]
         if lesson.completed:
             student = self.students[index.row()]
@@ -339,7 +338,7 @@ class VisitModel(QAbstractTableModel):
     def headerData(self, p_int, orientation, role=None):
         if role == Qt.DisplayRole:
             if orientation == Qt.Vertical:
-                return format_name(self.students[p_int])
+                return self.students[p_int].short_name()
             if orientation == Qt.Horizontal:
                 return rept(self.lessons[p_int])
         if role == self.CardIdRole:

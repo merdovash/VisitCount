@@ -3,7 +3,7 @@ from typing import List
 
 from PyQt5.QtCore import pyqtSlot, Qt, pyqtSignal
 from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QApplication, QLayout, QSpacerItem
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QApplication, QLayout
 
 from Client.MyQt.Widgets import QImageWidget
 from Client.MyQt.Widgets.LoadData import Step
@@ -34,7 +34,7 @@ class QStepsWidget(QWidget):
 
         self.setLayout(super_layout)
         palette = QPalette()
-        palette.setColor(QPalette.Background, QColor(200,200,200))
+        palette.setColor(QPalette.Background, QColor(200, 200, 200))
         self.setAutoFillBackground(True)
         self.setPalette(palette)
 
@@ -61,7 +61,7 @@ class QStepsWidget(QWidget):
 
     def _clear(self):
         for item in self.items:
-            if isinstance(item , QWidget):
+            if isinstance(item, QWidget):
                 self.main_layout.removeWidget(item)
             elif isinstance(item, QLayout):
                 self.main_layout.removeItem(item)

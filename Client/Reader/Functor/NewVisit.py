@@ -6,8 +6,7 @@ from sqlalchemy import inspect
 
 from Client.MyQt.Widgets.ComboBox import QMComboBox
 from Client.Reader.SerialReader import RFIDReader
-from DataBase2 import Lesson, Student, Visitation
-from Domain.Data import names_of_groups
+from DataBase2 import Lesson, Student, Visitation, Group
 from Domain.Exception import StudentNotFoundException, TooManyStudentsFoundException, BisitorException
 
 from Parser import Args
@@ -30,7 +29,7 @@ class StudentSelector(QWidget):
                             "Выберите студента для введеной карты из списка ниже.")
 
         self.combo = QMComboBox(Student)
-        self.combo.formatter = lambda student: f'{names_of_groups(student.groups)} | {student.full_name()}'
+        self.combo.formatter = lambda student: f'{Group.names(student.groups)} | {student.full_name()}'
 
         self.show_all_students = QCheckBox("Показать всех студентов")
         self.show_all_students.toggled.connect(fill_combo)
@@ -76,7 +75,7 @@ class MarkVisitProcess(QObject):
 
         self.students = sorted(
                 students,
-                key=lambda student: f'{names_of_groups(student.groups)} | {student.full_name()}')
+                key=lambda student: f'{Group.names(student.groups)} | {student.full_name()}')
         self.lesson = lesson
 
         self.session = inspect(lesson).session

@@ -6,12 +6,11 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFormLayout, QLineEdit
     QCheckBox, QTimeEdit, QSpinBox
 
 from Client.MyQt.Widgets.ComboBox.CheckComboBox import CheckableComboBox
-from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
-from Client.MyQt.Widgets.Network.UpdateDataViews import UpdateDataViews
 from Client.MyQt.utils import check_connection
 from DataBase2 import _DBEmailObject, DataView, ContactInfo, ContactViews
-from Domain.functools.Format import agree_to_number
+from Domain.MessageFormat import agree_to_number
+from Modules.API.DataView import DataViewAPI
 
 
 class QContactManagerWindow(QWidget):
@@ -168,7 +167,7 @@ class QContactManagerWindow(QWidget):
                     if len(new) else 'Уже загружены всё виды.')
 
             if check_connection():
-                self.manager = UpdateDataViews(user, apply, lambda x: print(x))
+                self.manager = DataViewAPI.load(user, apply, lambda x: print(x))
             else:
                 QMessageBox().information(
                     self,

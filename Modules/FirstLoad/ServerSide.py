@@ -3,6 +3,7 @@ from DataBase2 import Professor, Lesson, Group, LessonsGroups, \
 from Domain.Exception.Authentication import UnauthorizedError
 from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
 from Modules import Module
+from Modules.API import AccessError
 from Modules.FirstLoad import address
 
 
@@ -10,13 +11,11 @@ class FirstLoadModule(Module):
     def __init__(self, app, request):
         super().__init__(app, request, address)
 
-    def post(self, data, response, auth, **kwargs):
+    def post(self, data, auth, **kwargs):
         if auth.user_type == 1:
-            response.set_data(
-                self.first_load_data(auth)
-            )
+            return self.first_load_data(auth)
         else:
-            response.set_error('no such privileges')
+            raise AccessError()
 
     def first_load_data(self, auth):
         professor = auth.user

@@ -1,24 +1,22 @@
 from collections import defaultdict
 from typing import Dict, Type
 
-from DataBase2 import Auth, Professor, _DBTrackedObject, Administration
+from DataBase2 import Auth, Professor, _DBTrackedObject
 from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes, ServerUpdateData
 from Modules import Module
 from Modules.Synch import address
-from Server.Response import Response
 
 
 class SynchModule(Module):
     def __init__(self, app, request):
         super().__init__(app, request, address)
 
-    def post(self, data: dict, response: Response, auth: Auth, **kwargs):
+    def post(self, data: dict, auth: Auth, **kwargs):
         """
         Находит все обновления для преподавателя
 
 
         :param data:
-        :param response:
         :param auth:
         :param kwargs:
         :return:
@@ -106,4 +104,4 @@ class SynchModule(Module):
         session.commit()
 
         # формируем ответ клиенту
-        response.set_data(ServerUpdateData(changed_id=changed, updates=server_updates, skiped=skiped))
+        return ServerUpdateData(changed_id=changed, updates=server_updates, skiped=skiped)

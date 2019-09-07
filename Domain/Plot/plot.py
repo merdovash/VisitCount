@@ -10,7 +10,8 @@ from scipy import stats
 
 from DataBase2 import Lesson, Visitation, Student, _DBObject, name, _DBRoot, Semester
 from Domain.functools.Decorator import is_iterable
-from Domain.functools.Format import agree_to_number, inflect, type_name
+from Domain.functools.Format import type_name
+from Domain.MessageFormat import agree_to_number, inflect
 
 
 def gaussian(x, mean, amplitude=0., standard_deviation=1.):

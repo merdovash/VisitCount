@@ -24,7 +24,7 @@ class NewUserForm(QWidget):
 
         password = QLineEdit()
         password.setEchoMode(QLineEdit.Password)
-        form.addRow(QLabel('Пароль'), password)
+        form.addRow(QLabel('Пароль*'), password)
 
         last_name = QLineEdit()
         form.addRow(QLabel('Фамилия*'), last_name)
@@ -64,6 +64,7 @@ class NewUserForm(QWidget):
                     QMessageBox().information(self, 'Созданиеучетной записи', 'Логин уже занят. Введите дургой логин')
                     login.setText('')
                 else:
+                    QMessageBox().information(self, 'Созданиеучетной записи', f'Неизвестная ошибка {response.message}')
                     print(response.message)
 
             val = {'Логин': login.text() != '',

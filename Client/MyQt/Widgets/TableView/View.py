@@ -11,7 +11,7 @@ from Client.MyQt.Widgets.TableView import VisitModel
 from Client.MyQt.Widgets.TableView.Model import VisitItemDelegate
 from Client.Reader.Functor.RegisterCardProcess import RegisterCardProcess
 from DataBase2 import Lesson, Visitation, Student, VisitationLossReason
-from Domain.functools.Format import agree_to_gender
+from Domain.MessageFormat import agree_to_gender
 
 
 class VisitView(QTableView):

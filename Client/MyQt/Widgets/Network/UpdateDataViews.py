@@ -1,7 +1,4 @@
-from typing import Dict, Set
-
 from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
-from DataBase2 import DataView
 from Modules.UpdateDataViews import DataViewsResponse
 
 
@@ -20,5 +17,3 @@ def UpdateDataViews(user, on_finish, on_error):
         on_error)
 
     return manager
-
-

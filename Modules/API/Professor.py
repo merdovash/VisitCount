@@ -5,7 +5,7 @@ import requests
 from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest, BisitorRequest
 from Client.MyQt.utils import check_connection
 from DataBase2 import Professor, Auth
-from Modules.API import API
+from Modules.API import API, AccessError
 from Parser import Args
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
@@ -51,21 +51,20 @@ class ProfessorSettingsApi(ProfessorApi):
 
                 on_finish(result)
 
-    def post(self, data: dict, response: Response, auth: Auth, **kwargs):
+    def post(self, data: dict, auth: Auth, **kwargs):
         """
 
         :param data: {
             'settings': dict,
             'last_update': datetime
         }
-        :param response:
         :param auth:
         :param kwargs:
         :return:
         """
         user = auth.user
         if not isinstance(user, Professor):
-            response.set_error("Только для преподавателей")
+            raise AccessError('Только для преподавателей')
 
         professor = user
         if data['settings'] != professor.settings:
@@ -73,18 +72,12 @@ class ProfessorSettingsApi(ProfessorApi):
                 professor.settings = data['settings']
                 professor.session().commit()
 
-                response.set_data({
-                    'msg': 'OK'
-                })
+                return
             else:
                 if professor.has_local_updates(data['last_update']):
-                    response.set_data({
-                        'settings': professor.settings
-                    })
+                    return {'settings': professor.settings}
                 else:
                     professor.settings = data['settings']
                     professor.session().commit()
 
-                    response.set_data({
-                        'msg': 'OK'
-                    })
+                    return
