@@ -1,4 +1,4 @@
-from DataBase2 import Session, Auth, Professor, ContactInfo
+from DataBase2 import Session, Auth, Professor, ContactInfo, UserType
 from Modules.NewProfessor import address, NewProfessorResponse
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
@@ -32,7 +32,7 @@ def init(app, request):
         auth = Auth.new(session,
                         login=data['data']['login'],
                         password=data['data']['password'],
-                        user_type=Auth.Type.PROFESSOR,
+                        user_type=UserType.PROFESSOR,
                         user_id=professor.id)
 
         session.commit()

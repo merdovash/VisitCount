@@ -1,5 +1,6 @@
 from DataBase2 import Professor, Lesson, Group, LessonsGroups, \
-    StudentsGroups, Student, Discipline, Visitation, Auth, Administration, Parent, _DBObject, _DBList, Semester
+    StudentsGroups, Student, Discipline, Visitation, Auth, Administration, Parent, _DBObject, _DBList, Semester, \
+    UserType
 from Domain.Exception.Authentication import UnauthorizedError
 from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
 from Modules import Module
@@ -27,7 +28,7 @@ class FirstLoadModule(Module):
             if cls.__name__ == Auth.__name__:
                 main_data[cls.__name__] = self.session. \
                     query(Auth). \
-                    filter(Auth.user_type == Auth.Type.PROFESSOR). \
+                    filter(Auth.user_type == UserType.PROFESSOR). \
                     filter(Auth.user_id == professor_id). \
                     first()
             else:

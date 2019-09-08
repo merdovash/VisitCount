@@ -1,11 +1,10 @@
 flask
-flask-restfull
 pymorphy2
 sqlalchemy
 pyserial
 numpy
 pandas
-mysqlclient
+Psycopg2
 premailer
 beautifulsoup4
 xlrd

@@ -8,7 +8,7 @@ from Client.MyQt.Widgets import QSeparator
 from Client.MyQt.Widgets.LoadData.AbstractWizard import Step, AbstractLoadingWizard
 from Client.MyQt.Widgets.LoadData.LessonsLoad import LessonLoadingWidget
 from Client.MyQt.Widgets.LoadData.StepsWidget import QStepsWidget
-from DataBase2 import Auth, Session, Professor, Lesson
+from DataBase2 import Auth, Session, Professor, Lesson, UserType
 
 
 class LoadingWizardWindow(QMainWindow):
@@ -117,7 +117,7 @@ class LoadingWizardWidget(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    auth = Auth.get_or_create(login='VAE', password='123456', user_id=1, user_type=Auth.Type.PROFESSOR)
+    auth = Auth.get_or_create(login='VAE', password='123456', user_id=1, user_type=UserType.PROFESSOR)
     professor = Professor.get_or_create(id=1)
 
     w = LoadingWizardWindow(professor=auth.user)

@@ -6,12 +6,8 @@ import os
 from flask import Flask, make_response, request, send_file, send_from_directory
 
 from Modules import API
-from Modules import SourceChecker
-from Modules.CabinetLogIn import ServerSide as Cabinet
 from Modules.FirstLoad.ServerSide import FirstLoadModule
-from Modules.Index import ServerSide as Index
 from Modules.Synch.ServerSide import SynchModule
-from Modules.VisitLandingPage import ServerSide as VisitLandingPage
 from Modules.NewProfessor import ServerSide as NewProfessor
 from Modules.UpdateDataViews import ServerSide as GetDataViews
 from Parser import Args
@@ -23,10 +19,6 @@ app = Flask(__name__, static_folder=path + "/static", template_folder=path + '/t
 
 # load modules
 
-SourceChecker.init(app)
-Cabinet.init(app)
-Index.init(app)
-VisitLandingPage.init(app)
 NewProfessor.init(app, request)
 SynchModule(app, request)
 GetDataViews.init(app, request)

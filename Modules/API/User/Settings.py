@@ -1,21 +1,13 @@
-from datetime import datetime
-
-import requests
-
-from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest, BisitorRequest
+from Client.MyQt.Widgets.Network.BisitorRequest import BisitorRequest
 from Client.MyQt.utils import check_connection
 from DataBase2 import Professor, Auth
-from Modules.API import API, AccessError
+from Modules.API import AccessError
+from Modules.API.User import UserAPI
 from Parser import Args
 from Parser.JsonParser import JsonParser
-from Server.Response import Response
 
 
-class ProfessorApi(API):
-    address = API.address + '/professor'
-
-
-class ProfessorSettingsApi(ProfessorApi):
+class SettingsAPI(UserAPI):
     """
     Протокол синхронизации параметров отображения таблицы посещений
 
@@ -27,7 +19,7 @@ class ProfessorSettingsApi(ProfessorApi):
 
     """
 
-    address = ProfessorApi.address + '/settings'
+    __address__ = UserAPI.__address__ + '/settings'
 
     @classmethod
     def synch(cls, professor: Professor):
@@ -40,7 +32,7 @@ class ProfessorSettingsApi(ProfessorApi):
                         professor.settings = result_data['settings']
 
                 result = BisitorRequest(
-                    Args().host + cls.address,
+                    cls.__address__,
                     professor,
                     data={
                         'settings': professor.settings,

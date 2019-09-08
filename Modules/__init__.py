@@ -1,3 +1,5 @@
+import traceback
+
 from DataBase2 import Auth, Session
 from Domain.Exception.Authentication import InvalidLoginException, InvalidPasswordException
 from Parser.JsonParser import JsonParser
@@ -16,6 +18,9 @@ class Module:
         - распаковка сообщения
         - упакаовка сообщения
     """
+
+    __auth_require__ = True
+
     def __init__(self, app, request, address, func=None, methods=default_methods, form=False):
         self._is_form = form
 
@@ -38,13 +43,15 @@ class Module:
                     if data is not None:
                         authentication = None
                         try:
-                            authentication = Auth.log_in(**data['user'])
+                            if self.__auth_require__:
+                                authentication = Auth.log_in(**data['user'])
 
                             result = self.post(data=data.get('data'), auth=authentication, **kwargs)
 
                             response.set_data(result)
                         except Exception as e:
-                            response.set_error(str(e))
+                            response.set_error(f'{str(type(e))}: {str(e)}')
+                            traceback.print_tb(e)
                         finally:
                             if authentication is not None:
                                 authentication.user.session().close()

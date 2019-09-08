@@ -1,7 +1,10 @@
+from urllib.parse import urlparse
+
 from PyQt5.QtCore import QUrl, pyqtSignal
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 from PyQt5.QtWidgets import QMessageBox
 
+from DataBase2 import Auth, _DBPerson
 from Parser import Args
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
@@ -11,12 +14,21 @@ def pack(user, data):
     return dict(user=user.auth.data(), data=data)
 
 
+def get_full_address(address):
+    u = urlparse(address)
+
+    if not u.netloc:
+        u = u._replace(netloc=Args().host)
+
+    if not u.scheme:
+        u = u._replace(scheme='http')
+
+    return u.geturl()
+
+
 class _QBisitorRequest(QNetworkRequest):
     def __init__(self, *__args):
-        url = __args[0]
-        if isinstance(url, str):
-            url = QUrl(url)
-        super().__init__(url, *__args[1:])
+        super().__init__(*__args)
         self.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
 
 
@@ -24,13 +36,20 @@ class QBisitorAccessManager(QNetworkAccessManager):
     response = pyqtSignal('PyQt_PyObject')
     error = pyqtSignal('PyQt_PyObject')
 
-    def __init__(self, professor, response_type):
+    def __init__(self, user, response_type):
         super().__init__()
 
-        if professor is not None:
-            self.data = {
-                'user': professor.auth.data()
-            }
+        if user is not None:
+            if isinstance(user, Auth):
+                self.data = {
+                    'user': user.data()
+                }
+            elif issubclass(type(user), _DBPerson):
+                self.data = {
+                    'user': user.auth.data()
+                }
+            else:
+                raise TypeError(type(user))
         else:
             self.data = {}
         self.response_type = response_type
@@ -39,7 +58,8 @@ class QBisitorAccessManager(QNetworkAccessManager):
     def post(self, request: QNetworkRequest, data=None, *__args):
         self.data['data'] = data
         print('request', request.url())
-        return super().post(request, bytearray(JsonParser.dump(self.data), encoding='utf-8'), *__args)
+        q_data = bytearray(JsonParser.dump(self.data), encoding='utf-8')
+        return super().post(request, q_data, *__args)
 
     def on_finish(self, reply: QNetworkReply):
         if reply.error() == QNetworkReply.NoError:
@@ -60,23 +80,17 @@ class QBisitorAccessManager(QNetworkAccessManager):
 class QBisitorRequest:
     response_type = None
 
-    def __init__(self, address, user, data, on_finish, on_error=None, response_type=None):
-        host = Args().host
-        if host[:4] != 'http':
-            host = 'http://' + host
-        if host not in address:
-            url = host + address
-        else:
-            url = address
-
-        manager = QBisitorAccessManager(user, response_type if response_type is not None else self.response_type)
-        request = _QBisitorRequest(url)
-        manager.response.connect(on_finish)
+    def __init__(self, address, user, data, *, on_finish, on_error=None, response_type=None):
+        self.manager = QBisitorAccessManager(user, response_type if response_type is not None else self.response_type)
+        self.request = _QBisitorRequest()
+        self.request.setUrl(QUrl(get_full_address(address)))
+        self.manager.response.connect(on_finish)
         if on_error is not None:
-            manager.error.connect(on_error)
+            self.manager.error.connect(on_error)
         else:
-            manager.error.connect(lambda x: QMessageBox().information(None, "Загрузка информации с сервера", x.message))
-        result = manager.post(request, data)
+            self.manager.error.connect(lambda x: QMessageBox().information(None, "Загрузка информации с сервера",
+                                                                       x.message))
+        result = self.manager.post(self.request, data)
 
 
 def BisitorRequest(address, user, data, on_finish=None, on_error=None):
@@ -85,7 +99,7 @@ def BisitorRequest(address, user, data, on_finish=None, on_error=None):
     data = pack(user, data)
     print(bytes(JsonParser.dump(data), encoding='utf8'))
     request = Request(
-        address,
+        get_full_address(address),
         bytes(JsonParser.dump(data), encoding='utf8'),
         headers={'Content-Type': 'application/json"'})
     res = urlopen(request).read().decode()

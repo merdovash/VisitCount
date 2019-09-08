@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFormLayout, QLineEdit
 
 from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
 from Client.MyQt.Widgets.QLink import QLink
+from Modules.API.User.Professor.NewProfessor import ProfessorCreateAPI
 from Modules.NewProfessor import NewProfessorResponse
 
 
@@ -79,9 +80,7 @@ class NewUserForm(QWidget):
                     f'Для продолжения необходимо заполнить поля {", ".join([key for key, value in val.items() if not value])}'
                 )
             else:
-                self.manager = QBisitorRequest(
-                    '/new_professor',
-                    None,
+                self.manager = ProfessorCreateAPI.create(
                     {
                         'login': login.text(),
                         'password': password.text(),
@@ -91,8 +90,7 @@ class NewUserForm(QWidget):
                         'email': email.text()
                     },
                     on_success,
-                    on_error,
-                    response_type=NewProfessorResponse
+                    on_error
                 )
         ok_btn.clicked.connect(on_ok)
 

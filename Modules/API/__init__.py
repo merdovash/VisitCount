@@ -16,15 +16,17 @@ class NoDataError(APIError):
 
 
 def init(app, request):
-    from Modules.API.Group import GroupApi
-    from Modules.API.Professor import ProfessorSettingsApi
+    from Modules.API.Group import GroupAPI
+    from Modules.API.User.FirstLoad import FirstLoad
+    from Modules.API.User.Professor.NewProfessor import ProfessorCreateAPI
+    from Modules.API.User.Settings import SettingsAPI
 
-    for init_api in [GroupApi, ProfessorSettingsApi]:
-        init_api(app, request, init_api.address)
+    for init_api in [GroupAPI, SettingsAPI, FirstLoad, ProfessorCreateAPI]:
+        init_api(app, request, init_api.__address__)
 
 
 class API(Module):
-    address = '/api'
+    __address__ = '/api'
 
     def __init__(self, app, request, address):
         super().__init__(app, request, address)

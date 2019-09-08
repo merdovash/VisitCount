@@ -14,19 +14,22 @@ class Structure(IJSON):
         return str(cls).split("'")[1]
 
     @staticmethod
-    def load(data: dict, type_name: str = None, class_: Type['Structure'] = None) -> 'Structure':
+    def load(data: dict, type_name: str = None, class_: Type['Structure'] = None) -> 'Structure' or dict:
         import Modules
-        if class_ is None and type_name is not None:
-            class_: Type[Structure] = eval(list(filter(
-                lambda x: x == type_name,
-                [str(t).split('\'')[1] for t in Structure.__subclasses__()]))[0])
-        if class_ is None:
-            raise TypeError(f'could not find class {type_name}')
+        try:
+            if class_ is None and type_name is not None:
+                class_: Type[Structure] = eval(list(filter(
+                    lambda x: x == type_name,
+                    [str(t).split('\'')[1] for t in Structure.__subclasses__()]))[0])
+            if class_ is None:
+                raise TypeError(f'could not find class {type_name}')
 
-        if issubclass(class_, HiddenStructure):
-            return class_(data)
-        else:
-            return class_(**data)
+            if issubclass(class_, HiddenStructure):
+                return class_(data)
+            else:
+                return class_(**data)
+        except IndexError:
+            return data
 
 
 class HiddenStructure(Structure):

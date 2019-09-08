@@ -1,6 +1,13 @@
+import enum
+
 from Domain.Exception import BisitorException
 
 _args = None
+
+
+class Side(enum.Enum):
+    client = 0
+    server = 1
 
 
 class IJSON:
@@ -21,6 +28,7 @@ def Args(side=None):
             parser.add_argument('--css', type=str, default=src.qss, help='you can disable css')
 
             _args = parser.parse_args()
+            _args.side = Side.client
 
         elif side == 'server':
             import logging
@@ -48,6 +56,7 @@ def Args(side=None):
             parser.add_argument('--database-server', type=str, dest="database_server", default='mysql', choices=['mysql', 'postgres'])
 
             _args = parser.parse_args()
+            _args.side = Side.server
         else:
             raise BisitorException("Необходимо обьявить тип приложения")
     return _args

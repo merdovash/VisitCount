@@ -77,9 +77,10 @@ class Response(Structure):
             if class_ is not None:
                 self.data = Structure.load(kwargs.get('data', {}), class_=class_)
 
-            elif kwargs.get('data_type', None) is not None:
-                self.data_type: str = kwargs.get('data_type', None)
-                self.data = Structure.load(kwargs.get('data', {}), self.data_type)
+            # TODO пофиксить
+            # elif kwargs.get('data_type', None) is not None:
+            #     self.data_type: str = kwargs.get('data_type', None)
+            #     self.data = Structure.load(kwargs.get('data', {}), self.data_type)
 
             else:
                 self.data = kwargs.get('data')

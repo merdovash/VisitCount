@@ -7,10 +7,10 @@ from Server import Response
 
 
 class DataViewAPI(API):
-    address = API.address + '/data_view'
+    __address__ = API.__address__ + '/data_view'
 
     def __init__(self, app, request):
-        super().__init__(app, request, self.address)
+        super().__init__(app, request, self.__address__)
 
     @classmethod
     def load(cls, user, on_finish, on_error):

@@ -1,3 +1,5 @@
+# encoding=utf8
+
 """
 This module contains static class methods to read and load json.
 
@@ -12,7 +14,6 @@ from enum import Enum
 from sqlalchemy.ext.associationproxy import _AssociationList
 
 from Domain.Exception.Net import InvalidPOSTDataException
-from Domain.Structures.DictWrapper import Structure
 from Parser import IJSON
 
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -71,9 +72,9 @@ class JsonParser:
             res = "{"
             for key in obj.keys():
                 value = obj[key]
-                if isinstance(value, (int, str, bool, float)) or value is None:
+                if isinstance(value, (int, str, float)):
                     if isinstance(obj, str):
-                        res += '"'+key+'":"' + value.replace("\"", "\\\"")+'",'
+                        res += '"'+key+'":"' + value.replace("\"", "\\\"").replace('None', 'null')+'",'
                     else:
                         res += f'"{key}":"{value}",'
                 else:
@@ -91,14 +92,20 @@ class JsonParser:
                 res = res[:-1] if len(res) > 1 else res
             res += "]"
 
-        elif isinstance(obj, Structure.__class__):
-            res = f'"{obj.class_name()}"'
+        elif isinstance(obj, type):
+            if hasattr(obj, 'class_name'):
+                res = f'"{obj.class_name()}"'
+            else:
+                res = f'"{obj.__name__}"'
 
         elif isinstance(obj, IJSON) or hasattr(obj, 'to_json'):
             res = obj.to_json()
 
-        elif isinstance(obj, (int, str, bool, float)) or obj is None:
+        elif isinstance(obj, (int, str, float)) or obj is None:
             res = "\"" + obj.replace("\"", "\\\"") if isinstance(obj, str) else str(obj) + "\""
+
+        elif isinstance(obj, bool):
+            res = 'true' if obj else 'false'
 
         elif isinstance(obj, (datetime, date)):
             res = f'"{obj.strftime("%Y-%m-%d %H:%M:%S")}"'
@@ -107,6 +114,10 @@ class JsonParser:
             res = f'"{str(obj).split(".")[1]}"'
 
         else:
-            res = json.dumps(encode(obj)).encode("utf-8")
+            res = json.dumps(encode(obj), ensure_ascii=False).encode("utf-8")
 
         return res
+
+
+if __name__ == '__main__':
+    print(JsonParser.read('{"request_type":"api/user/first_load","status":"OK","data":{"auth":{"id":"1","login":"Vlad","password":"123456","uid":"None","user_type":"PROFESSOR","user_id":"1"},"professor":[{"id":"1","_created":"2019-09-08 11:39:02","_updated":"2019-09-08 11:39:02","_is_deleted":"False","_deleted":"None","last_name":"Щекочихин","first_name":"Владсилав","middle_name":"","card_id":"None","_last_update_in":"2019-09-08 11:39:02","settings":"{\"colors\": {\"_type\": \"Area\", \"title\": \"Цвета Журнала посещений\", \"visit\": {\"_type\": \"color\", \"title\": \"Цвет посещения\", \"value\": \"rgb(138, 226, 52)\", \"default\": \"rgb(240, 240, 0)\"}, \"sub_visit\": {\"_type\": \"color\", \"title\": \"Цвет уважительного пропуска\", \"value\": None, \"default\": \"rgb(255, 238, 238)\"}, \"not_visited\": {\"_type\": \"color\", \"title\": \"Цвет пропуска\", \"value\": \"rgb(226, 61, 135)\", \"default\": \"rgb(255, 255, 255)\"}, \"not_completed\": {\"_type\": \"color\", \"title\": \"Цвет непроведенного занятия\", \"value\": None, \"default\": \"rgb(199, 199, 199)\"}, \"good_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения хорошего уровня посещений\", \"value\": \"rgb(115, 210, 22)\", \"default\": \"rgb(0, 255, 0)\"}, \"bad_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения плохого уровня посещений\", \"value\": \"rgb(239, 41, 41)\", \"default\": \"rgb(255, 0, 0)\"}, \"avg_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения среднего уровня посещений\", \"value\": None, \"default\": \"rgb(255, 255, 255)\"}, \"missing_card\": {\"_type\": \"color\", \"title\": \"Цвет студентов без зарегистрованной карты\", \"value\": None, \"default\": \"rgb(121, 22, 22)\"}}}","contact_info_id":"1"}],"data":{"Lesson":[],"Visitation":[],"StudentsParents":[],"Faculty":[],"VisitationLossReason":[],"LessonType":[],"Discipline":[],"Student":[],"Building":[],"DataView":[],"StudentsGroups":[],"File":[],"Administration":[],"Department":[],"Group":[],"LessonsGroups":[],"ContactViews":[],"Parent":[],"Semester":[],"Room":[],"ContactInfo":[{"id":"1","_created":"2019-09-08 11:39:02","_updated":"2019-09-08 11:39:02","_is_deleted":"False","_deleted":"None","email":"","auto":"False","last_auto":"2010-01-01 00:00:00"}],"DepartmentProfessors":[]}},"message":null,"data_type":"Domain.Structures.DictWrapper.Network.FirstLoad.ServerFirstLoadData"}'))

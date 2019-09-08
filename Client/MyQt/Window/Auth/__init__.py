@@ -4,10 +4,11 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from Client.MyQt.Widgets import Message, BisitorWidget
 from Client.MyQt.Window.Main import MainWindow
 from Client.Settings import Settings
+from Domain.Exception import BisitorException
 from Domain.Exception.Authentication import InvalidLoginException
-from Modules.API.Professor import ProfessorSettingsApi
-from Modules.FirstLoad.ClientSide import InitialDataLoader
-from Parser import Args
+
+from Modules.API.User.FirstLoad import FirstLoad
+from Modules.API.User.Settings import SettingsAPI
 
 
 class AuthWindow(BisitorWidget):
@@ -72,7 +73,7 @@ class AuthWindow(BisitorWidget):
         auth = Auth.log_in(**auth)
         professor = auth.user
 
-        ProfessorSettingsApi.synch(professor)
+        SettingsAPI.synch(professor)
 
         Settings.load(professor)
         debug(auth.user)
@@ -85,6 +86,9 @@ class AuthWindow(BisitorWidget):
         self.close()
 
     def auth(self, *args):
+        def on_error(msg):
+            raise BisitorException(msg)
+
         from DataBase2 import Auth
         from Client.MyQt.Widgets.Network.Request import RequestWidget
 
@@ -98,17 +102,7 @@ class AuthWindow(BisitorWidget):
 
                 self.auth_success.emit(dict(login=login, password=password))
             except InvalidLoginException:
-                self.layout().addWidget(
-                    RequestWidget(
-                        InitialDataLoader(
-                            login=login,
-                            password=password,
-                            host=Args().host),
-                        text_button="Загрузить данные",
-                        title="загрузка данных",
-                        on_close=lambda: self.auth_success.emit(dict(login=login, password=password))
-                    )
-                )
+                self.loading = FirstLoad.load(Auth(login=login, password=password), self.auth, )
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         if a0.key() + 1 == QtCore.Qt.Key_Enter:

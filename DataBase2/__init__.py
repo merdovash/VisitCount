@@ -1,10 +1,10 @@
 """
-
-Файл с описанием базы данных
+Файл с описанием базы данных, всех сущностей и их поведений
 """
 import enum
 import json
 import os
+import secrets
 import sys
 from datetime import datetime, timedelta
 from inspect import isclass
@@ -14,7 +14,7 @@ from warnings import warn
 
 from math import floor
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, \
-    String, ForeignKey, Boolean, DateTime, inspect, Enum, Binary, LargeBinary
+    String, ForeignKey, Boolean, DateTime, inspect, Enum, LargeBinary
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -36,7 +36,7 @@ from Domain.functools.Decorator import listed, filter_deleted, sorter, \
     is_iterable, filter_semester
 from Domain.functools.List import without_None
 from Domain.MessageFormat import Case, inflect
-from Parser import IJSON, Args
+from Parser import IJSON, Args, Side
 
 try:
     _root = sys.modules['__main__'].__file__
@@ -71,20 +71,25 @@ def make_database_file(path: Path):
     return True
 
 
-_is_mysql = _root != 'run_client.py' and os.name != 'nt'
-if _is_mysql:
+if Args().side == Side.server:
     from DataBase2.config2 import Config
 
     connect_args = dict()
     if Args().database_server == 'mysql':
-        connect_args.update(dict(use_unicode=True))
+        connect_args['connect_args'] = dict(use_unicode=True)
+
+    if Args().database_server == 'postgres':
+        connect_args['client_encoding'] = 'utf8'
+        connect_args['encoding'] = 'utf8'
+        # connect_args['connect_args'] = dict(convert_unicode=True)
 
     engine = create_engine(Config.connection_string,
                            pool_pre_ping=False,
                            echo=False,
                            poolclass=QueuePool,
                            pool_recycle=3600,
-                           connect_args=connect_args)
+                           **connect_args)
+
 
 else:
     db_path = Path(__file__).parent / 'db2.db'
@@ -99,7 +104,7 @@ else:
 
 Base = declarative_base(bind=engine)
 
-if _is_mysql:
+if Args().side == Side.server:
     Session = ThreadLocalRegistry(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
 else:
     Session = scoped_session(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
@@ -176,6 +181,8 @@ class _DBObject(IJSON):
             return Get.bool
         if python_type == int:
             return Get.int
+        if issubclass(python_type, enum.Enum):
+            return lambda x: python_type[x] if isinstance(x, str) else x
         return python_type
 
     @classmethod
@@ -599,13 +606,52 @@ class _DBList:
         return session.query(cls).all()
 
 
+class File(Base, _DBTrackedObject):
+    __tablename__ = 'files'
+
+    name = Column(String)
+    ext = Column(String)
+    data = Column(LargeBinary)
+
+    def __init__(self, file_name):
+        path = Path(file_name)
+
+        with open(str(file_name), 'rb') as file:
+            data = file.read()
+
+        super().__init__(
+            name=path.name,
+            ext=path.suffix,
+            data=data
+        )
+
+    def file_name(self):
+        return f'{self.name}.{self.ext}'
+
+    def download_file(self):
+        file_name = Path('temp')/self.file_name()
+        with open(str(file_name), 'wb') as file:
+            file.write(self.data)
+        return file_name
+
+    @classmethod
+    @listed
+    def of(cls, obj, *args, **kwargs):
+        if isinstance(obj, Professor):
+            return File.of(Lesson.of(obj))
+        if isinstance(obj, Lesson):
+            return obj.loss_reasons
+
+        raise NotImplementedError(type(obj))
+
+
 class ContactInfo(Base, _DBTrackedObject):
     __tablename__ = "contacts"
 
     email = Column(String(200))
 
     auto = Column(Boolean, default=False)
-    last_auto = Column(DateTime)
+    last_auto = Column(DateTime, default=datetime(2010, 1, 1, 0, 0, 0))
     interval_auto_hours = Column(Integer)
 
     _views = relationship('ContactViews', backref='contact')
@@ -1012,21 +1058,12 @@ class VisitationLossReason(Base, _DBTrackedObject):
     lesson_id = Column(Integer, ForeignKey('lessons.id'))
     student_id = Column(Integer, ForeignKey('students.id'))
     reason = Column(Enum(LossReason), nullable=False)
-    file_ext = Column(String(10))
-    file = Column(LargeBinary)
+
+    file_id = Column(Integer, ForeignKey('files.id'))
+    proof = relationship('File')
 
     student = relationship('Student', backref=backref('loss_reasons'))
     lesson = relationship("Lesson", backref=backref('loss_reasons'))
-
-    def set_file(self, path: Path):
-        with open(str(path), 'rb') as file:
-            data = file.read()
-
-            if self.file != data:
-                self.file = data
-            suffix = path.suffix[1:] if path.suffix.startswith('.') else path.suffix
-            if self.file_ext != suffix:
-                self.file_ext = suffix
 
     @classmethod
     @listed
@@ -1040,23 +1077,24 @@ class VisitationLossReason(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
+class UserType(enum.Enum):
+    STUDENT = 0
+    PROFESSOR = 1
+    PARENT = 2
+    ADMIN = 3
+
+
 class Auth(Base, _DBTrackedObject):
     """
     Таблица пользователей
     """
 
-    class Type:
-        STUDENT = 0
-        PROFESSOR = 1
-        PARENT = 2
-        ADMIN = 3
-
     __tablename__ = 'auth5'
 
     login = Column(String(40), unique=True)
     password = Column(String(40))
-    uid = Column(String(40), unique=True)
-    user_type = Column(Integer)
+    uid = Column(String(40), unique=True, default=lambda: str(secrets.randbits(128)))
+    user_type = Column(Enum(UserType))
     user_id = Column(Integer)
 
     __user = None
@@ -1068,12 +1106,12 @@ class Auth(Base, _DBTrackedObject):
         :return: Professor or Student
         """
         if self.__user is None:
-            if self.user_type == Auth.Type.STUDENT:
+            if self.user_type == UserType.STUDENT:
                 self.__user: Student = self.session() \
                     .query(Student) \
                     .filter(Student.id == self.user_id) \
                     .first()
-            elif self.user_type == Auth.Type.PROFESSOR:
+            elif self.user_type == UserType.PROFESSOR:
                 self.__user: Professor = self.session() \
                     .query(Professor) \
                     .filter(Professor.id == self.user_id) \
@@ -1233,7 +1271,10 @@ class Semester(Base, _DBNamed, _DBRoot):
             if max is None or (lesson.date < now and lesson.date > max.date):
                 max = lesson
 
-        return max.semester
+        if max:
+            return max.semester
+
+        return None
 
     @staticmethod
     def closest_semester_start(now=None):
@@ -1521,9 +1562,9 @@ class Professor(Base, _DBPerson, _DBRoot, ):
 
     @property
     def settings(self):
-        string_value = self._settings
+        string_value = self._settings.replace('None', 'null')  # TODO исправить None
         from Parser.JsonParser import JsonParser
-        return JsonParser.read(self._settings) if string_value not in ('None', None) else None
+        return JsonParser.read(string_value) if string_value not in ('None', None) else None
 
     @settings.setter
     def settings(self, value):
@@ -1531,7 +1572,8 @@ class Professor(Base, _DBPerson, _DBRoot, ):
             self._settings = value
 
         elif isinstance(value, (dict, Settings)):
-            self._settings = json.dumps(value)
+            from Parser.JsonParser import JsonParser
+            self._settings = JsonParser.dump(value)
 
         else:
             raise NotImplementedError(type(value))

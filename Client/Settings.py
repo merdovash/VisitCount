@@ -6,6 +6,7 @@ from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QColor
 
 from Client.src import load_resource, resource
+from Parser.JsonParser import JsonParser
 
 
 class _Setting:
@@ -225,7 +226,7 @@ class Settings(_Setting):
 
     def save(self):
         if self.professor is not None:
-            self.professor.settings = json.dumps(self.__json__())
+            self.professor.settings = JsonParser.dump(self.__json__())
             self.professor.session().commit()
         else:
             with open(str(resource('settings.json')), 'w+', encoding='utf8') as f:

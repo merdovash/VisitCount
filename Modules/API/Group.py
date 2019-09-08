@@ -3,11 +3,11 @@ from typing import List
 from DataBase2 import Student, _DBObject, Auth, Group
 from Domain.Structures.DictWrapper import Structure
 from Modules.API import API, NoDataError
-from Server.Response import Response
 
 
-class GroupApi(API):
-    address = API.address + '/group'
+class GroupAPI(API):
+    __address__ = API.__address__ + '/group'
+
     class GroupResponse(Structure):
         name: str
         students: List[Student]

@@ -14,7 +14,7 @@ from Client.MyQt.interface import IAcceptDrop, ISelectFile
 from DataBase2 import Group, Student, Semester
 from Domain.Loader.GroupLoader.GroupLoader import GroupLoader
 from Domain.Loader.LessonLoader import LessonLoader
-from Modules.API.Group import GroupApi
+from Modules.API.Group import GroupAPI
 
 
 class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
@@ -218,7 +218,7 @@ class LessonLoadingWidget(AbstractLoadingWizard, IAcceptDrop, ISelectFile):
         self.step.emit(self.group_steps[group.name])
 
     def request_students(self):
-        def apply_response(group: GroupApi.GroupResponse):
+        def apply_response(group: GroupAPI.GroupResponse):
             self._apply_group(
                 group_name=group.name,
                 students=group.students

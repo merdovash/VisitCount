@@ -30,6 +30,14 @@ def init(loop: asyncio.AbstractEventLoop = None):
         await send_message()
 
     async def look():
+        def is_time_to_prepare(contact):
+            if contact.last_auto and contact.interval_auto_hours:
+                is_time = contact.last_auto + timedelta(0, contact.interval_auto_hours * 3600) <= next_loop
+                has_lessons = receiver.has_lessons_since(contact.last_auto)
+                return contact.auto and is_time and has_lessons
+
+            return contact.auto
+
         while 1:
             tasks = []
 
@@ -47,12 +55,9 @@ def init(loop: asyncio.AbstractEventLoop = None):
                     stats[class_.__name__]['total'] = len(receivers)
                     for receiver in receivers:
                         contact: ContactInfo = receiver.contact
-                        if contact is None:
+                        if not contact:
                             continue
-
-                        is_time = contact.last_auto + timedelta(0, contact.interval_auto_hours * 3600) <= next_loop
-                        has_lessons = receiver.has_lessons_since(contact.last_auto)
-                        if contact is not None and contact.auto and is_time and has_lessons:
+                        if is_time_to_prepare(contact):
                             logger.info(f'receiver {receiver.full_name()} is active')
                             tasks.append(loop.create_task(send(receiver)))
 

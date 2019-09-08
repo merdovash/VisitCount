@@ -2,6 +2,10 @@ if __name__ == "__main__":
     import os
     import sys
 
+    # инициализация
+    from Parser import Args
+    Args('client')
+
     import PyQt5
 
     from PyQt5.QtGui import QFont, QFontDatabase
@@ -10,11 +14,11 @@ if __name__ == "__main__":
 
     from Client.MyQt.Window.Auth import AuthWindow
     from Client.src import src, resource
-    from Parser import Args
+
 
     pyqt = os.path.dirname(PyQt5.__file__)
     QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
-    Args('client')  # инициализация
+
     app = QApplication(sys.argv+["--disable-web-security"])
 
     id = QFontDatabase.addApplicationFont(str(resource("AlegreyaSans-Regular.ttf")))
