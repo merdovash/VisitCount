@@ -42,6 +42,7 @@ class SettingsAPI(UserAPI):
                 )
 
                 on_finish(result)
+            # TODO проверить наличие обновлений на сервере
 
     def post(self, data: dict, auth: Auth, **kwargs):
         """

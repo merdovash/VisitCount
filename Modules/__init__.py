@@ -51,7 +51,6 @@ class Module:
                             response.set_data(result)
                         except Exception as e:
                             response.set_error(f'{str(type(e))}: {str(e)}')
-                            traceback.print_tb(e)
                         finally:
                             if authentication is not None:
                                 authentication.user.session().close()

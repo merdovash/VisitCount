@@ -14,7 +14,7 @@ def pack(user, data):
     return dict(user=user.auth.data(), data=data)
 
 
-def get_full_address(address):
+def get_full_address(address) -> str:
     u = urlparse(address)
 
     if not u.netloc:
@@ -97,9 +97,10 @@ def BisitorRequest(address, user, data, on_finish=None, on_error=None):
     from urllib.request import Request, urlopen
 
     data = pack(user, data)
-    print(bytes(JsonParser.dump(data), encoding='utf8'))
+    address = get_full_address(address)
+    print(f'request {address}')
     request = Request(
-        get_full_address(address),
+        address,
         bytes(JsonParser.dump(data), encoding='utf8'),
         headers={'Content-Type': 'application/json"'})
     res = urlopen(request).read().decode()
