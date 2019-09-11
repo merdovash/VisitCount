@@ -27,7 +27,7 @@ class DatabaseConfig:
         parser.add_argument('-database-password', type=str, dest="database_password")
         parser.add_argument('-database-database', type=str, dest="database_database")
         parser.add_argument('--database-host', type=str, dest="database_host", default='localhost')
-        parser.add_argument('--database-server', type=str, dest="database_server", default='mysql',
+        parser.add_argument('--database-server', type=str, dest="database_server", default='postgres',
                             choices=['mysql', 'postgres'])
 
         res, _ = parser.parse_known_args(sys.argv)
