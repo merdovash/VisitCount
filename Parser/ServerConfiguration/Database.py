@@ -96,7 +96,7 @@ class DatabaseINIConfig(_DatabaseConfig):
         data = config['DATABASE']
 
         self._login = data['login']
-        self._password = data['password']
+        self._password = data.get('password')
         self._host = data['host']
         self._database = data['database']
         self.schema = data['schema']
