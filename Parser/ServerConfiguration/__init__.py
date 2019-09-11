@@ -1,4 +1,6 @@
-from Parser.ServerConfiguration.Database import DatabaseConfig
+import sys
+
+from Parser.ServerConfiguration.Database import DatabaseCLIConfig, DatabaseINIConfig
 from Parser.ServerConfiguration.Logging import LoggingConfig
 from Parser.ServerConfiguration.Notification import NotificationConfig
 from Parser.ServerConfiguration.Server import ServerConfig
@@ -16,7 +18,17 @@ __config = None
 
 class _Config:
     def __init__(self):
-        self.database = DatabaseConfig()
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-DATABASE', type=str)
+
+        res, _ = parser.parse_known_args(sys.argv)
+
+        if res.DATABASE:
+            self.database = DatabaseINIConfig(res.DATABASE)
+        else:
+            self.database = DatabaseCLIConfig()
         self.notification = NotificationConfig()
         self.server = ServerConfig()
         self.logging = LoggingConfig()
