@@ -1,5 +1,3 @@
-from Client.MyQt.Widgets.Network.BisitorRequest import BisitorRequest
-from Client.MyQt.utils import check_connection
 from DataBase2 import Professor, Auth
 from Modules.API import AccessError
 from Modules.API.User import UserAPI
@@ -23,6 +21,8 @@ class SettingsAPI(UserAPI):
 
     @classmethod
     def synch(cls, professor: Professor):
+        from Client.MyQt.Widgets.Network.BisitorRequest import BisitorRequest
+        from Client.MyQt.utils import check_connection
         if check_connection():
             if professor.has_local_updates(professor._last_update_in):
                 def on_finish(result):

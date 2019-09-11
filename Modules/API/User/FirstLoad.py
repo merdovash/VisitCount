@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Dict, Type
 
-from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
 from DataBase2 import Auth, Semester, _DBObject, _DBList, Professor, UserType, Session
 from Domain.Exception.Authentication import UnauthorizedError
 from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
@@ -15,6 +14,7 @@ class FirstLoad(UserAPI):
 
     @classmethod
     def load(cls, auth: Auth, on_finish=None, on_error=None):
+        from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
         def apply(data):
             def create_row(item_data: Dict, class_: Type[_DBObject]):
                 if not class_.get(session, **item_data):
