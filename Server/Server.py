@@ -101,4 +101,4 @@ def run():
     run server
     """
     Args('server')
-    app.run(host=Args().server_host, port=Args().server_port)
+    app.run(host=Args().server.host, port=Args().server.port)

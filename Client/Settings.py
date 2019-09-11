@@ -2,9 +2,9 @@ import json
 import re
 from typing import Any
 
-from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QColor
 
+from Client.interface import ISettings
 from Client.src import load_resource, resource
 from Parser.JsonParser import JsonParser
 
@@ -166,7 +166,7 @@ class _SettingInt(int, _SettingCustomLeaf):
         return self.value if self.value is not None else self.default
 
 
-class Settings(_Setting):
+class Settings(_Setting, ISettings):
     def items(self):
         return self.__data.items()
 

@@ -1,6 +1,11 @@
+# encoding: utf8
 import enum
+import os
+
+from sqlalchemy.engine import url
 
 from Domain.Exception import BisitorException
+from Parser.ServerConfiguration import Config
 
 _args = None
 
@@ -15,7 +20,7 @@ class IJSON:
         raise NotImplementedError()
 
 
-def Args(side=None):
+def Args(side='client'):
     global _args
     if _args is None:
         import argparse
@@ -27,35 +32,11 @@ def Args(side=None):
             parser.add_argument('--test', type=bool, default=False, help='for testing without Reader')
             parser.add_argument('--css', type=str, default=src.qss, help='you can disable css')
 
-            _args = parser.parse_args()
+            _args, _ = parser.parse_known_args()
             _args.side = Side.client
 
         elif side == 'server':
-            import logging
-            parser = argparse.ArgumentParser()
-            parser.add_argument('--logging-level', metavar="select logging level", default=logging.INFO, type=int)
-
-            # SYSTEM
-            parser.add_argument('-system-name', type=str, dest='system_name', default='Система Учета Посещаемости')
-            parser.add_argument('-help-email', type=str, dest='help_email', default='Не указано')
-
-            # SERVER
-            parser.add_argument('--server-host', type=str, dest='server_host', default='0.0.0.0')
-            parser.add_argument('--server-port', type=str, dest='server_port', default='5000')
-
-            # NOTIFICATION
-            parser.add_argument('-notification-email', type=str, dest="notification_email")
-            parser.add_argument('-notification-password', type=str, dest="notification_password")
-            parser.add_argument('-notification-smtp-server', type=str, dest="smtp_server", default="smtp.gmail.com:587")
-
-            # DATABASE
-            parser.add_argument('-database-login', type=str, dest="database_login")
-            parser.add_argument('-database-password', type=str, dest="database_password")
-            parser.add_argument('-database-database', type=str, dest="database_database")
-            parser.add_argument('--database-host', type=str, dest="database_host", default='localhost')
-            parser.add_argument('--database-server', type=str, dest="database_server", default='mysql', choices=['mysql', 'postgres'])
-
-            _args = parser.parse_args()
+            _args = Config()
             _args.side = Side.server
         else:
             raise BisitorException("Необходимо обьявить тип приложения")

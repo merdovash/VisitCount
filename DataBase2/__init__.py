@@ -15,6 +15,7 @@ from warnings import warn
 from math import floor
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, \
     String, ForeignKey, Boolean, DateTime, inspect, Enum, LargeBinary
+from sqlalchemy.engine import url
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -23,9 +24,10 @@ from sqlalchemy.pool import StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
 from sqlalchemy.util import ThreadLocalRegistry
 
-from Client.Settings import Settings
+from Client.interface import ISettings
 from Client.src import load_resource
 from DataBase2.SessionInterface import ISession
+from DataBase2.utils import make_database_file
 from Domain.ArgPars import get_argv
 from Domain.Exception import BisitorException
 from Domain.Exception.Authentication import InvalidPasswordException, \
@@ -47,43 +49,18 @@ _root = os.path.basename(_root)
 _new = False
 
 
-def make_database_file(path: Path):
-    """
-    Проверяет создан ли файл базы данных
-
-    :param path: путь к файлу базы данных
-    :return: прилось ли создавать новый файл
-    """
-    if path.exists():
-        return False
-
-    path_to_create = []
-
-    parent_path: Path = path.parent
-    while not parent_path.exists():
-        path_to_create.append(parent_path)
-
-    for pp in path_to_create:
-        pp.mkdir()
-
-    fh = open(str(path), 'w+')
-    fh.close()
-    return True
-
-
 if Args().side == Side.server:
-    from DataBase2.config2 import Config
 
     connect_args = dict()
-    if Args().database_server == 'mysql':
+    if Args().database.schema == 'mysql':
         connect_args['connect_args'] = dict(use_unicode=True)
 
-    if Args().database_server == 'postgres':
+    if Args().database.schema == 'postgres':
         connect_args['client_encoding'] = 'utf8'
         connect_args['encoding'] = 'utf8'
         # connect_args['connect_args'] = dict(convert_unicode=True)
-
-    engine = create_engine(Config.connection_string,
+    print(Args().database.connection_string())
+    engine = create_engine(Args().database.connection_string(),
                            pool_pre_ping=False,
                            echo=False,
                            poolclass=QueuePool,
@@ -97,7 +74,7 @@ else:
 
     _new = make_database_file(db_path)
 
-    engine = create_engine(connection_string,
+    engine = create_engine(Args().connection_string(),
                            echo=True if get_argv('--db-echo') else False,
                            poolclass=StaticPool,
                            connect_args={'check_same_thread': False})
@@ -1571,7 +1548,7 @@ class Professor(Base, _DBPerson, _DBRoot, ):
         if isinstance(value, str):
             self._settings = value
 
-        elif isinstance(value, (dict, Settings)):
+        elif isinstance(value, (dict, ISettings)):
             from Parser.JsonParser import JsonParser
             self._settings = JsonParser.dump(value)
 

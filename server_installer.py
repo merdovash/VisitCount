@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from argparse import ArgumentParser
@@ -17,6 +18,10 @@ if __name__ == '__main__':
     }
 
     res = parser.parse_args(sys.argv[1:])
+
+    if os.name == 'posix':
+        if res.db == 'postgres':
+            subprocess.call(['apt-get', 'install', 'libpq-dev', 'python-dev'])
 
     with open('server_requirements.txt', 'r') as req:
         for line in req:
