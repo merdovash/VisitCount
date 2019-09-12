@@ -30,7 +30,7 @@ class _DatabaseConfig:
             res['host'] = '/{}'.format(db_path.as_posix())
 
         if hasattr(self, '_database'):
-            res['database'] = self.schema
+            res['database'] = self._database
 
         if hasattr(self, 'query'):
             res['query'].update(self.query)
