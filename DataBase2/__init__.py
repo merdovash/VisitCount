@@ -73,9 +73,9 @@ else:
     connection_string = 'sqlite:///{}'.format(db_path)
 
     _new = make_database_file(db_path)
-
-    engine = create_engine(Args().connection_string(),
-                           echo=True if get_argv('--db-echo') else False,
+    print('sqlite:///{}'.format(db_path))
+    engine = create_engine('sqlite:///{}'.format(db_path),
+                           echo=True, # if get_argv('--db-echo') else False,
                            poolclass=StaticPool,
                            connect_args={'check_same_thread': False})
 
@@ -1343,7 +1343,7 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         дисциплина: {self.discipline.name}
         преподаватель: {self.professor.full_name()}
         группы: {Group.names(self.groups)}
-        кабинет: {self.room.short_name()}"""
+        кабинет: {self.room.short_name() if self.room else 'не указан'}"""
 
     @classmethod
     @sorter

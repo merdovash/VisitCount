@@ -5,10 +5,12 @@ from typing import List, Tuple
 
 import xlrd
 from docx import Document
+from sqlalchemy.ext.associationproxy import _AssociationList
 
-from DataBase2 import Professor, Session, Discipline, Group, Lesson, Student
+from DataBase2 import Professor, Session, Discipline, Group, Lesson, Student, LessonType, Auth, UserType
 from DataBase2.SessionInterface import ISession
 from Domain.Loader import WordReader, ExcelReader, Reader
+from Domain.Loader.VisitationLoader import VisitationExcelLoader
 from Domain.Validation.Values import Get
 
 
@@ -73,6 +75,8 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
 
     GROUP_CELL = (0, 2)
     DISCIPLINE_CELL = (0, 3)
+    DISCIPLINE_START_COL = 3
+    DISCIPLINE_END_COL = 21
 
     FULL_NAME_START_ROW = 5
     LESSON_INDEX_ROW = 1
@@ -93,7 +97,7 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
         else:
             raise ValueError('group is not found')
 
-        discipline_regex = self.discipline_regex.findall(self.sheet.cell(*self.DISCIPLINE_CELL).value)
+        discipline_regex = self._extract_discipline_name()
         if len(discipline_regex):
             discipline_name = discipline_regex[0]
             discipline = Discipline.get_or_create(self.session, name=discipline_name)
@@ -102,10 +106,11 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
 
         self.students = list()
         for row in range(self.FULL_NAME_START_ROW, self.sheet.nrows):
-            full_name = self.sheet.cell(row, self.TIME_START_COL).value
+            full_name = self.sheet.cell(row, self.FULL_NAME_COL).value
             if full_name not in [None, '']:
                 student_regex = self.student_regex.findall(full_name)
                 if len(student_regex):
+                    student_regex = student_regex[0]
                     if len(student_regex) == 2:
                         student = Student.get_or_create(self.session,
                                                         last_name=student_regex[0],
@@ -125,7 +130,10 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
                     self.students.append(student)
             else:
                 break
-
+        lesson_type = LessonType.get_or_create(
+            name='Практика',
+            abbreviation='П',
+            session=session)
         self.lessons = list()
         for col in range(self.TIME_START_COL, self.sheet.ncols):
             lesson_index = self.sheet.cell(self.LESSON_INDEX_ROW, col).value
@@ -136,6 +144,7 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
                     month = int(date_regex[1])
                     day = int(date_regex[0])
                 else:
+                    continue
                     raise ValueError(f'{self.sheet.cell(self.DAY_ROW, col).value} is not acceptable date format')
 
                 time_regex = self.day_regex.findall(self.sheet.cell(self.TIME_ROW, col).value)
@@ -148,9 +157,10 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
 
                 time = datetime(start_day.year, month, day, hours, minutes)
 
-                kwargs = dict(room_id='', type=Lesson.Type.Practice)
+                kwargs = dict(room_id='')
                 if discipline.id is None:
                     lesson = Lesson.new(self.session, date=time, professor_id=professor.id, **kwargs)
+
                     lesson.discipline = discipline
                     lesson.groups.append(group)
                 else:
@@ -162,6 +172,7 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
                         **kwargs)
                     if group not in lesson.groups:
                         lesson.groups.append(group)
+                lesson.type = lesson_type
                 self.lessons.append(lesson)
             else:
                 break
@@ -170,6 +181,14 @@ class ExcelLessonLoader(ExcelReader, LessonLoader):
         self.group = group
         self.session.commit()
         professor.session().expire_all()
+
+    def _extract_discipline_name(self):
+        for col in range(self.DISCIPLINE_START_COL, self.DISCIPLINE_END_COL):
+            res = self.discipline_regex.findall(self.sheet.cell(0, col).value)
+            if res:
+                return res
+        raise ValueError('Название дисциплины не найдено (ожидается, что оно находится в первой строке между '
+                         'столбцами D и X)')
 
     def get_disciplines(self):
         return [self.discipline]
@@ -287,4 +306,17 @@ class WordLessonLoader(WordReader, LessonLoader):
             return Lesson.Type.Lab
         if "практ" in lower_text:
             return Lesson.Type.Practice
+
+
+if __name__ == '__main__':
+    session = Session()
+    #auth = Auth.log_in(login='VAE', password='123456')
+    #professor = Professor.get_or_create(first_name='Валерий', last_name='Евстигнеев')
+
+    # loader = ExcelLessonLoader('data.xls', datetime(2019, 9, 1, 0, 0, 0), professor, session)
+    #loader = VisitationExcelLoader('data.xls', Group.get(id=1), Discipline.get(id=1), session)
+
+
+    session.commit()
+
 

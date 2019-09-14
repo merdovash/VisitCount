@@ -74,8 +74,8 @@ class Get:
                 if val in ['None', 'none', 'null', '']:
                     return None
                 raise CardIdValueException()
-        if isinstance(val, int):
-            return val
+        if isinstance(val, (int, float)):
+            return int(val)
         if val is None:
             return None
         raise NotImplementedError()

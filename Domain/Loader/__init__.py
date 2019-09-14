@@ -52,31 +52,52 @@ class ExcelReader(Reader):
         r'(?:(?P<month>[0-9]+)[:.](?P<day>[0-9]+))'
     )
 
-    discipline_name_cell_index = (0, 3)
+    DISCIPLINE_ROW = 0
+    DISCIPLINE_START_COL = 3
+    DISCIPLINE_END_COL = 21
 
     student_regex = re.compile(
         r'(?:(?P<last>[А-яа-яё]+) (?P<first>[А-яа-яё]+)(?: (?P<middle>[А-яа-яё]+))?)'
     )
 
-    def get_student(self, row: int, students: List[Student])->Student or None:
+    STUDENT_START_ROW = 5
+
+    def get_student(self, row: int, students: List[Student]) -> Student or None:
 
         if not hasattr(self, '_students_cache') or self._students_cache is None:
             self._students_cache = {}
 
         if row not in self._students_cache.keys():
             student_fio = self.student_regex.findall(self.file.cell(row, 2).value)
-            if len(student_fio)==0:
+            if student_fio:
+                student_fio = student_fio[0]
+
+                if len(student_fio) == 0:
+                    self._students_cache[row] = None
+                if len(student_fio) == 2:
+                    self._students_cache[row] = [
+                        s
+                        for s in students
+                        if s.last_name == student_fio[0] and s.first_name == student_fio[1]
+                    ][0]
+                if len(student_fio) == 3:
+                    self._students_cache[row] = [
+                        s
+                        for s in students
+                        if s.last_name == student_fio[0] and s.first_name == student_fio[1] and s.middle_name == student_fio[2]
+                    ][0]
+
+            else:
                 self._students_cache[row] = None
-            if len(student_fio)==2:
-                self._students_cache[row] = list(filter(lambda x:x.last_name==student_fio[0] and x.first_name==student_fio[1], students))[0]
-            if len(student_fio)==3:
-                self._students_cache[row] = list(filter(lambda x:x.last_name==student_fio[0] and x.first_name==student_fio[1] and x.middle_name==student_fio[2], students))[0]
 
         return self._students_cache[row]
 
-    def get_date(self, col: int, year: int)->datetime:
-        day = self.day_regex.findall(self.file.cell(3, col).value)[0]
-        time = self.day_regex.findall(self.file.cell(4, col).value)[0]
+    def get_date(self, col: int, year: int) -> datetime:
+        try:
+            day = self.day_regex.findall(self.file.cell(3, col).value)[0]
+            time = self.day_regex.findall(self.file.cell(4, col).value)[0]
+        except IndexError:
+            return None
 
         date = datetime(year, int(day[1]), int(day[0]), int(time[0]),int(time[1]))
         return date
@@ -86,7 +107,12 @@ class ExcelReader(Reader):
         return self.group_regex.findall(value)
 
     def discipline_name(self):
-        return self.discipline_regex.findall(self.file.cell(*self.discipline_name_cell_index).value)[0]
+        for col in range(self.DISCIPLINE_START_COL, self.DISCIPLINE_END_COL):
+            r = self.discipline_regex.findall(self.file.cell(self.DISCIPLINE_ROW, col).value)
+            if r:
+                return r[0]
+        raise ValueError('Название дисциплины не найдено (ожидается, что оно находится в первой строке между '
+                         'столбцами D и X)')
 
     suffix = ['.xls', '.xlsx']
 
