@@ -8,7 +8,7 @@ from pandas import DataFrame
 from pandas._libs.tslibs.offsets import relativedelta
 from scipy import stats
 
-from DataBase2 import Lesson, Visitation, Student, _DBObject, name, _DBRoot, Semester
+from DataBase2 import Lesson, Visitation, Student, DBObject, name, IRoot, Semester
 from Domain.functools.Decorator import is_iterable
 from Domain.functools.Format import type_name
 from Domain.MessageFormat import agree_to_number, inflect
@@ -50,7 +50,7 @@ def cumsum(df, second_group_by) -> DataFrame:
     return res
 
 
-def prepare_data(root, semester, group_by: Type[_DBObject]):
+def prepare_data(root, semester, group_by: Type[DBObject]):
     data = []
     year = None
     for user in root:
@@ -78,7 +78,7 @@ def prepare_data(root, semester, group_by: Type[_DBObject]):
     return data, year
 
 
-def plot(user: List[_DBRoot], semester: List[Semester], group_by: Type[_DBRoot], plot_type: str = 'distribution'):
+def plot(user: List[IRoot], semester: List[Semester], group_by: Type[IRoot], plot_type: str = 'distribution'):
     fig = Figure()
     # fig = Figure(figsize=(width, height), dpi=dpi, )
     data, year = prepare_data(user, semester, group_by)

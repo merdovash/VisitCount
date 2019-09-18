@@ -117,6 +117,10 @@ class ExcelReader(Reader):
     suffix = ['.xls', '.xlsx']
 
 
+class PDFReader(Reader):
+    pass
+
+
 class NetworkLoader(Loader):
     _has_data = False
 

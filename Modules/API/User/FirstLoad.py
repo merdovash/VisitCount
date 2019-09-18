@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, Type
 
-from DataBase2 import Auth, Semester, _DBObject, _DBList, Professor, UserType, Session
+from DataBase2 import Auth, Semester, DBObject, IListed, Professor, UserType, Session, Base
 from Domain.Exception.Authentication import UnauthorizedError
 from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
 from Domain.Validation.Dict import Map
@@ -16,7 +16,7 @@ class FirstLoad(UserAPI):
     def load(cls, auth: Auth, on_finish=None, on_error=None):
         from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
         def apply(data):
-            def create_row(item_data: Dict, class_: Type[_DBObject]):
+            def create_row(item_data: Dict, class_: Type[DBObject]):
                 if not class_.get(session, **item_data):
                     class_.new(session, **item_data)
                     session.flush()
@@ -59,7 +59,7 @@ class FirstLoad(UserAPI):
         main_data = dict()
         current_semester = Semester.current(professor)
 
-        for cls in _DBObject.subclasses():
+        for cls in Base.__subclasses__():
             if cls.__name__ == Auth.__name__:
                 main_data[cls.__name__] = self.session. \
                     query(Auth). \
@@ -68,7 +68,7 @@ class FirstLoad(UserAPI):
                     first()
             else:
                 try:
-                    if issubclass(cls, _DBList):
+                    if issubclass(cls, IListed):
                         main_data[cls.__name__] = cls.all(professor.session())
                     else:
                         main_data[cls.__name__] = cls.of(professor, semester=current_semester)

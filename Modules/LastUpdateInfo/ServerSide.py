@@ -1,6 +1,6 @@
 from sqlalchemy import or_
 
-from DataBase2 import Auth, Professor, _DBTrackedObject
+from DataBase2 import Auth, Professor, ISynchronize
 from Domain.Structures.DictWrapper.Network.Synch import Changes
 from Modules import Module
 from Modules.API import AccessError
@@ -19,7 +19,7 @@ class LastUpdateInfo(Module):
 
         last_update = professor._last_update_out
         items = {'created': {}, 'updated': {}, 'deleted': {}}
-        for cls in _DBTrackedObject.subclasses():
+        for cls in ISynchronize.subclasses():
             updated = professor.session() \
                 .query(cls) \
                 .filter(cls._updated > professor._last_update_out) \

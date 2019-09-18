@@ -1,6 +1,6 @@
 from typing import Type
 
-from DataBase2 import _DBObject
+from DataBase2 import DBObject
 
 
 class Validate:
@@ -11,5 +11,5 @@ class Validate:
 
 class Map:
     @staticmethod
-    def item_type(d: dict, class_: Type[_DBObject]) -> dict:
+    def item_type(d: dict, class_: Type[DBObject]) -> dict:
         return {key: class_.column_type(key)(value) for key, value in d.items()}

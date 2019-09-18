@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 
-from DataBase2 import _DBObject
+from DataBase2 import DBObject
 
 
 class QNewItemsTable(QTableWidget):
@@ -15,7 +15,7 @@ class QNewItemsTable(QTableWidget):
         self.setHorizontalHeaderItem(0, QTableWidgetItem('Имя'))
         self.setHorizontalHeaderItem(1, QTableWidgetItem('Статус'))
 
-    def addItem(self, item: _DBObject):
+    def addItem(self, item: DBObject):
         new = None
         current_row = self.rowCount()
         if item.session() == self.new_session:

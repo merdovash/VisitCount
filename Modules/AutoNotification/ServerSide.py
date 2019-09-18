@@ -3,13 +3,13 @@ import logging
 from datetime import timedelta, datetime
 from typing import List
 
-from DataBase2 import _DBEmailObject, Session, ContactInfo
+from DataBase2 import IContact, Session, Contact
 from Domain.Notification.Report import MessageMaker
 
 
 def init(loop: asyncio.AbstractEventLoop = None):
-    async def send(receiver: _DBEmailObject):
-        contact: ContactInfo = receiver.contact
+    async def send(receiver: IContact):
+        contact: Contact = receiver.contact
         sleep_until: datetime = contact.last_auto
         now = datetime.now()
         while sleep_until < now:
@@ -48,13 +48,13 @@ def init(loop: asyncio.AbstractEventLoop = None):
             session = Session()
             stats = dict()
             search_start = datetime.now()
-            for class_ in _DBEmailObject.email_subclasses():
+            for class_ in IContact.email_subclasses():
                 if len(class_.__subclasses__()) == 0:
-                    receivers: List[_DBEmailObject] = session.query(class_).all()
+                    receivers: List[IContact] = session.query(class_).all()
                     stats[class_.__name__] = dict(total=0, prepared=[])
                     stats[class_.__name__]['total'] = len(receivers)
                     for receiver in receivers:
-                        contact: ContactInfo = receiver.contact
+                        contact: Contact = receiver.contact
                         if not contact:
                             continue
                         if is_time_to_prepare(contact):

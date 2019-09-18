@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Type
 
-from DataBase2 import Auth, Professor, _DBTrackedObject
+from DataBase2 import Auth, Professor, ISynchronize
 from Domain.Structures.DictWrapper.Network.Synch import ClientUpdateData, Changes, ServerUpdateData
 from Modules import Module
 from Modules.Synch import address
@@ -22,7 +22,7 @@ class SynchModule(Module):
         :return:
         """
 
-        def apply_new_item(item_data: Dict, class_: Type[_DBTrackedObject]):
+        def apply_new_item(item_data: Dict, class_: Type[ISynchronize]):
             """
             Создает новый объект класса class_ на основании данных item_data
 
@@ -43,14 +43,14 @@ class SynchModule(Module):
 
             session.flush()
 
-        def apply_update(item_data: Dict, class_: Type[_DBTrackedObject]):
+        def apply_update(item_data: Dict, class_: Type[ISynchronize]):
             """
             Обновляет данные эленты класса class_ на основании данных item_data
 
             :param item_data: словарь {%название_поля% : %значение_поля%,  ...}
             :param class_: класс мапппер orm sqlalchemy
             """
-            item: _DBTrackedObject = class_.get(session, id=item_data['id'])
+            item: ISynchronize = class_.get(session, id=item_data['id'])
             if item is None:
                 skiped[class_.__name__].append(item_data)
                 return
@@ -63,14 +63,14 @@ class SynchModule(Module):
                     setattr(item, '_updated', item_data['_updated'])
                 session.flush()
 
-        def delete_item(item_data, class_: Type[_DBTrackedObject]):
+        def delete_item(item_data, class_: Type[ISynchronize]):
             """
             Удаляет элент класса class_ на основании данных item_data
 
             :param item_data: словарь {%название_поля% : %значение_поля%,  ...}
             :param class_: класс мапппер orm sqlalchemy
             """
-            item: _DBTrackedObject = class_.get(session, id=item_data['id'])
+            item: ISynchronize = class_.get(session, id=item_data['id'])
             item.delete()
             session.flush()
 

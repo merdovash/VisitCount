@@ -8,21 +8,21 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFormLayout, QLineEdit
 from Client.MyQt.Widgets.ComboBox.CheckComboBox import CheckableComboBox
 from Client.MyQt.Widgets.Network.SendUpdate import SendUpdatesWidget
 from Client.MyQt.utils import check_connection
-from DataBase2 import _DBEmailObject, DataView, ContactInfo, ContactViews
+from DataBase2 import IContact, DataView, Contact, ContactViews
 from Domain.MessageFormat import agree_to_number
 from Modules.API.DataView import DataViewAPI
 
 
 class QContactManagerWindow(QWidget):
-    def __init__(self, user: _DBEmailObject, flags=None, *args, **kwargs):
-        assert isinstance(user, _DBEmailObject)
+    def __init__(self, user: IContact, flags=None, *args, **kwargs):
+        assert isinstance(user, IContact)
         super().__init__(flags, *args, **kwargs)
         with open('Client/src/style.qss', 'r') as style_file:
             self.setStyleSheet(style_file.read())
         self.setMinimumWidth(500)
 
         if not user.contact:
-            contact = ContactInfo.new(user.session())
+            contact = Contact.new(user.session())
             user.contact = contact
             user.session().commit()
 

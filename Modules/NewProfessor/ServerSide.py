@@ -1,4 +1,4 @@
-from DataBase2 import Session, Auth, Professor, ContactInfo, UserType
+from DataBase2 import Session, Auth, Professor, Contact, UserType
 from Modules.NewProfessor import address, NewProfessorResponse
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
@@ -22,8 +22,8 @@ def init(app, request):
                                   last_name=data['data']['last_name'],
                                   middle_name=data['data']['middle_name'])
 
-        contact = ContactInfo.new(session,
-                                  email=data['data']['email'])
+        contact = Contact.new(session,
+                              email=data['data']['email'])
 
         professor.contact = contact
 

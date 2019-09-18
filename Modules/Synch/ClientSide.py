@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Type, Dict, Any
 
-from DataBase2 import _DBTrackedObject, Visitation
+from DataBase2 import ISynchronize, Visitation
 from Domain.Structures.DictWrapper.Network import BaseRequest
 from Domain.Structures.DictWrapper.Network.Synch import ServerUpdateData, ChangeId
 from Domain.functools.Function import None_or_empty
@@ -46,7 +46,7 @@ class Updater(ClientWorker):
         :return:
         """
 
-        def creating_new_items(item_data: Dict, class_: Type[_DBTrackedObject]):
+        def creating_new_items(item_data: Dict, class_: Type[ISynchronize]):
             """
             Создает новый элент класса class_ на основании данных item_data
 
@@ -72,7 +72,7 @@ class Updater(ClientWorker):
 
             progress_bar.increment()
 
-        def update_existing_rows(item_data: Dict, class_: Type[_DBTrackedObject]):
+        def update_existing_rows(item_data: Dict, class_: Type[ISynchronize]):
             """
             Обновляет данные элемента класса class_ на основании данных item_data
 
@@ -91,33 +91,33 @@ class Updater(ClientWorker):
 
             progress_bar.increment()
 
-        def delete_item(item_data: Dict, class_: Type[_DBTrackedObject]):
+        def delete_item(item_data: Dict, class_: Type[ISynchronize]):
             """
             Удаляет элент класса class_ на основании данных item_data
 
             :param item_data: словарь {%название_поля% : %значение_поля%,  ...}
             :param class_: класс мапппер orm sqlalchemy
             """
-            item: _DBTrackedObject = class_.get(session, id=item_data['id'])
+            item: ISynchronize = class_.get(session, id=item_data['id'])
             item.delete()
 
             progress_bar.increment()
 
-        def change_id_to_temp(change_id: ChangeId, class_: Type[_DBTrackedObject]):
+        def change_id_to_temp(change_id: ChangeId, class_: Type[ISynchronize]):
             item = class_.get(session, id=change_id.from_id)
             item.id = item.id * (-1)
             change_id.from_id = item.id
             logging.getLogger("synch").debug(f'changed {item} id to temp {item.id}')
             progress_bar.increment()
 
-        def change_id_to_global(change_id: ChangeId, class_: Type[_DBTrackedObject]):
+        def change_id_to_global(change_id: ChangeId, class_: Type[ISynchronize]):
             item = class_.get(session, id=change_id.from_id)
             item.id = change_id.to_id
             logging.getLogger("synch").debug(f'changed {item} id to global id={change_id}')
 
             progress_bar.increment()
 
-        def delay_skipped(item_data: Dict[str, Any], class_: Type[_DBTrackedObject]):
+        def delay_skipped(item_data: Dict[str, Any], class_: Type[ISynchronize]):
             item = class_.get(session, id=item_data['id'])
             if item is not None:
                 item._updated = datetime.now()

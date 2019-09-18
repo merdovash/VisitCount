@@ -19,8 +19,8 @@ class Get:
     @staticmethod
     def table_name(val) -> str:
         from sqlalchemy.ext.declarative import DeclarativeMeta
-        from DataBase2 import _DBObject, Base
-        if isinstance(val, str) and val in [cls.__name__ for cls in _DBObject.subclasses()]:
+        from DataBase2 import DBObject, Base
+        if isinstance(val, str) and val in [cls.__name__ for cls in DBObject.subclasses()]:
             return val
         elif isinstance(val, DeclarativeMeta):
             return val.__name__

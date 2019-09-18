@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLab
 
 from Client.MyQt.Widgets.ProgressBar import ProgressBar
 from Modules.Client import ClientWorker
-from Modules.FirstLoad.ClientSide import InitialDataLoader
 from Parser.JsonParser import JsonParser
 
 

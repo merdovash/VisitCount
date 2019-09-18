@@ -14,7 +14,7 @@ from typing import List, TypeVar, Type, Callable, Dict, Tuple
 
 from pandas import DataFrame
 
-from DataBase2 import _DBEmailObject, Professor, ContactInfo, Visitation, Lesson, Faculty, \
+from DataBase2 import IContact, Professor, Contact, Visitation, Lesson, Faculty, \
     Administration, Semester, DataView
 from Domain.Notification import src
 from Domain.Notification.HTMLMaker import HTMLMaker
@@ -24,7 +24,7 @@ from Parser import Args
 
 class MessageMaker(ABC):
     file_name: str
-    receiver: _DBEmailObject
+    receiver: IContact
 
     @abstractmethod
     def update(self, mime: MIMEMultipart, html: HTMLMaker) -> List[str]:
@@ -33,7 +33,7 @@ class MessageMaker(ABC):
     @classmethod
     def auto(cls, receiver, target_time) -> Callable[[], None] or None:
         receiver = receiver
-        contact: ContactInfo = receiver.contact
+        contact: Contact = receiver.contact
         target_time = target_time
 
         with open(src.data) as data_json:
@@ -124,7 +124,7 @@ class Report(MessageMaker, ABC):
     def append_data(self, html: HTMLMaker):
         pass
 
-    def __init__(self, receiver: _DBEmailObject, target_time: datetime, data: dict):
+    def __init__(self, receiver: IContact, target_time: datetime, data: dict):
         self.receiver = receiver
         self.target_time = target_time
         self.data = data

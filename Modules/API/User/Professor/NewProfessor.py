@@ -1,4 +1,4 @@
-from DataBase2 import Auth, Session, Professor, ContactInfo, UserType
+from DataBase2 import Auth, Session, Professor, Contact, UserType
 from Modules.API.User.Professor import ProfessorAPI
 
 
@@ -33,8 +33,8 @@ class ProfessorCreateAPI(ProfessorAPI):
                                   last_name=data['last_name'],
                                   middle_name=data['middle_name'])
 
-        contact = ContactInfo.new(session,
-                                  email=data['email'])
+        contact = Contact.new(session,
+                              email=data['email'])
 
         professor.contact = contact
 

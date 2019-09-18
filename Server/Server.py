@@ -6,7 +6,6 @@ import os
 from flask import Flask, make_response, request, send_file, send_from_directory
 
 from Modules import API
-from Modules.FirstLoad.ServerSide import FirstLoadModule
 from Modules.Synch.ServerSide import SynchModule
 from Modules.NewProfessor import ServerSide as NewProfessor
 from Modules.UpdateDataViews import ServerSide as GetDataViews
@@ -23,8 +22,6 @@ NewProfessor.init(app, request)
 SynchModule(app, request)
 GetDataViews.init(app, request)
 API.init(app, request)
-
-FirstLoadModule(app, request)
 
 print(path)
 

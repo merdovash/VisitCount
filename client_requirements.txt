@@ -3,6 +3,7 @@ PyQtPlot
 QtWebEngineWidgets
 pymorphy2
 sqlalchemy
+sqlalchemy-utils
 pyserial
 xlrd
 requests

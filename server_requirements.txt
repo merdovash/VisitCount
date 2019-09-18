@@ -1,6 +1,7 @@
 flask
 pymorphy2
 sqlalchemy
+sqlalchemy-utils
 pyserial
 numpy
 pandas

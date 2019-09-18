@@ -7,17 +7,17 @@ from PyQt5.QtWidgets import QVBoxLayout, QComboBox, QLabel, QPushButton, QTabWid
 from Client.MyQt.Widgets import BisitorWidget
 from Client.MyQt.Widgets.VisualData.Graph import MyMplCanvas
 from Client.MyQt.utils import simple_show
-from DataBase2 import Professor, Student, _DBObject, Semester, _DBRoot
+from DataBase2 import Professor, Student, DBObject, Semester, IRoot
 
 
 class SettingWidget(BisitorWidget):
     accept = pyqtSignal('PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject', 'PyQt_PyObject')
 
-    def __init__(self, user: _DBObject, *args, **kwargs):
+    def __init__(self, user: DBObject, *args, **kwargs):
         from Client.MyQt.Widgets.ComboBox import QMCheckedComboBox, QMComboBox
 
         super().__init__(*args, **kwargs)
-        data_groups: List[Type[_DBRoot or _DBObject]] = sorted(_DBRoot.__subclasses__(), key=lambda x: x.__type_name__)
+        data_groups: List[Type[IRoot or DBObject]] = sorted(IRoot.__subclasses__(), key=lambda x: x.__type_name__)
         plot_types = {
             "Посещения по неделям": ('bar_week', "Показывает уровень посещений на каждой неделе"),
             'Распределение': ('distribution', "Показывает итоговый уровень посещений на дату"),
@@ -33,7 +33,7 @@ class SettingWidget(BisitorWidget):
 
         main_layout = QGridLayout()
 
-        data_selector = QMComboBox(_DBRoot)
+        data_selector = QMComboBox(IRoot)
         main_layout.addWidget(QLabel('Данные по'), 0, 0)
         main_layout.addWidget(data_selector, 0, 1, 1, 2)
 
@@ -48,7 +48,7 @@ class SettingWidget(BisitorWidget):
         main_layout.addWidget(semester_selector, 1, 1, 1, 2)
         semester_selector.loads(user)
 
-        group_by_selector = QMComboBox(_DBRoot)
+        group_by_selector = QMComboBox(IRoot)
         group_by_selector.setEnabled(False)
         main_layout.addWidget(QLabel('Группировать'), 2, 0)
         group_by_checkbox = QCheckBox('включить')

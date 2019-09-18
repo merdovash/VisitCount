@@ -2,20 +2,18 @@
 Файл с описанием базы данных, всех сущностей и их поведений
 """
 import enum
-import json
 import os
 import secrets
 import sys
 from datetime import datetime, timedelta
 from inspect import isclass
+from math import floor
 from pathlib import Path
 from typing import List, Union, Dict, Any, Type, Callable, Set
 from warnings import warn
 
-from math import floor
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, \
-    String, ForeignKey, Boolean, DateTime, inspect, Enum, LargeBinary
-from sqlalchemy.engine import url
+    String, ForeignKey, inspect, Enum, LargeBinary, types, event
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -23,21 +21,22 @@ from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
 from sqlalchemy.util import ThreadLocalRegistry
+from sqlalchemy_utils import database_exists, create_database
 
 from Client.interface import ISettings
 from Client.src import load_resource
+from Constants import DB_DATE_FORMAT
 from DataBase2.SessionInterface import ISession
 from DataBase2.utils import make_database_file
-from Domain.ArgPars import get_argv
 from Domain.Exception import BisitorException
 from Domain.Exception.Authentication import InvalidPasswordException, \
     InvalidLoginException, InvalidUidException, \
     UnauthorizedError
+from Domain.MessageFormat import Case, inflect
 from Domain.Validation.Values import Get
 from Domain.functools.Decorator import listed, filter_deleted, sorter, \
     is_iterable, filter_semester
 from Domain.functools.List import without_None
-from Domain.MessageFormat import Case, inflect
 from Parser import IJSON, Args, Side
 
 try:
@@ -47,6 +46,9 @@ except AttributeError:
 
 _root = os.path.basename(_root)
 _new = False
+
+
+
 
 
 if Args().side == Side.server:
@@ -67,15 +69,18 @@ if Args().side == Side.server:
                            pool_recycle=3600,
                            **connect_args)
 
+    if not database_exists(engine.url):
+        create_database(engine.url)
+
 
 else:
-    db_path = Path(__file__).parent / 'db2.db'
+    db_path = Path(__file__).parent / 'db5.db'
     connection_string = 'sqlite:///{}'.format(db_path)
 
     _new = make_database_file(db_path)
     print('sqlite:///{}'.format(db_path))
     engine = create_engine('sqlite:///{}'.format(db_path),
-                           echo=True, # if get_argv('--db-echo') else False,
+                           echo=Args().database.echo,
                            poolclass=StaticPool,
                            connect_args={'check_same_thread': False})
 
@@ -111,17 +116,61 @@ def name(obj):
         return obj.value
     if is_iterable(obj):
         return ', '.join([name(o) for o in obj])
-    if isinstance(obj, _DBNamed):
+    if isinstance(obj, INamed):
         full = obj.full_name()
         if len(full) > 20:
             return obj.short_name()
-    if isclass(obj) and issubclass(obj, _DBNamed):
+    if isclass(obj) and issubclass(obj, INamed):
         return obj.__type_name__
     return str(obj)
 
 
-class _DBObject(IJSON):
-    __tablename__: str
+class DateTime(types.TypeDecorator):
+    impl = types.DateTime
+    python_type = datetime
+
+    def process_bind_param(self, value, dialect):
+        # TODO проверка диалекта
+        if isinstance(value, str):
+            if value in ('null', 'None'):
+                warn(f'Пустая дата не прведена к типу None: "{value}"')
+                return None
+            return datetime.strptime(value, DB_DATE_FORMAT)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if isinstance(value, str):
+            return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+        return value
+
+
+class Boolean(types.TypeDecorator):
+    impl = types.Boolean
+    python_type = bool
+
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, str):
+            if value in  ('True', 'False', 'true', 'false', '1', '0'):
+                warn(f'Bool передавется в виде строки: "{value}"')
+            if value in ('1', 'true', 'True'):
+                return True
+            elif value in ('0', 'false', 'False'):
+                return False
+        elif isinstance(value, int):
+            if value == 1:
+                return True
+            elif value == 0:
+                return False
+        elif isinstance(value, bool):
+            return value
+
+        raise ValueError(f'попытка записать в bool значение: {value}')
+
+
+class DBObject(IJSON):
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__
     __type_name__: str
     __table_args__ = {
         'mysql_engine': 'InnoDB',
@@ -265,7 +314,7 @@ class _DBObject(IJSON):
         ).execute(data)
 
     @classmethod
-    def get(cls, session: ISession = None, **kwargs) -> '_DBObject':
+    def get(cls, session: ISession = None, **kwargs) -> 'DBObject':
         """
         Производит поиск элмента по заданным в **kwargs атрубтам и возвращает найденные строки
         :param session: ISession
@@ -298,7 +347,7 @@ class _DBObject(IJSON):
             return instance
 
     @classmethod
-    def class_(cls, cls_name) -> Type['_DBObject']:
+    def class_(cls, cls_name) -> Type['DBObject']:
         """
         Воспроизводит класс по его названию
         :param cls_name: имя класса
@@ -307,7 +356,7 @@ class _DBObject(IJSON):
         return eval(cls_name)
 
     def __eq__(self, other):
-        if isinstance(other, _DBObject):
+        if isinstance(other, DBObject):
             return super().__eq__(other)
 
         if isinstance(other, dict):
@@ -316,7 +365,7 @@ class _DBObject(IJSON):
         super().__eq__(other)
 
     @classmethod
-    def subclasses(cls) -> List[Type['_DBObject']] or List[type]:
+    def subclasses(cls) -> List[Type['DBObject']] or List[type]:
         """
         :return: list of real subclasses
         """
@@ -341,7 +390,10 @@ class _DBObject(IJSON):
         return self.__repr__()
 
 
-class _Displayable:
+class IDisplayable:
+    def display_name(self):
+        raise NotImplementedError()
+
     def __gt__(self, other):
         """
         Сравнивает названия объектов для их отображения в ComboBox в алфавитном порядке
@@ -351,14 +403,14 @@ class _Displayable:
         return name(self) > name(other)
 
 
-class _DBRoot(_Displayable):
+class IRoot(IDisplayable):
     """
     Класс для обозначения классов для отобраения в статистике
     """
     pass
 
 
-class _DBTrackedObject(_DBObject):
+class ISynchronize(DBObject):
     _created = Column(DateTime, default=datetime.now)
     _updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     _is_deleted = Column(Boolean, default=False)
@@ -400,7 +452,7 @@ class _DBTrackedObject(_DBObject):
         return max(without_None(self._updated, self._created, self._deleted))
 
 
-class _DBNamed(_DBObject):
+class INamed(DBObject):
     def full_name(self, case=None) -> str:
         raise NotImplementedError()
 
@@ -412,7 +464,7 @@ class _DBNamed(_DBObject):
         return f"<{type(self).__name__} (name={self.full_name()})>"
 
 
-class _DBNamedObject(_DBNamed):
+class INamedObject(INamed):
     name: str = Column(String(100), nullable=False)
     abbreviation: str = Column(String(16))
 
@@ -439,17 +491,17 @@ class _DBNamedObject(_DBNamed):
             return super().get(session, **kwargs)
 
 
-class _DBEmailObject(_DBNamed):
+class IContact:
     @declared_attr
     def contact_info_id(cls) -> int:
-        return Column(Integer, ForeignKey('contacts.id'))
+        return Column(Integer, ForeignKey('Contact.id'))
 
     @declared_attr
-    def contact(cls) -> 'ContactInfo':
-        return relationship('ContactInfo')
+    def contact(cls) -> 'Contact':
+        return relationship(Contact.__name__)
 
     @classmethod
-    def email_subclasses(cls) -> List[Type['_DBEmailObject']]:
+    def email_subclasses(cls) -> List[Type['IContact']]:
         res = [cls]
         for class_ in cls.__subclasses__():
             res.extend(class_.email_subclasses())
@@ -483,7 +535,7 @@ class _DBEmailObject(_DBNamed):
         return False
 
 
-class _DBPerson(_DBEmailObject, _DBTrackedObject):
+class IPerson(IContact, ISynchronize):
     last_name: str = Column(String(50), nullable=False)
     first_name: str = Column(String(50), nullable=False)
     middle_name: str = Column(String(50), default="")
@@ -575,7 +627,7 @@ class _DBPerson(_DBEmailObject, _DBTrackedObject):
         return session.query(cls).filter(cls.id == kwargs.get('id')).first()
 
 
-class _DBList:
+class IListed:
     @classmethod
     def all(cls, session: ISession = None):
         if session is None:
@@ -583,8 +635,8 @@ class _DBList:
         return session.query(cls).all()
 
 
-class File(Base, _DBTrackedObject):
-    __tablename__ = 'files'
+class File(Base, ISynchronize):
+
 
     name = Column(String)
     ext = Column(String)
@@ -622,8 +674,8 @@ class File(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
-class ContactInfo(Base, _DBTrackedObject):
-    __tablename__ = "contacts"
+class Contact(Base, ISynchronize):
+
 
     email = Column(String(200))
 
@@ -652,9 +704,9 @@ class ContactInfo(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
-class DataView(Base, _DBNamedObject, _DBList):
+class DataView(Base, INamedObject, IListed):
     # TODO _TRACKED
-    __tablename__ = "data_views"
+
 
     script_path = Column(String(500))
 
@@ -667,21 +719,21 @@ class DataView(Base, _DBNamedObject, _DBList):
         if isinstance(obj, ContactViews):
             return obj._view
 
-        if isinstance(obj, ContactInfo):
+        if isinstance(obj, Contact):
             return DataView.of(ContactViews.of(obj))
 
         return obj.session().query(DataView).all()
 
 
-class ContactViews(Base, _DBTrackedObject):
-    __tablename__ = 'emails_views'
+class ContactViews(Base, ISynchronize):
+
     __table_args__ = (
         UniqueConstraint('contact_info_id', 'data_view_id', name='contact_views_UK'),
-        _DBObject.__table_args__,
+        DBObject.__table_args__,
     )
 
-    contact_info_id = Column(Integer, ForeignKey('contacts.id'))
-    data_view_id = Column(Integer, ForeignKey('data_views.id'))
+    contact_info_id = Column(Integer, ForeignKey('Contact.id'))
+    data_view_id = Column(Integer, ForeignKey('DataView.id'))
 
     _view = relationship('DataView')
 
@@ -690,9 +742,9 @@ class ContactViews(Base, _DBTrackedObject):
     @listed
     def of(cls, obj, *args, **kwargs):
         if isinstance(obj, Professor):
-            return ContactViews.of(ContactInfo.of(obj))
+            return ContactViews.of(Contact.of(obj))
 
-        if isinstance(obj, ContactInfo):
+        if isinstance(obj, Contact):
             return obj._views
 
         if isinstance(obj, DataView):
@@ -701,8 +753,7 @@ class ContactViews(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
-class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
-    __tablename__ = "faculties"
+class Faculty(Base, IContact, INamedObject, IListed, IRoot):
     __type_name__ = "Факультет"
 
     def appeal(self, case=None):
@@ -747,11 +798,11 @@ class Faculty(Base, _DBEmailObject, _DBNamedObject, _DBList, _DBRoot):
         return self.full_name() > other.full_name()
 
 
-class FacultyAdministrations(Base, _DBObject):
-    __tablename__ = "faculty_administrations"
+class FacultyAdministrations(Base, DBObject):
 
-    faculty_id = Column('Faculty', ForeignKey('faculties.id'))
-    admin_id = Column('Administration', ForeignKey('administrations.id'))
+
+    faculty_id = Column('Faculty', ForeignKey('Faculty.id'))
+    admin_id = Column('Administration', ForeignKey('Administration.id'))
 
     faculty: Faculty = relationship('Faculty', backref=backref('_admins'))
     admin: 'Administration' = relationship('Administration', backref=backref('_faculties'))
@@ -765,12 +816,12 @@ class FacultyAdministrations(Base, _DBObject):
         raise NotImplementedError(type(obj))
 
 
-class Department(Base, _DBNamedObject, _DBEmailObject, _DBList, _DBRoot):
-    __tablename__ = "departments"
+class Department(Base, INamedObject, IContact, IListed, IRoot):
+
 
     __type_name__ = "Кафедра"
 
-    faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
+    faculty_id = Column(Integer, ForeignKey('Faculty.id'), nullable=False)
 
     faculty: Faculty = relationship('Faculty', backref=backref('departments'))
     professors: List['Professor'] = association_proxy('_professors', 'professor')
@@ -798,15 +849,15 @@ class Department(Base, _DBNamedObject, _DBEmailObject, _DBList, _DBRoot):
         raise NotImplementedError(type(obj))
 
 
-class DepartmentProfessors(Base, _DBObject):
-    __tablename__ = "departments_professors"
+class DepartmentProfessors(Base, DBObject):
+
     __table_args__ = (
         UniqueConstraint('department_id', 'professor_id', name='departments_professors_UK'),
-        _DBObject.__table_args__
+        DBObject.__table_args__
     )
 
-    department_id = Column(Integer, ForeignKey('departments.id'))
-    professor_id = Column(Integer, ForeignKey('professors.id'))
+    department_id = Column(Integer, ForeignKey('Department.id'))
+    professor_id = Column(Integer, ForeignKey('Professor.id'))
 
     department = relationship('Department', backref=backref('_professors'))
     professor = relationship('Professor', backref=backref('_department'))
@@ -820,17 +871,17 @@ class DepartmentProfessors(Base, _DBObject):
         raise NotImplementedError(type(obj))
 
 
-class StudentsGroups(Base, _DBTrackedObject):
+class StudentsGroups(Base, ISynchronize):
     """
     Ассоциативная таблица Студентов - Групп
     """
-    __tablename__ = 'students_groups'
+
     __table_args__ = (
         UniqueConstraint('student_id', 'group_id', name='students_groups_UK'),
-        _DBObject.__table_args__
+        DBObject.__table_args__
     )
-    student_id = Column(Integer, ForeignKey('students.id'))
-    group_id = Column(Integer, ForeignKey('groups.id'))
+    student_id = Column(Integer, ForeignKey('Student.id'))
+    group_id = Column(Integer, ForeignKey('Group.id'))
 
     @classmethod
     @listed
@@ -842,18 +893,18 @@ class StudentsGroups(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj), obj)
 
 
-class LessonsGroups(Base, _DBTrackedObject):
+class LessonsGroups(Base, ISynchronize):
     """
     Ассоциативная таблица Занятий - Групп
     """
-    __tablename__ = 'lessons_groups'
+
     __table_args__ = (
         UniqueConstraint('lesson_id', 'group_id', name='lesson_groups_UK'),
-        _DBObject.__table_args__
+        DBObject.__table_args__
     )
 
-    lesson_id = Column(Integer, ForeignKey('lessons.id'))
-    group_id = Column(Integer, ForeignKey('groups.id'))
+    lesson_id = Column(Integer, ForeignKey('Lesson.id'))
+    group_id = Column(Integer, ForeignKey('Group.id'))
 
     @classmethod
     @filter_deleted
@@ -866,8 +917,8 @@ class LessonsGroups(Base, _DBTrackedObject):
         raise NotImplementedError(type(obj))
 
 
-class Building(Base, _DBNamed, _DBList, _DBRoot):
-    __tablename__ = 'building'
+class Building(Base, INamed, IListed, IRoot):
+
     __type_name__ = 'Корпус'
     address = Column(String(500))
     abbreviation = Column(String(16))
@@ -896,10 +947,10 @@ class Building(Base, _DBNamed, _DBList, _DBRoot):
         return self.address
 
 
-class Room(Base, _DBNamed, _DBRoot):
-    __tablename__ = 'room'
+class Room(Base, INamed, IRoot):
+
     __type_name__ = 'Аудитория'
-    building_id = Column(Integer, ForeignKey('building.id'))
+    building_id = Column(Integer, ForeignKey('Building.id'))
     room_number = Column(Integer)
     reader_id = Column(Integer)
 
@@ -929,18 +980,18 @@ class Room(Base, _DBNamed, _DBRoot):
         raise NotImplementedError(type(obj))
 
 
-class StudentsParents(Base, _DBTrackedObject):
+class StudentsParents(Base, ISynchronize):
     """
     Ассоциативная таблица Студентов - Родителей
     """
-    __tablename__ = 'students_parents'
+
     __table_args__ = (
         UniqueConstraint('parent_id', 'student_id', name='student_parent_UK'),
-        _DBObject.__table_args__
+        DBObject.__table_args__
     )
 
-    parent_id = Column(Integer, ForeignKey('parents.id'))
-    student_id = Column(Integer, ForeignKey('students.id'))
+    parent_id = Column(Integer, ForeignKey('Parent.id'))
+    student_id = Column(Integer, ForeignKey('Student.id'))
 
     @classmethod
     @listed
@@ -952,19 +1003,19 @@ class StudentsParents(Base, _DBTrackedObject):
         raise NotImplementedError(obj)
 
 
-class Visitation(Base, _DBTrackedObject):
+class Visitation(Base, ISynchronize):
     """
     Таблица посещений занятий
     """
 
-    __tablename__ = 'visitations'
+
     __table_args__ = (
         UniqueConstraint('student_id', 'lesson_id', name='visitation_UK'),
-        _DBObject.__table_args__
+        DBObject.__table_args__
     )
 
-    student_id = Column(Integer, ForeignKey('students.id'))
-    lesson_id = Column(Integer, ForeignKey('lessons.id'))
+    student_id = Column(Integer, ForeignKey('Student.id'))
+    lesson_id = Column(Integer, ForeignKey('Lesson.id'))
 
     def __repr__(self):
         return f'<Visitation(id={self.id}, student_id={self.student_id},' \
@@ -1017,26 +1068,30 @@ class Visitation(Base, _DBTrackedObject):
         return list(set(Visitation.of(students)) & set(Visitation.of(lessons)))
 
 
-class LossReason(enum.Enum):
-    sick = 'Болезнь'
-    work = 'Работа'
-    science = 'Научная деятельность'
-    other = 'Другое'
+class LossReason(Base, INamedObject, IListed):
+    __type_name__ = 'причина пропуска'
+
+    # дефолтные значения - создаются при создании БД
+    SICK = 1
+    WORK = 2
+    SCIENCE = 3
+    OTHER = 4
 
 
-class VisitationLossReason(Base, _DBTrackedObject):
-    __tablename__ = "loss_reason"
+class VisitationLossReason(Base, ISynchronize):
+
     __table_args__ = (
         UniqueConstraint('lesson_id', 'student_id', name='loss_reason_UK'),
-        _DBObject.__table_args__,
+        DBObject.__table_args__,
     )
 
     id = Column(Integer, primary_key=True)
-    lesson_id = Column(Integer, ForeignKey('lessons.id'))
-    student_id = Column(Integer, ForeignKey('students.id'))
-    reason = Column(Enum(LossReason), nullable=False)
+    lesson_id = Column(Integer, ForeignKey('Lesson.id'))
+    student_id = Column(Integer, ForeignKey('Student.id'))
+    reason_id = Column(Integer, ForeignKey(LossReason.id), nullable=False)
+    reason = relationship(LossReason.__name__)
 
-    file_id = Column(Integer, ForeignKey('files.id'))
+    file_id = Column(Integer, ForeignKey('File.id'))
     proof = relationship('File')
 
     student = relationship('Student', backref=backref('loss_reasons'))
@@ -1061,12 +1116,12 @@ class UserType(enum.Enum):
     ADMIN = 3
 
 
-class Auth(Base, _DBTrackedObject):
+class Auth(Base, ISynchronize):
     """
     Таблица пользователей
     """
 
-    __tablename__ = 'auth5'
+
 
     login = Column(String(40), unique=True)
     password = Column(String(40))
@@ -1143,14 +1198,14 @@ class Auth(Base, _DBTrackedObject):
         }
 
 
-class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
+class Discipline(Base, ISynchronize, INamedObject, IRoot):
     """
     Таблица дисциплин
     """
-    __tablename__ = 'disciplines'
+
     __type_name__ = "Дисциплина"
 
-    department_id = Column(Integer, ForeignKey('departments.id'))
+    department_id = Column(Integer, ForeignKey('Department.id'))
     department: Department = relationship('Department', backref=backref('disciplines'))
 
     lessons: List['Lesson'] = relationship('Lesson', backref=backref('discipline'))
@@ -1192,8 +1247,8 @@ class Discipline(Base, _DBTrackedObject, _DBNamedObject, _DBRoot):
         raise NotImplementedError(type(obj))
 
 
-class Semester(Base, _DBNamed, _DBRoot):
-    __tablename__ = "semesters"
+class Semester(Base, INamed, IRoot):
+
     __type_name__ = 'Семестр'
 
     start_date: datetime = Column(DateTime, nullable=False, unique=True)
@@ -1268,10 +1323,11 @@ class Semester(Base, _DBNamed, _DBRoot):
             return temp
 
 
-class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
-    __tablename__ = 'lesson_type'
+class LessonType(Base, INamedObject, IListed, IRoot):
+
     __type_name__ = 'Вид занятия'
 
+    search_names: relationship or List['LessonTypeSearchNames']
     @classmethod
     @listed
     def of(cls, obj, *args, **kwargs):
@@ -1290,25 +1346,29 @@ class LessonType(Base, _DBNamedObject, _DBList, _DBRoot):
         raise NotImplementedError(type(obj))
 
 
-class Lesson(Base, _DBTrackedObject, _Displayable):
+class LessonTypeSearchNames(Base, DBObject, IListed):
+    search_name = Column(String, unique=True)
+    lesson_type_id = Column(Integer, ForeignKey(LessonType.id))
+    lesson_type = relationship(LessonType.__name__, backref=backref('search_names'))
+
+
+class Lesson(Base, ISynchronize, IDisplayable):
     """
     Lesson
     """
-
-    __tablename__ = 'lessons'
     __type_name__ = "Занятие"
     __table_args__ = (
         UniqueConstraint('professor_id', 'date', name='lesson_UK'),
-        _DBObject.__table_args__
+        DBObject.__table_args__
     )
 
-    professor_id: int = Column(Integer, ForeignKey('professors.id'), nullable=False)
-    discipline_id: int = Column(Integer, ForeignKey('disciplines.id'), nullable=False)
-    type_id: int = Column(Integer, ForeignKey('lesson_type.id'), nullable=False)
+    professor_id: int = Column(Integer, ForeignKey('Professor.id'), nullable=False)
+    discipline_id: int = Column(Integer, ForeignKey('Discipline.id'), nullable=False)
+    type_id: int = Column(Integer, ForeignKey('LessonType.id'), nullable=False)
     date: datetime = Column(DateTime, nullable=False)
     completed: bool = Column(Boolean, nullable=False, default=False)
-    room_id: int = Column(Integer, ForeignKey('room.id'), nullable=False)
-    semester_id = Column(Integer, ForeignKey('semesters.id'))
+    room_id: int = Column(Integer, ForeignKey('Room.id'), nullable=False)
+    semester_id = Column(Integer, ForeignKey('Semester.id'))
     semester: Semester = relationship('Semester', backref=backref('lessons'))
 
     discipline: Discipline
@@ -1381,7 +1441,7 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         raise NotImplementedError(type(obj))
 
     @classmethod
-    def intersect(cls, *args: _DBObject) -> Set['Lesson']:
+    def intersect(cls, *args: DBObject) -> Set['Lesson']:
         """
         Возвращает набор занятий, которые есть у всех переданных обьектов
         :param args: Любые сущности системы
@@ -1470,13 +1530,12 @@ class Lesson(Base, _DBTrackedObject, _Displayable):
         return f"{self.type.abbreviation} {self.date}"
 
 
-class Administration(Base, _DBPerson):
+class Administration(Base, IPerson):
     """
     Таблица администраций
     """
-    __tablename__ = 'administrations'
-    type_name = 'Представитель администрации'
 
+    type_name = 'Представитель администрации'
     faculties: List[Faculty] = association_proxy('_faculties', 'faculty')
 
     def appeal(self, case=None):
@@ -1514,11 +1573,11 @@ class UpdateDirection(Enum):
     from_both_to_both = 6
 
 
-class Professor(Base, _DBPerson, _DBRoot, ):
+class Professor(Base, IPerson, IRoot, ):
     """
     Таблица преподавателей
     """
-    __tablename__ = 'professors'
+
     __type_name__ = 'Преподаватель'
 
     _last_update_in = Column(DateTime, default=datetime.now)
@@ -1624,7 +1683,7 @@ class Professor(Base, _DBPerson, _DBRoot, ):
         if self._last_update_out is None:
             self._last_update_out = datetime(2008, 1, 1)
 
-        tracked_classes: List[Type[_DBTrackedObject]] = [x for x in _DBTrackedObject.subclasses() if x != Auth]
+        tracked_classes: List[Type[ISynchronize]] = [x for x in ISynchronize.subclasses() if x != Auth]
 
         for cls in tracked_classes:
             updated[cls.__name__] = self.session() \
@@ -1645,14 +1704,14 @@ class Professor(Base, _DBPerson, _DBRoot, ):
         return dict(created=created, updated=updated, deleted=deleted)
 
 
-class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
+class Group(Base, INamedObject, IContact, ISynchronize, IRoot):
     """
     Таблица групп
     """
-    __tablename__ = 'groups'
+
     __type_name__ = "Группа"
 
-    faculty_id = Column(Integer, ForeignKey('faculties.id'))
+    faculty_id = Column(Integer, ForeignKey('Faculty.id'))
 
     faculty: Faculty
 
@@ -1715,13 +1774,13 @@ class Group(Base, _DBNamedObject, _DBEmailObject, _DBTrackedObject, _DBRoot):
             raise NotImplementedError(type(groups))
 
 
-class Student(Base, _DBPerson, _DBRoot):
+class Student(Base, IPerson, IRoot):
     """
     Таблица студентов
     """
     __type_name__ = 'Студент'
 
-    __tablename__ = 'students'
+
 
     _parents = relationship('StudentsParents', backref=backref('student'))
     parents: List['Parent'] = association_proxy('_parents', 'parent')
@@ -1772,11 +1831,11 @@ class Student(Base, _DBPerson, _DBRoot):
         raise NotImplementedError(type(obj))
 
 
-class Parent(Base, _DBPerson):
+class Parent(Base, IPerson):
     """
     Таблица содержащая информациюо родителях
     """
-    __tablename__ = "parents"
+
     type_name = "Родитель"
 
     _students = relationship("StudentsParents", backref=backref('parent'))
@@ -1798,6 +1857,50 @@ class Parent(Base, _DBPerson):
             return Parent.of(Student.of(obj))
 
         raise NotImplementedError(type(obj))
+
+
+@event.listens_for(LessonType.__table__, 'after_create')
+def __init_lesson_types(target, connection, **kw):
+    data = (
+        dict(id=1, name='Лекция', abbreviation='Л'),
+        dict(id=2, name='Практическое занятие', abbreviation='П/з'),
+        dict(id=3, name='Лабораторная работа', abbreviation='Л/р'),
+    )
+
+    connection.execute(
+        LessonType.table().insert(),
+        *data
+    )
+
+
+@event.listens_for(LessonTypeSearchNames.__table__, 'after_create')
+def __init_lesson_type_search_names(target, connection, **kw):
+    data = (
+        dict(search_name='Лекция'.lower(), lesson_type_id=1),
+        dict(search_name='Лабораторная работа'.lower(), lesson_type_id=3),
+        dict(search_name='Практические занятия'.lower(), lesson_type_id=2)
+    )
+
+    connection.execute(
+        LessonTypeSearchNames.table().insert(),
+        *data
+    )
+
+
+@event.listens_for(LossReason.__table__, 'after_create')
+def __init_loss_reasons(target, connection, **kw):
+    data = (
+        dict(id=0, name='Болезнь', abbreviation='Б'),
+        dict(id=1, name='Работа', abbreviation='Р'),
+        dict(id=2, name='Научная деятельность', abbreviation='Науч'),
+        dict(id=-1, name='Другое', abbreviation='Другое'),
+    )
+
+    connection.execute(
+        LossReason.table().insert(),
+        *data
+    )
+
 
 
 Base.metadata.create_all(engine)

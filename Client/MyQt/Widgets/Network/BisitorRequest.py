@@ -4,7 +4,7 @@ from PyQt5.QtCore import QUrl, pyqtSignal
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 from PyQt5.QtWidgets import QMessageBox
 
-from DataBase2 import Auth, _DBPerson
+from DataBase2 import Auth, IPerson
 from Parser import Args
 from Parser.JsonParser import JsonParser
 from Server.Response import Response
@@ -18,7 +18,7 @@ def get_full_address(address) -> str:
     u = urlparse(address)
 
     if not u.netloc:
-        u = u._replace(netloc=Args().host)
+        u = u._replace(netloc=Args().host.address)
 
     if not u.scheme:
         u = u._replace(scheme='http')
@@ -44,7 +44,7 @@ class QBisitorAccessManager(QNetworkAccessManager):
                 self.data = {
                     'user': user.data()
                 }
-            elif issubclass(type(user), _DBPerson):
+            elif issubclass(type(user), IPerson):
                 self.data = {
                     'user': user.auth.data()
                 }

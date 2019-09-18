@@ -1,8 +1,5 @@
 # encoding: utf8
 import enum
-import os
-
-from sqlalchemy.engine import url
 
 from Domain.Exception import BisitorException
 

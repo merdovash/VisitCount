@@ -1,6 +1,6 @@
 from typing import List
 
-from DataBase2 import _DBPerson
+from DataBase2 import IPerson
 from Domain.Structures.DictWrapper import Structure
 from Domain.Structures.DictWrapper.Network import BaseRequest
 from Domain.Structures.PrimitiveWrapper import ID
@@ -31,6 +31,6 @@ class NotificationResponse(Structure):
 
 
 class NotificationRequest(BaseRequest):
-    def __init__(self, user: _DBPerson, data):
+    def __init__(self, user: IPerson, data):
         super().__init__(user)
         self.data = data

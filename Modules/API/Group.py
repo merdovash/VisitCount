@@ -1,6 +1,6 @@
 from typing import List
 
-from DataBase2 import Student, _DBObject, Auth, Group
+from DataBase2 import Student, DBObject, Auth, Group
 from Domain.Structures.DictWrapper import Structure
 from Modules.API import API, NoDataError
 
@@ -19,7 +19,7 @@ class GroupAPI(API):
                 self.students = students
             else:
                 self.students = [
-                    {key: _DBObject.column_type(key)(value) for key, value in student.items()}
+                    {key: DBObject.column_type(key)(value) for key, value in student.items()}
                     for student in students
                 ]
 

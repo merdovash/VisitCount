@@ -1,20 +1,20 @@
 import re
 from collections import namedtuple
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import xlrd
 from docx import Document
-from sqlalchemy.ext.associationproxy import _AssociationList
+from sqlalchemy import or_
 
-from DataBase2 import Professor, Session, Discipline, Group, Lesson, Student, LessonType, Auth, UserType
+from DataBase2 import Professor, Session, Discipline, Group, Lesson, Student, LessonType, LessonTypeSearchNames, Room, \
+    Building, Semester
 from DataBase2.SessionInterface import ISession
-from Domain.Loader import WordReader, ExcelReader, Reader
-from Domain.Loader.VisitationLoader import VisitationExcelLoader
+from Domain.Loader import WordReader, ExcelReader, Reader, PDFReader
 from Domain.Validation.Values import Get
 
 
-def get_lesson_by_time(day, time, start_day: datetime, professor: Professor, session: Session)-> Lesson:
+def get_lesson_by_time(day, time, start_day: datetime, professor: Professor, session: Session) -> Lesson:
     day_regex = re.compile(
         r'(?:(?P<month>[0-9]+)[:.](?P<day>[0-9]+))'
     )
@@ -41,6 +41,16 @@ def get_lesson_by_time(day, time, start_day: datetime, professor: Professor, ses
 
 
 class LessonLoader(Reader):
+    def __init__(self, session, semester: Semester):
+        self._semester = semester
+        self.session = session
+        self._lesson_data = []
+        self._groups = set()
+        self._rooms = set()
+        self._disciplines = set()
+        self._lesson_types = set()
+        self._professors = set()
+
     def get_disciplines(self):
         raise NotImplementedError()
 
@@ -49,6 +59,178 @@ class LessonLoader(Reader):
 
     def get_groups(self):
         raise NotImplementedError()
+
+    def add_lesson_data(self, *, date: datetime, lesson_type: str, groups: List[str],
+                        professor: List[str], discipline: str, room: List[str]):
+        """
+        
+        :param date: 
+        :param lesson_type: название типа занятия
+        :param groups: список названий групп
+        :param professor: Список ФИО; Если даны инициалы ИО, то присылать их без точек
+        :param discipline: Название дисциплины
+        :param room: пара (Здание, кабинет)
+        :return: 
+        """
+        assert len(professor) in (2, 3)
+        assert len(room) == 2
+        self._lesson_data.append(
+            dict(date=date, type=lesson_type, professor=professor, groups=groups, discipline=discipline, room=room))
+        self._groups.union(set(groups))
+        self._rooms.add(room)
+        self._disciplines.add(discipline)
+        self._lesson_types.add(lesson_type)
+        self._professors.add(professor)
+
+    def save(self):
+        def load_professors() -> Dict[Tuple[str, str, str], Professor]:
+            ps = dict()
+            for p in self._professors:
+                query = self.session.query(Professor).filter(Professor.last_name == p[0])
+                if len(p[1]) > 1:
+                    query.filter(Professor.first_name == p[1])
+                else:
+                    query.filter(Professor.first_name.like(f'{p[1]}%'))
+
+                if len(p) == 3:
+                    if len(p[2]) > 1:
+                        query.filter(Professor.middle_name == p[2])
+                    else:
+                        query.filter(Professor.middle_name.like(f'{p[2]}%'))
+
+                professor = query.all()
+                if professor:
+                    if len(professor) > 1:
+                        professor = self._handle_multiple_professor_result(professor)
+                        ps[p] = professor
+                    else:
+                        ps[p] = professor[0]
+                else:
+                    professor = Professor(last_name=p[0], first_name=p[1], middle_name=p[2] if len(p) == 3 else None)
+                    self.session.add(professor)
+                    ps[p] = professor
+            return ps
+
+        def load_disciplines() -> Dict[str, Discipline]:
+            ds = dict()
+            for d in self._disciplines:
+                query = self.session.query(Discipline).filter(Discipline.name == d)
+
+                discipline = query.all()
+                if discipline:
+                    if len(discipline) > 1:
+                        discipline = self._handle_multiple_discipline_result(discipline)
+                        ds[d] = discipline
+                    else:
+                        ds[d] = discipline[0]
+                else:
+                    discipline = Discipline(name=d)
+                    session.add(discipline)
+                    ds[d] = discipline
+
+            return ds
+
+        def load_lesson_types() -> Dict[str, LessonType]:
+            lts = dict()
+
+            for lt in self._lesson_types:
+                query = self.session \
+                    .query(LessonType) \
+                    .join(LessonTypeSearchNames) \
+                    .filter(LessonTypeSearchNames.search_name == lt.lower())
+
+                lesson_type = query.first()
+                if lesson_type:
+                    lts[lt] = lesson_type
+                else:
+                    lesson_type = LessonType(name=lt)
+                    self.session.add(lesson_type)
+                    self.session.flush()
+                    ltsn = LessonTypeSearchNames(search_name=lt)
+                    self.session.add(ltsn)
+                    ltsn.lesson_type = lesson_type
+                    lts[lt] = LessonType
+            return lts
+
+        def load_groups() -> Dict[str, Group]:
+            gs = dict()
+
+            for g in self._groups:
+                query = self.session.query(Group).filter(Group.name == g)
+
+                group = query.all()
+                if group:
+                    if len(group) > 1:
+                        group = self._handle_multiple_group_result(group)
+                        gs[g] = group
+                    else:
+                        gs[g] = group[0]
+                else:
+                    group = Group(name=g)
+                    session.add(group)
+                    gs[g] = group
+
+            return gs
+
+        def load_room() -> Dict[Tuple[str, str], Room]:
+            rs = dict()
+
+            for r in self._rooms:
+                query = self.session \
+                    .query(Room) \
+                    .join(Building) \
+                    .filter(or_(Building.address == r[0], Building.abbreviation == r[0])) \
+                    .filter(Room.room_number == r[1])
+
+                room = query.all()
+                if room:
+                    if len(room) > 1:
+                        room = self._handle_multiple_room_result(room)
+                        rs[r] = room
+                    else:
+                        rs[r] = room[0]
+                else:
+                    room = Room(room_number=r[1])
+                    session.add(room)
+                    self.session.flush()
+                    building = Building(address=r[0], abbreviation=r[0])
+                    self.session.add(building)
+                    room.building = building
+                    rs[r] = room
+            return rs
+
+        professors = load_professors()
+        disciplines = load_disciplines()
+        lesson_types = load_lesson_types()
+        groups = load_groups()
+        rooms = load_room()
+
+        self.session.flush()
+
+        for ld in self._lesson_data:
+            lesson = Lesson(date=ld['date'])
+            lesson.professor = professors[ld['professor']]
+            lesson.discipline = disciplines[ld['discipline']]
+            lesson.room = rooms[ld['rooms']]
+            lesson.groups.extend([groups[g] for g in ld['groups']])
+            lesson.type = lesson_types[ld['lesson_type']]
+            lesson.completed = False
+            lesson.semester = self._semester
+
+        self.session.flush()
+        self.session.commit()
+
+    def _handle_multiple_discipline_result(self, disciplines: List[Discipline]) -> Discipline:
+        raise NotImplementedError("Необходимо определить что делать в случае если под описанную дисциплину "
+                                  "подходит несколько записей")
+
+    def _handle_multiple_professor_result(self, professors: List[Professor]) -> Professor:
+        raise NotImplementedError("Необходимо определить что делать в случае если под описанного преподавателя "
+                                  "подходит несколько записей")
+
+    def _handle_multiple_group_result(self, group: List[Group]) -> Group:
+        raise NotImplementedError("Необходимо определить что делать в случае если под описанную группу "
+                                  "подходит несколько записей")
 
 
 class ExcelLessonLoader(ExcelReader, LessonLoader):
@@ -308,15 +490,18 @@ class WordLessonLoader(WordReader, LessonLoader):
             return Lesson.Type.Practice
 
 
+class PDFLessonLoader(LessonLoader, PDFReader):
+    def __init__(self, session, semester):
+        LessonLoader.__init__(self, session, semester)
+        PDFReader.__init__(self)
+
+
 if __name__ == '__main__':
     session = Session()
-    #auth = Auth.log_in(login='VAE', password='123456')
-    #professor = Professor.get_or_create(first_name='Валерий', last_name='Евстигнеев')
+    # auth = Auth.log_in(login='VAE', password='123456')
+    # professor = Professor.get_or_create(first_name='Валерий', last_name='Евстигнеев')
 
     # loader = ExcelLessonLoader('data.xls', datetime(2019, 9, 1, 0, 0, 0), professor, session)
-    #loader = VisitationExcelLoader('data.xls', Group.get(id=1), Discipline.get(id=1), session)
-
+    # loader = VisitationExcelLoader('data.xls', Group.get(id=1), Discipline.get(id=1), session)
 
     session.commit()
-
-

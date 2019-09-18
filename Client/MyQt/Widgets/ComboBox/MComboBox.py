@@ -6,7 +6,7 @@ from PyQt5.QtGui import QImage, QPen, QColor
 from PyQt5.QtWidgets import QComboBox
 
 from Client.MyQt.ColorScheme import Color
-from DataBase2 import Lesson, _Displayable, name, Group
+from DataBase2 import Lesson, IDisplayable, name, Group
 from Domain.functools.Format import type_name
 
 T = TypeVar('T')
@@ -77,7 +77,7 @@ class QMComboBox(QComboBox):
         else:
             super().addItems([name(i) for i in iterable])
 
-    def current(self) -> _Displayable or None:
+    def current(self) -> IDisplayable or None:
         try:
             return self.items[self.currentIndex()]
         except IndexError:

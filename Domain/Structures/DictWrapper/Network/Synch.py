@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Callable, Type
 
-from DataBase2 import _DBTrackedObject, _DBObject
+from DataBase2 import ISynchronize, DBObject
 from Domain.Structures.DictWrapper import HiddenStructure, Structure
 from Domain.Structures.DictWrapper.Network import TablesData
 from Domain.Validation import Values
@@ -22,9 +22,9 @@ class IDChanges(HiddenStructure):
         self._data: Dict[str, List[ChangeId]] = {key: [ChangeId(**i) for i in value]
                                                  for key, value in data.items()}
 
-    def foreach(self, func: Callable[[ChangeId, Type[_DBTrackedObject]], None]):
+    def foreach(self, func: Callable[[ChangeId, Type[ISynchronize]], None]):
         for class_name in self._data:
-            class_: Type[_DBTrackedObject] = _DBObject.class_(class_name)
+            class_: Type[ISynchronize] = DBObject.class_(class_name)
 
             for item in self._data[class_name]:
                 func(item, class_)

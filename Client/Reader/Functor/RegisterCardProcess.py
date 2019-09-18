@@ -3,14 +3,14 @@ from PyQt5.QtWidgets import QMessageBox
 from sqlalchemy import inspect
 
 from Client.Reader.SerialReader import RFIDReader
-from DataBase2 import _DBPerson
+from DataBase2 import IPerson
 from Domain.MessageFormat import inflect, Case
 
 
 class RegisterCardProcess(QMessageBox):
     success = pyqtSignal()
 
-    def __init__(self, user: _DBPerson, parent, *__args):
+    def __init__(self, user: IPerson, parent, *__args):
         super().__init__(parent)
 
         self.reader = RFIDReader.instance(f"зарегистрировать карту {inflect(user.__type_name__, Case.РОДИТЕЛЬНЫЙ)}")

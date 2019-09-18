@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QFormLayout
 from PyQtPlot.BarWidget import QBarGraphWidget
 
-from DataBase2 import _DBObject
+from DataBase2 import DBObject
 # from Main.DataBase.GlobalStatistic import Statistic
 from Domain.Structures import Data
 
@@ -48,7 +48,7 @@ class QAnalysisDialog(QWidget):
 
         return f
 
-    def __init__(self, data: Data, selector: Dict[str, List[_DBObject]], plot_styler: Callable[[QBarGraphWidget], None],
+    def __init__(self, data: Data, selector: Dict[str, List[DBObject]], plot_styler: Callable[[QBarGraphWidget], None],
                  flags=None, *args, **kwargs):
         QWidget.__init__(self, flags, *args, **kwargs)
 

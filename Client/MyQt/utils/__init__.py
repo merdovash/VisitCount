@@ -20,10 +20,11 @@ def check_connection() -> bool:
         # reachable
         import socket
         from urllib import parse
-        url = parse.urlparse(Args().host)
+        address = Args().host.address
+        url = parse.urlparse(address)
         print(url)
         if url.netloc == '':
-            socket.create_connection((Args().host.split(':')[0], Args().host.split(':')[1]))
+            socket.create_connection((address.split(':')[0], address.split(':')[1]))
         else:
             socket.create_connection((url.hostname, url.port))
         return True
