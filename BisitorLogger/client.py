@@ -10,3 +10,10 @@ def init():
     synch_fh.setLevel(logging.DEBUG)
     synch_fh.setFormatter(formatter)
     synch_logger.addHandler(synch_fh)
+
+    debug_logger = logging.getLogger('debug')
+    debug_logger.setLevel(logging.DEBUG)
+    debug_fh = logging.FileHandler('debug.log')
+    debug_fh.setLevel(logging.DEBUG)
+    debug_fh.setFormatter(formatter)
+    debug_logger.addHandler(debug_fh)

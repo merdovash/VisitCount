@@ -12,11 +12,12 @@ from pathlib import Path
 from typing import List, Union, Dict, Any, Type, Callable, Set
 from warnings import warn
 
+import sqlalchemy
 from sqlalchemy import create_engine, UniqueConstraint, Column, Integer, \
     String, ForeignKey, inspect, Enum, LargeBinary, types, event
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.associationproxy import association_proxy, _AssociationList
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.ext.declarative import declarative_base, declared_attr, as_declarative
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session, backref
 from sqlalchemy.pool import StaticPool, QueuePool
 from sqlalchemy.sql import ClauseElement
@@ -74,7 +75,7 @@ if Args().side == Side.server:
 
 
 else:
-    db_path = Path(__file__).parent / 'db5.db'
+    db_path = Path(__file__).parent / 'db6.db'
     connection_string = 'sqlite:///{}'.format(db_path)
 
     _new = make_database_file(db_path)
@@ -84,14 +85,10 @@ else:
                            poolclass=StaticPool,
                            connect_args={'check_same_thread': False})
 
-Base = declarative_base(bind=engine)
-
 if Args().side == Side.server:
     Session = ThreadLocalRegistry(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
 else:
     Session = scoped_session(sessionmaker(bind=engine, autoflush=False, expire_on_commit=False))
-
-metadata = Base.metadata
 
 Session: Callable[[], ISession] = Session
 
@@ -133,7 +130,7 @@ class DateTime(types.TypeDecorator):
         # TODO проверка диалекта
         if isinstance(value, str):
             if value in ('null', 'None'):
-                warn(f'Пустая дата не прведена к типу None: "{value}"')
+                warn(f'Пустая дата не приведена к типу None: {type(value)}:{value}"')
                 return None
             return datetime.strptime(value, DB_DATE_FORMAT)
         return value
@@ -151,7 +148,7 @@ class Boolean(types.TypeDecorator):
     def process_bind_param(self, value, dialect):
         if isinstance(value, str):
             if value in  ('True', 'False', 'true', 'false', '1', '0'):
-                warn(f'Bool передавется в виде строки: "{value}"')
+                warn(f'Bool передается в виде строки: "{value}"')
             if value in ('1', 'true', 'True'):
                 return True
             elif value in ('0', 'false', 'False'):
@@ -167,10 +164,12 @@ class Boolean(types.TypeDecorator):
         raise ValueError(f'попытка записать в bool значение: {value}')
 
 
+@as_declarative()
 class DBObject(IJSON):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__
+
     __type_name__: str
     __table_args__ = {
         'mysql_engine': 'InnoDB',
@@ -179,9 +178,6 @@ class DBObject(IJSON):
     }
 
     id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-
-    def __init__(self, **kwargs):
-        Base.__init__(self, id=kwargs.pop('id', None), **kwargs)
 
     def __repr__(self):
         return "<{type}({fields})>".format(
@@ -207,8 +203,6 @@ class DBObject(IJSON):
             return Get.bool
         if python_type == int:
             return Get.int
-        if issubclass(python_type, enum.Enum):
-            return lambda x: python_type[x] if isinstance(x, str) else x
         return python_type
 
     @classmethod
@@ -391,7 +385,10 @@ class DBObject(IJSON):
 
 
 class IDisplayable:
-    def display_name(self):
+    def type_name(self) -> str:
+        raise NotImplementedError()
+
+    def display_name(self) -> str:
         raise NotImplementedError()
 
     def __gt__(self, other):
@@ -410,7 +407,7 @@ class IRoot(IDisplayable):
     pass
 
 
-class ISynchronize(DBObject):
+class ISynchronize:
     _created = Column(DateTime, default=datetime.now)
     _updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     _is_deleted = Column(Boolean, default=False)
@@ -452,7 +449,7 @@ class ISynchronize(DBObject):
         return max(without_None(self._updated, self._created, self._deleted))
 
 
-class INamed(DBObject):
+class INamed:
     def full_name(self, case=None) -> str:
         raise NotImplementedError()
 
@@ -635,9 +632,7 @@ class IListed:
         return session.query(cls).all()
 
 
-class File(Base, ISynchronize):
-
-
+class File(DBObject, ISynchronize):
     name = Column(String)
     ext = Column(String)
     data = Column(LargeBinary)
@@ -674,9 +669,7 @@ class File(Base, ISynchronize):
         raise NotImplementedError(type(obj))
 
 
-class Contact(Base, ISynchronize):
-
-
+class Contact(DBObject, ISynchronize):
     email = Column(String(200))
 
     auto = Column(Boolean, default=False)
@@ -704,7 +697,7 @@ class Contact(Base, ISynchronize):
         raise NotImplementedError(type(obj))
 
 
-class DataView(Base, INamedObject, IListed):
+class DataView( DBObject, INamedObject, IListed):
     # TODO _TRACKED
 
 
@@ -725,14 +718,14 @@ class DataView(Base, INamedObject, IListed):
         return obj.session().query(DataView).all()
 
 
-class ContactViews(Base, ISynchronize):
+class ContactViews(DBObject, ISynchronize):
 
     __table_args__ = (
         UniqueConstraint('contact_info_id', 'data_view_id', name='contact_views_UK'),
         DBObject.__table_args__,
     )
 
-    contact_info_id = Column(Integer, ForeignKey('Contact.id'))
+    contact_info_id = Column(Integer, ForeignKey(Contact.id))
     data_view_id = Column(Integer, ForeignKey('DataView.id'))
 
     _view = relationship('DataView')
@@ -753,7 +746,7 @@ class ContactViews(Base, ISynchronize):
         raise NotImplementedError(type(obj))
 
 
-class Faculty(Base, IContact, INamedObject, IListed, IRoot):
+class Faculty(DBObject, IContact, INamedObject, IListed, IRoot):
     __type_name__ = "Факультет"
 
     def appeal(self, case=None):
@@ -798,9 +791,7 @@ class Faculty(Base, IContact, INamedObject, IListed, IRoot):
         return self.full_name() > other.full_name()
 
 
-class FacultyAdministrations(Base, DBObject):
-
-
+class FacultyAdministrations(DBObject):
     faculty_id = Column('Faculty', ForeignKey('Faculty.id'))
     admin_id = Column('Administration', ForeignKey('Administration.id'))
 
@@ -816,7 +807,7 @@ class FacultyAdministrations(Base, DBObject):
         raise NotImplementedError(type(obj))
 
 
-class Department(Base, INamedObject, IContact, IListed, IRoot):
+class Department(DBObject, INamedObject, IContact, IListed, IRoot):
 
 
     __type_name__ = "Кафедра"
@@ -849,8 +840,7 @@ class Department(Base, INamedObject, IContact, IListed, IRoot):
         raise NotImplementedError(type(obj))
 
 
-class DepartmentProfessors(Base, DBObject):
-
+class DepartmentProfessors(DBObject):
     __table_args__ = (
         UniqueConstraint('department_id', 'professor_id', name='departments_professors_UK'),
         DBObject.__table_args__
@@ -871,7 +861,7 @@ class DepartmentProfessors(Base, DBObject):
         raise NotImplementedError(type(obj))
 
 
-class StudentsGroups(Base, ISynchronize):
+class StudentsGroups(DBObject, ISynchronize):
     """
     Ассоциативная таблица Студентов - Групп
     """
@@ -893,7 +883,7 @@ class StudentsGroups(Base, ISynchronize):
         raise NotImplementedError(type(obj), obj)
 
 
-class LessonsGroups(Base, ISynchronize):
+class LessonsGroups(DBObject, ISynchronize):
     """
     Ассоциативная таблица Занятий - Групп
     """
@@ -917,7 +907,7 @@ class LessonsGroups(Base, ISynchronize):
         raise NotImplementedError(type(obj))
 
 
-class Building(Base, INamed, IListed, IRoot):
+class Building(DBObject, INamed, IListed, IRoot):
 
     __type_name__ = 'Корпус'
     address = Column(String(500))
@@ -947,7 +937,7 @@ class Building(Base, INamed, IListed, IRoot):
         return self.address
 
 
-class Room(Base, INamed, IRoot):
+class Room(DBObject, INamed, IRoot):
 
     __type_name__ = 'Аудитория'
     building_id = Column(Integer, ForeignKey('Building.id'))
@@ -980,7 +970,7 @@ class Room(Base, INamed, IRoot):
         raise NotImplementedError(type(obj))
 
 
-class StudentsParents(Base, ISynchronize):
+class StudentsParents(DBObject,ISynchronize):
     """
     Ассоциативная таблица Студентов - Родителей
     """
@@ -1003,7 +993,7 @@ class StudentsParents(Base, ISynchronize):
         raise NotImplementedError(obj)
 
 
-class Visitation(Base, ISynchronize):
+class Visitation(DBObject, ISynchronize):
     """
     Таблица посещений занятий
     """
@@ -1068,7 +1058,7 @@ class Visitation(Base, ISynchronize):
         return list(set(Visitation.of(students)) & set(Visitation.of(lessons)))
 
 
-class LossReason(Base, INamedObject, IListed):
+class LossReason(DBObject, INamedObject, IListed):
     __type_name__ = 'причина пропуска'
 
     # дефолтные значения - создаются при создании БД
@@ -1078,7 +1068,7 @@ class LossReason(Base, INamedObject, IListed):
     OTHER = 4
 
 
-class VisitationLossReason(Base, ISynchronize):
+class VisitationLossReason(DBObject, ISynchronize):
 
     __table_args__ = (
         UniqueConstraint('lesson_id', 'student_id', name='loss_reason_UK'),
@@ -1109,24 +1099,22 @@ class VisitationLossReason(Base, ISynchronize):
         raise NotImplementedError(type(obj))
 
 
-class UserType(enum.Enum):
+class UserType(DBObject, IListed, INamedObject):
     STUDENT = 0
     PROFESSOR = 1
     PARENT = 2
     ADMIN = 3
 
 
-class Auth(Base, ISynchronize):
+class Auth(DBObject, ISynchronize):
     """
     Таблица пользователей
     """
 
-
-
     login = Column(String(40), unique=True)
     password = Column(String(40))
     uid = Column(String(40), unique=True, default=lambda: str(secrets.randbits(128)))
-    user_type = Column(Enum(UserType))
+    user_type_id = Column(Integer, ForeignKey(UserType.id))
     user_id = Column(Integer)
 
     __user = None
@@ -1138,12 +1126,12 @@ class Auth(Base, ISynchronize):
         :return: Professor or Student
         """
         if self.__user is None:
-            if self.user_type == UserType.STUDENT:
+            if self.user_type_id == UserType.STUDENT:
                 self.__user: Student = self.session() \
                     .query(Student) \
                     .filter(Student.id == self.user_id) \
                     .first()
-            elif self.user_type == UserType.PROFESSOR:
+            elif self.user_type_id == UserType.PROFESSOR:
                 self.__user: Professor = self.session() \
                     .query(Professor) \
                     .filter(Professor.id == self.user_id) \
@@ -1187,18 +1175,18 @@ class Auth(Base, ISynchronize):
 
     def __repr__(self):
         return f"<Auth(id={self.id}," \
-               f" user_type={self.user_type}," \
+               f" user_type_id={self.user_type_id}," \
                f" user_id={self.user_id})>"
 
     def data(self) -> Dict[str, str]:
         return {
             'login': self.login,
             'password': self.password,
-            'user_type': self.user_type
+            'user_type_id': self.user_type_id
         }
 
 
-class Discipline(Base, ISynchronize, INamedObject, IRoot):
+class Discipline(DBObject, ISynchronize, INamedObject, IRoot):
     """
     Таблица дисциплин
     """
@@ -1247,7 +1235,7 @@ class Discipline(Base, ISynchronize, INamedObject, IRoot):
         raise NotImplementedError(type(obj))
 
 
-class Semester(Base, INamed, IRoot):
+class Semester(DBObject,  INamed, IRoot):
 
     __type_name__ = 'Семестр'
 
@@ -1323,7 +1311,7 @@ class Semester(Base, INamed, IRoot):
             return temp
 
 
-class LessonType(Base, INamedObject, IListed, IRoot):
+class LessonType(DBObject, INamedObject, IListed, IRoot):
 
     __type_name__ = 'Вид занятия'
 
@@ -1346,13 +1334,13 @@ class LessonType(Base, INamedObject, IListed, IRoot):
         raise NotImplementedError(type(obj))
 
 
-class LessonTypeSearchNames(Base, DBObject, IListed):
+class LessonTypeSearchNames(DBObject, IListed):
     search_name = Column(String, unique=True)
     lesson_type_id = Column(Integer, ForeignKey(LessonType.id))
     lesson_type = relationship(LessonType.__name__, backref=backref('search_names'))
 
 
-class Lesson(Base, ISynchronize, IDisplayable):
+class Lesson(DBObject, ISynchronize, IDisplayable):
     """
     Lesson
     """
@@ -1530,7 +1518,7 @@ class Lesson(Base, ISynchronize, IDisplayable):
         return f"{self.type.abbreviation} {self.date}"
 
 
-class Administration(Base, IPerson):
+class Administration(DBObject, IPerson):
     """
     Таблица администраций
     """
@@ -1573,7 +1561,7 @@ class UpdateDirection(Enum):
     from_both_to_both = 6
 
 
-class Professor(Base, IPerson, IRoot, ):
+class Professor(DBObject, IPerson, IRoot, ):
     """
     Таблица преподавателей
     """
@@ -1704,7 +1692,7 @@ class Professor(Base, IPerson, IRoot, ):
         return dict(created=created, updated=updated, deleted=deleted)
 
 
-class Group(Base, INamedObject, IContact, ISynchronize, IRoot):
+class Group(DBObject, INamedObject, IContact, ISynchronize, IRoot):
     """
     Таблица групп
     """
@@ -1774,13 +1762,11 @@ class Group(Base, INamedObject, IContact, ISynchronize, IRoot):
             raise NotImplementedError(type(groups))
 
 
-class Student(Base, IPerson, IRoot):
+class Student(DBObject, IPerson, IRoot):
     """
     Таблица студентов
     """
     __type_name__ = 'Студент'
-
-
 
     _parents = relationship('StudentsParents', backref=backref('student'))
     parents: List['Parent'] = association_proxy('_parents', 'parent')
@@ -1831,7 +1817,7 @@ class Student(Base, IPerson, IRoot):
         raise NotImplementedError(type(obj))
 
 
-class Parent(Base, IPerson):
+class Parent(DBObject, IPerson):
     """
     Таблица содержащая информациюо родителях
     """
@@ -1902,5 +1888,19 @@ def __init_loss_reasons(target, connection, **kw):
     )
 
 
+@event.listens_for(UserType.__table__, 'after_create')
+def __init_user_type(target, connection, **kw):
+    data = (
+        dict(id=0, name='Студент'),
+        dict(id=1, name='Преподаватель'),
+        dict(id=2, name='Родитель'),
+        dict(id=3, name='Методист'),
+    )
 
-Base.metadata.create_all(engine)
+    connection.execute(
+        UserType.table().insert(),
+        *data
+    )
+
+
+DBObject.metadata.create_all(engine)

@@ -117,7 +117,7 @@ class LoadingWizardWidget(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    auth = Auth.get_or_create(login='VAE', password='123456', user_id=1, user_type=UserType.PROFESSOR)
+    auth = Auth.get_or_create(login='VAE', password='123456', user_id=1, user_type_id=UserType.PROFESSOR)
     professor = Professor.get_or_create(id=1)
 
     w = LoadingWizardWindow(professor=auth.user)

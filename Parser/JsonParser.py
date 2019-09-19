@@ -8,10 +8,9 @@ TODO:
     * encoding
 """
 import json
+import logging
 from datetime import datetime, date
 from enum import Enum
-
-from sqlalchemy.ext.associationproxy import _AssociationList
 
 from Domain.Exception.Net import InvalidPOSTDataException
 from Parser import IJSON
@@ -57,7 +56,8 @@ class JsonParser:
         :param obj: object
         :return: encoded json string
         """
-
+        logging.getLogger('debug').debug('dump file {:20}'.format(str(obj)))
+        from sqlalchemy.ext.associationproxy import _AssociationList
         def encode(val) -> str:
             """
 
@@ -120,4 +120,4 @@ class JsonParser:
 
 
 if __name__ == '__main__':
-    print(JsonParser.read('{"request_type":"api/user/first_load","status":"OK","data":{"auth":{"id":"1","login":"Vlad","password":"123456","uid":"None","user_type":"PROFESSOR","user_id":"1"},"professor":[{"id":"1","_created":"2019-09-08 11:39:02","_updated":"2019-09-08 11:39:02","_is_deleted":"False","_deleted":"None","last_name":"Щекочихин","first_name":"Владсилав","middle_name":"","card_id":"None","_last_update_in":"2019-09-08 11:39:02","settings":"{\"colors\": {\"_type\": \"Area\", \"title\": \"Цвета Журнала посещений\", \"visit\": {\"_type\": \"color\", \"title\": \"Цвет посещения\", \"value\": \"rgb(138, 226, 52)\", \"default\": \"rgb(240, 240, 0)\"}, \"sub_visit\": {\"_type\": \"color\", \"title\": \"Цвет уважительного пропуска\", \"value\": None, \"default\": \"rgb(255, 238, 238)\"}, \"not_visited\": {\"_type\": \"color\", \"title\": \"Цвет пропуска\", \"value\": \"rgb(226, 61, 135)\", \"default\": \"rgb(255, 255, 255)\"}, \"not_completed\": {\"_type\": \"color\", \"title\": \"Цвет непроведенного занятия\", \"value\": None, \"default\": \"rgb(199, 199, 199)\"}, \"good_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения хорошего уровня посещений\", \"value\": \"rgb(115, 210, 22)\", \"default\": \"rgb(0, 255, 0)\"}, \"bad_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения плохого уровня посещений\", \"value\": \"rgb(239, 41, 41)\", \"default\": \"rgb(255, 0, 0)\"}, \"avg_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения среднего уровня посещений\", \"value\": None, \"default\": \"rgb(255, 255, 255)\"}, \"missing_card\": {\"_type\": \"color\", \"title\": \"Цвет студентов без зарегистрованной карты\", \"value\": None, \"default\": \"rgb(121, 22, 22)\"}}}","contact_info_id":"1"}],"data":{"Lesson":[],"Visitation":[],"StudentsParents":[],"Faculty":[],"VisitationLossReason":[],"LessonType":[],"Discipline":[],"Student":[],"Building":[],"DataView":[],"StudentsGroups":[],"File":[],"Administration":[],"Department":[],"Group":[],"LessonsGroups":[],"ContactViews":[],"Parent":[],"Semester":[],"Room":[],"ContactInfo":[{"id":"1","_created":"2019-09-08 11:39:02","_updated":"2019-09-08 11:39:02","_is_deleted":"False","_deleted":"None","email":"","auto":"False","last_auto":"2010-01-01 00:00:00"}],"DepartmentProfessors":[]}},"message":null,"data_type":"Domain.Structures.DictWrapper.Network.FirstLoad.ServerFirstLoadData"}'))
+    print(JsonParser.read('{"request_type":"api/user/first_load","status":"OK","data":{"auth":{"id":"1","login":"Vlad","password":"123456","uid":"None","user_type_id":"PROFESSOR","user_id":"1"},"professor":[{"id":"1","_created":"2019-09-08 11:39:02","_updated":"2019-09-08 11:39:02","_is_deleted":"False","_deleted":"None","last_name":"Щекочихин","first_name":"Владсилав","middle_name":"","card_id":"None","_last_update_in":"2019-09-08 11:39:02","settings":"{\"colors\": {\"_type\": \"Area\", \"title\": \"Цвета Журнала посещений\", \"visit\": {\"_type\": \"color\", \"title\": \"Цвет посещения\", \"value\": \"rgb(138, 226, 52)\", \"default\": \"rgb(240, 240, 0)\"}, \"sub_visit\": {\"_type\": \"color\", \"title\": \"Цвет уважительного пропуска\", \"value\": None, \"default\": \"rgb(255, 238, 238)\"}, \"not_visited\": {\"_type\": \"color\", \"title\": \"Цвет пропуска\", \"value\": \"rgb(226, 61, 135)\", \"default\": \"rgb(255, 255, 255)\"}, \"not_completed\": {\"_type\": \"color\", \"title\": \"Цвет непроведенного занятия\", \"value\": None, \"default\": \"rgb(199, 199, 199)\"}, \"good_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения хорошего уровня посещений\", \"value\": \"rgb(115, 210, 22)\", \"default\": \"rgb(0, 255, 0)\"}, \"bad_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения плохого уровня посещений\", \"value\": \"rgb(239, 41, 41)\", \"default\": \"rgb(255, 0, 0)\"}, \"avg_student\": {\"_type\": \"color\", \"title\": \"Цвет обозначения среднего уровня посещений\", \"value\": None, \"default\": \"rgb(255, 255, 255)\"}, \"missing_card\": {\"_type\": \"color\", \"title\": \"Цвет студентов без зарегистрованной карты\", \"value\": None, \"default\": \"rgb(121, 22, 22)\"}}}","contact_info_id":"1"}],"data":{"Lesson":[],"Visitation":[],"StudentsParents":[],"Faculty":[],"VisitationLossReason":[],"LessonType":[],"Discipline":[],"Student":[],"Building":[],"DataView":[],"StudentsGroups":[],"File":[],"Administration":[],"Department":[],"Group":[],"LessonsGroups":[],"ContactViews":[],"Parent":[],"Semester":[],"Room":[],"ContactInfo":[{"id":"1","_created":"2019-09-08 11:39:02","_updated":"2019-09-08 11:39:02","_is_deleted":"False","_deleted":"None","email":"","auto":"False","last_auto":"2010-01-01 00:00:00"}],"DepartmentProfessors":[]}},"message":null,"data_type":"Domain.Structures.DictWrapper.Network.FirstLoad.ServerFirstLoadData"}'))

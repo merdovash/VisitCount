@@ -1,12 +1,11 @@
 from datetime import datetime
 from typing import Dict, Type
 
-from DataBase2 import Auth, Semester, DBObject, IListed, Professor, UserType, Session, Base
+from DataBase2 import Auth, Semester, DBObject, IListed, Professor, UserType, Session, ISession
 from Domain.Exception.Authentication import UnauthorizedError
-from Domain.Structures.DictWrapper.Network.FirstLoad import ServerFirstLoadData
-from Domain.Validation.Dict import Map
 from Modules.API import AccessError
 from Modules.API.User import UserAPI
+from Modules.utils import synch_foreach
 
 
 class FirstLoad(UserAPI):
@@ -15,22 +14,27 @@ class FirstLoad(UserAPI):
     @classmethod
     def load(cls, auth: Auth, on_finish=None, on_error=None):
         from Client.MyQt.Widgets.Network.BisitorRequest import QBisitorRequest
-        def apply(data):
-            def create_row(item_data: Dict, class_: Type[DBObject]):
+        def apply(received_data):
+            def create_row(session: ISession, item_data: Dict, class_: Type[DBObject]):
                 if not class_.get(session, **item_data):
-                    class_.new(session, **item_data)
-                    session.flush()
+                    new_record = class_(**item_data)
+                    session.add(new_record)
 
-            received_data = ServerFirstLoadData(**data)
-
+            # received_data = ServerFirstLoadData(**data)
             session = Session()
-            auth = Auth.new(session, **received_data.auth)
 
-            received_data.data.foreach(create_row)
+            auth = Auth(**received_data.pop('Auth'))
+            session.add(auth)
+            session.flush()
 
-            professor = Professor.new(session, **Map.item_type(received_data.professor[0], Professor))
+            professor = Professor(**received_data.pop('Professor')[0])
+
             professor._last_update_in = datetime.now()
             professor._last_update_out = datetime.now()
+            session.add(professor)
+            session.flush()
+
+            synch_foreach(session, received_data, create_row)
 
             session.commit()
 
@@ -48,7 +52,7 @@ class FirstLoad(UserAPI):
         return request
 
     def post(self, data: dict, auth: Auth, **kwargs):
-        if auth.user_type == UserType.PROFESSOR:
+        if auth.user_type_id == UserType.PROFESSOR:
             return self.first_load_data(auth)
         else:
             raise AccessError()
@@ -59,11 +63,11 @@ class FirstLoad(UserAPI):
         main_data = dict()
         current_semester = Semester.current(professor)
 
-        for cls in Base.__subclasses__():
+        for cls in DBObject.__subclasses__():
             if cls.__name__ == Auth.__name__:
                 main_data[cls.__name__] = self.session. \
                     query(Auth). \
-                    filter(Auth.user_type == UserType.PROFESSOR). \
+                    filter(Auth.user_type_id == UserType.PROFESSOR). \
                     filter(Auth.user_id == professor_id). \
                     first()
             else:
@@ -75,5 +79,4 @@ class FirstLoad(UserAPI):
                 except UnauthorizedError:
                     pass
 
-        r = ServerFirstLoadData(**main_data)
-        return r
+        return main_data

@@ -2,13 +2,9 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from Client.MyQt.Widgets import Message, BisitorWidget
-from Client.MyQt.Window.Main import MainWindow
 from Client.Settings import Settings
 from Domain.Exception import BisitorException
 from Domain.Exception.Authentication import InvalidLoginException
-
-from Modules.API.User.FirstLoad import FirstLoad
-from Modules.API.User.Settings import SettingsAPI
 
 
 class AuthWindow(BisitorWidget):
@@ -68,11 +64,13 @@ class AuthWindow(BisitorWidget):
     # slots
     @pyqtSlot('PyQt_PyObject')
     def on_auth_success(self, auth):
+        from Client.MyQt.Window.Main import MainWindow
         from DataBase2 import Auth
         from Client.Debug.WrongId import debug
         auth = Auth.log_in(**auth)
         professor = auth.user
 
+        from Modules.API.User.Settings import SettingsAPI
         SettingsAPI.synch(professor)
 
         Settings.load(professor)
@@ -102,6 +100,7 @@ class AuthWindow(BisitorWidget):
 
                 self.auth_success.emit(dict(login=login, password=password))
             except InvalidLoginException:
+                from Modules.API.User.FirstLoad import FirstLoad
                 self.loading = FirstLoad.load(Auth(login=login, password=password), self.auth, )
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
@@ -114,3 +113,7 @@ class AuthWindow(BisitorWidget):
             self.new_user_form = NewUserForm()
 
         self.new_user_form.show()
+
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        super().showEvent(a0)
+        import DataBase2  # оптимизация импорта базы данных

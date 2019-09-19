@@ -1,15 +1,12 @@
 from enum import Enum
-from typing import Any, List, TypeVar
+from typing import Any, List, Type
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QImage, QPen, QColor
 from PyQt5.QtWidgets import QComboBox
 
 from Client.MyQt.ColorScheme import Color
-from DataBase2 import Lesson, IDisplayable, name, Group
-from Domain.functools.Format import type_name
-
-T = TypeVar('T')
+from DataBase2 import Lesson, IDisplayable, name, Group, IPerson
 
 
 class QMComboBox(QComboBox):
@@ -24,12 +21,12 @@ class QMComboBox(QComboBox):
 
     label: str
 
-    def formatter(self, item: T) -> str:
+    def formatter(self, item: IDisplayable) -> str:
         if hasattr(self.type, 'formatter'):
             return self.type.formatter(item)
         raise NotImplementedError()
 
-    def sorter(self, item: T) -> Any:
+    def sorter(self, item: IDisplayable) -> Any:
         if hasattr(self.type, 'sorter'):
             return self.type.sorter(item)
         raise NotImplementedError()
@@ -43,7 +40,7 @@ class QMComboBox(QComboBox):
             )
 
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='on_parent_change')
-    def on_parent_change(self, lessons, parent_value):
+    def on_parent_change(self, lessons: List[Lesson] or None, parent_value: IDisplayable or None):
         self.lessons = lessons
         if lessons is None or len(lessons) == 0:
             return
@@ -52,7 +49,7 @@ class QMComboBox(QComboBox):
         self.set_items(data)
         self.setCurrent(self.type.of(Lesson.closest_to_date(lessons))[0])
 
-    def __init__(self, type_: T = None, parent=None):
+    def __init__(self, type_: Type[IDisplayable] = None, parent=None):
         super().__init__()
         self.setParent(parent)
         self.type = type_
@@ -60,7 +57,7 @@ class QMComboBox(QComboBox):
 
         self.currentIndexChanged.connect(self.resignal)
 
-        self.items: List[T] = []
+        self.items: List[IDisplayable] = []
 
         self.pending = None
 
@@ -70,10 +67,10 @@ class QMComboBox(QComboBox):
     def setEngine(self, type_):
         self.type = type_
 
-    def addItems(self, iterable: List[T], p_str=None) -> None:
+    def addItems(self, iterable: List[IDisplayable], p_str=None) -> None:
         for i, value in enumerate(iterable):
             self.items.append(value)
-            self.setItemData(i, f"{type_name(value)}: {name(value)}", Qt.ToolTipRole);
+            self.setItemData(i, f"{value.type_name()}: {value.display_name()}", Qt.ToolTipRole)
         else:
             super().addItems([name(i) for i in iterable])
 
@@ -88,7 +85,7 @@ class QMComboBox(QComboBox):
         self.items = []
 
     @pyqtSlot('PyQt_PyObject', name='setCurrent')
-    def setCurrent(self, item: T):
+    def setCurrent(self, item: IDisplayable):
         if len(self.items) == 0:
             return
 
@@ -116,14 +113,14 @@ class QMComboBox(QComboBox):
     #
     #    p.drawImage(rect.width() - self.image.width(), self.height() // 2 - self.image.height() // 2, self.image)
 
-    def set_items(self, items):
+    def set_items(self, items: List[IDisplayable]):
         self.blockSignals(True)
         self.clear()
         self.addItems(items)
         self.blockSignals(False)
         self.resignal()
 
-    def loads(self, user):
+    def loads(self, user: IPerson):
         self.lessons = Lesson.of(user)
         self.on_parent_change(self.lessons, None)
 
@@ -132,16 +129,16 @@ class QMComboBox(QComboBox):
 
 
 class QMMultipleComboBox(QMComboBox):
-    def filter_lessons(self, lessons):
+    def filter_lessons(self, lessons: List[Lesson]):
         return sorted([l for d, l in [(self.filter([l])[0], l) for l in lessons] if d == self.current()])
 
-    def filter(self, lessons):
+    def filter(self, lessons: List[Lesson]) -> List[List[IDisplayable]]:
         data = sorted(list(set([frozenset(self.type.of(l)) for l in lessons])), key=Group.names)
         data = [list(d) for d in data]
         return data
 
     @pyqtSlot('PyQt_PyObject', 'PyQt_PyObject', name='on_parent_change')
-    def on_parent_change(self, lessons, parent_value):
+    def on_parent_change(self, lessons: List[Lesson], parent_value: IDisplayable):
         self.lessons = lessons
         if lessons is None or len(lessons) == 0:
             return

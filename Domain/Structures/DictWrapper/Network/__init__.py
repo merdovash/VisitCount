@@ -56,6 +56,6 @@ class BaseRequest(Structure):
         self.user = {
             'login': user.auth.login,
             'password': user.auth.password,
-            'user_type': user.auth.user_type
+            'user_type_id': user.auth.user_type_id
         }
         self.data = data

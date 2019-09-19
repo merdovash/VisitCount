@@ -43,7 +43,7 @@ class ProfessorCreateAPI(ProfessorAPI):
         auth = Auth.new(session,
                         login=data['login'],
                         password=data['password'],
-                        user_type=UserType.PROFESSOR,
+                        user_type_id=UserType.PROFESSOR,
                         user_id=professor.id)
 
         session.commit()
